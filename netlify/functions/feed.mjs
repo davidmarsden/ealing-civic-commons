@@ -163,7 +163,7 @@ function extractEalingSection(rawHtml = '') {
   let paragraphMatch;
   while ((paragraphMatch = paragraphPattern.exec(html))) {
     const paragraphText = strip(paragraphMatch[1]);
-    if (/^Ealing(?:\s+(?:Council|LBC|London Borough of Ealing))?\b[\s:–—-]*/i.test(paragraphText) && paragraphText.length >= 20) {
+    if (/^(?:Ealing(?:\s+(?:Council|LBC))?|London Borough of Ealing)\b[\s:–—-]*/i.test(paragraphText) && paragraphText.length >= 20) {
       return paragraphText;
     }
   }
