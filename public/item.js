@@ -1,6 +1,14 @@
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
+const contributionTypeOrder = [
+  'Correction',
+  'Evidence / document',
+  'Related source',
+  'Local information',
+  'Comment / context'
+];
+
 const pillClass = type => type === 'Official record'
   ? 'official'
   : type === 'Journalism / publishing'
@@ -31,8 +39,22 @@ function findItem(data, key) {
   return (data?.items || []).find(candidate => itemKey(candidate.id) === key);
 }
 
+function threadId(key) {
+  return `civic-item:${key}`;
+}
+
+function safeHttpUrl(value) {
+  if (!value) return null;
+  try {
+    const url = new URL(value, window.location.origin);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 function fillContributionFields(item, key) {
-  const thread = `civic-item:${key}`;
+  const thread = threadId(key);
   $('#threadId').textContent = thread;
   $('#contributionItemId').value = item.id;
   $('#contributionThreadId').value = thread;
@@ -71,6 +93,79 @@ function renderItem(item, key) {
   $('#discussion').hidden = false;
 }
 
+function contributionCard(contribution) {
+  const link = safeHttpUrl(contribution.relatedUrl);
+  const contributor = contribution.displayName || 'Community contributor';
+  const provenance = contribution.provenance || 'Submitted to Civic Commons and reviewed before publication.';
+  return `
+    <article class="contribution-card" id="contribution-${esc(contribution.id)}">
+      <div class="contribution-card-meta">
+        <strong>${esc(contributor)}</strong>
+        <span>${esc(fmtDate(contribution.publishedAt || contribution.submittedAt))}</span>
+        <span class="moderation-status">Published after review</span>
+      </div>
+      <p class="contribution-body">${esc(contribution.body)}</p>
+      ${link ? `<p class="contribution-link"><a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open related source ↗</a></p>` : ''}
+      <p class="contribution-provenance">${esc(provenance)}</p>
+    </article>
+  `;
+}
+
+function renderContributions(contributions, key) {
+  const list = $('#contributionList');
+  const count = $('#contributionCount');
+  const expectedThread = threadId(key);
+  const published = (contributions || [])
+    .filter(entry => entry && entry.status === 'published' && entry.threadId === expectedThread && entry.body)
+    .sort((a, b) => Date.parse(a.publishedAt || a.submittedAt || 0) - Date.parse(b.publishedAt || b.submittedAt || 0));
+
+  count.textContent = `${published.length} published`;
+
+  if (!published.length) {
+    list.innerHTML = `
+      <div class="contribution-empty">
+        <strong>No approved contributions yet.</strong>
+        <span>Have evidence, a correction or useful local context? Add it above for moderation.</span>
+      </div>
+    `;
+    return;
+  }
+
+  const groups = new Map();
+  published.forEach(entry => {
+    const type = contributionTypeOrder.includes(entry.type) ? entry.type : 'Comment / context';
+    if (!groups.has(type)) groups.set(type, []);
+    groups.get(type).push(entry);
+  });
+
+  list.innerHTML = contributionTypeOrder
+    .filter(type => groups.has(type))
+    .map(type => `
+      <section class="contribution-group">
+        <div class="contribution-group-heading">
+          <h3>${esc(type)}</h3>
+          <span>${groups.get(type).length}</span>
+        </div>
+        <div class="contribution-group-items">
+          ${groups.get(type).map(contributionCard).join('')}
+        </div>
+      </section>
+    `).join('');
+}
+
+async function loadApprovedContributions(key) {
+  try {
+    const response = await fetch('/data/contributions.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    renderContributions(data.contributions, key);
+  } catch (error) {
+    $('#contributionCount').textContent = '';
+    $('#contributionList').innerHTML = '<div class="contribution-empty"><strong>Approved contributions are temporarily unavailable.</strong><span>The item and submission form are still available.</span></div>';
+    console.error('Approved contributions load failed', error);
+  }
+}
+
 function renderMissing(key) {
   const status = $('#itemStatus');
   status.innerHTML = `
@@ -88,6 +183,8 @@ async function load() {
     return;
   }
 
+  const contributionsPromise = loadApprovedContributions(key);
+
   try {
     const response = await fetch('/.netlify/functions/feed', { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -102,6 +199,7 @@ async function load() {
     const demoItem = findItem(window.CIVIC_COMMONS_DEMO, key);
     if (demoItem) {
       renderItem(demoItem, key);
+      await contributionsPromise;
       return;
     }
 
@@ -109,6 +207,8 @@ async function load() {
     status.innerHTML = `<h1>Item temporarily unavailable.</h1><p>The live civic feed could not be loaded and this permalink is not present in the bundled prototype dataset.</p><p><a href="/">Return to the timeline →</a></p>`;
     console.error('Item load failed', error);
   }
+
+  await contributionsPromise;
 }
 
 load();
