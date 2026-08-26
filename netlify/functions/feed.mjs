@@ -2,6 +2,24 @@ import { XMLParser } from 'fast-xml-parser';
 
 const sources = [
   {
+    id: 'southall-stories',
+    name: 'Southall Stories',
+    url: 'https://southallstories.uk/feed.xml',
+    homepage: 'https://southallstories.uk/',
+    sourceClass: 'Journalism / publishing',
+    towns: ['Southall'],
+    defaultTopics: ['Council & democracy', 'Community']
+  },
+  {
+    id: 'community-powered-reporting',
+    name: 'Community Powered Reporting',
+    url: 'https://communitypoweredreporting.co.uk/feed/',
+    homepage: 'https://communitypoweredreporting.co.uk/',
+    sourceClass: 'Journalism / publishing',
+    towns: ['Southall'],
+    defaultTopics: ['Council & democracy', 'Community']
+  },
+  {
     id: 'southall-residents-alliance',
     name: 'Southall Residents Alliance',
     url: 'https://southallresidentsalliance.co.uk/feed/',
