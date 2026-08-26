@@ -100,7 +100,8 @@ const sources = [
     homepage: 'https://www.reddit.com/r/OpenCouncilNetwork/',
     sourceClass: 'Independent civic data / analysis',
     towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
-    defaultTopics: ['Council & democracy']
+    defaultTopics: ['Council & democracy'],
+    extractEalingSection: true
   },
   {
     id: 'view-from-w5',
@@ -155,6 +156,30 @@ const strip = (html = '') => decodeEntities(String(html)
 
 const textValue = value => value?.['#text'] ?? value ?? '';
 
+function extractEalingSection(rawHtml = '') {
+  const html = decodeEntities(String(rawHtml));
+  const heading = /<h([1-6])\b[^>]*>\s*(?:<[^>]+>\s*)*Ealing(?:\s+(?:Council|LBC|London Borough of Ealing))?\s*(?:<\/[^>]+>\s*)*<\/h\1>/i.exec(html);
+
+  if (heading) {
+    const afterHeading = html.slice(heading.index + heading[0].length);
+    const nextHeading = /<h[1-6]\b[^>]*>/i.exec(afterHeading);
+    const sectionHtml = nextHeading ? afterHeading.slice(0, nextHeading.index) : afterHeading;
+    const text = strip(sectionHtml);
+    if (text.length >= 20) return text;
+  }
+
+  const strongHeading = /<p\b[^>]*>\s*<(?:strong|b)\b[^>]*>\s*Ealing(?:\s+(?:Council|LBC|London Borough of Ealing))?\s*<\/(?:strong|b)>\s*<\/p>/i.exec(html);
+  if (strongHeading) {
+    const afterHeading = html.slice(strongHeading.index + strongHeading[0].length);
+    const nextStrongHeading = /<p\b[^>]*>\s*<(?:strong|b)\b[^>]*>\s*[A-Z][A-Za-z '&.-]{2,60}\s*<\/(?:strong|b)>\s*<\/p>/i.exec(afterHeading);
+    const sectionHtml = nextStrongHeading ? afterHeading.slice(0, nextStrongHeading.index) : afterHeading;
+    const text = strip(sectionHtml);
+    if (text.length >= 20) return text;
+  }
+
+  return null;
+}
+
 function topicGuess(title, defaults) {
   const text = title.toLowerCase();
   const rules = [
@@ -178,25 +203,31 @@ function normaliseDate(value) {
 }
 
 function normaliseItem(source, item) {
-  const title = strip(textValue(item.title) || 'Untitled');
+  const originalTitle = strip(textValue(item.title) || 'Untitled');
   const linkRaw = item.link;
   const link = typeof linkRaw === 'string' ? linkRaw : Array.isArray(linkRaw)
     ? (linkRaw.find(l => l?.['@_rel'] === 'alternate')?.['@_href'] || linkRaw[0]?.['@_href'])
     : (linkRaw?.['@_href'] || source.homepage);
-  const description = strip(textValue(item.description ?? item.summary ?? item['content:encoded'] ?? item.content));
+  const rawDescription = textValue(item.description ?? item.summary ?? item['content:encoded'] ?? item.content);
+  const extracted = source.extractEalingSection ? extractEalingSection(rawDescription) : null;
+  const description = extracted || strip(rawDescription);
+  const title = extracted && !/^ealing\b/i.test(originalTitle) ? `Ealing — ${originalTitle}` : originalTitle;
+  const summaryPrefix = extracted ? 'Commons extract from OCN’s public roundup: ' : '';
   const published = item.pubDate ?? item.published ?? item.updated ?? item.date ?? null;
   return {
-    id: `${source.id}:${item.guid?.['#text'] ?? item.guid ?? item.id ?? link ?? title}`,
+    id: `${source.id}:${item.guid?.['#text'] ?? item.guid ?? item.id ?? link ?? originalTitle}`,
     sourceId: source.id,
     source: source.name,
     sourceClass: source.sourceClass,
     sourceHomepage: source.homepage,
     title,
     url: link || source.homepage,
-    summary: description.slice(0, 420),
+    summary: `${summaryPrefix}${description}`.slice(0, 420),
     publishedAt: normaliseDate(published),
     towns: source.towns,
-    topics: topicGuess(title, source.defaultTopics)
+    topics: topicGuess(`${title} ${description}`, source.defaultTopics),
+    derived: Boolean(extracted),
+    derivedFrom: extracted ? 'OCN Reddit roundup' : null
   };
 }
 
