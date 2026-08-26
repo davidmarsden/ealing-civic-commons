@@ -112,16 +112,17 @@ const namedEntities = {
   pound: '£', euro: '€'
 };
 
+const decodeCodePoint = (raw, radix) => {
+  const code = Number.parseInt(raw, radix);
+  return Number.isInteger(code) && code >= 0 && code <= 0x10FFFF
+    ? String.fromCodePoint(code)
+    : null;
+};
+
 function decodeEntities(value = '') {
   return String(value)
-    .replace(/&#x([0-9a-f]+);?/gi, (_, hex) => {
-      const code = Number.parseInt(hex, 16);
-      return Number.isFinite(code) ? String.fromCodePoint(code) : _;
-    })
-    .replace(/&#([0-9]+);?/g, (_, dec) => {
-      const code = Number.parseInt(dec, 10);
-      return Number.isFinite(code) ? String.fromCodePoint(code) : _;
-    })
+    .replace(/&#x([0-9a-f]+);?/gi, (match, hex) => decodeCodePoint(hex, 16) ?? match)
+    .replace(/&#([0-9]+);?/g, (match, dec) => decodeCodePoint(dec, 10) ?? match)
     .replace(/&([a-z][a-z0-9]+);/gi, (match, name) => namedEntities[name.toLowerCase()] ?? match);
 }
 
