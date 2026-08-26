@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Southall & Ealing Civic Commons</title>
+  <meta name="description" content="A read-only prototype connecting local journalism, community organisations and official democratic records across Ealing." />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <div>
+        <a class="brand" href="/">Civic Commons</a>
+        <div class="strap">Southall & Ealing</div>
+      </div>
+      <nav aria-label="Primary">
+        <a href="#latest">Latest</a>
+        <a href="#sources">Sources</a>
+        <a href="#about">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <p class="eyebrow">Phase 1 prototype</p>
+          <h1>What’s happening in Southall?</h1>
+          <p class="lede">Local reporting, community voices and official democratic records — connected in one place, with the original source always visible.</p>
+        </div>
+        <aside class="principle">
+          <strong>Publish anywhere.</strong>
+          <span>Connect locally.</span>
+          <span>Keep the sources open.</span>
+        </aside>
+      </div>
+    </section>
+
+    <section class="wrap filters" aria-label="Timeline filters">
+      <div>
+        <label for="townFilter">Place</label>
+        <select id="townFilter">
+          <option value="Southall" selected>Southall</option>
+          <option value="All">All Ealing</option>
+          <option value="Acton">Acton</option>
+          <option value="Ealing">Ealing</option>
+          <option value="Greenford">Greenford</option>
+          <option value="Hanwell">Hanwell</option>
+          <option value="Northolt">Northolt</option>
+          <option value="Perivale">Perivale</option>
+        </select>
+      </div>
+      <div>
+        <label for="topicFilter">Topic</label>
+        <select id="topicFilter">
+          <option value="All" selected>All topics</option>
+          <option>Council & democracy</option>
+          <option>Planning & development</option>
+          <option>Housing</option>
+          <option>Environment</option>
+          <option>Transport</option>
+          <option>Community</option>
+          <option>Schools & young people</option>
+          <option>Policing & safety</option>
+          <option>Culture & history</option>
+        </select>
+      </div>
+      <div>
+        <label for="typeFilter">Source type</label>
+        <select id="typeFilter">
+          <option value="All" selected>All source types</option>
+          <option>Official record</option>
+          <option>Journalism / publishing</option>
+          <option>Organisation / campaign</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="wrap statusbar" aria-live="polite">
+      <div id="status">Loading live sources…</div>
+      <button id="refreshButton" type="button">Refresh</button>
+    </section>
+
+    <section class="wrap content-grid" id="latest">
+      <div>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Latest</p>
+            <h2 id="timelineTitle">Southall civic timeline</h2>
+          </div>
+          <span id="itemCount" class="count"></span>
+        </div>
+        <div id="timeline" class="timeline"></div>
+      </div>
+
+      <aside class="sidebar">
+        <section class="panel evidence-panel">
+          <p class="eyebrow">Source labels</p>
+          <h3>Know what you’re looking at</h3>
+          <p><span class="source-pill official">Official record</span> primary council/public authority material.</p>
+          <p><span class="source-pill journalism">Journalism / publishing</span> reporting, analysis and commentary.</p>
+          <p><span class="source-pill organisation">Organisation / campaign</span> residents’ groups, campaigns and civic organisations.</p>
+        </section>
+        <section class="panel" id="sources">
+          <p class="eyebrow">Prototype feeds</p>
+          <h3>Source health</h3>
+          <div id="healthList" class="health-list"></div>
+        </section>
+      </aside>
+    </section>
+
+    <section class="about" id="about">
+      <div class="wrap about-grid">
+        <div>
+          <p class="eyebrow">About this experiment</p>
+          <h2>Not another social network.</h2>
+        </div>
+        <div>
+          <p>The Civic Commons is an experiment in connecting information that is already being published independently. Sources keep their own websites and identities. Every item links back to the original.</p>
+          <p>Southall is the starting point. A borough-wide service would recognise Acton, Ealing, Greenford, Hanwell, Northolt, Perivale and Southall as distinct civic places rather than treating the borough as one interchangeable audience.</p>
+          <p class="prototype-note">This is an early read-only prototype. Topic and place classification is deliberately simple and may be wrong; provenance is kept visible so mistakes can be found and corrected.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>Southall & Ealing Civic Commons — prototype</span>
+      <span>Open civic infrastructure, not a publication.</span>
+    </div>
+  </footer>
+
+  <script src="/demo-data.js"></script>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

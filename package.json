@@ -1,0 +1,13 @@
+{
+  "name": "ealing-civic-commons-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "mkdir -p dist && cp -R public/. dist/"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.2.5"
+  }
+}
