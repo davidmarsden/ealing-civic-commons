@@ -17,6 +17,7 @@
       <nav aria-label="Primary">
         <a href="#latest">Latest</a>
         <a href="#sources">Sources</a>
+        <a href="#submit-source">Submit source</a>
         <a href="#about">About</a>
       </nav>
     </div>
@@ -107,8 +108,48 @@
           <p class="eyebrow">Prototype feeds</p>
           <h3>Source health</h3>
           <div id="healthList" class="health-list"></div>
+          <a class="panel-action" href="#submit-source">Suggest a source →</a>
         </section>
       </aside>
+    </section>
+
+    <section class="submit-source" id="submit-source">
+      <div class="wrap submit-grid">
+        <div>
+          <p class="eyebrow">Help widen the Commons</p>
+          <h2>Submit a source</h2>
+          <p>Know a local publication, residents’ group, community organisation, campaign or public-data source we should follow? Send it for review. Submission does not guarantee inclusion.</p>
+        </div>
+        <form name="submit-source" method="POST" action="/thanks.html" data-netlify="true" netlify-honeypot="bot-field" class="source-form">
+          <input type="hidden" name="form-name" value="submit-source" />
+          <p class="honeypot"><label>Don’t fill this out: <input name="bot-field" /></label></p>
+          <label>Source name
+            <input name="source-name" type="text" required />
+          </label>
+          <label>Website or feed URL
+            <input name="source-url" type="url" required placeholder="https://" />
+          </label>
+          <div class="form-row">
+            <label>Area
+              <select name="area">
+                <option>Southall</option><option>Acton</option><option>Ealing</option><option>Greenford</option><option>Hanwell</option><option>Northolt</option><option>Perivale</option><option>Borough-wide</option><option>Other / multiple</option>
+              </select>
+            </label>
+            <label>Source type
+              <select name="source-type">
+                <option>Journalism / publishing</option><option>Residents’ or community organisation</option><option>Campaign</option><option>Official / public body</option><option>Data / research</option><option>Other</option>
+              </select>
+            </label>
+          </div>
+          <label>Why should we include it? <span class="optional">Optional</span>
+            <textarea name="notes" rows="4"></textarea>
+          </label>
+          <label>Your email <span class="optional">Optional — only if we need to follow up</span>
+            <input name="email" type="email" />
+          </label>
+          <button class="submit-button" type="submit">Submit source</button>
+        </form>
+      </div>
     </section>
 
     <section class="about" id="about">
