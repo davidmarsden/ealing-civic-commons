@@ -21,6 +21,17 @@ const fmtDate = iso => {
 };
 const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
+function itemKey(id) {
+  const bytes = new TextEncoder().encode(String(id ?? ''));
+  let binary = '';
+  bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function itemPath(item) {
+  return `/items/${itemKey(item.id)}`;
+}
+
 function filteredItems() {
   if (!state.data) return [];
   return state.data.items.filter(item => {
@@ -49,8 +60,12 @@ function render() {
         <div>${esc(fmtDate(item.publishedAt))}</div>
       </div>
       <div>
-        <h3><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title)}</a></h3>
+        <h3><a href="${esc(itemPath(item))}">${esc(item.title)}</a></h3>
         ${item.summary ? `<p class="item-summary">${esc(item.summary)}</p>` : ''}
+        <div class="item-actions">
+          <a href="${esc(itemPath(item))}">View Commons item · add context →</a>
+          <a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Read original ↗</a>
+        </div>
         <div class="tags">
           ${item.towns.map(t => `<span class="tag">${esc(t)}</span>`).join('')}
           ${item.topics.map(t => `<span class="tag">${esc(t)}</span>`).join('')}
