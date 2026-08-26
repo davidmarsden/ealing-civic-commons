@@ -205,11 +205,13 @@ async function fetchAttempt(source, browserLike = false) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 7500);
   try {
-    return await fetch(source.url, {
+    const response = await fetch(source.url, {
       signal: controller.signal,
       redirect: 'follow',
       headers: requestHeaders(source, browserLike)
     });
+    const body = response.ok ? await response.text() : null;
+    return { response, body };
   } finally {
     clearTimeout(timeout);
   }
@@ -217,12 +219,13 @@ async function fetchAttempt(source, browserLike = false) {
 
 async function fetchSource(source) {
   try {
-    let res = await fetchAttempt(source, false);
+    let attempt = await fetchAttempt(source, false);
 
-    if (!res.ok && source.browserRetry && [401, 403, 406, 429].includes(res.status)) {
-      res = await fetchAttempt(source, true);
+    if (!attempt.response.ok && source.browserRetry && [401, 403, 406, 429].includes(attempt.response.status)) {
+      attempt = await fetchAttempt(source, true);
     }
 
+    const res = attempt.response;
     if (!res.ok) {
       const blocked = source.browserRetry && [401, 403, 406, 429].includes(res.status);
       return {
@@ -234,8 +237,7 @@ async function fetchSource(source) {
       };
     }
 
-    const xml = await res.text();
-    const parsed = parser.parse(xml);
+    const parsed = parser.parse(attempt.body);
     const rssChannel = parsed?.rss?.channel;
     const atomFeed = parsed?.feed;
 
