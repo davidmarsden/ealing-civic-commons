@@ -10,7 +10,7 @@ Southall is the starting point, but the Commons is designed for the borough's se
 
 - Fetches multiple RSS/Atom feeds server-side through a Netlify Function.
 - Normalises items into one chronological civic timeline.
-- Labels source class clearly: official record, journalism/publishing, organisation/campaign.
+- Labels source class clearly: official record, journalism/publishing, independent civic data/analysis, organisation/campaign.
 - Filters by town, topic and source type.
 - Defaults to Southall.
 - Displays source health so silent feed failures are visible.
@@ -30,11 +30,11 @@ The working source census, architecture and prospectus are version-controlled in
 
 These are public so that assumptions, omissions and design decisions can be scrutinised and corrected.
 
-## Development principle: partners are integrations, not gates
+## Development principle: participation and integrations in parallel
 
-Open Council Network and Ealing Council can substantially enrich the Commons. Neither should block development of the participation layer.
+Open Council Network and Ealing Council can substantially enrich the Commons. Conversations and integrations with them can continue in parallel while the participation layer develops.
 
-The current direction is therefore to begin the social phase in parallel with democracy integrations. See [`docs/open-social-phase.md`](./docs/open-social-phase.md).
+The current direction is described in [`docs/open-social-phase.md`](./docs/open-social-phase.md).
 
 Initial social work can include stable Commons item URLs, town/topic/source following, corrections, related evidence, contributions and moderated discussion. External systems such as RSS.chat, ActivityPub or AT Protocol can later connect to those open primitives without becoming dependencies.
 
@@ -49,9 +49,12 @@ Initial social work can include stable Commons item URLs, town/topic/source foll
 - Ealing Transition
 - East Acton Golf Links Residents’ Association
 - Ealing Council ModernGov
+- Open Council Network — Ealing updates (experimental Reddit search RSS)
 - The View from W5
 - MySouthall
 - The Neighbours’ Paper (candidate `/feed/` endpoint under live verification)
+
+The OCN feed uses Reddit's public subreddit search RSS for `Ealing`. It is treated as independent civic data/analysis, not as an official council record and not as a substitute for OCN's paid API. Its canonical links remain the original Reddit posts.
 
 Further candidates from the source census can be added incrementally once their preferred public feed endpoints are verified.
 
@@ -98,7 +101,7 @@ npm run build
 6. Improve place classification beyond source defaults.
 7. Add feed-level conditional requests / caching and parser tests.
 8. Add EALING.NEWS Southall and Asian Standard Southall after endpoint verification.
-9. Continue OCN pilot discussions in parallel rather than as a dependency.
+9. Continue OCN pilot discussions and public-feed experiments in parallel.
 10. Continue working with Ealing Council/ModernGov on reliable official-feed access in parallel.
 
 The Commons should remain useful if any one external service is unavailable.
