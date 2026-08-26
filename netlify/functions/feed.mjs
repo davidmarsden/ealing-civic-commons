@@ -89,7 +89,9 @@ const sources = [
     homepage: 'https://ealing.moderngov.co.uk/',
     sourceClass: 'Official record',
     towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
-    defaultTopics: ['Council & democracy']
+    defaultTopics: ['Council & democracy'],
+    browserRetry: true,
+    referer: 'https://ealing.moderngov.co.uk/mgWhatsNew.aspx?bcr=1'
   },
   {
     id: 'view-from-w5',
@@ -187,15 +189,50 @@ function normaliseItem(source, item) {
   };
 }
 
-async function fetchSource(source) {
+function requestHeaders(source, browserLike = false) {
+  const headers = {
+    accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.5',
+    'accept-language': 'en-GB,en;q=0.9',
+    'user-agent': browserLike
+      ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'
+      : 'Southall-Ealing-Civic-Commons/0.1 (+public-interest prototype)'
+  };
+  if (browserLike && source.referer) headers.referer = source.referer;
+  return headers;
+}
+
+async function fetchAttempt(source, browserLike = false) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 7500);
   try {
-    const res = await fetch(source.url, {
+    return await fetch(source.url, {
       signal: controller.signal,
-      headers: { 'user-agent': 'Southall-Ealing-Civic-Commons/0.1 (+public-interest prototype)' }
+      redirect: 'follow',
+      headers: requestHeaders(source, browserLike)
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchSource(source) {
+  try {
+    let res = await fetchAttempt(source, false);
+
+    if (!res.ok && source.browserRetry && [401, 403, 406, 429].includes(res.status)) {
+      res = await fetchAttempt(source, true);
+    }
+
+    if (!res.ok) {
+      const blocked = source.browserRetry && [401, 403, 406, 429].includes(res.status);
+      return {
+        source,
+        ok: false,
+        status: blocked ? 'blocked' : 'error',
+        error: blocked ? `Upstream blocked automated fetch (HTTP ${res.status})` : `HTTP ${res.status}`,
+        items: []
+      };
+    }
 
     const xml = await res.text();
     const parsed = parser.parse(xml);
@@ -207,11 +244,15 @@ async function fetchSource(source) {
     }
 
     const rawItems = rssChannel ? arr(rssChannel.item) : arr(atomFeed.entry);
-    return { source, ok: true, items: rawItems.slice(0, 15).map(item => normaliseItem(source, item)) };
+    return { source, ok: true, status: 'ok', items: rawItems.slice(0, 15).map(item => normaliseItem(source, item)) };
   } catch (error) {
-    return { source, ok: false, error: error.name === 'AbortError' ? 'Timed out' : String(error.message || error), items: [] };
-  } finally {
-    clearTimeout(timeout);
+    return {
+      source,
+      ok: false,
+      status: 'error',
+      error: error.name === 'AbortError' ? 'Timed out' : String(error.message || error),
+      items: []
+    };
   }
 }
 
@@ -222,7 +263,15 @@ export default async () => {
     const bd = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
     return bd - ad;
   }).slice(0, 80);
-  const health = results.map(r => ({ id: r.source.id, name: r.source.name, ok: r.ok, error: r.error || null, itemCount: r.items.length }));
+  const health = results.map(r => ({
+    id: r.source.id,
+    name: r.source.name,
+    homepage: r.source.homepage,
+    ok: r.ok,
+    status: r.status || (r.ok ? 'ok' : 'error'),
+    error: r.error || null,
+    itemCount: r.items.length
+  }));
   return new Response(JSON.stringify({ generatedAt: new Date().toISOString(), items, health }), {
     headers: {
       'content-type': 'application/json; charset=utf-8',
