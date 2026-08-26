@@ -1,0 +1,28 @@
+.item-page-hero { padding: 58px 0 34px; border-bottom: 1px solid var(--line); background: var(--card); }
+.item-page-status { padding: 28px 0 34px; max-width: 880px; }
+.item-page-status h1, .item-page-card h1 { font-size: clamp(2.5rem, 6vw, 5rem); max-width: 980px; }
+.item-page-status p { max-width: 760px; color: #4c5650; }
+.item-page-card { display: grid; gap: 18px; }
+.item-page-meta { display: flex; flex-wrap: wrap; gap: 9px 14px; align-items: center; color: var(--muted); font-size: .85rem; }
+.item-page-summary { max-width: 860px; font-family: Georgia, serif; font-size: clamp(1.15rem, 2vw, 1.45rem); color: #46514a; margin: 0; }
+.provenance-note { max-width: 840px; padding: 12px 14px; border-left: 3px solid var(--amber); background: #f2ece4; color: #584a42; font-size: .88rem; }
+.item-page-actions { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-top: 8px; }
+.item-page-actions a { font-weight: 800; color: var(--green); text-underline-offset: 3px; }
+.item-page-actions .primary-source-link { display: inline-block; background: var(--green); color: #fff; padding: 11px 16px; border-radius: 8px; text-decoration: none; }
+.canonical-note { max-width: 820px; color: var(--muted); font-size: .82rem; }
+.contribution-layout { display: grid; grid-template-columns: .72fr 1.28fr; gap: 72px; padding: 64px 0; align-items: start; }
+.contribution-layout h2, .discussion-placeholder h2 { font-family: Georgia, serif; letter-spacing: -.025em; font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.03; margin: 0 0 18px; }
+.contribution-layout > div > p { color: #505a54; max-width: 520px; }
+.moderation-note { border-top: 1px solid var(--line); padding-top: 16px; margin-top: 22px; }
+.thread-meta { margin-top: 26px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); display: grid; gap: 6px; }
+.thread-meta span { overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; color: var(--green-dark); }
+.thread-meta small { color: var(--muted); }
+.contribution-form { position: relative; }
+.consent-label { display: grid !important; grid-template-columns: auto 1fr; gap: 10px; align-items: start; text-transform: none !important; letter-spacing: normal !important; font-weight: 500 !important; }
+.consent-label input { width: auto; margin: 4px 0 0 !important; }
+.discussion-placeholder { padding: 54px 0 76px; border-top: 1px solid var(--line); }
+.discussion-placeholder p { max-width: 760px; color: #505a54; }
+code { overflow-wrap: anywhere; }
+@media (max-width: 820px) {
+  .contribution-layout { grid-template-columns: 1fr; gap: 30px; }
+}
