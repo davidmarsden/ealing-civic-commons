@@ -1,8 +1,12 @@
-# Southall & Ealing Civic Commons — Phase 1 prototype
+# Southall & Ealing Civic Commons — open civic prototype
 
-A deliberately small read-only prototype demonstrating the core proposition: connect local journalism, community organisations and official democratic records while keeping provenance and canonical sources visible.
+An open civic-information prototype connecting local journalism, community organisations and official democratic records while keeping provenance and canonical sources visible.
 
-## What it does
+> **Publish anywhere. Connect locally. Keep the sources open.**
+
+Southall is the starting point, but the Commons is designed for the borough's seven distinct civic places: Acton, Ealing, Greenford, Hanwell, Northolt, Perivale and Southall.
+
+## What it does now
 
 - Fetches multiple RSS/Atom feeds server-side through a Netlify Function.
 - Normalises items into one chronological civic timeline.
@@ -11,7 +15,28 @@ A deliberately small read-only prototype demonstrating the core proposition: con
 - Defaults to Southall.
 - Displays source health so silent feed failures are visible.
 - Links every item back to the original publisher.
-- Accepts public source suggestions through a Netlify Form for human review.
+- Accepts public source suggestions for human review.
+- Publishes its founding documents and development assumptions openly.
+
+## Founding pack
+
+The working source census, architecture and prospectus are version-controlled in [`docs/`](./docs/):
+
+- [Founding Pack index](./docs/FOUNDING-PACK.md)
+- [Source Register — v0.3](./docs/source-register-v0.3.md)
+- [Technical Architecture & Prototype Specification — v0.1](./docs/technical-architecture-spec-v0.1.md)
+- [Partner Prospectus](./docs/partner-prospectus.md)
+- [Open Social Phase — development direction](./docs/open-social-phase.md)
+
+These are public so that assumptions, omissions and design decisions can be scrutinised and corrected.
+
+## Development principle: partners are integrations, not gates
+
+Open Council Network and Ealing Council can substantially enrich the Commons. Neither should block development of the participation layer.
+
+The current direction is therefore to begin the social phase in parallel with democracy integrations. See [`docs/open-social-phase.md`](./docs/open-social-phase.md).
+
+Initial social work can include stable Commons item URLs, town/topic/source following, corrections, related evidence, contributions and moderated discussion. External systems such as RSS.chat, ActivityPub or AT Protocol can later connect to those open primitives without becoming dependencies.
 
 ## Current live feed set
 
@@ -48,7 +73,7 @@ Build settings are committed in `netlify.toml`:
 - publish directory: `dist`
 - functions directory: `netlify/functions`
 
-No environment variables are required for Phase 1.
+No environment variables are required for the current prototype.
 
 ## Run locally
 
@@ -63,15 +88,17 @@ npx netlify dev
 npm run build
 ```
 
-## Phase 1 next steps
+## Immediate development priorities
 
-1. Verify The Neighbours’ Paper feed in the Netlify source-health panel.
-2. Test a source submission end-to-end in Netlify Forms.
-3. Add EALING.NEWS Southall and Asian Standard Southall feeds after endpoint verification.
-4. Improve place classification beyond source defaults.
+1. Begin Social Phase A: stable item permalinks and open participation primitives.
+2. Add correction / related evidence submissions at item level.
+3. Prototype follow/subscribe for town, topic and source without behavioural profiling.
+4. Add basic moderated item discussion/contributions.
 5. Add a source registry file instead of hard-coded feed configuration.
-6. Add feed-level conditional requests / caching.
-7. Add tests for RSS/Atom parsing and duplicate handling.
-8. Add an explicit feedback/correction route.
-9. Add the Founding Charter and source-register pages.
-10. Begin OCN pilot conversation and add structured meetings as Phase 2.
+6. Improve place classification beyond source defaults.
+7. Add feed-level conditional requests / caching and parser tests.
+8. Add EALING.NEWS Southall and Asian Standard Southall after endpoint verification.
+9. Continue OCN pilot discussions in parallel rather than as a dependency.
+10. Continue working with Ealing Council/ModernGov on reliable official-feed access in parallel.
+
+The Commons should remain useful if any one external service is unavailable.
