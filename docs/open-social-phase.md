@@ -4,15 +4,15 @@
 **Date:** 26 August 2026  
 **Status:** Active development direction
 
-The Civic Commons should not wait for Open Council Network, Ealing Council, RSS.chat or any other external partner before developing its social and participatory layers.
+The Civic Commons can begin developing its social and participatory layers now, while conversations and integrations with Open Council Network, Ealing Council, RSS.chat and other potential partners continue in parallel.
 
-Those integrations can make the Commons better. They must not become gates.
+Those relationships can make the Commons substantially better. They are complementary to the work already under way rather than prerequisites for the next development stage.
 
 ## Principle
 
 > **Participation should be native to the Commons, while identity and publishing remain portable.**
 
-The social layer should therefore be built so that external services can connect to it rather than own it.
+The social layer should therefore be built so that external services can connect to it without the Commons depending on any single service.
 
 ## What we can build now
 
@@ -123,20 +123,20 @@ Early participation should therefore be deliberately constrained:
 - external replies/contributions mapped back to Commons item IDs.
 
 **Parallel democracy integration**
-- Open Council Network integration when terms/access are agreed;
-- Ealing Council/ModernGov ingestion when technically available;
-- neither blocks Social Phases A or B.
+- continue exploring Open Council Network integration as access and terms are agreed;
+- continue working with Ealing Council/ModernGov on reliable access to official democratic publishing;
+- develop Social Phases A and B alongside those integrations.
 
 ## Why this matters
 
 The read-only timeline proves that Ealing already has a distributed civic information ecosystem. The social phase turns discovery into participation: residents can follow an issue, add evidence, connect sources, correct mistakes and discuss material without surrendering the underlying civic record to a commercial social network.
 
-That stronger public prototype should also make partnership discussions easier. OCN, Ealing Council and local publishers will be able to see a functioning civic network rather than an abstract proposal waiting for their involvement.
+A stronger public prototype should also make partnership discussions easier. OCN, Ealing Council and local publishers will be able to see and shape a functioning civic network as it develops.
 
 ## Constitutional constraint
 
-No external integration should become indispensable to core participation.
+Core participation should remain portable and resilient rather than becoming dependent on any single external integration.
 
-If one provider disappears, changes its pricing, blocks access or changes direction, the Commons should retain its public URLs, source provenance, subscriptions, contributions and civic relationships.
+If a provider later disappears, changes its pricing, alters access or changes direction, the Commons should retain its public URLs, source provenance, subscriptions, contributions and civic relationships.
 
 **Publish anywhere. Connect locally. Participate openly.**
