@@ -161,8 +161,17 @@ function extractEalingSection(rawHtml = '') {
   const heading = /<h([1-6])\b[^>]*>\s*(?:<[^>]+>\s*)*Ealing(?:\s+(?:Council|LBC|London Borough of Ealing))?\s*(?:<\/[^>]+>\s*)*<\/h\1>/i.exec(html);
 
   if (heading) {
+    const headingLevel = Number.parseInt(heading[1], 10);
     const afterHeading = html.slice(heading.index + heading[0].length);
-    const nextHeading = /<h[1-6]\b[^>]*>/i.exec(afterHeading);
+    const headingPattern = /<h([1-6])\b[^>]*>/gi;
+    let nextHeading;
+    let match;
+    while ((match = headingPattern.exec(afterHeading))) {
+      if (Number.parseInt(match[1], 10) <= headingLevel) {
+        nextHeading = match;
+        break;
+      }
+    }
     const sectionHtml = nextHeading ? afterHeading.slice(0, nextHeading.index) : afterHeading;
     const text = strip(sectionHtml);
     if (text.length >= 20) return text;
