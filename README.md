@@ -14,6 +14,8 @@ A deliberately small read-only prototype demonstrating the core proposition: con
 
 ## Current feed set
 
+- Southall Stories
+- Community Powered Reporting
 - Southall Residents Alliance
 - Southall Transition
 - Ealing Matters
@@ -24,7 +26,7 @@ A deliberately small read-only prototype demonstrating the core proposition: con
 - The View from W5
 - MySouthall
 
-Southall Stories itself should be added once its preferred public feed endpoint is confirmed/configured for this prototype. Further candidates from the source census can then be added incrementally.
+Further candidates from the source census can be added incrementally once their preferred public feed endpoints are verified.
 
 ## Netlify
 
@@ -51,7 +53,7 @@ npm run build
 
 ## Phase 1 next steps
 
-1. Confirm/add Southall Stories feed.
+1. Verify the Southall Stories and Community Powered Reporting feeds in the Netlify source-health panel.
 2. Add EALING.NEWS Southall and Asian Standard Southall feeds after endpoint verification.
 3. Improve place classification beyond source defaults.
 4. Add a source registry file instead of hard-coded feed configuration.
