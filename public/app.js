@@ -63,7 +63,7 @@ function render() {
         <h3><a href="${esc(itemPath(item))}">${esc(item.title)}</a></h3>
         ${item.summary ? `<p class="item-summary">${esc(item.summary)}</p>` : ''}
         <div class="item-actions">
-          <a href="${esc(itemPath(item))}">View Commons item · add context →</a>
+          <a href="${esc(itemPath(item))}">Add context →</a>
           <a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Read original ↗</a>
         </div>
         <div class="tags">
