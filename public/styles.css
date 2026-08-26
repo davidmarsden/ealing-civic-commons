@@ -53,6 +53,7 @@ button { border: 0; background: transparent; color: var(--green); font: inherit;
 .source-pill { display: inline-block; width: fit-content; font-size: .67rem; line-height: 1; text-transform: uppercase; letter-spacing: .07em; font-weight: 850; padding: 6px 8px 5px; border-radius: 4px; }
 .official { color: #fff; background: var(--blue); }
 .journalism { color: #fff; background: var(--green); }
+.analysis { color: #fff; background: var(--amber); }
 .organisation { color: #fff; background: var(--purple); }
 .sidebar { display: grid; align-content: start; gap: 18px; }
 .panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; box-shadow: var(--shadow); }

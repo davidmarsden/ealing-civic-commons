@@ -7,7 +7,13 @@ const count = $('#itemCount');
 const title = $('#timelineTitle');
 const healthList = $('#healthList');
 
-const pillClass = type => type === 'Official record' ? 'official' : type === 'Journalism / publishing' ? 'journalism' : 'organisation';
+const pillClass = type => type === 'Official record'
+  ? 'official'
+  : type === 'Journalism / publishing'
+    ? 'journalism'
+    : type === 'Independent civic data / analysis'
+      ? 'analysis'
+      : 'organisation';
 const fmtDate = iso => {
   if (!iso) return 'Date unavailable';
   const d = new Date(iso);

@@ -94,6 +94,15 @@ const sources = [
     referer: 'https://ealing.moderngov.co.uk/mgWhatsNew.aspx?bcr=1'
   },
   {
+    id: 'open-council-network-reddit-ealing',
+    name: 'Open Council Network — Ealing updates',
+    url: 'https://www.reddit.com/r/OpenCouncilNetwork/search.rss?q=Ealing&restrict_sr=1&sort=new',
+    homepage: 'https://www.reddit.com/r/OpenCouncilNetwork/',
+    sourceClass: 'Independent civic data / analysis',
+    towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
+    defaultTopics: ['Council & democracy']
+  },
+  {
     id: 'view-from-w5',
     name: 'The View from W5',
     url: 'https://theviewfromw5.substack.com/feed',
@@ -144,6 +153,8 @@ const strip = (html = '') => decodeEntities(String(html)
   .replace(/\s+/g, ' ')
   .trim();
 
+const textValue = value => value?.['#text'] ?? value ?? '';
+
 function topicGuess(title, defaults) {
   const text = title.toLowerCase();
   const rules = [
@@ -167,12 +178,12 @@ function normaliseDate(value) {
 }
 
 function normaliseItem(source, item) {
-  const title = strip(item.title?.['#text'] ?? item.title ?? 'Untitled');
+  const title = strip(textValue(item.title) || 'Untitled');
   const linkRaw = item.link;
   const link = typeof linkRaw === 'string' ? linkRaw : Array.isArray(linkRaw)
     ? (linkRaw.find(l => l?.['@_rel'] === 'alternate')?.['@_href'] || linkRaw[0]?.['@_href'])
     : (linkRaw?.['@_href'] || source.homepage);
-  const description = strip(item.description ?? item.summary ?? item['content:encoded'] ?? item.content ?? '');
+  const description = strip(textValue(item.description ?? item.summary ?? item['content:encoded'] ?? item.content));
   const published = item.pubDate ?? item.published ?? item.updated ?? item.date ?? null;
   return {
     id: `${source.id}:${item.guid?.['#text'] ?? item.guid ?? item.id ?? link ?? title}`,
