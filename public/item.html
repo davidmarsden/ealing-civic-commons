@@ -91,10 +91,20 @@
       </form>
     </section>
 
-    <section class="wrap discussion-placeholder" id="discussion" hidden>
-      <p class="eyebrow">Discussion & contributions</p>
-      <h2>Moderated, not engagement-ranked.</h2>
-      <p>Public contribution display is the next storage/moderation step. For now, this page establishes the durable civic thread and accepts contributions into the moderation queue.</p>
+    <section class="approved-contributions" id="discussion" hidden>
+      <div class="wrap">
+        <div class="discussion-heading">
+          <div>
+            <p class="eyebrow">Discussion & contributions</p>
+            <h2>Published after review.</h2>
+            <p>Approved corrections, evidence, related sources, local information and context appear here in chronological order within their contribution type. Popularity does not affect ordering.</p>
+          </div>
+          <span id="contributionCount" class="count"></span>
+        </div>
+        <div id="contributionList" class="contribution-list" aria-live="polite">
+          <p class="contribution-loading">Loading approved contributions…</p>
+        </div>
+      </div>
     </section>
   </main>
 
