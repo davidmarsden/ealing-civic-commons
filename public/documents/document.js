@@ -9,6 +9,15 @@ function inline(text) {
     .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" rel="noopener noreferrer" target="_blank">$1</a>');
 }
 
+function paragraphHtml(lines) {
+  return lines.map((line, index) => {
+    const hardBreak = / {2,}$/.test(line);
+    const rendered = inline(line.replace(/ {2,}$/, '').trim());
+    if (index === lines.length - 1) return rendered;
+    return rendered + (hardBreak ? '<br>' : ' ');
+  }).join('');
+}
+
 function isTableDivider(line) {
   return /^\s*\|?\s*:?-{3,}/.test(line) && line.includes('|');
 }
@@ -80,13 +89,13 @@ function markdownToHtml(markdown) {
       continue;
     }
 
-    const paragraph = [line.trim()];
+    const paragraph = [line];
     i += 1;
     while (i < lines.length && lines[i].trim() && !/^(#{1,4})\s+/.test(lines[i]) && !lines[i].startsWith('```') && !lines[i].startsWith('> ') && !/^[-*]\s+/.test(lines[i]) && !/^\d+\.\s+/.test(lines[i]) && !/^---+$/.test(lines[i].trim()) && !(lines[i].includes('|') && i + 1 < lines.length && isTableDivider(lines[i + 1]))) {
-      paragraph.push(lines[i].trim());
+      paragraph.push(lines[i]);
       i += 1;
     }
-    out.push(`<p>${inline(paragraph.join(' '))}</p>`);
+    out.push(`<p>${paragraphHtml(paragraph)}</p>`);
   }
 
   return out.join('\n');
