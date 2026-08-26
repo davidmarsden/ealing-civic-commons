@@ -64,7 +64,10 @@ button { border: 0; background: transparent; color: var(--green); font: inherit;
 .health-row { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: start; font-size: .82rem; }
 .health-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; background: #a5aaa6; }
 .health-dot.ok { background: #3e865f; }
+.health-dot.blocked { background: var(--amber); }
 .health-dot.bad { background: #b64d43; }
+.health-source { text-decoration: none; }
+.health-source:hover, .health-source:focus { color: var(--green); text-decoration: underline; text-underline-offset: 2px; }
 .health-count { color: var(--muted); }
 .empty { padding: 48px 0; color: var(--muted); font-family: Georgia, serif; font-size: 1.4rem; }
 .submit-source { border-top: 1px solid var(--line); padding: 70px 0; background: #efede5; }
