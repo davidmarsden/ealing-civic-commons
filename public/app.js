@@ -12,7 +12,7 @@ const healthList = $('#healthList');
 
 const pillClass = type => type === 'Official record' ? 'official' : type === 'Journalism / publishing' ? 'journalism' : type === 'Independent civic data / analysis' ? 'analysis' : 'organisation';
 const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date(iso); return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' }).format(d); };
-const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt',"'":'&#39;','"':'&quot;'}[c]));
 const itemPath = item => `/items/${stableItemKey(item.id)}`;
 const threadId = item => `civic-item:${stableItemKey(item.id)}`;
 
@@ -83,22 +83,30 @@ function render() {
 function diagnosticLabel(diagnostic) { const mode = diagnostic.mode === 'browser-compatible' ? 'Retry' : 'Initial request'; const elapsed = Number.isFinite(diagnostic.elapsedMs) ? ` · ${diagnostic.elapsedMs} ms` : ''; return diagnostic.outcome === 'http-response' ? `${mode}: HTTP ${diagnostic.httpStatus}${elapsed}` : `${mode}: ${diagnostic.error || 'transport error'}${elapsed}`; }
 function renderHealth() { const health = state.data?.health ?? []; healthList.innerHTML = health.map(h => { const healthStatus = h.status || (h.ok ? 'ok' : 'error'); const upstream = healthStatus === 'blocked' || healthStatus === 'upstream'; const label = h.ok ? h.itemCount : upstream ? 'upstream' : 'error'; const dotClass = h.ok ? 'ok' : upstream ? 'blocked' : 'bad'; const sourceName = h.homepage ? `<a class="health-source" href="${esc(h.homepage)}" target="_blank" rel="noopener noreferrer">${esc(h.name)}</a>` : esc(h.name); const diagnostics = Array.isArray(h.diagnostics) && h.diagnostics.length ? `<div class="health-diagnostics"><strong>Fetch diagnostics</strong>${h.diagnostics.map(d => `<span>${esc(diagnosticLabel(d))}</span>`).join('')}${h.error ? `<span>Result: ${esc(h.error)}</span>` : ''}</div>` : ''; return `<div class="health-entry"><div class="health-row" title="${esc(h.error || 'Feed fetched successfully')}"><span class="health-dot ${dotClass}"></span><span>${sourceName}</span><span class="health-count">${esc(label)}</span></div>${diagnostics}</div>`; }).join(''); }
 
-async function loadContributions() { try { const res = await fetch('/data/contributions.json', { cache: 'no-store' }); if (!res.ok) throw new Error(`HTTP ${res.status}`); const data = await res.json(); state.contributions = Array.isArray(data.contributions) ? data.contributions : []; } catch { state.contributions = []; } }
+async function loadContributions() {
+  try {
+    const res = await fetch('/data/contributions.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    state.contributions = Array.isArray(data.contributions) ? data.contributions : [];
+  } catch {
+    state.contributions = [];
+  }
+  if (state.data) render();
+}
 
 async function load() {
   status.textContent = 'Loading live sources…';
-  const contributionsPromise = loadContributions();
+  loadContributions();
   try {
     const res = await fetch('/.netlify/functions/feed', { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     state.data = await res.json();
-    await contributionsPromise;
     const good = state.data.health.filter(h => h.ok).length;
     const upstream = state.data.health.filter(h => h.status === 'blocked' || h.status === 'upstream').length;
     status.textContent = `Updated ${new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date(state.data.generatedAt))} · ${good}/${state.data.health.length} feeds responding${upstream ? ` · ${upstream} unavailable upstream` : ''}`;
     renderHealth(); render();
   } catch {
-    await contributionsPromise;
     if (window.CIVIC_COMMONS_DEMO) { state.data = window.CIVIC_COMMONS_DEMO; status.textContent = 'Showing prototype data · live RSS activates when deployed with the server-side feed function'; renderHealth(); render(); }
     else { status.textContent = 'Live feeds are unavailable in this preview.'; timeline.innerHTML = '<div class="empty">Live feed endpoint unavailable.</div>'; }
   }
