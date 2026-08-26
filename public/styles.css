@@ -31,13 +31,14 @@ h1 { font-family: Georgia, 'Times New Roman', serif; font-size: clamp(3rem, 7vw,
 .principle { border-left: 3px solid var(--green); padding: 8px 0 8px 22px; display: grid; gap: 4px; font-family: Georgia, serif; font-size: 1.16rem; }
 .principle strong { color: var(--green-dark); }
 .filters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 28px 0 14px; }
-.filters label { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; margin: 0 0 6px; color: var(--muted); }
-select { width: 100%; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); padding: 12px 14px; font: inherit; }
+.filters label, .source-form label { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; margin: 0 0 6px; color: var(--muted); }
+select, input, textarea { width: 100%; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); padding: 12px 14px; font: inherit; }
+textarea { resize: vertical; }
 .statusbar { display: flex; justify-content: space-between; gap: 16px; color: var(--muted); font-size: .88rem; padding: 8px 0 28px; }
 button { border: 0; background: transparent; color: var(--green); font: inherit; font-weight: 750; cursor: pointer; }
 .content-grid { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 42px; padding-bottom: 80px; }
 .section-heading { display: flex; justify-content: space-between; align-items: end; border-bottom: 2px solid var(--ink); padding-bottom: 12px; margin-bottom: 6px; }
-.section-heading h2, .about h2 { font-family: Georgia, serif; letter-spacing: -.025em; font-size: clamp(2rem, 4vw, 3.2rem); margin: 0; line-height: 1; }
+.section-heading h2, .about h2, .submit-source h2 { font-family: Georgia, serif; letter-spacing: -.025em; font-size: clamp(2rem, 4vw, 3.2rem); margin: 0; line-height: 1; }
 .count { color: var(--muted); font-size: .85rem; }
 .timeline { display: grid; }
 .item { display: grid; grid-template-columns: 135px minmax(0, 1fr); gap: 20px; padding: 24px 0; border-bottom: 1px solid var(--line); }
@@ -58,6 +59,7 @@ button { border: 0; background: transparent; color: var(--green); font: inherit;
 .panel h3 { margin: 0 0 14px; font-family: Georgia, serif; font-size: 1.35rem; }
 .panel p { font-size: .9rem; color: #505a54; }
 .panel .source-pill { margin-right: 4px; }
+.panel-action { display: inline-block; margin-top: 18px; color: var(--green); font-weight: 800; text-decoration: none; font-size: .86rem; }
 .health-list { display: grid; gap: 10px; }
 .health-row { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: start; font-size: .82rem; }
 .health-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; background: #a5aaa6; }
@@ -65,6 +67,17 @@ button { border: 0; background: transparent; color: var(--green); font: inherit;
 .health-dot.bad { background: #b64d43; }
 .health-count { color: var(--muted); }
 .empty { padding: 48px 0; color: var(--muted); font-family: Georgia, serif; font-size: 1.4rem; }
+.submit-source { border-top: 1px solid var(--line); padding: 70px 0; background: #efede5; }
+.submit-grid { display: grid; grid-template-columns: .75fr 1.25fr; gap: 80px; align-items: start; }
+.submit-grid > div > p:not(.eyebrow) { color: #505a54; max-width: 480px; }
+.source-form { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 24px; box-shadow: var(--shadow); display: grid; gap: 16px; }
+.source-form label { margin: 0; }
+.source-form label input, .source-form label select, .source-form label textarea { margin-top: 6px; text-transform: none; letter-spacing: normal; font-weight: 450; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.optional { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.honeypot { position: absolute; left: -10000px; }
+.submit-button { justify-self: start; background: var(--green); color: #fff; padding: 11px 18px; border-radius: 8px; }
+.submit-button:hover, .submit-button:focus { background: var(--green-dark); }
 .about { background: var(--green-dark); color: #f4f1e8; padding: 70px 0; }
 .about-grid { display: grid; grid-template-columns: .8fr 1.2fr; gap: 80px; }
 .about .eyebrow { color: #c6dfd2; }
@@ -73,7 +86,7 @@ button { border: 0; background: transparent; color: var(--green); font: inherit;
 footer { background: #0f2e23; color: #bfccc5; }
 .footer-inner { min-height: 86px; display: flex; justify-content: space-between; align-items: center; gap: 24px; font-size: .8rem; }
 @media (max-width: 820px) {
-  .hero-grid, .content-grid, .about-grid { grid-template-columns: 1fr; gap: 30px; }
+  .hero-grid, .content-grid, .about-grid, .submit-grid { grid-template-columns: 1fr; gap: 30px; }
   .hero { padding-top: 52px; }
   .principle { margin-top: 10px; }
   .filters { grid-template-columns: 1fr; }
@@ -83,8 +96,8 @@ footer { background: #0f2e23; color: #bfccc5; }
 }
 @media (max-width: 560px) {
   .wrap { width: min(100% - 22px, 1180px); }
-  nav { gap: 12px; font-size: .82rem; }
+  nav { gap: 10px; font-size: .76rem; flex-wrap: wrap; justify-content: flex-end; }
   h1 { font-size: 3.35rem; }
-  .sidebar { grid-template-columns: 1fr; }
+  .sidebar, .form-row { grid-template-columns: 1fr; }
   .footer-inner { flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; }
 }

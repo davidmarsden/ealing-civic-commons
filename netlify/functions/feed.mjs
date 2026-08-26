@@ -20,6 +20,15 @@ const sources = [
     defaultTopics: ['Council & democracy', 'Community']
   },
   {
+    id: 'neighbours-paper',
+    name: 'The Neighbours’ Paper',
+    url: 'https://neighbourspaper.org/feed/',
+    homepage: 'https://neighbourspaper.org/',
+    sourceClass: 'Journalism / publishing',
+    towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
+    defaultTopics: ['Council & democracy', 'Community']
+  },
+  {
     id: 'southall-residents-alliance',
     name: 'Southall Residents Alliance',
     url: 'https://southallresidentsalliance.co.uk/feed/',
