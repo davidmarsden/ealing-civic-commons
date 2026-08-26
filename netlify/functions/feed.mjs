@@ -103,8 +103,34 @@ const sources = [
 ];
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', textNodeName: '#text' });
-const strip = (html = '') => String(html).replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 const arr = value => value == null ? [] : Array.isArray(value) ? value : [value];
+
+const namedEntities = {
+  amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
+  rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“', ndash: '–', mdash: '—',
+  hellip: '…', bull: '•', middot: '·', copy: '©', reg: '®', trade: '™',
+  pound: '£', euro: '€'
+};
+
+function decodeEntities(value = '') {
+  return String(value)
+    .replace(/&#x([0-9a-f]+);?/gi, (_, hex) => {
+      const code = Number.parseInt(hex, 16);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : _;
+    })
+    .replace(/&#([0-9]+);?/g, (_, dec) => {
+      const code = Number.parseInt(dec, 10);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : _;
+    })
+    .replace(/&([a-z][a-z0-9]+);/gi, (match, name) => namedEntities[name.toLowerCase()] ?? match);
+}
+
+const strip = (html = '') => decodeEntities(String(html)
+  .replace(/<script[\s\S]*?<\/script>/gi, '')
+  .replace(/<style[\s\S]*?<\/style>/gi, '')
+  .replace(/<[^>]+>/g, ' '))
+  .replace(/\s+/g, ' ')
+  .trim();
 
 function topicGuess(title, defaults) {
   const text = title.toLowerCase();
