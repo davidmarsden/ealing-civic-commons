@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "netlify dev",
-    "build": "mkdir -p dist && cp -R public/. dist/"
+    "build": "mkdir -p dist/documents/content && cp -R public/. dist/ && cp docs/*.md dist/documents/content/"
   },
   "dependencies": {
     "fast-xml-parser": "^5.2.5"
