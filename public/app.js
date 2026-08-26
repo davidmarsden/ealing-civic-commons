@@ -58,8 +58,9 @@ function renderHealth() {
   const health = state.data?.health ?? [];
   healthList.innerHTML = health.map(h => {
     const healthStatus = h.status || (h.ok ? 'ok' : 'error');
-    const label = h.ok ? h.itemCount : healthStatus === 'blocked' ? 'blocked' : 'error';
-    const dotClass = h.ok ? 'ok' : healthStatus === 'blocked' ? 'blocked' : 'bad';
+    const upstream = healthStatus === 'blocked' || healthStatus === 'upstream';
+    const label = h.ok ? h.itemCount : upstream ? 'upstream' : 'error';
+    const dotClass = h.ok ? 'ok' : upstream ? 'blocked' : 'bad';
     const sourceName = h.homepage
       ? `<a class="health-source" href="${esc(h.homepage)}" target="_blank" rel="noopener noreferrer">${esc(h.name)}</a>`
       : esc(h.name);
@@ -80,9 +81,9 @@ async function load() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     state.data = await res.json();
     const good = state.data.health.filter(h => h.ok).length;
-    const blocked = state.data.health.filter(h => h.status === 'blocked').length;
-    const blockedNote = blocked ? ` · ${blocked} blocked upstream` : '';
-    status.textContent = `Updated ${new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date(state.data.generatedAt))} · ${good}/${state.data.health.length} feeds responding${blockedNote}`;
+    const upstream = state.data.health.filter(h => h.status === 'blocked' || h.status === 'upstream').length;
+    const upstreamNote = upstream ? ` · ${upstream} unavailable upstream` : '';
+    status.textContent = `Updated ${new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date(state.data.generatedAt))} · ${good}/${state.data.health.length} feeds responding${upstreamNote}`;
     renderHealth();
     render();
   } catch (err) {
