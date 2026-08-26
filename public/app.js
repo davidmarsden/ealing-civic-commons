@@ -1,6 +1,7 @@
 import { clearFollows, followCount, itemMatchesFollows, loadFollows, stableItemKey } from './follow-store.js';
 
-const state = { data: null, contributions: [], filters: { town: 'Southall', topic: 'All', type: 'All' }, view: location.hash === '#following' ? 'following' : 'latest' };
+const initialFollowing = location.hash === '#following';
+const state = { data: null, contributions: [], filters: { town: initialFollowing ? 'All' : 'Southall', topic: 'All', type: 'All' }, view: initialFollowing ? 'following' : 'latest' };
 const $ = sel => document.querySelector(sel);
 const timeline = $('#timeline');
 const status = $('#status');
@@ -18,6 +19,13 @@ const threadId = item => `civic-item:${stableItemKey(item.id)}`;
 function contributionStats(item) {
   const entries = state.contributions.filter(entry => entry?.status === 'published' && entry.threadId === threadId(item));
   return { total: entries.length, corrections: entries.filter(entry => entry.type === 'Correction').length };
+}
+
+function contributionLabel(stats) {
+  if (!stats.total) return '';
+  if (stats.corrections === stats.total) return `${stats.corrections} correction${stats.corrections === 1 ? '' : 's'}`;
+  if (stats.corrections) return `${stats.corrections} correction${stats.corrections === 1 ? '' : 's'} · ${stats.total} additions`;
+  return `${stats.total} addition${stats.total === 1 ? '' : 's'}`;
 }
 
 function filteredItems() {
@@ -66,7 +74,8 @@ function render() {
   }
   timeline.innerHTML = items.map(item => {
     const stats = contributionStats(item);
-    const additions = stats.total ? `<a class="contribution-count" href="${esc(itemPath(item))}#discussion">${stats.corrections ? `${stats.corrections} correction${stats.corrections === 1 ? '' : 's'} · ` : ''}${stats.total} addition${stats.total === 1 ? '' : 's'}</a>` : '';
+    const label = contributionLabel(stats);
+    const additions = label ? `<a class="contribution-count" href="${esc(itemPath(item))}#discussion">${esc(label)}</a>` : '';
     return `<article class="item"><div class="item-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass)}</span><div class="item-source">${esc(item.source)}</div><div>${esc(fmtDate(item.publishedAt))}</div></div><div><h3><a href="${esc(itemPath(item))}">${esc(item.title)}</a></h3>${item.summary ? `<p class="item-summary">${esc(item.summary)}</p>` : ''}<div class="item-actions"><a href="${esc(itemPath(item))}">Add context →</a>${additions}<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Read original ↗</a></div><div class="tags">${item.towns.map(t => `<span class="tag">${esc(t)}</span>`).join('')}${item.topics.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div></div></article>`;
   }).join('');
 }
@@ -95,7 +104,17 @@ async function load() {
   }
 }
 
-function setView(view) { state.view = view; history.replaceState(null, '', view === 'following' ? '#following' : '#latest'); render(); }
+function setView(view) {
+  state.view = view;
+  if (view === 'following') {
+    state.filters = { town: 'All', topic: 'All', type: 'All' };
+    $('#townFilter').value = 'All'; $('#topicFilter').value = 'All'; $('#typeFilter').value = 'All';
+  }
+  history.replaceState(null, '', view === 'following' ? '#following' : '#latest');
+  render();
+}
+
+$('#townFilter').value = state.filters.town;
 $('#townFilter').addEventListener('change', e => { state.filters.town = e.target.value; render(); });
 $('#topicFilter').addEventListener('change', e => { state.filters.topic = e.target.value; render(); });
 $('#typeFilter').addEventListener('change', e => { state.filters.type = e.target.value; render(); });
