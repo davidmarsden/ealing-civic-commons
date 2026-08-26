@@ -248,11 +248,13 @@ async function fetchSource(source) {
     const rawItems = rssChannel ? arr(rssChannel.item) : arr(atomFeed.entry);
     return { source, ok: true, status: 'ok', items: rawItems.slice(0, 15).map(item => normaliseItem(source, item)) };
   } catch (error) {
+    const message = error.name === 'AbortError' ? 'Timed out' : String(error.message || error);
+    const upstreamFailure = Boolean(source.browserRetry);
     return {
       source,
       ok: false,
-      status: 'error',
-      error: error.name === 'AbortError' ? 'Timed out' : String(error.message || error),
+      status: upstreamFailure ? 'upstream' : 'error',
+      error: upstreamFailure ? `Official source unavailable to automated fetch (${message})` : message,
       items: []
     };
   }
