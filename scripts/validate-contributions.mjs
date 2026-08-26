@@ -8,7 +8,19 @@ const allowedTypes = new Set([
   'Local information',
   'Comment / context'
 ]);
-const forbiddenPrivateFields = new Set(['email', 'contactEmail', 'ip', 'ipAddress']);
+const allowedContributionFields = new Set([
+  'id',
+  'threadId',
+  'type',
+  'body',
+  'relatedUrl',
+  'displayName',
+  'submittedAt',
+  'publishedAt',
+  'provenance',
+  'status'
+]);
+const threadIdPattern = /^civic-item:[A-Za-z0-9_-]+$/;
 
 function fail(message) {
   console.error(`Contribution registry validation failed: ${message}`);
@@ -34,9 +46,9 @@ for (const [index, contribution] of (registry.contributions || []).entries()) {
     continue;
   }
 
-  for (const field of forbiddenPrivateFields) {
-    if (Object.prototype.hasOwnProperty.call(contribution, field)) {
-      fail(`${label} contains forbidden private field "${field}"`);
+  for (const field of Object.keys(contribution)) {
+    if (!allowedContributionFields.has(field)) {
+      fail(`${label} contains non-public field "${field}"; only documented public fields are allowed`);
     }
   }
 
@@ -48,8 +60,8 @@ for (const [index, contribution] of (registry.contributions || []).entries()) {
     ids.add(contribution.id);
   }
 
-  if (!contribution.threadId || typeof contribution.threadId !== 'string' || !contribution.threadId.startsWith('civic-item:')) {
-    fail(`${label} requires a civic-item threadId`);
+  if (typeof contribution.threadId !== 'string' || !threadIdPattern.test(contribution.threadId)) {
+    fail(`${label} requires threadId in the form "civic-item:<non-empty base64url item key>"`);
   }
 
   if (!allowedTypes.has(contribution.type)) {
@@ -66,6 +78,10 @@ for (const [index, contribution] of (registry.contributions || []).entries()) {
 
   if (!contribution.publishedAt || Number.isNaN(Date.parse(contribution.publishedAt))) {
     fail(`${label} requires a valid publishedAt date`);
+  }
+
+  if (contribution.submittedAt && Number.isNaN(Date.parse(contribution.submittedAt))) {
+    fail(`${label} submittedAt must be a valid date when present`);
   }
 
   if (contribution.relatedUrl) {
