@@ -158,6 +158,16 @@ const textValue = value => value?.['#text'] ?? value ?? '';
 
 function extractEalingSection(rawHtml = '') {
   const html = decodeEntities(String(rawHtml));
+
+  const paragraphPattern = /<p\b[^>]*>([\s\S]*?)<\/p>/gi;
+  let paragraphMatch;
+  while ((paragraphMatch = paragraphPattern.exec(html))) {
+    const paragraphText = strip(paragraphMatch[1]);
+    if (/^(?:Ealing(?:\s+(?:Council|LBC))?|London Borough of Ealing)\b[\s:–—-]*/i.test(paragraphText) && paragraphText.length >= 20) {
+      return paragraphText;
+    }
+  }
+
   const heading = /<h([1-6])\b[^>]*>\s*(?:<[^>]+>\s*)*Ealing(?:\s+(?:Council|LBC|London Borough of Ealing))?\s*(?:<\/[^>]+>\s*)*<\/h\1>/i.exec(html);
 
   if (heading) {
