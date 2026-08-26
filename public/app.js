@@ -56,13 +56,21 @@ function render() {
 
 function renderHealth() {
   const health = state.data?.health ?? [];
-  healthList.innerHTML = health.map(h => `
-    <div class="health-row" title="${esc(h.error || 'Feed fetched successfully')}">
-      <span class="health-dot ${h.ok ? 'ok' : 'bad'}"></span>
-      <span>${esc(h.name)}</span>
-      <span class="health-count">${h.ok ? h.itemCount : 'error'}</span>
-    </div>
-  `).join('');
+  healthList.innerHTML = health.map(h => {
+    const healthStatus = h.status || (h.ok ? 'ok' : 'error');
+    const label = h.ok ? h.itemCount : healthStatus === 'blocked' ? 'blocked' : 'error';
+    const dotClass = h.ok ? 'ok' : healthStatus === 'blocked' ? 'blocked' : 'bad';
+    const sourceName = h.homepage
+      ? `<a class="health-source" href="${esc(h.homepage)}" target="_blank" rel="noopener noreferrer">${esc(h.name)}</a>`
+      : esc(h.name);
+    return `
+      <div class="health-row" title="${esc(h.error || 'Feed fetched successfully')}">
+        <span class="health-dot ${dotClass}"></span>
+        <span>${sourceName}</span>
+        <span class="health-count">${esc(label)}</span>
+      </div>
+    `;
+  }).join('');
 }
 
 async function load() {
@@ -72,7 +80,9 @@ async function load() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     state.data = await res.json();
     const good = state.data.health.filter(h => h.ok).length;
-    status.textContent = `Updated ${new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date(state.data.generatedAt))} · ${good}/${state.data.health.length} feeds responding`;
+    const blocked = state.data.health.filter(h => h.status === 'blocked').length;
+    const blockedNote = blocked ? ` · ${blocked} blocked upstream` : '';
+    status.textContent = `Updated ${new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date(state.data.generatedAt))} · ${good}/${state.data.health.length} feeds responding${blockedNote}`;
     renderHealth();
     render();
   } catch (err) {
