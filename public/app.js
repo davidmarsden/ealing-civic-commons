@@ -54,6 +54,15 @@ function render() {
   `).join('');
 }
 
+function diagnosticLabel(diagnostic) {
+  const mode = diagnostic.mode === 'browser-compatible' ? 'Retry' : 'Initial request';
+  const elapsed = Number.isFinite(diagnostic.elapsedMs) ? ` · ${diagnostic.elapsedMs} ms` : '';
+  if (diagnostic.outcome === 'http-response') {
+    return `${mode}: HTTP ${diagnostic.httpStatus}${elapsed}`;
+  }
+  return `${mode}: ${diagnostic.error || 'transport error'}${elapsed}`;
+}
+
 function renderHealth() {
   const health = state.data?.health ?? [];
   healthList.innerHTML = health.map(h => {
@@ -64,11 +73,21 @@ function renderHealth() {
     const sourceName = h.homepage
       ? `<a class="health-source" href="${esc(h.homepage)}" target="_blank" rel="noopener noreferrer">${esc(h.name)}</a>`
       : esc(h.name);
+    const diagnostics = Array.isArray(h.diagnostics) && h.diagnostics.length
+      ? `<div class="health-diagnostics">
+          <strong>Fetch diagnostics</strong>
+          ${h.diagnostics.map(d => `<span>${esc(diagnosticLabel(d))}</span>`).join('')}
+          ${h.error ? `<span>Result: ${esc(h.error)}</span>` : ''}
+        </div>`
+      : '';
     return `
-      <div class="health-row" title="${esc(h.error || 'Feed fetched successfully')}">
-        <span class="health-dot ${dotClass}"></span>
-        <span>${sourceName}</span>
-        <span class="health-count">${esc(label)}</span>
+      <div class="health-entry">
+        <div class="health-row" title="${esc(h.error || 'Feed fetched successfully')}">
+          <span class="health-dot ${dotClass}"></span>
+          <span>${sourceName}</span>
+          <span class="health-count">${esc(label)}</span>
+        </div>
+        ${diagnostics}
       </div>
     `;
   }).join('');
