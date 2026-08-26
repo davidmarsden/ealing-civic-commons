@@ -201,9 +201,14 @@ function requestHeaders(source, browserLike = false) {
   return headers;
 }
 
+function errorMessage(error) {
+  return error?.name === 'AbortError' ? 'Timed out' : String(error?.message || error);
+}
+
 async function fetchAttempt(source, browserLike = false) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 7500);
+  const startedAt = Date.now();
   try {
     const response = await fetch(source.url, {
       signal: controller.signal,
@@ -211,34 +216,91 @@ async function fetchAttempt(source, browserLike = false) {
       headers: requestHeaders(source, browserLike)
     });
     const body = response.ok ? await response.text() : null;
-    return { response, body };
+    return { response, body, elapsedMs: Date.now() - startedAt };
+  } catch (error) {
+    error.fetchElapsedMs = Date.now() - startedAt;
+    throw error;
   } finally {
     clearTimeout(timeout);
   }
 }
 
-async function fetchSource(source) {
-  let responseReceived = false;
+async function recordedAttempt(source, browserLike, diagnostics) {
+  const mode = browserLike ? 'browser-compatible' : 'civic-reader';
   try {
-    let attempt = await fetchAttempt(source, false);
+    const attempt = await fetchAttempt(source, browserLike);
+    diagnostics.push({
+      mode,
+      outcome: 'http-response',
+      httpStatus: attempt.response.status,
+      elapsedMs: attempt.elapsedMs
+    });
+    return attempt;
+  } catch (error) {
+    diagnostics.push({
+      mode,
+      outcome: 'transport-error',
+      error: errorMessage(error),
+      elapsedMs: error.fetchElapsedMs ?? null
+    });
+    throw error;
+  }
+}
 
-    if (!attempt.response.ok && source.browserRetry && [401, 403, 406, 429].includes(attempt.response.status)) {
-      attempt = await fetchAttempt(source, true);
+async function fetchSource(source) {
+  const diagnostics = [];
+  let attempt;
+
+  try {
+    attempt = await recordedAttempt(source, false, diagnostics);
+  } catch (firstError) {
+    if (!source.browserRetry) {
+      return { source, ok: false, status: 'error', error: errorMessage(firstError), items: [], diagnostics };
     }
 
-    const res = attempt.response;
-    responseReceived = true;
-    if (!res.ok) {
-      const blocked = source.browserRetry && [401, 403, 406, 429].includes(res.status);
+    try {
+      attempt = await recordedAttempt(source, true, diagnostics);
+    } catch (retryError) {
       return {
         source,
         ok: false,
-        status: blocked ? 'blocked' : 'error',
-        error: blocked ? `Upstream blocked automated fetch (HTTP ${res.status})` : `HTTP ${res.status}`,
-        items: []
+        status: 'upstream',
+        error: `Official source unavailable to automated fetch after retry (${errorMessage(retryError)})`,
+        items: [],
+        diagnostics
       };
     }
+  }
 
+  if (!attempt.response.ok && source.browserRetry && [401, 403, 406, 429].includes(attempt.response.status) && diagnostics.length === 1) {
+    try {
+      attempt = await recordedAttempt(source, true, diagnostics);
+    } catch (retryError) {
+      return {
+        source,
+        ok: false,
+        status: 'upstream',
+        error: `Official source retry failed before a response (${errorMessage(retryError)})`,
+        items: [],
+        diagnostics
+      };
+    }
+  }
+
+  const res = attempt.response;
+  if (!res.ok) {
+    const blocked = source.browserRetry && [401, 403, 406, 429].includes(res.status);
+    return {
+      source,
+      ok: false,
+      status: blocked ? 'blocked' : 'error',
+      error: blocked ? `Upstream blocked automated fetch (HTTP ${res.status})` : `HTTP ${res.status}`,
+      items: [],
+      diagnostics
+    };
+  }
+
+  try {
     const parsed = parser.parse(attempt.body);
     const rssChannel = parsed?.rss?.channel;
     const atomFeed = parsed?.feed;
@@ -248,16 +310,21 @@ async function fetchSource(source) {
     }
 
     const rawItems = rssChannel ? arr(rssChannel.item) : arr(atomFeed.entry);
-    return { source, ok: true, status: 'ok', items: rawItems.slice(0, 15).map(item => normaliseItem(source, item)) };
+    return {
+      source,
+      ok: true,
+      status: 'ok',
+      items: rawItems.slice(0, 15).map(item => normaliseItem(source, item)),
+      diagnostics
+    };
   } catch (error) {
-    const message = error.name === 'AbortError' ? 'Timed out' : String(error.message || error);
-    const upstreamFailure = Boolean(source.browserRetry && !responseReceived);
     return {
       source,
       ok: false,
-      status: upstreamFailure ? 'upstream' : 'error',
-      error: upstreamFailure ? `Official source unavailable to automated fetch (${message})` : message,
-      items: []
+      status: 'error',
+      error: errorMessage(error),
+      items: [],
+      diagnostics
     };
   }
 }
@@ -276,7 +343,8 @@ export default async () => {
     ok: r.ok,
     status: r.status || (r.ok ? 'ok' : 'error'),
     error: r.error || null,
-    itemCount: r.items.length
+    itemCount: r.items.length,
+    diagnostics: r.source.browserRetry ? r.diagnostics : undefined
   }));
   return new Response(JSON.stringify({ generatedAt: new Date().toISOString(), items, health }), {
     headers: {
