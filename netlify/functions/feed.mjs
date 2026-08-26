@@ -104,6 +104,12 @@ function topicGuess(title, defaults) {
   return [...new Set([...hits, ...defaults])].slice(0, 3);
 }
 
+function normaliseDate(value) {
+  if (!value) return null;
+  const timestamp = Date.parse(String(value));
+  return Number.isNaN(timestamp) ? null : new Date(timestamp).toISOString();
+}
+
 function normaliseItem(source, item) {
   const title = strip(item.title?.['#text'] ?? item.title ?? 'Untitled');
   const linkRaw = item.link;
@@ -121,7 +127,7 @@ function normaliseItem(source, item) {
     title,
     url: link || source.homepage,
     summary: description.slice(0, 420),
-    publishedAt: published ? new Date(published).toISOString() : null,
+    publishedAt: normaliseDate(published),
     towns: source.towns,
     topics: topicGuess(title, source.defaultTopics)
   };
@@ -136,9 +142,17 @@ async function fetchSource(source) {
       headers: { 'user-agent': 'Southall-Ealing-Civic-Commons/0.1 (+public-interest prototype)' }
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
     const xml = await res.text();
     const parsed = parser.parse(xml);
-    const rawItems = arr(parsed?.rss?.channel?.item ?? parsed?.feed?.entry);
+    const rssChannel = parsed?.rss?.channel;
+    const atomFeed = parsed?.feed;
+
+    if (!rssChannel && !atomFeed) {
+      throw new Error('Unrecognized RSS/Atom feed structure');
+    }
+
+    const rawItems = rssChannel ? arr(rssChannel.item) : arr(atomFeed.entry);
     return { source, ok: true, items: rawItems.slice(0, 15).map(item => normaliseItem(source, item)) };
   } catch (error) {
     return { source, ok: false, error: error.name === 'AbortError' ? 'Timed out' : String(error.message || error), items: [] };
