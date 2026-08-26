@@ -218,6 +218,7 @@ async function fetchAttempt(source, browserLike = false) {
 }
 
 async function fetchSource(source) {
+  let responseReceived = false;
   try {
     let attempt = await fetchAttempt(source, false);
 
@@ -226,6 +227,7 @@ async function fetchSource(source) {
     }
 
     const res = attempt.response;
+    responseReceived = true;
     if (!res.ok) {
       const blocked = source.browserRetry && [401, 403, 406, 429].includes(res.status);
       return {
@@ -249,7 +251,7 @@ async function fetchSource(source) {
     return { source, ok: true, status: 'ok', items: rawItems.slice(0, 15).map(item => normaliseItem(source, item)) };
   } catch (error) {
     const message = error.name === 'AbortError' ? 'Timed out' : String(error.message || error);
-    const upstreamFailure = Boolean(source.browserRetry);
+    const upstreamFailure = Boolean(source.browserRetry && !responseReceived);
     return {
       source,
       ok: false,
