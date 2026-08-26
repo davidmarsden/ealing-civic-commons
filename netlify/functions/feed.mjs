@@ -233,6 +233,7 @@ function normaliseItem(source, item) {
   const title = extracted && !/^ealing\b/i.test(originalTitle) ? `Ealing — ${originalTitle}` : originalTitle;
   const summaryPrefix = extracted ? 'Commons extract from OCN’s public roundup: ' : '';
   const published = item.pubDate ?? item.published ?? item.updated ?? item.date ?? null;
+  const summary = `${summaryPrefix}${description}`;
   return {
     id: `${source.id}:${item.guid?.['#text'] ?? item.guid ?? item.id ?? link ?? originalTitle}`,
     sourceId: source.id,
@@ -241,7 +242,7 @@ function normaliseItem(source, item) {
     sourceHomepage: source.homepage,
     title,
     url: link || source.homepage,
-    summary: `${summaryPrefix}${description}`.slice(0, 420),
+    summary: extracted ? summary : summary.slice(0, 420),
     publishedAt: normaliseDate(published),
     towns: source.towns,
     topics: topicGuess(`${title} ${description}`, source.defaultTopics),
