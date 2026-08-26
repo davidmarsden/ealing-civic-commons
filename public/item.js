@@ -27,6 +27,10 @@ function routeKey() {
   return parts[0] === 'items' ? parts.slice(1).join('/') : '';
 }
 
+function findItem(data, key) {
+  return (data?.items || []).find(candidate => itemKey(candidate.id) === key);
+}
+
 function fillContributionFields(item, key) {
   const thread = `civic-item:${key}`;
   $('#threadId').textContent = thread;
@@ -88,15 +92,21 @@ async function load() {
     const response = await fetch('/.netlify/functions/feed', { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
-    const item = (data.items || []).find(candidate => itemKey(candidate.id) === key);
+    const item = findItem(data, key);
     if (!item) {
       renderMissing(key);
       return;
     }
     renderItem(item, key);
   } catch (error) {
+    const demoItem = findItem(window.CIVIC_COMMONS_DEMO, key);
+    if (demoItem) {
+      renderItem(demoItem, key);
+      return;
+    }
+
     const status = $('#itemStatus');
-    status.innerHTML = `<h1>Item temporarily unavailable.</h1><p>The live civic feed could not be loaded. The original item permalink has not changed.</p><p><a href="/">Return to the timeline →</a></p>`;
+    status.innerHTML = `<h1>Item temporarily unavailable.</h1><p>The live civic feed could not be loaded and this permalink is not present in the bundled prototype dataset.</p><p><a href="/">Return to the timeline →</a></p>`;
     console.error('Item load failed', error);
   }
 }
