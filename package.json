@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "netlify dev",
-    "build": "mkdir -p dist/documents/content && cp -R public/. dist/ && cp docs/*.md dist/documents/content/"
+    "validate:contributions": "node scripts/validate-contributions.mjs",
+    "build": "npm run validate:contributions && mkdir -p dist/documents/content && cp -R public/. dist/ && cp docs/*.md dist/documents/content/"
   },
   "dependencies": {
     "fast-xml-parser": "^5.2.5"
