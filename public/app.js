@@ -66,6 +66,38 @@ async function copyText(value) {
   input.remove();
 }
 
+async function submitEmailAlerts(form, follows) {
+  const submit = form.querySelector('button[type="submit"]');
+  const result = form.querySelector('[data-email-result]');
+  submit.disabled = true;
+  submit.textContent = 'Sending confirmation…';
+  result.textContent = '';
+  result.className = 'email-alert-result';
+
+  try {
+    const response = await fetch('/.netlify/functions/email-subscribe', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        email: form.elements.email.value,
+        website: form.elements.website.value,
+        follows
+      })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+    result.textContent = data.message || 'Check your inbox to confirm your alerts.';
+    result.classList.add('success');
+    form.elements.email.value = '';
+  } catch (error) {
+    result.textContent = error.message || 'Could not start email alerts. Please try again.';
+    result.classList.add('error');
+  } finally {
+    submit.disabled = false;
+    submit.textContent = 'Email me updates';
+  }
+}
+
 function renderPersonalFeedTools(follows, total) {
   const tools = ensurePersonalFeedTools();
   if (!total) {
@@ -77,12 +109,24 @@ function renderPersonalFeedTools(follows, total) {
   const feedUrl = personalFeedUrl(follows);
   tools.hidden = false;
   tools.innerHTML = `
-    <div class="personal-feed-heading"><strong>Your personal RSS</strong><span>Portable, chronological, no account.</span></div>
-    <div class="personal-feed-actions">
-      <button id="copyPersonalFeedButton" type="button">Copy RSS feed URL</button>
-      <a href="${esc(feedUrl)}" target="_blank" rel="noopener">Open RSS feed ↗</a>
-    </div>
-    <small>The feed URL contains the civic things you follow. Anyone with the URL can see those follow choices; it contains no email address or account identifier.</small>
+    <section class="personal-output-block" aria-labelledby="personalRssHeading">
+      <div class="personal-feed-heading"><strong id="personalRssHeading"><span class="rss-mini" aria-hidden="true">◔</span> Your personal RSS</strong><span>Portable, chronological, no account. <a href="/rss.html">What is RSS?</a></span></div>
+      <div class="personal-feed-actions">
+        <button id="copyPersonalFeedButton" type="button">Copy RSS feed URL</button>
+        <a href="${esc(feedUrl)}" target="_blank" rel="noopener">Open RSS feed ↗</a>
+      </div>
+      <small>The feed URL contains the civic things you follow. Anyone with the URL can see those follow choices; it contains no email address or account identifier.</small>
+    </section>
+    <section class="personal-output-block email-alert-block" aria-labelledby="emailAlertsHeading">
+      <div class="personal-feed-heading"><strong id="emailAlertsHeading">Email alerts</strong><span>Future matching updates, checked every 15 minutes.</span></div>
+      <form id="emailAlertForm" class="email-alert-form">
+        <label for="emailAlertAddress">Email address</label>
+        <div class="email-alert-row"><input id="emailAlertAddress" name="email" type="email" autocomplete="email" required placeholder="you@example.org"><button type="submit">Email me updates</button></div>
+        <label class="email-honeypot" aria-hidden="true">Website <input name="website" type="text" tabindex="-1" autocomplete="off"></label>
+        <div class="email-alert-result" data-email-result aria-live="polite"></div>
+      </form>
+      <small>Double opt-in. No account. No open or click tracking. Every alert includes a one-click unsubscribe link. Your email address is stored only to deliver these alerts.</small>
+    </section>
   `;
 
   $('#copyPersonalFeedButton').addEventListener('click', async event => {
@@ -95,6 +139,10 @@ function renderPersonalFeedTools(follows, total) {
     } catch {
       button.textContent = 'Copy failed — open feed instead';
     }
+  });
+  $('#emailAlertForm').addEventListener('submit', event => {
+    event.preventDefault();
+    submitEmailAlerts(event.currentTarget, follows);
   });
 }
 
