@@ -92,3 +92,12 @@ export default async request => {
 
   return json({ ok: true, message: 'Check your inbox to confirm your alerts.' });
 };
+
+export const config = {
+  rateLimit: {
+    action: 'rate_limit',
+    aggregateBy: 'ip',
+    windowSize: 60,
+    windowLimit: 5
+  }
+};
