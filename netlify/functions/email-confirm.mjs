@@ -1,4 +1,4 @@
-import { confirmationKey, store, subscriptionKey, tokenHash } from './email-alerts-lib.mjs';
+import { confirmationKey, store, subscriptionKey, tokenHash } from '../lib/email-alerts.mjs';
 
 const CONFIRMATION_TTL_MS = 48 * 60 * 60 * 1000;
 
