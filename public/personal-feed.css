@@ -1,0 +1,9 @@
+.personal-feed-tools { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+.personal-feed-tools[hidden] { display: none; }
+.personal-feed-heading { display: grid; gap: 2px; }
+.personal-feed-heading strong { font-family: Georgia, serif; font-size: 1.05rem; }
+.personal-feed-heading span, .personal-feed-tools small { color: var(--muted); font-size: .76rem; line-height: 1.4; }
+.personal-feed-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.personal-feed-actions button, .personal-feed-actions a { display: inline-block; border-radius: 8px; padding: 8px 10px; font-size: .78rem; font-weight: 800; text-decoration: none; }
+.personal-feed-actions button { background: var(--green); color: #fff; }
+.personal-feed-actions a { border: 1px solid var(--line); background: var(--card); color: var(--green); }
