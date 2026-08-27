@@ -76,6 +76,18 @@ function digestHtml(entries, unsubscribeUrl) {
   return `<div style="font-family:system-ui,-apple-system,sans-serif;color:#18221d;line-height:1.5;max-width:680px"><h1 style="font-family:Georgia,serif">Civic Commons updates</h1><p>New chronological civic information matching your follows.</p>${cards}<hr style="border:0;border-top:1px solid #d9d8cf"><p style="font-size:13px;color:#68726c">No engagement ranking. No open or click tracking. <a href="${htmlEscape(unsubscribeUrl)}">Unsubscribe from these alerts</a>.</p></div>`;
 }
 
+async function activeSubscription(blobs, key) {
+  const current = await blobs.get(key, { type: 'json', consistency: 'strong' });
+  return current?.status === 'active' && current.email && current.unsubscribeToken ? current : null;
+}
+
+async function persistCursorIfActive(blobs, key, patch) {
+  const current = await activeSubscription(blobs, key);
+  if (!current) return false;
+  await blobs.setJSON(key, { ...current, ...patch });
+  return true;
+}
+
 async function processSubscription(blobs, key, subscription, origin) {
   if (subscription?.status !== 'active' || !subscription.email || !subscription.unsubscribeToken) return { skipped: true };
 
@@ -87,22 +99,28 @@ async function processSubscription(blobs, key, subscription, origin) {
     return { failed: true };
   }
 
+  const current = await activeSubscription(blobs, key);
+  if (!current) return { skipped: true };
+
   const now = new Date().toISOString();
-  const firstDelivery = !subscription.lastSentAt;
-  const candidates = newEntriesFor(subscription, items).slice(0, MAX_ENTRIES_PER_EMAIL);
+  const firstDelivery = !current.lastSentAt;
+  const candidates = newEntriesFor(current, items).slice(0, MAX_ENTRIES_PER_EMAIL);
   const currentGuids = items.map(item => item.guid);
 
   if (!candidates.length) {
     const seededSeen = firstDelivery
       ? currentGuids.slice(0, MAX_SEEN_GUIDS)
-      : subscription.seenGuids || [];
-    await blobs.setJSON(key, { ...subscription, lastCheckedAt: now, seenGuids: seededSeen });
+      : current.seenGuids || [];
+    await persistCursorIfActive(blobs, key, { lastCheckedAt: now, seenGuids: seededSeen });
     return { sent: 0 };
   }
 
-  const unsubscribeUrl = `${origin}/.netlify/functions/email-unsubscribe?token=${encodeURIComponent(subscription.unsubscribeToken)}`;
+  const beforeSend = await activeSubscription(blobs, key);
+  if (!beforeSend) return { skipped: true };
+
+  const unsubscribeUrl = `${origin}/.netlify/functions/email-unsubscribe?token=${encodeURIComponent(beforeSend.unsubscribeToken)}`;
   await sendMail({
-    to: subscription.email,
+    to: beforeSend.email,
     subject: candidates.length === 1 ? `Civic Commons: ${candidates[0].title}` : `Civic Commons: ${candidates.length} new updates`,
     text: digestText(candidates, unsubscribeUrl),
     html: digestHtml(candidates, unsubscribeUrl)
@@ -110,8 +128,8 @@ async function processSubscription(blobs, key, subscription, origin) {
 
   const seen = firstDelivery
     ? currentGuids.slice(0, MAX_SEEN_GUIDS)
-    : [...new Set([...(subscription.seenGuids || []), ...candidates.map(item => item.guid)])].slice(-MAX_SEEN_GUIDS);
-  await blobs.setJSON(key, { ...subscription, lastCheckedAt: now, lastSentAt: now, seenGuids: seen });
+    : [...new Set([...(beforeSend.seenGuids || []), ...candidates.map(item => item.guid)])].slice(-MAX_SEEN_GUIDS);
+  await persistCursorIfActive(blobs, key, { lastCheckedAt: now, lastSentAt: now, seenGuids: seen });
   return { sent: candidates.length };
 }
 
