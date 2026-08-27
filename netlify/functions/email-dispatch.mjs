@@ -5,8 +5,7 @@ import {
   personalFeedUrl,
   publicOrigin,
   sendMail,
-  store,
-  subscriptionKey
+  store
 } from './email-alerts-lib.mjs';
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', textNodeName: '#text' });
@@ -19,6 +18,12 @@ function plain(value = '') {
   return String(value).replace(/\s+/g, ' ').trim();
 }
 
+function normaliseDate(value) {
+  if (!value) return null;
+  const timestamp = Date.parse(String(value));
+  return Number.isNaN(timestamp) ? null : new Date(timestamp).toISOString();
+}
+
 function parseFeed(xml) {
   const parsed = parser.parse(xml);
   const items = arr(parsed?.rss?.channel?.item);
@@ -27,7 +32,7 @@ function parseFeed(xml) {
     title: plain(textValue(item.title) || 'Civic Commons update'),
     link: plain(textValue(item.link)),
     description: plain(textValue(item.description)),
-    publishedAt: item.pubDate ? new Date(textValue(item.pubDate)).toISOString() : null
+    publishedAt: normaliseDate(textValue(item.pubDate))
   })).filter(item => item.guid && item.link);
 }
 
@@ -83,13 +88,14 @@ async function processSubscription(blobs, key, subscription, origin) {
   }
 
   const now = new Date().toISOString();
+  const firstDelivery = !subscription.lastSentAt;
   const candidates = newEntriesFor(subscription, items).slice(0, MAX_ENTRIES_PER_EMAIL);
   const currentGuids = items.map(item => item.guid);
 
   if (!candidates.length) {
-    const seededSeen = subscription.lastSentAt
-      ? subscription.seenGuids || []
-      : currentGuids.slice(0, MAX_SEEN_GUIDS);
+    const seededSeen = firstDelivery
+      ? currentGuids.slice(0, MAX_SEEN_GUIDS)
+      : subscription.seenGuids || [];
     await blobs.setJSON(key, { ...subscription, lastCheckedAt: now, seenGuids: seededSeen });
     return { sent: 0 };
   }
@@ -102,7 +108,9 @@ async function processSubscription(blobs, key, subscription, origin) {
     html: digestHtml(candidates, unsubscribeUrl)
   });
 
-  const seen = [...new Set([...(subscription.seenGuids || []), ...candidates.map(item => item.guid)])].slice(-MAX_SEEN_GUIDS);
+  const seen = firstDelivery
+    ? currentGuids.slice(0, MAX_SEEN_GUIDS)
+    : [...new Set([...(subscription.seenGuids || []), ...candidates.map(item => item.guid)])].slice(-MAX_SEEN_GUIDS);
   await blobs.setJSON(key, { ...subscription, lastCheckedAt: now, lastSentAt: now, seenGuids: seen });
   return { sent: candidates.length };
 }
