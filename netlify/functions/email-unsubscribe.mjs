@@ -1,4 +1,4 @@
-import { store, subscriptionKey, tokenHash, unsubscribeKey } from './email-alerts-lib.mjs';
+import { store, subscriptionKey, tokenHash, unsubscribeKey } from '../lib/email-alerts.mjs';
 
 function page(title, body) {
   return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} — Civic Commons</title><style>body{margin:0;background:#f6f4ee;color:#18221d;font-family:system-ui,sans-serif;line-height:1.55}.card{width:min(680px,calc(100% - 32px));margin:10vh auto;background:#fffdf8;border:1px solid #d9d8cf;border-radius:14px;padding:28px}h1{font-family:Georgia,serif;font-size:2.4rem;line-height:1;margin-top:0}a{color:#1f5b42;font-weight:700}</style></head><body><main class="card"><h1>${title}</h1>${body}<p><a href="/">Return to Civic Commons →</a></p></main></body></html>`, {
