@@ -1,0 +1,25 @@
+.personal-output-block { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 18px; }
+.personal-output-block + .personal-output-block { margin-top: 22px; }
+.personal-feed-heading { display: grid; gap: 2px; }
+.personal-feed-heading strong { font-family: Georgia, serif; font-size: 1.18rem; }
+.personal-feed-heading span { color: var(--muted); font-size: .82rem; }
+.personal-feed-heading a { color: var(--green); font-weight: 750; }
+.personal-feed-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.personal-feed-actions button, .personal-feed-actions a { border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; font-size: .82rem; font-weight: 800; text-decoration: none; color: var(--green); background: var(--card); }
+.personal-feed-actions button { background: var(--green); color: #fff; border-color: var(--green); }
+.personal-output-block small { display: block; color: var(--muted); font-size: .75rem; margin-top: 12px; line-height: 1.45; }
+.rss-mini { color: var(--amber); font-family: sans-serif; }
+.email-alert-form { display: grid; gap: 7px; margin-top: 12px; }
+.email-alert-form > label:first-child { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 800; }
+.email-alert-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
+.email-alert-row input { min-width: 0; padding: 10px 11px; }
+.email-alert-row button { background: var(--green); color: #fff; border-radius: 8px; padding: 10px 12px; white-space: nowrap; }
+.email-alert-row button:disabled { opacity: .6; cursor: wait; }
+.email-honeypot { position: absolute !important; left: -10000px !important; width: 1px !important; height: 1px !important; overflow: hidden !important; }
+.email-alert-result { min-height: 1.3em; font-size: .78rem; }
+.email-alert-result.success { color: var(--green-dark); font-weight: 750; }
+.email-alert-result.error { color: #963f38; font-weight: 750; }
+@media (max-width: 560px) {
+  .email-alert-row { grid-template-columns: 1fr; }
+  .email-alert-row button { justify-self: start; }
+}

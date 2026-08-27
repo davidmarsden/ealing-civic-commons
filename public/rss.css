@@ -1,0 +1,33 @@
+.rss-guide { padding-bottom: 80px; }
+.rss-guide-hero { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 32px; align-items: center; padding: 72px 0 52px; border-bottom: 1px solid var(--line); }
+.rss-guide-hero h1 { font-size: clamp(3.5rem, 8vw, 6.2rem); }
+.rss-mark { width: 92px; height: 92px; border-radius: 22px; background: var(--amber); display: grid; place-items: center; }
+.rss-mark svg { width: 54px; height: 54px; fill: none; stroke: #fff; stroke-width: 2.5; stroke-linecap: round; }
+.rss-mark circle { fill: #fff; stroke: none; }
+.rss-guide-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 70px; padding: 68px 0; }
+.rss-guide h2 { font-family: Georgia, serif; font-size: clamp(2rem, 4vw, 3.1rem); line-height: 1.05; margin: 0 0 18px; letter-spacing: -.025em; }
+.rss-guide-grid article p, .rss-readers p, .rss-privacy p { color: #505a54; font-size: 1.02rem; max-width: 760px; }
+.rss-callout { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 24px; box-shadow: var(--shadow); display: grid; gap: 9px; align-content: start; }
+.rss-callout strong { font-family: Georgia, serif; font-size: 1.35rem; margin-bottom: 6px; }
+.rss-callout span { color: #505a54; }
+.rss-steps { padding: 62px 0; border-top: 1px solid var(--line); }
+.rss-steps ol { list-style: none; padding: 0; margin: 34px 0 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; counter-reset: rss-step; }
+.rss-steps li { counter-increment: rss-step; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; display: grid; gap: 7px; }
+.rss-steps li::before { content: counter(rss-step); width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--green); color: #fff; font-weight: 850; margin-bottom: 8px; }
+.rss-steps li strong { font-family: Georgia, serif; font-size: 1.2rem; }
+.rss-steps li span { color: var(--muted); }
+.rss-readers { display: grid; grid-template-columns: .75fr 1.25fr; gap: 70px; padding: 68px 0; border-top: 1px solid var(--line); }
+.reader-list { display: grid; border-top: 2px solid var(--ink); }
+.reader-list a { display: grid; gap: 3px; padding: 17px 2px; border-bottom: 1px solid var(--line); text-decoration: none; }
+.reader-list a:hover strong, .reader-list a:focus strong { color: var(--green); text-decoration: underline; text-underline-offset: 3px; }
+.reader-list strong { font-family: Georgia, serif; font-size: 1.18rem; }
+.reader-list span { color: var(--muted); font-size: .92rem; }
+.rss-privacy { padding: 58px 0 0; border-top: 1px solid var(--line); }
+.rss-privacy a { color: var(--green); font-weight: 800; }
+@media (max-width: 760px) {
+  .rss-guide-hero, .rss-guide-grid, .rss-readers { grid-template-columns: 1fr; gap: 26px; }
+  .rss-guide-hero { padding-top: 46px; }
+  .rss-mark { width: 72px; height: 72px; }
+  .rss-mark svg { width: 42px; height: 42px; }
+  .rss-steps ol { grid-template-columns: 1fr; }
+}
