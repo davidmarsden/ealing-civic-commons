@@ -12,7 +12,7 @@ const healthList = $('#healthList');
 
 const pillClass = type => type === 'Official record' ? 'official' : type === 'Journalism / publishing' ? 'journalism' : type === 'Independent civic data / analysis' ? 'analysis' : 'organisation';
 const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date(iso); return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' }).format(d); };
-const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt',"'":'&#39;','"':'&quot;'}[c]));
+const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const itemPath = item => `/items/${stableItemKey(item.id)}`;
 const threadId = item => `civic-item:${stableItemKey(item.id)}`;
 
@@ -26,6 +26,76 @@ function contributionLabel(stats) {
   if (stats.corrections === stats.total) return `${stats.corrections} correction${stats.corrections === 1 ? '' : 's'}`;
   if (stats.corrections) return `${stats.corrections} correction${stats.corrections === 1 ? '' : 's'} · ${stats.total} additions`;
   return `${stats.total} addition${stats.total === 1 ? '' : 's'}`;
+}
+
+function personalFeedUrl(follows = loadFollows()) {
+  const url = new URL('/.netlify/functions/personal-feed', location.origin);
+  const mapping = [
+    ['item', follows.items],
+    ['source', follows.sources],
+    ['town', follows.towns],
+    ['topic', follows.topics]
+  ];
+  mapping.forEach(([param, entries]) => (entries || []).forEach(entry => url.searchParams.append(param, entry.id)));
+  return url.href;
+}
+
+function ensurePersonalFeedTools() {
+  let tools = $('#personalFeedTools');
+  if (tools) return tools;
+  tools = document.createElement('div');
+  tools.id = 'personalFeedTools';
+  tools.className = 'personal-feed-tools';
+  $('#followSummary').insertAdjacentElement('afterend', tools);
+  return tools;
+}
+
+async function copyText(value) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+  const input = document.createElement('textarea');
+  input.value = value;
+  input.setAttribute('readonly', '');
+  input.style.position = 'fixed';
+  input.style.opacity = '0';
+  document.body.appendChild(input);
+  input.select();
+  document.execCommand('copy');
+  input.remove();
+}
+
+function renderPersonalFeedTools(follows, total) {
+  const tools = ensurePersonalFeedTools();
+  if (!total) {
+    tools.innerHTML = '';
+    tools.hidden = true;
+    return;
+  }
+
+  const feedUrl = personalFeedUrl(follows);
+  tools.hidden = false;
+  tools.innerHTML = `
+    <div class="personal-feed-heading"><strong>Your personal RSS</strong><span>Portable, chronological, no account.</span></div>
+    <div class="personal-feed-actions">
+      <button id="copyPersonalFeedButton" type="button">Copy RSS feed URL</button>
+      <a href="${esc(feedUrl)}" target="_blank" rel="noopener">Open RSS feed ↗</a>
+    </div>
+    <small>The feed URL contains the civic things you follow. Anyone with the URL can see those follow choices; it contains no email address or account identifier.</small>
+  `;
+
+  $('#copyPersonalFeedButton').addEventListener('click', async event => {
+    const button = event.currentTarget;
+    try {
+      await copyText(feedUrl);
+      const original = button.textContent;
+      button.textContent = '✓ RSS URL copied';
+      setTimeout(() => { button.textContent = original; }, 1800);
+    } catch {
+      button.textContent = 'Copy failed — open feed instead';
+    }
+  });
 }
 
 function filteredItems() {
@@ -48,10 +118,12 @@ function renderFollowSummary() {
   const summary = $('#followSummary');
   if (!total) {
     summary.innerHTML = '<div class="follow-empty">Nothing followed yet. Open any item and follow the story, source, place or topic.</div>';
+    renderPersonalFeedTools(follows, total);
     return;
   }
   const labels = { items: 'Stories', sources: 'Sources', towns: 'Places', topics: 'Topics' };
   summary.innerHTML = Object.entries(labels).filter(([type]) => follows[type].length).map(([type, label]) => `<div class="follow-summary-group"><strong>${label}</strong>${follows[type].map(entry => `<span>${esc(entry.label)}</span>`).join('')}</div>`).join('');
+  renderPersonalFeedTools(follows, total);
 }
 
 function renderViewControls() {
