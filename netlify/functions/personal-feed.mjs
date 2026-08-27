@@ -1,6 +1,7 @@
 import feedHandler from './feed.mjs';
 
 const MAX_TARGETS_PER_TYPE = 50;
+const MAX_TARGET_LENGTH = 512;
 const allowedParams = new Set(['item', 'source', 'town', 'topic']);
 
 function xml(value = '') {
@@ -16,6 +17,12 @@ function stableItemKey(id) {
   return Buffer.from(String(id ?? ''), 'utf8').toString('base64url');
 }
 
+function validTarget(param, value) {
+  if (!value || value.length > MAX_TARGET_LENGTH) return false;
+  if (param === 'item') return /^[A-Za-z0-9_-]+$/.test(value);
+  return !/[\u0000-\u001F\u007F]/.test(value);
+}
+
 function readTargets(url) {
   const targets = { items: [], sources: [], towns: [], topics: [] };
   const mapping = { item: 'items', source: 'sources', town: 'towns', topic: 'topics' };
@@ -23,7 +30,7 @@ function readTargets(url) {
   for (const [key, value] of url.searchParams.entries()) {
     if (!allowedParams.has(key)) continue;
     const target = String(value ?? '').trim();
-    if (!target) continue;
+    if (!validTarget(key, target)) continue;
     const type = mapping[key];
     if (!targets[type].includes(target) && targets[type].length < MAX_TARGETS_PER_TYPE) {
       targets[type].push(target);
@@ -62,6 +69,7 @@ function itemXml(item, siteOrigin) {
   const key = stableItemKey(item.id);
   const commonsUrl = `${siteOrigin}/items/${encodeURIComponent(key)}`;
   const originalUrl = item.url || item.sourceHomepage || siteOrigin;
+  const sourceUrl = item.sourceHomepage || originalUrl;
   const description = [
     item.summary || '',
     `Source: ${item.source}`,
@@ -69,7 +77,7 @@ function itemXml(item, siteOrigin) {
   ].filter(Boolean).join('\n\n');
   const published = item.publishedAt ? new Date(item.publishedAt).toUTCString() : null;
 
-  return `    <item>\n      <title>${xml(item.title)}</title>\n      <link>${xml(commonsUrl)}</link>\n      <guid isPermaLink="false">${xml(`civic-item:${key}`)}</guid>${published ? `\n      <pubDate>${xml(published)}</pubDate>` : ''}\n      <description>${xml(description)}</description>\n      <source url="${xml(originalUrl)}">${xml(item.source)}</source>\n    </item>`;
+  return `    <item>\n      <title>${xml(item.title)}</title>\n      <link>${xml(commonsUrl)}</link>\n      <guid isPermaLink="false">${xml(`civic-item:${key}`)}</guid>${published ? `\n      <pubDate>${xml(published)}</pubDate>` : ''}\n      <description>${xml(description)}</description>\n      <source url="${xml(sourceUrl)}">${xml(item.source)}</source>\n    </item>`;
 }
 
 export default async request => {
@@ -77,13 +85,23 @@ export default async request => {
   const targets = readTargets(requestUrl);
 
   if (!targetCount(targets)) {
-    return new Response('Personal Civic Commons RSS requires at least one item, source, town or topic follow.', {
+    return new Response('Personal Civic Commons RSS requires at least one valid item, source, town or topic follow.', {
       status: 400,
       headers: { 'content-type': 'text/plain; charset=utf-8' }
     });
   }
 
-  const upstream = await feedHandler();
+  let upstream;
+  try {
+    upstream = await feedHandler();
+  } catch (error) {
+    console.error('Personal RSS upstream feed failed', error);
+    return new Response('Civic Commons feed is temporarily unavailable.', {
+      status: 503,
+      headers: { 'content-type': 'text/plain; charset=utf-8' }
+    });
+  }
+
   if (!upstream.ok) {
     return new Response('Civic Commons feed is temporarily unavailable.', {
       status: 503,
