@@ -14,7 +14,7 @@ import {
   subscriptionKey,
   tokenHash,
   unsubscribeKey
-} from './email-alerts-lib.mjs';
+} from '../lib/email-alerts.mjs';
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status,
