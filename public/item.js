@@ -13,7 +13,8 @@ function safeHttpUrl(value) { if (!value) return null; try { const url = new URL
 
 function followButton(type, id, label, text) {
   const active = isFollowing(type, id);
-  return `<button class="follow-button${active ? ' active' : ''}" type="button" data-follow-type="${esc(type)}" data-follow-id="${esc(id)}" data-follow-label="${esc(label)}" aria-pressed="${active}">${active ? '✓ Following' : `+ Follow ${esc(text)}`}</button>`;
+  const activeText = type === 'items' ? '✓ Following this story' : `✓ Following: ${esc(label)}`;
+  return `<button class="follow-button${active ? ' active' : ''}" type="button" data-follow-type="${esc(type)}" data-follow-id="${esc(id)}" data-follow-label="${esc(label)}" aria-pressed="${active}">${active ? activeText : `+ Follow ${esc(text)}`}</button>`;
 }
 
 function renderFollowControls(item, key) {
