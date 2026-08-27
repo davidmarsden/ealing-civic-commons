@@ -26,18 +26,22 @@ function validTarget(param, value) {
 function readTargets(url) {
   const targets = { items: [], sources: [], towns: [], topics: [] };
   const mapping = { item: 'items', source: 'sources', town: 'towns', topic: 'topics' };
+  const overflow = new Set();
 
   for (const [key, value] of url.searchParams.entries()) {
     if (!allowedParams.has(key)) continue;
     const target = String(value ?? '').trim();
     if (!validTarget(key, target)) continue;
     const type = mapping[key];
-    if (!targets[type].includes(target) && targets[type].length < MAX_TARGETS_PER_TYPE) {
-      targets[type].push(target);
+    if (targets[type].includes(target)) continue;
+    if (targets[type].length >= MAX_TARGETS_PER_TYPE) {
+      overflow.add(key);
+      continue;
     }
+    targets[type].push(target);
   }
 
-  return targets;
+  return { targets, overflow: [...overflow] };
 }
 
 function targetCount(targets) {
@@ -115,7 +119,14 @@ async function loadPublishedContributions(requestUrl) {
 
 export default async request => {
   const requestUrl = new URL(request.url);
-  const targets = readTargets(requestUrl);
+  const { targets, overflow } = readTargets(requestUrl);
+
+  if (overflow.length) {
+    return new Response(`Personal Civic Commons RSS supports at most ${MAX_TARGETS_PER_TYPE} unique follows per type. Too many: ${overflow.join(', ')}.`, {
+      status: 400,
+      headers: { 'content-type': 'text/plain; charset=utf-8' }
+    });
+  }
 
   if (!targetCount(targets)) {
     return new Response('Personal Civic Commons RSS requires at least one valid item, source, town or topic follow.', {
