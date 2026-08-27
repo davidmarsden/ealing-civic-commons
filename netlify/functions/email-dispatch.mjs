@@ -6,7 +6,7 @@ import {
   publicOrigin,
   sendMail,
   store
-} from './email-alerts-lib.mjs';
+} from '../lib/email-alerts.mjs';
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', textNodeName: '#text' });
 const arr = value => value == null ? [] : Array.isArray(value) ? value : [value];
