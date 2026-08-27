@@ -8,9 +8,11 @@ Email is a delivery option over the same stable follow model used by the browser
 2. The Following panel offers account-free email alerts for that current follow set.
 3. The visitor enters an email address.
 4. Civic Commons sends a confirmation link. Confirmation links expire after 48 hours.
-5. Only after confirmation does the subscription become active.
+5. Opening that link only displays a confirmation page; the visitor must deliberately press **Confirm email alerts** before the subscription becomes active.
 6. The scheduled dispatcher checks for matching updates every 15 minutes.
-7. Every delivered message contains a one-click unsubscribe link.
+7. Every delivered message contains an unsubscribe link. Opening it displays a confirmation page; the subscriber must deliberately press **Stop email alerts** before delivery is disabled.
+
+The explicit POST actions in steps 5 and 7 prevent automated email-security link scanners from accidentally opting somebody in or out simply by fetching links.
 
 Confirmation establishes the delivery cursor. Existing timeline items are not dumped into the subscriber's inbox; only later matching items and approved Commons contributions are delivered.
 
@@ -44,6 +46,8 @@ There is no Civic Commons account record, password, profile, advertising ID, ope
 `netlify/functions/email-dispatch.mjs` is a Netlify Scheduled Function running every 15 minutes. It reads active subscriptions and uses each subscription's portable personal RSS definition as the source of matching civic updates.
 
 Approved contributions can therefore arrive by email in the same way they arrive in personal RSS: corrections, evidence/documents, related sources, local information and moderated context become new chronological updates.
+
+The dispatcher re-reads subscription state after feed retrieval, immediately before sending, and again before persisting its delivery cursor. This prevents a concurrent unsubscribe from being overwritten by stale dispatcher state.
 
 The first version is intentionally a prototype-scale dispatcher. If subscription volume grows materially, dispatch should be refactored to fetch the shared civic feed once per run and fan out matching entries rather than fetching one personal RSS representation per subscription.
 
