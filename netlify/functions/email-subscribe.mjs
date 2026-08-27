@@ -63,6 +63,7 @@ export default async request => {
     lastCheckedAt: null,
     lastSentAt: null,
     seenGuids: [],
+    unsubscribeToken,
     unsubscribeTokenHash: unsubscribeHash
   };
 
