@@ -1,0 +1,36 @@
+import { confirmationKey, store, subscriptionKey, tokenHash } from './email-alerts-lib.mjs';
+
+function page(title, body) {
+  return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} — Civic Commons</title><style>body{margin:0;background:#f6f4ee;color:#18221d;font-family:system-ui,sans-serif;line-height:1.55}.card{width:min(680px,calc(100% - 32px));margin:10vh auto;background:#fffdf8;border:1px solid #d9d8cf;border-radius:14px;padding:28px}h1{font-family:Georgia,serif;font-size:2.4rem;line-height:1;margin-top:0}a{color:#1f5b42;font-weight:700}</style></head><body><main class="card"><h1>${title}</h1>${body}<p><a href="/#following">Return to your Civic Commons follows →</a></p></main></body></html>`, {
+    headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }
+  });
+}
+
+export default async request => {
+  const token = new URL(request.url).searchParams.get('token');
+  if (!token || !/^[A-Za-z0-9_-]{20,}$/.test(token)) return page('Confirmation link invalid', '<p>This confirmation link is missing or malformed.</p>');
+
+  const blobs = store();
+  const hash = tokenHash(token);
+  const pointer = await blobs.get(confirmationKey(hash), { type: 'json', consistency: 'strong' });
+  if (!pointer?.subscriptionId) return page('Already confirmed or expired', '<p>This confirmation link is no longer active. If you still want alerts, submit the email form again.</p>');
+
+  const key = subscriptionKey(pointer.subscriptionId);
+  const subscription = await blobs.get(key, { type: 'json', consistency: 'strong' });
+  if (!subscription) return page('Subscription unavailable', '<p>We could not find this alert subscription.</p>');
+
+  if (subscription.status !== 'active') {
+    const now = new Date().toISOString();
+    await blobs.setJSON(key, {
+      ...subscription,
+      status: 'active',
+      confirmedAt: now,
+      lastCheckedAt: now,
+      lastSentAt: null,
+      seenGuids: []
+    });
+  }
+  await blobs.delete(confirmationKey(hash));
+
+  return page('Email alerts confirmed', '<p>Done. You’ll receive future Civic Commons items and approved updates that match these follows.</p><p>Confirmation starts the clock now, so we won’t dump the existing timeline into your inbox.</p>');
+};
