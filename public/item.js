@@ -1,7 +1,7 @@
 import { isFollowing, stableItemKey, toggleFollow } from './follow-store.js';
 
 const $ = sel => document.querySelector(sel);
-const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const esc = s => String(s ?? '').replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]));
 const contributionTypeOrder = ['Correction','Evidence / document','Related source','Local information','Comment / context'];
 const pillClass = type => type === 'Official record' ? 'official' : type === 'Journalism / publishing' ? 'journalism' : type === 'Independent civic data / analysis' ? 'analysis' : 'organisation';
 const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date(iso); return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(d); };
@@ -19,39 +19,40 @@ function followButton(type, id, label, text) {
 
 function renderFollowControls(item, key) {
   const container = $('#itemFollowControls');
-  container.innerHTML = `
-    <div class="follow-primary">${followButton('items', key, item.title, 'this story')}</div>
-    <div class="follow-options">
-      ${followButton('sources', item.sourceId, item.source, item.source)}
-      ${(item.towns || []).map(town => followButton('towns', town, town, town)).join('')}
-      ${(item.topics || []).map(topic => followButton('topics', topic, topic, topic)).join('')}
-    </div>
-    <p>Follows are stored only in this browser. No account or email address is required.</p>
-  `;
-  container.querySelectorAll('[data-follow-type]').forEach(button => button.addEventListener('click', () => {
-    toggleFollow(button.dataset.followType, button.dataset.followId, button.dataset.followLabel);
-    renderFollowControls(item, key);
-  }));
+  container.innerHTML = `<div class="follow-primary">${followButton('items', key, item.title, 'this story')}</div><div class="follow-options">${followButton('sources', item.sourceId, item.source, item.source)}${(item.towns || []).map(town => followButton('towns', town, town, town)).join('')}${(item.topics || []).map(topic => followButton('topics', topic, topic, topic)).join('')}</div><p>Follows are stored only in this browser. No account or email address is required.</p>`;
+  container.querySelectorAll('[data-follow-type]').forEach(button => button.addEventListener('click', () => { toggleFollow(button.dataset.followType, button.dataset.followId, button.dataset.followLabel); renderFollowControls(item, key); }));
 }
 
 function fillContributionFields(item, key) {
-  const thread = threadId(key);
-  $('#threadId').textContent = thread;
-  $('#contributionItemId').value = item.id;
-  $('#contributionThreadId').value = thread;
-  $('#contributionPermalink').value = window.location.href;
-  $('#contributionItemTitle').value = item.title;
-  $('#contributionOriginalUrl').value = item.url;
+  const thread = threadId(key); $('#threadId').textContent = thread; $('#contributionItemId').value = item.id; $('#contributionThreadId').value = thread; $('#contributionPermalink').value = window.location.href; $('#contributionItemTitle').value = item.title; $('#contributionOriginalUrl').value = item.url;
 }
 
 function renderItem(item, key) {
-  document.title = `${item.title} — Civic Commons`;
-  $('#itemStatus').hidden = true;
+  document.title = `${item.title} — Civic Commons`; $('#itemStatus').hidden = true;
   const view = $('#itemView'); view.hidden = false;
   view.innerHTML = `<div class="item-page-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass)}</span><span>${esc(item.source)}</span><span>${esc(fmtDate(item.publishedAt))}</span></div><h1>${esc(item.title)}</h1>${item.summary ? `<p class="item-page-summary">${esc(item.summary)}</p>` : ''}${item.derived ? `<p class="provenance-note"><strong>Commons-derived extract:</strong> ${esc(item.derivedFrom || 'derived from the source material')}.</p>` : ''}<div class="tags">${(item.towns || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}${(item.topics || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div><div class="item-page-actions"><a class="primary-source-link" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Read the original source ↗</a><a href="#contribute">Add to this story ↓</a></div><div id="itemFollowControls" class="item-follow-controls" aria-label="Follow this civic information"></div><p class="canonical-note">The original publisher remains the canonical source. This Commons URL exists so local context, evidence, corrections, discussion and follows can attach to a stable civic object.</p>`;
-  renderFollowControls(item, key);
-  fillContributionFields(item, key);
-  $('#contribute').hidden = false; $('#discussion').hidden = false;
+  renderFollowControls(item, key); fillContributionFields(item, key); $('#contribute').hidden = false; $('#discussion').hidden = false; loadCivicMemory(item);
+}
+
+function memoryList(items, kind) {
+  if (!items?.length) return '<p class="memory-meta">Nothing selected yet.</p>';
+  return `<ul class="memory-list">${items.map(item => `<li><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title)}</a><span class="memory-meta">${kind === 'source' ? `${esc(item.publisher || 'Source')}${item.date ? ` · ${esc(fmtDate(item.date))}` : ''}` : esc(fmtDate(item.date))}</span></li>`).join('')}</ul>`;
+}
+
+function renderCivicMemory(memory) {
+  if (!memory?.matched) return;
+  const section = $('#civicMemory'); const content = $('#civicMemoryContent');
+  const entityTags = (memory.entities || []).map(entity => `<span class="memory-tag">${esc(entity.name)} <small>${esc(entity.type)}</small></span>`).join('');
+  const topicTags = (memory.topics || []).map(topic => `<span class="memory-tag">${esc(topic.name)}</span>`).join('');
+  content.innerHTML = `<div class="civic-memory-heading"><div><p class="eyebrow">Related civic memory</p><h2 id="civicMemoryTitle">What connects to this story?</h2><p>Reviewed people, organisations, places and evidence from earlier Southall Stories reporting — added as historical context, not as a replacement for the original article.</p></div></div><div class="memory-grid"><section class="memory-panel"><h3>People, organisations, places & topics</h3><div class="memory-tags">${entityTags}${topicTags}</div></section><section class="memory-panel"><h3>Earlier reporting</h3>${memoryList(memory.earlierReporting, 'post')}</section><section class="memory-panel"><h3>Primary & supporting evidence</h3>${memoryList(memory.sources, 'source')}</section><section class="memory-panel"><h3>About this context</h3><p class="memory-meta">Matched by exact Southall Stories URL. Entity and topic links are deterministic; sources and entity-to-entity relationships are human-reviewed in Southall-Zettel.</p></section></div><p class="memory-provenance">Enrichment from <a href="${esc(memory.provenance?.sourceUrl || 'https://github.com/davidmarsden/Southall-Zettel')}" target="_blank" rel="noopener noreferrer">Southall-Zettel ↗</a>. The original publisher remains canonical.</p>`;
+  section.hidden = false;
+}
+
+async function loadCivicMemory(item) {
+  const section = $('#civicMemory'); section.hidden = true;
+  if (item.sourceId !== 'southall-stories' || !item.url) return;
+  try { const url = new URL('/.netlify/functions/civic-memory', location.origin); url.searchParams.set('url', item.url); const response = await fetch(url, { cache: 'no-store' }); if (!response.ok) return; renderCivicMemory(await response.json()); }
+  catch (error) { console.warn('Related civic memory unavailable', error); }
 }
 
 function contributionCard(contribution) { const link = safeHttpUrl(contribution.relatedUrl); const contributor = contribution.displayName || 'Community contributor'; const provenance = contribution.provenance || 'Submitted to Civic Commons and reviewed before publication.'; return `<article class="contribution-card" id="contribution-${esc(contribution.id)}"><div class="contribution-card-meta"><strong>${esc(contributor)}</strong><span>${esc(fmtDate(contribution.publishedAt || contribution.submittedAt))}</span><span class="moderation-status">Published after review</span></div><p class="contribution-body">${esc(contribution.body)}</p>${link ? `<p class="contribution-link"><a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open related source ↗</a></p>` : ''}<p class="contribution-provenance">${esc(provenance)}</p></article>`; }

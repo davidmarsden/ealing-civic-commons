@@ -11,111 +11,41 @@
 <body>
   <header class="site-header">
     <div class="wrap header-inner">
-      <div>
-        <a class="brand" href="/">Civic Commons</a>
-        <div class="strap">Southall & Ealing</div>
-      </div>
-      <nav aria-label="Primary">
-        <a href="/">Latest</a>
-        <a href="/#sources">Sources</a>
-        <a href="/documents/">Documents</a>
-        <a href="/#about">About</a>
-      </nav>
+      <div><a class="brand" href="/">Civic Commons</a><div class="strap">Southall & Ealing</div></div>
+      <nav aria-label="Primary"><a href="/">Latest</a><a href="/#sources">Sources</a><a href="/documents/">Documents</a><a href="/#about">About</a></nav>
     </div>
   </header>
 
   <main>
-    <section class="item-page-hero">
-      <div class="wrap">
-        <p class="eyebrow">Civic Commons item</p>
-        <div id="itemStatus" class="item-page-status" aria-live="polite">Loading item…</div>
-        <article id="itemView" class="item-page-card" hidden></article>
-      </div>
+    <section class="item-page-hero"><div class="wrap"><p class="eyebrow">Civic Commons item</p><div id="itemStatus" class="item-page-status" aria-live="polite">Loading item…</div><article id="itemView" class="item-page-card" hidden></article></div></section>
+
+    <section id="civicMemory" class="civic-memory" hidden aria-labelledby="civicMemoryTitle">
+      <div class="wrap"><div id="civicMemoryContent" aria-live="polite"></div></div>
     </section>
 
     <section class="wrap contribution-layout" id="contribute" hidden>
       <div>
-        <p class="eyebrow">Add to this story</p>
-        <h2>Bring context, evidence or a correction.</h2>
+        <p class="eyebrow">Add to this story</p><h2>Bring context, evidence or a correction.</h2>
         <p>The Commons connects material; it does not replace the original publisher. Contributions are reviewed before anything is made public.</p>
         <p class="moderation-note">This first social phase is deliberately moderated. There are no likes, engagement ranking or instant anonymous comments.</p>
-        <div class="thread-meta">
-          <strong>Open thread identity</strong>
-          <span id="threadId"></span>
-          <small>This stable thread ID travels with submissions so future discussion or federation can attach to the same civic item.</small>
-        </div>
+        <div class="thread-meta"><strong>Open thread identity</strong><span id="threadId"></span><small>This stable thread ID travels with submissions so future discussion or federation can attach to the same civic item.</small></div>
       </div>
-
       <form name="item-contribution" method="POST" action="/contribution-thanks.html" data-netlify="true" netlify-honeypot="bot-field" class="source-form contribution-form">
-        <input type="hidden" name="form-name" value="item-contribution" />
-        <input id="contributionItemId" type="hidden" name="item-id" />
-        <input id="contributionThreadId" type="hidden" name="thread-id" />
-        <input id="contributionPermalink" type="hidden" name="commons-permalink" />
-        <input id="contributionItemTitle" type="hidden" name="item-title" />
-        <input id="contributionOriginalUrl" type="hidden" name="original-url" />
+        <input type="hidden" name="form-name" value="item-contribution" /><input id="contributionItemId" type="hidden" name="item-id" /><input id="contributionThreadId" type="hidden" name="thread-id" /><input id="contributionPermalink" type="hidden" name="commons-permalink" /><input id="contributionItemTitle" type="hidden" name="item-title" /><input id="contributionOriginalUrl" type="hidden" name="original-url" />
         <p class="honeypot" hidden aria-hidden="true"><label>Don’t fill this out: <input name="bot-field" tabindex="-1" autocomplete="off" /></label></p>
-
-        <label>What are you adding?
-          <select name="contribution-type" required>
-            <option>Correction</option>
-            <option>Related source</option>
-            <option>Evidence / document</option>
-            <option>Local information</option>
-            <option>Comment / context</option>
-          </select>
-        </label>
-
-        <label>Contribution
-          <textarea name="body" rows="7" required placeholder="What should people know, and how do you know it?"></textarea>
-        </label>
-
-        <label>Related link <span class="optional">Optional</span>
-          <input name="related-url" type="url" placeholder="https://" />
-        </label>
-
-        <div class="form-row">
-          <label>Your name <span class="optional">Optional</span>
-            <input name="name" type="text" />
-          </label>
-          <label>Your email <span class="optional">Optional — for moderation follow-up</span>
-            <input name="email" type="email" />
-          </label>
-        </div>
-
-        <label class="consent-label">
-          <input name="publication-consent" type="checkbox" value="yes" required />
-          <span>I understand this submission may be published with moderation and provenance.</span>
-        </label>
-
+        <label>What are you adding?<select name="contribution-type" required><option>Correction</option><option>Related source</option><option>Evidence / document</option><option>Local information</option><option>Comment / context</option></select></label>
+        <label>Contribution<textarea name="body" rows="7" required placeholder="What should people know, and how do you know it?"></textarea></label>
+        <label>Related link <span class="optional">Optional</span><input name="related-url" type="url" placeholder="https://" /></label>
+        <div class="form-row"><label>Your name <span class="optional">Optional</span><input name="name" type="text" /></label><label>Your email <span class="optional">Optional — for moderation follow-up</span><input name="email" type="email" /></label></div>
+        <label class="consent-label"><input name="publication-consent" type="checkbox" value="yes" required /><span>I understand this submission may be published with moderation and provenance.</span></label>
         <button class="submit-button" type="submit">Submit for review</button>
       </form>
     </section>
 
-    <section class="approved-contributions" id="discussion" hidden>
-      <div class="wrap">
-        <div class="discussion-heading">
-          <div>
-            <p class="eyebrow">Discussion & contributions</p>
-            <h2>Published after review.</h2>
-            <p>Approved corrections, evidence, related sources, local information and context appear here in chronological order within their contribution type. Popularity does not affect ordering.</p>
-          </div>
-          <span id="contributionCount" class="count"></span>
-        </div>
-        <div id="contributionList" class="contribution-list" aria-live="polite">
-          <p class="contribution-loading">Loading approved contributions…</p>
-        </div>
-      </div>
-    </section>
+    <section class="approved-contributions" id="discussion" hidden><div class="wrap"><div class="discussion-heading"><div><p class="eyebrow">Discussion & contributions</p><h2>Published after review.</h2><p>Approved corrections, evidence, related sources, local information and context appear here in chronological order within their contribution type. Popularity does not affect ordering.</p></div><span id="contributionCount" class="count"></span></div><div id="contributionList" class="contribution-list" aria-live="polite"><p class="contribution-loading">Loading approved contributions…</p></div></div></section>
   </main>
 
-  <footer>
-    <div class="wrap footer-inner">
-      <span>Southall & Ealing Civic Commons — social phase prototype</span>
-      <span>Original sources remain canonical.</span>
-    </div>
-  </footer>
-
-  <script src="/demo-data.js"></script>
-  <script src="/item.js" type="module"></script>
+  <footer><div class="wrap footer-inner"><span>Southall & Ealing Civic Commons — social phase prototype</span><span>Original sources remain canonical.</span></div></footer>
+  <script src="/demo-data.js"></script><script src="/item.js" type="module"></script>
 </body>
 </html>
