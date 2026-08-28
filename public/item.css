@@ -23,6 +23,10 @@
 .civic-memory-heading p { max-width:760px; color:#505a54; margin:8px 0 0; }
 .memory-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
 .memory-panel { align-self:start; height:max-content; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; }
+.memory-panel:nth-child(1) { order: 4; }
+.memory-panel:nth-child(2) { order: 3; }
+.memory-panel:nth-child(3) { order: 1; }
+.memory-panel:nth-child(4) { order: 2; }
 .memory-panel h3 { margin:0 0 12px; font-family:Georgia,serif; font-size:1.25rem; }
 .memory-subsection + .memory-subsection { margin-top:20px; padding-top:16px; border-top:1px solid var(--line); }
 .memory-subsection h4 { margin:0 0 5px; font-size:.82rem; letter-spacing:.055em; text-transform:uppercase; color:var(--green-dark); }
