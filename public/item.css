@@ -24,6 +24,9 @@
 .memory-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
 .memory-panel { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; }
 .memory-panel h3 { margin:0 0 12px; font-family:Georgia,serif; font-size:1.25rem; }
+.memory-subsection + .memory-subsection { margin-top:20px; padding-top:16px; border-top:1px solid var(--line); }
+.memory-subsection h4 { margin:0 0 5px; font-size:.82rem; letter-spacing:.055em; text-transform:uppercase; color:var(--green-dark); }
+.memory-subsection > .memory-meta { margin:0 0 12px; max-width:620px; line-height:1.45; }
 .memory-tags { display:flex; flex-wrap:wrap; gap:7px; }
 .memory-tag { display:inline-flex; gap:5px; align-items:center; border:1px solid var(--line); border-radius:999px; padding:5px 9px; background:var(--paper); font-size:.8rem; }
 .memory-tag small { color:var(--muted); }
