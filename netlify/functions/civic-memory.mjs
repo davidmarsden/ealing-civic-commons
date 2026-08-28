@@ -1,6 +1,45 @@
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
 const EXPECTED_SCHEMA = 1;
 
+const PRIMARY_CITATION_DOMAINS = new Set([
+  'ealing.gov.uk',
+  'ealing.moderngov.co.uk',
+  'data.ealing.gov.uk',
+  'police.uk',
+  'london.gov.uk',
+  'gov.uk',
+  'assets.publishing.service.gov.uk',
+  'caselaw.nationalarchives.gov.uk',
+  'legislation.gov.uk',
+  'ons.gov.uk',
+  'nhs.uk',
+  'england.nhs.uk',
+  'changegrowlive.org'
+]);
+
+const CITATION_PUBLISHERS = new Map([
+  ['ealing.gov.uk', 'Ealing Council'],
+  ['ealing.moderngov.co.uk', 'Ealing Council'],
+  ['data.ealing.gov.uk', 'Ealing Council'],
+  ['police.uk', 'Police.uk / Metropolitan Police'],
+  ['london.gov.uk', 'Greater London Authority'],
+  ['gov.uk', 'UK Government'],
+  ['assets.publishing.service.gov.uk', 'UK Government'],
+  ['caselaw.nationalarchives.gov.uk', 'The National Archives'],
+  ['legislation.gov.uk', 'UK legislation'],
+  ['ons.gov.uk', 'Office for National Statistics'],
+  ['nhs.uk', 'NHS'],
+  ['england.nhs.uk', 'NHS England'],
+  ['changegrowlive.org', 'Change Grow Live'],
+  ['andrewteale.me.uk', 'Local Elections Archive Project'],
+  ['plumplot.co.uk', 'Plumplot']
+]);
+
+const EXCLUDED_RELATED_CITATION_DOMAINS = new Set([
+  'x.com', 'twitter.com', 'facebook.com', 'instagram.com', 'youtube.com', 'youtu.be',
+  'communitypoweredreporting.co.uk'
+]);
+
 function json(body, status = 200, maxAge = 300) {
   return new Response(JSON.stringify(body), {
     status,
@@ -26,6 +65,27 @@ function canonicalUrl(value) {
   } catch {
     return null;
   }
+}
+
+function evidenceUrlKey(value) {
+  try {
+    const url = new URL(value);
+    url.hash = '';
+    url.protocol = 'https:';
+    url.hostname = url.hostname.toLowerCase().replace(/^www\./, '');
+    for (const key of [...url.searchParams.keys()]) {
+      if (key.toLowerCase().startsWith('utm_')) url.searchParams.delete(key);
+    }
+    return url.href.replace(/\/$/, '');
+  } catch {
+    return String(value || '');
+  }
+}
+
+function domainMatches(domain, allowed) {
+  if (!domain) return false;
+  if (allowed.has(domain)) return true;
+  return [...allowed].some(base => domain.endsWith(`.${base}`));
 }
 
 function byId(items = []) {
@@ -118,7 +178,20 @@ function sourceView(source) {
     publisher: source.publisher,
     sourceType: source.source_type,
     date: source.publication_date || source.meeting_date || null,
-    url: source.canonical_url
+    url: source.canonical_url,
+    evidenceKind: 'curated-source'
+  };
+}
+
+function citationView(citation, evidenceKind) {
+  return {
+    id: `citation:${citation.post}:${evidenceUrlKey(citation.url)}`,
+    title: citation.label || citation.domain,
+    publisher: CITATION_PUBLISHERS.get(citation.domain) || citation.domain,
+    sourceType: evidenceKind === 'article-primary' ? 'Directly cited evidence' : 'Directly cited source',
+    date: null,
+    url: citation.url,
+    evidenceKind
   };
 }
 
@@ -137,20 +210,42 @@ function evidenceSourceIds(exportData, matchedPost, entityIds) {
   return ids;
 }
 
-function primaryEvidence(exportData, matchedPost, entityIds) {
-  const primaryIds = evidenceSourceIds(exportData, matchedPost, entityIds);
-  return (exportData.sources || [])
-    .filter(source => primaryIds.has(source.id) && source.canonical_url)
-    .sort((a, b) => Number((b.cited_by || []).includes(matchedPost.id)) - Number((a.cited_by || []).includes(matchedPost.id)) || String(b.publication_date || b.meeting_date || '').localeCompare(String(a.publication_date || a.meeting_date || '')))
-    .slice(0, 5)
-    .map(sourceView);
+function directCitations(exportData, matchedPost) {
+  return (exportData.citations || []).filter(citation => citation.post === matchedPost.id && citation.url);
 }
 
-function relatedSourceMaterial(exportData, matchedPost, entityIds, topicIds, entitiesById, frequencies) {
+function primaryEvidence(exportData, matchedPost, entityIds) {
+  const primaryIds = evidenceSourceIds(exportData, matchedPost, entityIds);
+  const curated = (exportData.sources || [])
+    .filter(source => primaryIds.has(source.id) && source.canonical_url)
+    .sort((a, b) => Number((b.cited_by || []).includes(matchedPost.id)) - Number((a.cited_by || []).includes(matchedPost.id)) || String(b.publication_date || b.meeting_date || '').localeCompare(String(a.publication_date || a.meeting_date || '')))
+    .map(sourceView);
+
+  const seenUrls = new Set(curated.map(item => evidenceUrlKey(item.url)));
+  const citations = directCitations(exportData, matchedPost)
+    .filter(citation => domainMatches(citation.domain, PRIMARY_CITATION_DOMAINS))
+    .filter(citation => !seenUrls.has(evidenceUrlKey(citation.url)))
+    .map(citation => citationView(citation, 'article-primary'));
+
+  const combined = [...curated, ...citations];
+  const deduped = [];
+  const seen = new Set();
+  for (const item of combined) {
+    const key = evidenceUrlKey(item.url);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(item);
+  }
+  return deduped.slice(0, 12);
+}
+
+function relatedSourceMaterial(exportData, matchedPost, entityIds, topicIds, entitiesById, frequencies, primary) {
   const totalPosts = (exportData.posts || []).length;
   const primaryIds = evidenceSourceIds(exportData, matchedPost, entityIds);
-  return (exportData.sources || [])
-    .filter(source => !primaryIds.has(source.id) && source.canonical_url)
+  const primaryUrls = new Set((primary || []).map(item => evidenceUrlKey(item.url)));
+
+  const curated = (exportData.sources || [])
+    .filter(source => !primaryIds.has(source.id) && source.canonical_url && !primaryUrls.has(evidenceUrlKey(source.canonical_url)))
     .map(source => {
       const sharedEntities = (source.related_entities || []).filter(id => entityIds.has(id));
       const sharedTopics = (source.related_topics || []).filter(id => topicIds.has(id));
@@ -161,8 +256,24 @@ function relatedSourceMaterial(exportData, matchedPost, entityIds, topicIds, ent
     })
     .filter(entry => entry.sharedEntities.length >= 1 && (entry.strongestEntity >= 4.25 || (entry.sharedEntities.length >= 2 && entry.score >= 5.5)))
     .sort((a, b) => b.score - a.score || String(b.source.publication_date || b.source.meeting_date || '').localeCompare(String(a.source.publication_date || a.source.meeting_date || '')))
-    .slice(0, 3)
     .map(({ source }) => sourceView(source));
+
+  const citationMaterial = directCitations(exportData, matchedPost)
+    .filter(citation => !domainMatches(citation.domain, PRIMARY_CITATION_DOMAINS))
+    .filter(citation => !domainMatches(citation.domain, EXCLUDED_RELATED_CITATION_DOMAINS))
+    .filter(citation => !primaryUrls.has(evidenceUrlKey(citation.url)))
+    .map(citation => citationView(citation, 'article-related'));
+
+  const combined = [...citationMaterial, ...curated];
+  const deduped = [];
+  const seen = new Set(primaryUrls);
+  for (const item of combined) {
+    const key = evidenceUrlKey(item.url);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(item);
+  }
+  return deduped.slice(0, 8);
 }
 
 function reviewedRelationships(exportData, entityIds) {
@@ -194,6 +305,7 @@ export default async request => {
     const { entityIds, topicIds } = sharedContext(exportData, matchedPost.id);
     const entities = [...entityIds].map(id => entitiesById.get(id)).filter(Boolean).map(entity => ({ id: entity.id, name: entity.name, type: entity.type })).sort((a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name));
     const topics = [...topicIds].map(id => topicsById.get(id)).filter(Boolean).map(topic => ({ id: topic.id, name: topic.name })).sort((a, b) => a.name.localeCompare(b.name));
+    const primary = primaryEvidence(exportData, matchedPost, entityIds);
 
     return json({
       matched: true,
@@ -202,13 +314,13 @@ export default async request => {
       entities,
       topics,
       earlierReporting: relatedEarlierPosts(exportData, matchedPost, entityIds, topicIds, entitiesById, frequencies),
-      primaryEvidence: primaryEvidence(exportData, matchedPost, entityIds),
-      relatedSourceMaterial: relatedSourceMaterial(exportData, matchedPost, entityIds, topicIds, entitiesById, frequencies),
+      primaryEvidence: primary,
+      relatedSourceMaterial: relatedSourceMaterial(exportData, matchedPost, entityIds, topicIds, entitiesById, frequencies, primary),
       relationships: reviewedRelationships(exportData, entityIds),
       provenance: {
         label: 'Related civic memory',
         source: 'Southall Stories research archive',
-        method: 'Exact Southall Stories URL match. Archive connections are generated from curated entities and topics; important relationships and source records are reviewed before publication.'
+        method: 'Exact Southall Stories URL match. Primary evidence includes sources directly cited by the article plus reviewed source records; broader related material is labelled separately.'
       }
     });
   } catch (error) {
