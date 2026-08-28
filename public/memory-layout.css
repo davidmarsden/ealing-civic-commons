@@ -1,0 +1,25 @@
+.memory-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.memory-column {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  min-width: 0;
+}
+
+.memory-column .memory-panel {
+  height: auto;
+  align-self: auto;
+}
+
+@media (max-width: 820px) {
+  .memory-grid {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+}
