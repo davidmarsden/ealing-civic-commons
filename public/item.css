@@ -21,7 +21,7 @@
 .civic-memory-heading { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:24px; align-items:end; margin-bottom:22px; }
 .civic-memory-heading h2 { font-family:Georgia,serif; font-size:clamp(2rem,4vw,3.2rem); line-height:1.03; margin:0; letter-spacing:-.025em; }
 .civic-memory-heading p { max-width:760px; color:#505a54; margin:8px 0 0; }
-.memory-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.memory-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
 .memory-panel { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; }
 .memory-panel h3 { margin:0 0 12px; font-family:Georgia,serif; font-size:1.25rem; }
 .memory-subsection + .memory-subsection { margin-top:20px; padding-top:16px; border-top:1px solid var(--line); }
