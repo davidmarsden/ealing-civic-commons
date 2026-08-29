@@ -52,6 +52,7 @@ function targetCount(targets) {
 function matches(item, targets) {
   if (targets.items.includes(stableItemKey(item.id))) return true;
   if (targets.sources.includes(item.sourceId)) return true;
+  if (item.boroughWide === true && targets.towns.length) return true;
   if ((item.towns || []).some(town => targets.towns.includes(town))) return true;
   if ((item.topics || []).some(topic => targets.topics.includes(topic))) return true;
   return false;
