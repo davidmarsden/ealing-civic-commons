@@ -83,6 +83,105 @@ export const ENTITY_REGISTRY = [
     providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   },
   {
+    route: 'people/anthony-kelly',
+    id: 'civic:person:anthony-kelly',
+    name: 'Anthony Kelly',
+    type: 'person',
+    description: 'Ealing councillor and Chair of the Overview and Scrutiny Committee for 2026/27.',
+    aliases: ['Cllr Anthony Kelly'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/gary-busuttil',
+    id: 'civic:person:gary-busuttil',
+    name: 'Gary Busuttil',
+    type: 'person',
+    description: 'Ealing councillor and Vice Chair of the Overview and Scrutiny Committee for 2026/27.',
+    aliases: ['Cllr Gary Busuttil'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/miriam-rice',
+    id: 'civic:person:miriam-rice',
+    name: 'Miriam Rice',
+    type: 'person',
+    description: 'Ealing councillor and Chair of the Housing and Environment Scrutiny Panel for 2026/27.',
+    aliases: ['Cllr Miriam Rice'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/athena-zissimos',
+    id: 'civic:person:athena-zissimos',
+    name: 'Athena Zissimos',
+    type: 'person',
+    description: 'Ealing councillor and Vice Chair of the Housing and Environment Scrutiny Panel for 2026/27.',
+    aliases: ['Cllr Athena Zissimos'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/hitesh-tailor',
+    id: 'civic:person:hitesh-tailor',
+    name: 'Hitesh Tailor',
+    type: 'person',
+    description: 'Ealing councillor and Chair of the Economy and Sustainability Scrutiny Panel for 2026/27.',
+    aliases: ['Cllr Hitesh Tailor'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/dee-martin',
+    id: 'civic:person:dee-martin',
+    name: 'Dee Martin',
+    type: 'person',
+    description: 'Ealing councillor and Chair of the Planning Committee for 2026/27.',
+    aliases: ['Cllr Dee Martin'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/katie-douglas',
+    id: 'civic:person:katie-douglas',
+    name: 'Katie Douglas',
+    type: 'person',
+    description: 'Ealing councillor and Vice Chair of the Planning Committee for 2026/27.',
+    aliases: ['Cllr Katie Douglas'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/overview-and-scrutiny-committee',
+    id: 'civic:organisation:overview-and-scrutiny-committee',
+    name: 'Overview and Scrutiny Committee',
+    type: 'organisation',
+    description: 'Ealing Council committee responsible for overview and scrutiny across the council and for considering called-in executive decisions.',
+    aliases: ['OSC'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/housing-and-environment-scrutiny-panel',
+    id: 'civic:organisation:housing-and-environment-scrutiny-panel',
+    name: 'Housing and Environment Scrutiny Panel',
+    type: 'organisation',
+    description: 'Ealing Council scrutiny panel covering housing and environmental matters.',
+    aliases: ['Housing & Environment Scrutiny Panel'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/economy-and-sustainability-scrutiny-panel',
+    id: 'civic:organisation:economy-and-sustainability-scrutiny-panel',
+    name: 'Economy and Sustainability Scrutiny Panel',
+    type: 'organisation',
+    description: 'Ealing Council scrutiny panel covering economy and sustainability matters.',
+    aliases: ['Economy & Sustainability Scrutiny Panel'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/planning-committee',
+    id: 'civic:organisation:planning-committee',
+    name: 'Planning Committee',
+    type: 'organisation',
+    description: 'Ealing Council committee that determines planning applications and related planning matters within its remit.',
+    aliases: ['Ealing Planning Committee'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
     route: 'places/acton',
     id: 'civic:place:acton',
     name: 'Acton',
