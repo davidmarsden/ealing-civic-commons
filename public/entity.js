@@ -4,28 +4,25 @@ const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date
 const labelType = value => String(value || '').replaceAll('_',' ');
 const pillClass = type => type === 'Official record' ? 'official' : type === 'Journalism / publishing' ? 'journalism' : type === 'Independent civic data / analysis' ? 'analysis' : 'organisation';
 const routeType = new Map([['people','person'],['organisations','organisation'],['places','place']]);
-const routeSegment = new Map([['person','people'],['organisation','organisations'],['place','places']]);
 const typeLabel = new Map([['person','person'],['organisation','organisation'],['place','place']]);
 
 function routeInfo() {
   if (document.body.dataset.entityId) {
-    return { id: document.body.dataset.entityId, expectedType: document.body.dataset.entityType || null, slug: document.body.dataset.entityId.replace(/^entity:/,''), segment: null };
+    const id = document.body.dataset.entityId;
+    const type = document.body.dataset.entityType || null;
+    const slug = id.replace(/^entity:/,'');
+    const segment = type === 'person' ? 'people' : type === 'organisation' ? 'organisations' : type === 'place' ? 'places' : 'places';
+    return { route: `${segment}/${slug}`, expectedType: type, slug, segment };
   }
   const parts = location.pathname.split('/').filter(Boolean);
   const segment = parts[0];
   const slug = parts[1]?.replace(/\.html$/,'');
-  return { id: slug ? `entity:${slug}` : null, expectedType: routeType.get(segment) || null, slug, segment };
-}
-
-function entityPath(entity) {
-  const segment = routeSegment.get(entity?.type);
-  const slug = String(entity?.id || '').replace(/^entity:/,'');
-  return segment && slug ? `/${segment}/${encodeURIComponent(slug)}` : null;
+  return { route: segment && slug ? `${segment}/${slug}` : null, expectedType: routeType.get(segment) || null, slug, segment };
 }
 
 function entityLink(entity, label = entity?.name) {
-  const path = entityPath(entity);
-  return path ? `<a class="entity-inline-link" href="${esc(path)}">${esc(label)}</a>` : esc(label);
+  if (entity?.commonsRoute) return `<a class="entity-inline-link" href="/${esc(entity.commonsRoute)}">${esc(label)}</a>`;
+  return esc(label);
 }
 
 function renderHero(data) {
@@ -49,13 +46,20 @@ function renderStats(data) {
   $('#entityTopics').innerHTML = (data.topics || []).map(topic => `<span class="entity-topic">${esc(topic.name)} · ${topic.count}</span>`).join('') || '<span class="entity-empty">No recurring topics found.</span>';
 }
 
+function renderProviders(items) {
+  const root = $('#entityProviders');
+  if (!root) return;
+  root.innerHTML = (items || []).map(provider => `<div class="entity-provider"><strong>${provider.url ? `<a href="${esc(provider.url)}" target="_blank" rel="noopener noreferrer">${esc(provider.label || provider.name)}</a>` : esc(provider.label || provider.name)}</strong><span>${esc(provider.role || provider.bindingRole || 'Data provider')}</span></div>`).join('') || '<span class="entity-empty">No provider metadata available.</span>';
+}
+
 function renderRelationships(items, entity) {
   const section = $('#relationshipsSection');
   if (!items?.length) return;
   section.hidden = false;
+  const current = dataEntity => ({ ...dataEntity, commonsRoute: window.__civicEntityRoute || null });
   $('#relationships').innerHTML = `<ul class="entity-list">${items.map(rel => {
-    const from = rel.direction === 'outgoing' ? entityLink(entity) : entityLink(rel.other);
-    const to = rel.direction === 'outgoing' ? entityLink(rel.other) : entityLink(entity);
+    const from = rel.direction === 'outgoing' ? entityLink(current(entity)) : entityLink(rel.other);
+    const to = rel.direction === 'outgoing' ? entityLink(rel.other) : entityLink(current(entity));
     return `<li><span class="relationship-type">${esc(labelType(rel.type))}</span><h3>${from} → ${to}</h3>${rel.note ? `<p class="relationship-note">${esc(rel.note)}</p>` : ''}${rel.validFrom || rel.validTo ? `<span class="entity-meta">Period: ${esc(rel.validFrom || 'unknown')} → ${esc(rel.validTo || 'present / unknown')}</span>` : ''}${rel.evidence?.length ? `<span class="entity-meta">Evidence: ${rel.evidence.map(ev => ev.url ? `<a href="${esc(ev.url)}" target="_blank" rel="noopener noreferrer">${esc(ev.title)}</a>` : esc(ev.title)).join(' · ')}</span>` : ''}</li>`;
   }).join('')}</ul>`;
 }
@@ -85,21 +89,22 @@ function renderCurrent(items) {
 
 async function load() {
   const route = routeInfo();
-  if (!route.id) {
+  if (!route.route) {
     $('#entityStatus').innerHTML = '<h1>Entity not found.</h1><p>This Civic Commons entity route is incomplete.</p><p><a href="/">Return to the civic timeline →</a></p>';
     return;
   }
   try {
-    const endpoint = new URL('/.netlify/functions/civic-entity', location.origin); endpoint.searchParams.set('id', route.id);
+    const endpoint = new URL('/.netlify/functions/civic-entity', location.origin); endpoint.searchParams.set('route', route.route);
     const [entityResponse, feedResponse] = await Promise.all([fetch(endpoint,{cache:'no-store'}), fetch('/.netlify/functions/feed',{cache:'no-store'}).catch(() => null)]);
     if (!entityResponse.ok) throw new Error(`Entity HTTP ${entityResponse.status}`);
     const data = await entityResponse.json();
     if (!data.matched) throw new Error(data.reason || 'Entity not found');
     if (route.expectedType && data.entity.type !== route.expectedType) throw new Error(`Entity type mismatch: expected ${route.expectedType}, got ${data.entity.type}`);
-    renderHero(data); renderStats(data); renderRelationships(data.relationships, data.entity); renderSources(data.sources); renderReporting(data.reporting);
+    window.__civicEntityRoute = data.civicEntity?.route || route.route;
+    renderHero(data); renderStats(data); renderProviders(data.providers); renderRelationships(data.relationships, data.entity); renderSources(data.sources); renderReporting(data.reporting);
     if (feedResponse?.ok) { const feed = await feedResponse.json(); renderCurrent(currentMatches(feed,data.entity)); }
   } catch (error) {
-    $('#entityStatus').innerHTML = `<h1>Civic entity temporarily unavailable.</h1><p>The reviewed civic-memory service could not load this entity. The rest of Civic Commons is unaffected.</p><p><a href="/">Return to the civic timeline →</a></p>`;
+    $('#entityStatus').innerHTML = `<h1>Civic entity temporarily unavailable.</h1><p>The civic entity service could not load this page. The rest of Civic Commons is unaffected.</p><p><a href="/">Return to the civic timeline →</a></p>`;
     console.error('Civic entity page failed', error);
   }
 }
