@@ -3,7 +3,7 @@
 .watch-hero h1 { font-size: clamp(3.4rem, 7vw, 6.4rem); }
 .watch-intro { padding: 28px 0 6px; color: #4c5650; max-width: 1180px; }
 .watch-intro p { max-width: 880px; font-size: 1.03rem; }
-.watch-filters { padding-top: 18px; }
+.watch-filters { padding-top: 18px; scroll-margin-top: 92px; }
 .watch-toolbar { display: flex; justify-content: space-between; gap: 18px; align-items: center; padding: 4px 0 28px; color: var(--muted); font-size: .88rem; }
 .watch-toolbar > div:last-child { display: flex; gap: 16px; }
 .watch-layout { display: grid; grid-template-columns: minmax(0,1fr) 310px; gap: 42px; padding-bottom: 80px; }
@@ -16,7 +16,10 @@
 .watch-health-dot.historical { background: var(--amber); }
 .watch-health-dot.empty, .watch-health-dot.unavailable { background: #b64d43; }
 .watch-health-state { color: var(--muted); text-transform: capitalize; }
-.document-category { color: var(--blue); font-size: .76rem; font-weight: 800; margin: 0 0 8px; }
+.document-category, .watch-health-category { appearance: none; border: 0; padding: 0; background: none; color: var(--blue); font: inherit; font-weight: 800; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.document-category { display: inline-block; font-size: .76rem; margin: 0 0 8px; }
+.document-category:hover, .document-category:focus, .watch-health-category:hover, .watch-health-category:focus { color: var(--green); }
+.watch-health-category { font-size: .8rem; line-height: 1.35; }
 .document-note { color: var(--muted); font-size: .78rem; margin-top: 8px; }
 @media (max-width: 820px) { .watch-hero-grid, .watch-layout { grid-template-columns: 1fr; gap: 30px; } .watch-hero { padding-top: 48px; } }
 @media (max-width: 560px) { .watch-toolbar { align-items: flex-start; flex-direction: column; } .watch-toolbar > div:last-child { flex-wrap: wrap; } }

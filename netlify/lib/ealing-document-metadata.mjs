@@ -8,17 +8,29 @@ const memoryCache = new Map();
 const store = () => getStore(STORE_NAME);
 const cacheKey = url => `page/${createHash('sha256').update(String(url)).digest('hex')}`;
 
-function strip(value = '') {
+const namedEntities = {
+  amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', pound: '£',
+  rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“', ndash: '–', mdash: '—', hellip: '…'
+};
+
+function decodeEntities(value = '') {
   return String(value)
+    .replace(/&#x([0-9a-f]+);?/gi, (match, hex) => {
+      const code = Number.parseInt(hex, 16);
+      return Number.isInteger(code) && code >= 0 && code <= 0x10FFFF ? String.fromCodePoint(code) : match;
+    })
+    .replace(/&#([0-9]+);?/g, (match, dec) => {
+      const code = Number.parseInt(dec, 10);
+      return Number.isInteger(code) && code >= 0 && code <= 0x10FFFF ? String.fromCodePoint(code) : match;
+    })
+    .replace(/&([a-z][a-z0-9]+);/gi, (match, name) => namedEntities[name.toLowerCase()] ?? match);
+}
+
+function strip(value = '') {
+  return decodeEntities(String(value)
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&pound;/gi, '£')
-    .replace(/&#163;/gi, '£')
-    .replace(/&#39;/g, "'")
-    .replace(/&quot;/gi, '"')
+    .replace(/<[^>]+>/g, ' '))
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -67,13 +79,18 @@ function extractMetadata(html, rawTitle) {
   return { description };
 }
 
+function normaliseRecord(record) {
+  if (!record?.description) return null;
+  return { ...record, description: strip(record.description) };
+}
+
 export async function getEalingDocumentMetadata(url, rawTitle) {
   if (!url || !/^https:\/\/www\.ealing\.gov\.uk\/(?:download\/)?downloads\//i.test(url)) return null;
   const key = cacheKey(url);
   if (memoryCache.has(key)) return memoryCache.get(key);
 
   try {
-    const cached = await store().get(key, { type: 'json', consistency: 'eventual' });
+    const cached = normaliseRecord(await store().get(key, { type: 'json', consistency: 'eventual' }));
     if (cached?.description) {
       memoryCache.set(key, cached);
       return cached;
