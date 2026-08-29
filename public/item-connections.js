@@ -16,7 +16,7 @@ function phraseMatch(text, phrase) {
   const match = pattern.exec(text);
   if (!match) return null;
   const start = match.index + match[1].length;
-  return { start, end: start + match[2].length, phrase: candidate };
+  return { start, end: start + match[2].length, phrase: match[2] };
 }
 
 function isEmbeddedPlacePrefix(text, entity, match) {
@@ -48,14 +48,14 @@ function directEntityMatches(text, entities) {
   return (entities || [])
     .map(entity => ({ entity, match: bestEntityMatch(text, entity) }))
     .filter(item => item.match)
-    .sort((a, b) => (typePriority[a.entity.type] ?? 9) - (typePriority[b.entity.type] ?? 9) || b.match.phrase.length - a.match.phrase.length || a.entity.name.localeCompare(b.entity.name))
-    .map(item => item.entity);
+    .sort((a, b) => (typePriority[a.entity.type] ?? 9) - (typePriority[b.entity.type] ?? 9) || b.match.phrase.length - a.match.phrase.length || a.entity.name.localeCompare(b.entity.name));
 }
 
-function entityChip(entity, suffix = '') {
+function entityChip(entity, suffix = '', displayName = null) {
   const route = entity.route || entity.commonsRoute;
   const href = route ? `/${route}` : null;
-  const label = `${esc(entity.name)}${suffix ? ` <small>${esc(suffix)}</small>` : ''}`;
+  const shown = displayName || entity.name;
+  const label = `${esc(shown)}${suffix ? ` <small>${esc(suffix)}</small>` : ''}`;
   return href ? `<a class="entity-link-chip" href="${esc(href)}">${label}<span aria-hidden="true">→</span></a>` : `<span class="entity-link-chip">${label}</span>`;
 }
 
@@ -81,12 +81,13 @@ async function renderConnections() {
     if (!response.ok) return true;
     const data = await response.json();
     const text = normalizedText(`${title.textContent || ''}\n${summary?.textContent || ''}`);
-    const direct = directEntityMatches(text, data.entities).slice(0, 8);
-    if (!direct.length) {
+    const directMatches = directEntityMatches(text, data.entities).slice(0, 8);
+    if (!directMatches.length) {
       section.hidden = true;
       return true;
     }
 
+    const direct = directMatches.map(item => item.entity);
     const directIds = new Set(direct.map(entity => entity.id));
     const relationshipSets = await Promise.all(direct.slice(0, 6).map(reviewedConnectionsForEntity));
     const related = new Map();
@@ -97,7 +98,12 @@ async function renderConnections() {
     });
 
     const relatedItems = [...related.values()].sort((a, b) => a.name.localeCompare(b.name)).slice(0, 8);
-    content.innerHTML = `<div class="entity-link-row"><strong>Mentioned in this source</strong><div class="entity-link-chips">${direct.map(entity => entityChip(entity, entity.type)).join('')}</div></div>${relatedItems.length ? `<div class="entity-link-row"><strong>Connected through reviewed evidence</strong><div class="entity-link-chips">${relatedItems.map(entity => entityChip(entity, entity.relationship)).join('')}</div></div>` : ''}<p class="entity-link-note">Direct links come from exact reviewed names or aliases in the source excerpt. Related links are one step away in the reviewed civic graph; they are not claims made by the original publisher.</p>`;
+    const directChips = directMatches.map(({ entity, match }) => {
+      const sourceName = match.phrase;
+      const suffix = normalizedText(sourceName).toLowerCase() === normalizedText(entity.name).toLowerCase() ? entity.type : `${entity.type} · ${entity.name}`;
+      return entityChip(entity, suffix, sourceName);
+    }).join('');
+    content.innerHTML = `<div class="entity-link-row"><strong>Mentioned in this source</strong><div class="entity-link-chips">${directChips}</div></div>${relatedItems.length ? `<div class="entity-link-row"><strong>Connected through reviewed evidence</strong><div class="entity-link-chips">${relatedItems.map(entity => entityChip(entity, entity.relationship)).join('')}</div></div>` : ''}<p class="entity-link-note">Direct links preserve the wording used by the source while resolving reviewed aliases to a canonical civic entity. Related links are one step away in the reviewed civic graph; they are not claims made by the original publisher.</p>`;
     section.hidden = false;
     return true;
   } catch (error) {
