@@ -1,9 +1,11 @@
 import { XMLParser } from 'fast-xml-parser';
+import { getEalingDocumentMetadata, EALING_DOCUMENT_METADATA_TIMEOUT_MS } from '../lib/ealing-document-metadata.mjs';
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', textNodeName: '#text' });
 const arr = value => value == null ? [] : Array.isArray(value) ? value : [value];
 const textValue = value => value?.['#text'] ?? value ?? '';
 const DOCUMENT_TIMEOUT_MS = 1000;
+const METADATA_ENRICH_LIMIT = 20;
 const knownTowns = ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
 
 const feeds = [
@@ -58,6 +60,10 @@ function freshness(lastPublishedAt) {
   if (days <= 180) return 'active';
   if (days <= 730) return 'quiet';
   return 'historical';
+}
+
+function rawPeriod(rawTitle) {
+  return strip(rawTitle).match(/^downloads?\s*:\s*(.+)$/i)?.[1]?.trim() || null;
 }
 
 function displayTitle(feed, rawTitle) {
@@ -135,6 +141,29 @@ async function fetchFeed(feed) {
   } finally { clearTimeout(timeout); }
 }
 
+async function enrichDocumentMetadata(items) {
+  const candidates = [...items]
+    .filter(item => item.canonicalUrl && rawPeriod(item.rawSourceTitle))
+    .sort((a, b) => Date.parse(b.publishedAt || 0) - Date.parse(a.publishedAt || 0))
+    .slice(0, METADATA_ENRICH_LIMIT);
+
+  const settled = await Promise.allSettled(candidates.map(async item => {
+    const metadata = await getEalingDocumentMetadata(item.canonicalUrl, item.rawSourceTitle);
+    if (!metadata?.description) return false;
+    const period = rawPeriod(item.rawSourceTitle);
+    item.documentDescription = metadata.description;
+    item.title = period ? `${metadata.description} — ${period}` : metadata.description;
+    item.summary = `Ealing Council classifies this document under “${item.documentCategory}”. The original council document remains the canonical source.`;
+    const metadataTowns = inferTowns(metadata.description);
+    item.towns = [...new Set([...(item.towns || []), ...metadataTowns])];
+    item.boroughWide = item.towns.length === 0;
+    item.metadataEnriched = true;
+    return true;
+  }));
+
+  return settled.filter(result => result.status === 'fulfilled' && result.value).length;
+}
+
 export async function fetchEalingCouncilDocuments() {
   const settled = await Promise.allSettled(feeds.map(fetchFeed));
   const items = [];
@@ -156,6 +185,7 @@ export async function fetchEalingCouncilDocuments() {
     seen.add(key);
     return true;
   });
+  const metadataEnriched = await enrichDocumentMetadata(deduped);
   const responding = feedHealth.filter(x => x.ok).length;
   return {
     source: { id:'ealing-council-documents', name:'Ealing Council — Document Watch', homepage:'https://www.ealing.gov.uk/', sourceClass:'Official record' },
@@ -163,6 +193,6 @@ export async function fetchEalingCouncilDocuments() {
     status: responding > 0 ? 'ok' : 'error',
     error: responding > 0 ? null : 'All enabled Ealing Council document feeds unavailable',
     items: deduped,
-    diagnostics: { enabledFeeds:feeds.length, respondingFeeds:responding, timeoutMs:DOCUMENT_TIMEOUT_MS, feeds:feedHealth }
+    diagnostics: { enabledFeeds:feeds.length, respondingFeeds:responding, timeoutMs:DOCUMENT_TIMEOUT_MS, metadataEnrichLimit:METADATA_ENRICH_LIMIT, metadataTimeoutMs:EALING_DOCUMENT_METADATA_TIMEOUT_MS, metadataEnriched, feeds:feedHealth }
   };
 }
