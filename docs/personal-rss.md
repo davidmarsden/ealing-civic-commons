@@ -1,7 +1,7 @@
 # Civic Commons personal RSS
 
 **Status:** Social Phase B2 working model  
-**Date:** 27 August 2026
+**Date:** 29 August 2026
 
 Personal RSS turns browser-local Civic Commons follows into a portable standards-based feed without creating an account.
 
@@ -49,13 +49,13 @@ The URL contains only civic follow identifiers. It does not contain a name, emai
 
 However, a personal RSS URL is **not secret**. Anyone who receives the URL can inspect its parameters and infer the stories, sources, places or topics represented by it. The UI says this explicitly before users copy or share the URL.
 
-## Current feed-window limitation
+## Persistent civic items
 
-Source items are still derived from the current live Civic Commons ingestion window rather than a permanent item store. A source item can therefore fall out of the current feed window.
+Normalized source items are copied into a site-wide Netlify Blobs store on a 15-minute schedule. The existing stable item key is the archive key, so adding persistence does not change item URLs, thread IDs, contribution IDs or follow parameters.
 
-Approved contribution records are persistent in the public contribution registry. Contributions to a directly followed item can therefore continue to appear as RSS entries even if the original source item is no longer in the current live window.
+A directly followed story is now loaded from the persistent store when it has fallen out of the live ingestion window. This means its original Civic Commons RSS entry and title context for later approved contributions remain available.
 
-Persistent civic item storage remains a later infrastructure step and can be added without changing the item keys, thread IDs, contribution IDs or personal-RSS parameter model.
+Source, place and topic follows still use the current live window for discovery of new source items. This is intentional for the first persistent-store iteration: feed readers retain entries they have already received, while the Commons archive provides durable lookup for individual civic objects. A later query/index layer can expose broader historical source/topic timelines without changing the subscription model.
 
 ## No engagement ranking
 
