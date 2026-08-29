@@ -34,6 +34,24 @@ export const INSTITUTIONAL_ENTITIES = [
     description: 'The Ealing Council body responsible for administering and overseeing the London Borough of Ealing Pension Fund.',
     aliases: ['Pension Fund Panel', 'PFP'],
     providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/ian-kingston',
+    id: 'civic:person:ian-kingston',
+    name: 'Ian Kingston',
+    type: 'person',
+    description: 'Ealing councillor and Chair of the Ealing Pension Fund Panel for 2026/27.',
+    aliases: ['Cllr Ian Kingston'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/yvonne-johnson',
+    id: 'civic:person:yvonne-johnson',
+    name: 'Yvonne Johnson',
+    type: 'person',
+    description: 'Ealing councillor and Vice-Chair of the Ealing Pension Fund Panel for 2026/27.',
+    aliases: ['Cllr Yvonne Johnson'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   }
 ];
 
