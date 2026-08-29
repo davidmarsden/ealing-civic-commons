@@ -36,6 +36,42 @@ export const INSTITUTIONAL_ENTITIES = [
     providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   },
   {
+    route: 'organisations/ealing-pension-fund',
+    id: 'civic:organisation:ealing-pension-fund',
+    name: 'London Borough of Ealing Pension Fund',
+    type: 'organisation',
+    description: 'The Local Government Pension Scheme fund administered by Ealing Council for eligible employees, former employees and other participating employers.',
+    aliases: ['Ealing Pension Fund', 'London Borough of Ealing Pension Fund'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/london-civ',
+    id: 'civic:organisation:london-civ',
+    name: 'London CIV',
+    type: 'organisation',
+    description: 'The Local Government Pension Scheme asset-pooling company that manages investments for London local-authority Partner Funds and Buckinghamshire Council.',
+    aliases: ['London LGPS CIV', 'London LGPS CIV Limited'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/london-councils',
+    id: 'civic:organisation:london-councils',
+    name: 'London Councils',
+    type: 'organisation',
+    description: 'The cross-party collective of London local government, bringing together the 32 London boroughs and the City of London Corporation.',
+    aliases: [],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/london-councils-leaders-committee',
+    id: 'civic:organisation:london-councils-leaders-committee',
+    name: "London Councils Leaders' Committee",
+    type: 'organisation',
+    description: 'London Councils’ main decision-making committee, made up of the leaders or directly elected mayors of London boroughs and the City of London.',
+    aliases: ["Leaders' Committee", 'London Councils Leaders Committee'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
     route: 'people/ian-kingston',
     id: 'civic:person:ian-kingston',
     name: 'Ian Kingston',
