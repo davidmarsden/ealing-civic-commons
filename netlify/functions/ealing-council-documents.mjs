@@ -69,7 +69,10 @@ function displayTitle(feed, rawTitle) {
 }
 
 function inferTowns(value) {
-  const text = String(value || '');
+  const text = String(value || '')
+    .replace(/\b(?:the\s+)?London Borough of Ealing(?: Council)?\b/gi, ' ')
+    .replace(/\bEaling Council\b/gi, ' ')
+    .replace(/\bEaling LBC\b/gi, ' ');
   return knownTowns.filter(town => new RegExp(`\\b${town.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(text));
 }
 
