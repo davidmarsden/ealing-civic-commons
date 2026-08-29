@@ -2,6 +2,7 @@ import { XMLParser } from 'fast-xml-parser';
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', textNodeName: '#text' });
 const arr = value => value == null ? [] : Array.isArray(value) ? value : [value];
+const ENRICHMENT_TIMEOUT_MS = 500;
 
 const topicFeeds = [
   ['201033', 'https://www.ealing.gov.uk/rss/201033/news'],
@@ -88,7 +89,7 @@ function civicTopics(value) {
 
 async function fetchTopicFeed(feed) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 4500);
+  const timeout = setTimeout(() => controller.abort(), ENRICHMENT_TIMEOUT_MS);
   try {
     const response = await fetch(feed.url, {
       signal: controller.signal,
@@ -160,7 +161,8 @@ export async function enrichEalingCouncilTopics(items) {
       topicFeedsTotal: topicFeeds.length,
       topicFeedsFetched: fetched,
       topicFeedsFailed: failed,
-      matchedItems
+      matchedItems,
+      timeoutMs: ENRICHMENT_TIMEOUT_MS
     }
   };
 }
