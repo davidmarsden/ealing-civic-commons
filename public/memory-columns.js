@@ -1,4 +1,19 @@
+function linkPilotEntityTags() {
+  document.querySelectorAll('.memory-tag').forEach(tag => {
+    if (tag.dataset.entityLinked === 'true') return;
+    const label = tag.childNodes[0]?.textContent?.trim();
+    if (label !== 'Southall Gasworks') return;
+    const link = document.createElement('a');
+    link.href = '/places/southall-gasworks.html';
+    link.className = 'memory-tag memory-tag-link';
+    link.dataset.entityLinked = 'true';
+    while (tag.firstChild) link.appendChild(tag.firstChild);
+    tag.replaceWith(link);
+  });
+}
+
 function arrangeMemoryColumns() {
+  linkPilotEntityTags();
   const grid = document.querySelector('.memory-grid');
   if (!grid || grid.dataset.columnsArranged === 'true') return;
 
@@ -24,6 +39,7 @@ function arrangeMemoryColumns() {
   right.append(related, people);
   grid.replaceChildren(left, right);
   grid.dataset.columnsArranged = 'true';
+  linkPilotEntityTags();
 }
 
 const memoryRoot = document.getElementById('civicMemoryContent');
