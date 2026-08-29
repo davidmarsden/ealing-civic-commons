@@ -12,6 +12,10 @@ function routeInfo() {
 function entityLink(entity) {
   return entity?.commonsRoute ? `<a class="entity-inline-link" href="/${esc(entity.commonsRoute)}">${esc(entity.name)}</a>` : esc(entity?.name || entity?.id);
 }
+function topicLink(topic) {
+  const slug = String(topic?.id || '').replace(/^topic:/,'');
+  return slug ? `<a class="entity-topic" href="/topics/${esc(slug)}">${esc(topic.name)}</a>` : `<span class="entity-topic">${esc(topic?.name)}</span>`;
+}
 function renderHero(data) {
   document.title = `${data.issue.name} — Civic Commons`;
   $('#issueStatus').hidden = true;
@@ -20,11 +24,9 @@ function renderHero(data) {
 }
 function renderStats(data) {
   const c = data.counts || {};
-  const stats = [
-    [c.entities || 0,'key entities'], [c.relationships || 0,'reviewed relationships'], [c.sources || 0,'curated sources'], [c.reporting || 0,'archive posts']
-  ];
+  const stats = [[c.entities || 0,'key entities'], [c.relationships || 0,'reviewed relationships'], [c.sources || 0,'curated sources'], [c.reporting || 0,'archive posts']];
   $('#issueStats').innerHTML = stats.map(([n,label]) => `<div class="entity-stat"><strong>${n}</strong><span>${label}</span></div>`).join('');
-  $('#issueTopics').innerHTML = (data.topics || []).map(topic => `<span class="entity-topic">${esc(topic.name)}</span>`).join('') || '<span class="entity-empty">No reviewed topics found.</span>';
+  $('#issueTopics').innerHTML = (data.topics || []).map(topicLink).join('') || '<span class="entity-empty">No reviewed topics found.</span>';
 }
 function renderProviders(items) {
   $('#issueProviders').innerHTML = (items || []).map(provider => `<div class="entity-provider"><strong>${provider.url ? `<a href="${esc(provider.url)}" target="_blank" rel="noopener noreferrer">${esc(provider.label || provider.name)}</a>` : esc(provider.label || provider.name)}</strong><span>${esc(provider.role || 'Data provider')}</span></div>`).join('');
