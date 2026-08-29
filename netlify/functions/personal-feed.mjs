@@ -1,4 +1,5 @@
 import feedHandler from './feed.mjs';
+import { getArchivedItem } from '../lib/civic-items.mjs';
 
 const MAX_TARGETS_PER_TYPE = 50;
 const MAX_TARGET_LENGTH = 512;
@@ -117,6 +118,16 @@ async function loadPublishedContributions(requestUrl) {
   }
 }
 
+async function loadArchivedFollowedItems(keys, liveItems) {
+  if (!keys.length) return [];
+  const liveKeys = new Set((liveItems || []).map(item => stableItemKey(item.id)));
+  const missing = keys.filter(key => !liveKeys.has(key));
+  const settled = await Promise.allSettled(missing.map(key => getArchivedItem(key)));
+  return settled
+    .filter(result => result.status === 'fulfilled' && result.value?.item)
+    .map(result => result.value.item);
+}
+
 export default async request => {
   const requestUrl = new URL(request.url);
   const { targets, overflow } = readTargets(requestUrl);
@@ -155,10 +166,13 @@ export default async request => {
   }
 
   const data = await upstream.json();
-  const matchedItems = (data.items || []).filter(item => matches(item, targets));
+  const liveItems = data.items || [];
+  const archivedFollowedItems = await loadArchivedFollowedItems(targets.items, liveItems);
+  const combinedItems = [...liveItems, ...archivedFollowedItems];
+  const matchedItems = combinedItems.filter(item => matches(item, targets));
   const siteOrigin = requestUrl.origin;
   const feedUrl = canonicalFeedUrl(request.url, targets);
-  const titleByThread = new Map((data.items || []).map(item => [`civic-item:${stableItemKey(item.id)}`, item.title]));
+  const titleByThread = new Map(combinedItems.map(item => [`civic-item:${stableItemKey(item.id)}`, item.title]));
   const followedThreads = new Set(targets.items.map(key => `civic-item:${key}`));
   matchedItems.forEach(item => followedThreads.add(`civic-item:${stableItemKey(item.id)}`));
 
