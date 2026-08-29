@@ -1,4 +1,4 @@
-import { findEntityByProviderId, findEntityByRoute, providerViews } from '../lib/entity-registry.mjs';
+import { findEntityByProviderId, findEntityByRoute, makeZettelRegistryEntity, parseEntityRoute, providerViews } from '../lib/entity-registry.mjs';
 
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
 const EXPECTED_SCHEMA = 1;
@@ -10,27 +10,38 @@ function json(body, status = 200, maxAge = 300) {
 function byId(items = []) { return new Map(items.map(item => [item.id, item])); }
 function dateValue(value) { const n = Date.parse(value || ''); return Number.isFinite(n) ? n : 0; }
 
+function registryView(entity) {
+  return { id: entity.id, route: entity.route, name: entity.name, type: entity.type };
+}
+
+function nativeEntityResponse(registryEntity) {
+  return json({
+    matched: true,
+    schemaVersion: 1,
+    civicEntity: registryView(registryEntity),
+    entity: {
+      id: registryEntity.id,
+      name: registryEntity.name,
+      type: registryEntity.type,
+      aliases: registryEntity.aliases || [],
+      description: registryEntity.description || null,
+      provenance: 'commons-entity-registry'
+    },
+    providers: providerViews(registryEntity),
+    counts: { reporting: 0, relationships: 0, sources: 0 },
+    relationships: [], sources: [], reporting: [], topics: [],
+    provenance: { label: 'Civic entity', source: 'Civic Commons entity registry', method: 'Canonical Commons identity with no Southall-Zettel provider record attached.' }
+  }, 200, 300);
+}
+
 export default async request => {
   const requestUrl = new URL(request.url);
   const route = requestUrl.searchParams.get('route');
   const legacyId = requestUrl.searchParams.get('id');
-  const registryEntity = route ? findEntityByRoute(route) : legacyId ? findEntityByProviderId('southall-zettel', legacyId) : null;
-  if (!registryEntity) return json({ matched: false, reason: 'entity-not-in-commons-registry' }, 404, 300);
+  let registryEntity = route ? findEntityByRoute(route) : legacyId ? findEntityByProviderId('southall-zettel', legacyId) : null;
 
-  const zettelBinding = registryEntity.providers.find(provider => provider.provider === 'southall-zettel' && provider.entityId);
-  const providers = providerViews(registryEntity);
-
-  if (!zettelBinding) {
-    return json({
-      matched: true,
-      schemaVersion: 1,
-      civicEntity: { id: registryEntity.id, route: registryEntity.route, name: registryEntity.name, type: registryEntity.type },
-      entity: { id: registryEntity.id, name: registryEntity.name, type: registryEntity.type, aliases: [], description: null, provenance: 'commons-entity-registry' },
-      providers,
-      counts: { reporting: 0, relationships: 0, sources: 0 },
-      relationships: [], sources: [], reporting: [], topics: [],
-      provenance: { label: 'Civic entity', source: 'Civic Commons entity registry', method: 'Canonical Commons identity with no Southall-Zettel provider record attached.' }
-    }, 200, 300);
+  if (registryEntity && !registryEntity.providers.some(provider => provider.provider === 'southall-zettel' && provider.entityId)) {
+    return nativeEntityResponse(registryEntity);
   }
 
   try {
@@ -42,6 +53,26 @@ export default async request => {
     const entitiesById = byId(data.entities);
     const topicsById = byId(data.topics);
     const postsById = byId(data.posts);
+
+    if (!registryEntity && route) {
+      const parsed = parseEntityRoute(route);
+      if (!parsed) return json({ matched: false, reason: 'invalid-entity-route' }, 400, 300);
+      const providerEntity = entitiesById.get(`entity:${parsed.slug}`);
+      if (!providerEntity || providerEntity.type !== parsed.type) return json({ matched: false, reason: 'entity-not-in-commons-registry' }, 404, 300);
+      registryEntity = makeZettelRegistryEntity(providerEntity);
+    }
+
+    if (!registryEntity && legacyId) {
+      const providerEntity = entitiesById.get(legacyId);
+      registryEntity = makeZettelRegistryEntity(providerEntity);
+    }
+
+    if (!registryEntity) return json({ matched: false, reason: 'entity-not-in-commons-registry' }, 404, 300);
+
+    const zettelBinding = registryEntity.providers.find(provider => provider.provider === 'southall-zettel' && provider.entityId);
+    if (!zettelBinding) return nativeEntityResponse(registryEntity);
+
+    const providers = providerViews(registryEntity);
     const id = zettelBinding.entityId;
     const entity = entitiesById.get(id);
     if (!entity) return json({ matched: false, reason: 'provider-entity-not-found' }, 404, 300);
@@ -52,7 +83,7 @@ export default async request => {
     const relationships = (data.relationships || []).filter(rel => rel.review_status === 'reviewed' && (rel.from === id || rel.to === id)).map(rel => {
       const otherId = rel.from === id ? rel.to : rel.from;
       const other = entitiesById.get(otherId);
-      const otherRegistry = findEntityByProviderId('southall-zettel', otherId);
+      const otherRegistry = findEntityByProviderId('southall-zettel', otherId) || makeZettelRegistryEntity(other);
       const evidence = (rel.evidence || []).map(ref => {
         if (ref.id.startsWith('post:')) { const post = postsById.get(ref.id); return post ? { id: post.id, type: 'post', title: post.title, url: post.url, provider: 'southall-zettel' } : null; }
         const source = (data.sources || []).find(item => item.id === ref.id);
@@ -73,8 +104,8 @@ export default async request => {
     return json({
       matched: true,
       schemaVersion: data.schema_version,
-      civicEntity: { id: registryEntity.id, route: registryEntity.route, name: registryEntity.name, type: registryEntity.type },
-      entity: { id: entity.id, name: registryEntity.name || entity.name, type: registryEntity.type || entity.type, aliases: entity.aliases || [], description: entity.description || null, reviewStatus: entity.review_status, provenance: entity.provenance },
+      civicEntity: registryView(registryEntity),
+      entity: { id: entity.id, name: registryEntity.name || entity.name, type: registryEntity.type || entity.type, aliases: entity.aliases || registryEntity.aliases || [], description: entity.description || registryEntity.description || null, reviewStatus: entity.review_status, provenance: entity.provenance },
       providers,
       counts: { reporting: reporting.length, relationships: relationships.length, sources: sources.length },
       relationships, sources, reporting, topics,
