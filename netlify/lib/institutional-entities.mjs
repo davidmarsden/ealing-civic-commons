@@ -9,6 +9,15 @@ export const INSTITUTIONAL_ENTITIES = [
     providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   },
   {
+    route: 'organisations/ealing-safer-neighbourhood-board',
+    id: 'civic:organisation:ealing-safer-neighbourhood-board',
+    name: 'Ealing Safer Neighbourhood Board',
+    type: 'organisation',
+    description: 'The borough-wide safer neighbourhood board bringing together community, policing and local representatives around crime, safety and neighbourhood policing in Ealing.',
+    aliases: ['Ealing Safer Neighbourhoods Board', 'ESNB'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
     route: 'organisations/old-oak-and-park-royal-development-corporation',
     id: 'civic:organisation:old-oak-and-park-royal-development-corporation',
     name: 'Old Oak and Park Royal Development Corporation',
