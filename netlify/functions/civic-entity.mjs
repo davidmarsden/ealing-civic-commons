@@ -1,4 +1,5 @@
 import { findEntityByProviderId, findEntityByRoute, makeZettelRegistryEntity, parseEntityRoute, providerViews } from '../lib/entity-registry.mjs';
+import { findInstitutionalEntityByRoute } from '../lib/institutional-entities.mjs';
 
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
 const EXPECTED_SCHEMA = 1;
@@ -30,7 +31,7 @@ function nativeEntityResponse(registryEntity) {
     providers: providerViews(registryEntity),
     counts: { reporting: 0, relationships: 0, sources: 0 },
     relationships: [], sources: [], reporting: [], topics: [],
-    provenance: { label: 'Civic entity', source: 'Civic Commons entity registry', method: 'Canonical Commons identity with no Southall-Zettel provider record attached.' }
+    provenance: { label: 'Civic entity', source: 'Civic Commons entity registry', method: 'Canonical Commons identity with no historical research-archive record attached.' }
   }, 200, 300);
 }
 
@@ -38,7 +39,7 @@ export default async request => {
   const requestUrl = new URL(request.url);
   const route = requestUrl.searchParams.get('route');
   const legacyId = requestUrl.searchParams.get('id');
-  let registryEntity = route ? findEntityByRoute(route) : legacyId ? findEntityByProviderId('southall-zettel', legacyId) : null;
+  let registryEntity = route ? (findEntityByRoute(route) || findInstitutionalEntityByRoute(route)) : legacyId ? findEntityByProviderId('southall-zettel', legacyId) : null;
 
   if (registryEntity && !registryEntity.providers.some(provider => provider.provider === 'southall-zettel' && provider.entityId)) {
     return nativeEntityResponse(registryEntity);
@@ -109,7 +110,7 @@ export default async request => {
       providers,
       counts: { reporting: reporting.length, relationships: relationships.length, sources: sources.length },
       relationships, sources, reporting, topics,
-      provenance: { label: 'Civic memory', source: 'Southall-Zettel via the Civic Commons entity registry', method: 'Civic Commons owns the public civic identity and route. Southall-Zettel supplies reviewed relationships, source records and deterministic historical-reporting matches as one provider.' }
+      provenance: { label: 'Civic memory', source: 'Southall Stories research archive via the Civic Commons entity registry', method: 'Civic Commons owns the public civic identity and route. The Southall Stories research archive supplies reviewed relationships, source records and deterministic historical-reporting matches as one provider.' }
     }, 200, 300);
   } catch (error) {
     console.error('Civic entity lookup failed', error);
