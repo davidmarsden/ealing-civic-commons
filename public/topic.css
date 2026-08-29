@@ -1,0 +1,6 @@
+.topic-hero{background:linear-gradient(180deg,#f4f0e5 0%,#f8f6ef 100%)}
+.topic-stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.topic-stat-grid .entity-stat{border-top:3px solid #26392f;padding-top:.8rem}
+.topic-stat-grid strong{display:block;font-family:Georgia,serif;font-size:2.15rem;line-height:1;color:#17261f}
+.topic-stat-grid span{display:block;margin-top:.45rem;color:#687169;font-size:.9rem}
+@media(max-width:700px){.topic-stat-grid{grid-template-columns:1fr 1fr}}
