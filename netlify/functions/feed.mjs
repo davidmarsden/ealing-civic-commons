@@ -63,7 +63,7 @@ const sources = [
     homepage: 'https://ealingcivicsociety.org/',
     sourceClass: 'Organisation / campaign',
     towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
-    defaultTopics: ['Planning & development', 'Culture & history', 'Community']
+    defaultTopics: ['Planning & development', 'Culture & history']
   },
   {
     id: 'west-ealing-neighbours',
