@@ -94,6 +94,15 @@ const sources = [
     referer: 'https://ealing.moderngov.co.uk/mgWhatsNew.aspx?bcr=1'
   },
   {
+    id: 'ealing-council-news',
+    name: 'Ealing Council — News',
+    url: 'https://www.ealing.gov.uk/rss/news',
+    homepage: 'https://www.ealing.gov.uk/news',
+    sourceClass: 'Official record',
+    towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
+    defaultTopics: ['Council & democracy', 'Community']
+  },
+  {
     id: 'open-council-network-reddit-ealing',
     name: 'Open Council Network — Ealing updates',
     url: 'https://www.reddit.com/r/OpenCouncilNetwork/search.rss?q=Ealing&restrict_sr=1&sort=new',
@@ -391,9 +400,33 @@ async function fetchSource(source) {
   }
 }
 
+function canonicalItemUrl(value) {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    url.hash = '';
+    url.hostname = url.hostname.toLowerCase();
+    if ((url.protocol === 'https:' && url.port === '443') || (url.protocol === 'http:' && url.port === '80')) url.port = '';
+    if (url.pathname !== '/') url.pathname = url.pathname.replace(/\/+$/, '');
+    return url.toString();
+  } catch {
+    return String(value).trim();
+  }
+}
+
+function dedupeItemsByCanonicalUrl(items) {
+  const seen = new Set();
+  return items.filter(item => {
+    const key = canonicalItemUrl(item.url) || item.id;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export default async () => {
   const results = await Promise.all(sources.map(fetchSource));
-  const items = results.flatMap(r => r.items).sort((a, b) => {
+  const items = dedupeItemsByCanonicalUrl(results.flatMap(r => r.items)).sort((a, b) => {
     const ad = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
     const bd = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
     return bd - ad;
