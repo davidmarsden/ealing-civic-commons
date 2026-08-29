@@ -23,6 +23,14 @@ export const POLITICAL_SOURCES = {
     url: 'https://ealing.moderngov.co.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
     reviewedAt: '2026-08-29'
   },
+  'ealing-jags-sanghera-councillor-2026': {
+    id: 'commons-source:ealing-jags-sanghera-councillor-2026',
+    title: 'Councillor Jags Sanghera',
+    publisher: 'Ealing Council / ModernGov',
+    sourceType: 'official-directory',
+    url: 'https://ealing.moderngov.co.uk/mgUserInfo.aspx?UID=4397',
+    reviewedAt: '2026-08-29'
+  },
   'ealing-libdem-shadow-cabinet-2026': {
     id: 'commons-source:ealing-libdem-shadow-cabinet-2026',
     title: 'Liberal Democrat opposition and shadow cabinet after the 2026 election',
@@ -38,6 +46,7 @@ const labourGroup = { id: 'civic:organisation:ealing-labour-group', name: 'Ealin
 const libDemGroup = { id: 'civic:organisation:ealing-liberal-democrat-group', name: 'Ealing Liberal Democrat Group', type: 'organisation', route: 'organisations/ealing-liberal-democrat-group' };
 const conservativeGroup = { id: 'civic:organisation:ealing-conservative-group', name: 'Ealing Conservative Group', type: 'organisation', route: 'organisations/ealing-conservative-group' };
 const greenGroup = { id: 'civic:organisation:ealing-green-group', name: 'Ealing Green Group', type: 'organisation', route: 'organisations/ealing-green-group' };
+const norwoodGreen = { id: 'civic:place:norwood-green', name: 'Norwood Green', type: 'place', route: 'places/norwood-green' };
 const electionEvidence = ['ealing-council-election-results-2026', 'ealing-councillors-by-party-2026'];
 const oppositionEvidence = ['ealing-council-opposition-appointments-2026-27', 'ealing-councillors-by-party-2026'];
 const currentOppositionEvidence = ['ealing-council-opposition-appointments-2026-27', 'ealing-libdem-shadow-cabinet-2026'];
@@ -86,6 +95,8 @@ export const POLITICAL_ASSERTIONS = [
     evidence: electionEvidence
   }),
   assertion({ id: 'commons-assertion:peter-mason-member-of-ealing-labour-group-2026', from: person('peter-mason','Peter Mason'), to: labourGroup, type: 'member_of', note: 'Peter Mason is a Labour councillor and leads the Labour-controlled council.', evidence: electionEvidence }),
+  assertion({ id: 'commons-assertion:jags-sanghera-councillor-for-norwood-green-2026', from: person('jags-sanghera','Jags Sanghera'), to: norwoodGreen, type: 'councillor_for', note: 'Jags Sanghera is a Labour councillor representing Norwood Green ward following the 7 May 2026 election.', validFrom: '2026-05-07', evidence: ['ealing-council-election-results-2026', 'ealing-jags-sanghera-councillor-2026'] }),
+  assertion({ id: 'commons-assertion:jags-sanghera-member-of-ealing-labour-group-2026', from: person('jags-sanghera','Jags Sanghera'), to: labourGroup, type: 'member_of', note: 'Ealing Council records Jags Sanghera as a Labour councillor for Norwood Green.', validFrom: '2026-05-07', evidence: ['ealing-jags-sanghera-councillor-2026'] }),
   assertion({ id: 'commons-assertion:gary-malcolm-leader-of-opposition-2026', from: person('gary-malcolm','Gary Malcolm'), to: council, type: 'leader_of_opposition_on', note: 'The council’s 2026/27 appointments record Gary Malcolm as Leader of the Opposition.', evidence: currentOppositionEvidence }),
   assertion({ id: 'commons-assertion:gary-malcolm-leader-of-ealing-libdem-group-2026', from: person('gary-malcolm','Gary Malcolm'), to: libDemGroup, type: 'leader_of', note: 'Gary Malcolm leads the Liberal Democrat opposition group on Ealing Council.', evidence: currentOppositionEvidence }),
   assertion({ id: 'commons-assertion:jon-ball-shadow-planning-2026', from: person('jon-ball','Jon Ball'), to: libDemGroup, type: 'shadow_cabinet_member_of', note: 'Jon Ball is the opposition spokesperson for Planning, Licensing and Regeneration and also serves as opposition whip.', evidence: currentOppositionEvidence }),
