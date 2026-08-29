@@ -4,6 +4,7 @@ const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_
 const arr = value => value == null ? [] : Array.isArray(value) ? value : [value];
 const textValue = value => value?.['#text'] ?? value ?? '';
 const towns = ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
+const DOCUMENT_TIMEOUT_MS = 1000;
 
 const feeds = [
   ['201033','Council and local decisions',['Council & democracy']],
@@ -61,7 +62,7 @@ function freshness(lastPublishedAt) {
 
 async function fetchFeed(feed) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 2500);
+  const timeout = setTimeout(() => controller.abort(), DOCUMENT_TIMEOUT_MS);
   try {
     const response = await fetch(feed.url, {
       signal: controller.signal,
@@ -135,6 +136,6 @@ export async function fetchEalingCouncilDocuments() {
     status: responding > 0 ? 'ok' : 'error',
     error: responding > 0 ? null : 'All enabled Ealing Council document feeds unavailable',
     items: deduped,
-    diagnostics: { enabledFeeds:feeds.length, respondingFeeds:responding, feeds:feedHealth }
+    diagnostics: { enabledFeeds:feeds.length, respondingFeeds:responding, timeoutMs:DOCUMENT_TIMEOUT_MS, feeds:feedHealth }
   };
 }
