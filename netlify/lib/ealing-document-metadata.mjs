@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { getStore } from '@netlify/blobs';
 
 const STORE_NAME = 'ealing-council-document-metadata';
-const FETCH_TIMEOUT_MS = 650;
+const FETCH_TIMEOUT_MS = 450;
 const memoryCache = new Map();
 
 const store = () => getStore(STORE_NAME);
@@ -68,12 +68,12 @@ function extractMetadata(html, rawTitle) {
 }
 
 export async function getEalingDocumentMetadata(url, rawTitle) {
-  if (!url || !/^https:\/\/www\.ealing\.gov\.uk\/downloads\//i.test(url)) return null;
+  if (!url || !/^https:\/\/www\.ealing\.gov\.uk\/(?:download\/)?downloads\//i.test(url)) return null;
   const key = cacheKey(url);
   if (memoryCache.has(key)) return memoryCache.get(key);
 
   try {
-    const cached = await store().get(key, { type: 'json' });
+    const cached = await store().get(key, { type: 'json', consistency: 'eventual' });
     if (cached?.description) {
       memoryCache.set(key, cached);
       return cached;
