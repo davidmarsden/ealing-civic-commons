@@ -12,7 +12,7 @@ const healthList = $('#healthList');
 
 const pillClass = type => type === 'Official record' ? 'official' : type === 'Journalism / publishing' ? 'journalism' : type === 'Independent civic data / analysis' ? 'analysis' : 'organisation';
 const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date(iso); return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' }).format(d); };
-const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const esc = s => String(s ?? '').replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]));
 const itemPath = item => `/items/${stableItemKey(item.id)}`;
 const threadId = item => `civic-item:${stableItemKey(item.id)}`;
 
@@ -150,7 +150,7 @@ function filteredItems() {
   if (!state.data) return [];
   const follows = loadFollows();
   return state.data.items.filter(item => {
-    const townOk = state.filters.town === 'All' || item.towns.includes(state.filters.town);
+    const townOk = state.filters.town === 'All' || item.boroughWide === true || item.towns.includes(state.filters.town);
     const topicOk = state.filters.topic === 'All' || item.topics.includes(state.filters.topic);
     const typeOk = state.filters.type === 'All' || item.sourceClass === state.filters.type;
     const followOk = state.view === 'latest' || itemMatchesFollows(item, follows);
@@ -196,7 +196,10 @@ function render() {
     const stats = contributionStats(item);
     const label = contributionLabel(stats);
     const additions = label ? `<a class="contribution-count" href="${esc(itemPath(item))}#discussion">${esc(label)}</a>` : '';
-    return `<article class="item"><div class="item-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass)}</span><div class="item-source">${esc(item.source)}</div><div>${esc(fmtDate(item.publishedAt))}</div></div><div><h3><a href="${esc(itemPath(item))}">${esc(item.title)}</a></h3>${item.summary ? `<p class="item-summary">${esc(item.summary)}</p>` : ''}<div class="item-actions"><a href="${esc(itemPath(item))}">Add context →</a>${additions}<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Read original ↗</a></div><div class="tags">${item.towns.map(t => `<span class="tag">${esc(t)}</span>`).join('')}${item.topics.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div></div></article>`;
+    const placeTags = item.boroughWide === true
+      ? '<span class="tag">Borough-wide</span>'
+      : item.towns.map(t => `<span class="tag">${esc(t)}</span>`).join('');
+    return `<article class="item"><div class="item-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass)}</span><div class="item-source">${esc(item.source)}</div><div>${esc(fmtDate(item.publishedAt))}</div></div><div><h3><a href="${esc(itemPath(item))}">${esc(item.title)}</a></h3>${item.summary ? `<p class="item-summary">${esc(item.summary)}</p>` : ''}<div class="item-actions"><a href="${esc(itemPath(item))}">Add context →</a>${additions}<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Read original ↗</a></div><div class="tags">${placeTags}${item.topics.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div></div></article>`;
   }).join('');
 }
 
@@ -252,5 +255,5 @@ $('#followingViewButton').addEventListener('click', () => setView('following'));
 document.querySelectorAll('[data-view-link]').forEach(link => link.addEventListener('click', event => { event.preventDefault(); setView(link.dataset.viewLink); document.querySelector('#latest').scrollIntoView(); }));
 $('#clearFollowsButton').addEventListener('click', () => { if (confirm('Clear all follows stored in this browser?')) { clearFollows(); render(); } });
 window.addEventListener('civic-follows-changed', render);
-window.addEventListener('storage', event => { if (event.key === 'civic-commons:follows:v1') render(); });
+window.addEventListener('storage', event => { if (event.key === 'civic-commons:follows:v1') render; });
 load();
