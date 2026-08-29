@@ -1,4 +1,5 @@
 import { XMLParser } from 'fast-xml-parser';
+import { enrichEalingCouncilTopics } from './ealing-council-topics.mjs';
 
 const sources = [
   {
@@ -428,7 +429,9 @@ function dedupeItemsByCanonicalUrl(items) {
 
 export default async () => {
   const results = await Promise.all(sources.map(fetchSource));
-  const items = dedupeItemsByCanonicalUrl(results.flatMap(r => r.items)).sort((a, b) => {
+  const dedupedItems = dedupeItemsByCanonicalUrl(results.flatMap(r => r.items));
+  const enrichment = await enrichEalingCouncilTopics(dedupedItems);
+  const items = enrichment.items.sort((a, b) => {
     const ad = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
     const bd = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
     return bd - ad;
@@ -443,7 +446,12 @@ export default async () => {
     itemCount: r.items.length,
     diagnostics: r.source.browserRetry ? r.diagnostics : undefined
   }));
-  return new Response(JSON.stringify({ generatedAt: new Date().toISOString(), items, health }), {
+  return new Response(JSON.stringify({
+    generatedAt: new Date().toISOString(),
+    items,
+    health,
+    enrichment: { ealingCouncilTopics: enrichment.diagnostics }
+  }), {
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'cache-control': 'public, max-age=300, stale-while-revalidate=900',
