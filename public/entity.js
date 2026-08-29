@@ -2,6 +2,7 @@ const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date(iso); return new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'long',year:'numeric'}).format(d); };
 const labelType = value => String(value || '').replaceAll('_',' ');
+const providerLabel = value => value === 'southall-zettel' ? 'Southall Stories research archive' : value === 'civic-commons' ? 'Civic Commons' : value || 'reviewed provider';
 const pillClass = type => type === 'Official record' ? 'official' : type === 'Journalism / publishing' ? 'journalism' : type === 'Independent civic data / analysis' ? 'analysis' : 'organisation';
 const routeType = new Map([['people','person'],['organisations','organisation'],['places','place']]);
 const typeLabel = new Map([['person','person'],['organisation','organisation'],['place','place']]);
@@ -66,7 +67,7 @@ function renderCommonsAssertions(data, entity) {
     const from = assertion.direction === 'outgoing' ? entityLink(current) : entityLink(assertion.other);
     const to = assertion.direction === 'outgoing' ? entityLink(assertion.other) : entityLink(current);
     const reviewed = assertion.reviewedBy ? `${assertion.reviewedBy}${assertion.reviewedAt ? ` · reviewed ${fmtDate(assertion.reviewedAt)}` : ''}` : 'Civic Commons';
-    return `<li><span class="relationship-type">${esc(labelType(assertion.type))}</span><h3>${from} → ${to}</h3>${assertion.note ? `<p class="relationship-note">${esc(assertion.note)}</p>` : ''}${assertion.validFrom || assertion.validTo ? `<span class="entity-meta">Period: ${esc(assertion.validFrom || 'unknown')} → ${esc(assertion.validTo || 'present / unknown')}</span>` : ''}${assertion.evidence?.length ? `<span class="entity-meta">External evidence: ${assertion.evidence.map(ev => ev.url ? `<a href="${esc(ev.url)}" target="_blank" rel="noopener noreferrer">${esc(ev.title)}</a>` : esc(ev.title)).join(' · ')}</span>` : ''}<span class="entity-meta">Provider: ${esc(reviewed)} · ${esc(assertion.provenance || 'commons-reviewed-assertion')}</span></li>`;
+    return `<li><span class="relationship-type">${esc(labelType(assertion.type))}</span><h3>${from} → ${to}</h3>${assertion.note ? `<p class="relationship-note">${esc(assertion.note)}</p>` : ''}${assertion.validFrom || assertion.validTo ? `<span class="entity-meta">Period: ${esc(assertion.validFrom || 'unknown')} → ${esc(assertion.validTo || 'present / unknown')}</span>` : ''}${assertion.evidence?.length ? `<span class="entity-meta">External evidence: ${assertion.evidence.map(ev => ev.url ? `<a href="${esc(ev.url)}" target="_blank" rel="noopener noreferrer">${esc(ev.title)}</a>` : esc(ev.title)).join(' · ')}</span>` : ''}<span class="entity-meta">Reviewed by ${esc(reviewed)}</span></li>`;
   }).join('')}</ul>`;
 }
 
@@ -78,7 +79,7 @@ function renderRelationships(items, entity) {
   $('#relationships').innerHTML = `<ul class="entity-list">${items.map(rel => {
     const from = rel.direction === 'outgoing' ? entityLink(current(entity)) : entityLink(rel.other);
     const to = rel.direction === 'outgoing' ? entityLink(rel.other) : entityLink(current(entity));
-    return `<li><span class="relationship-type">${esc(labelType(rel.type))}</span><h3>${from} → ${to}</h3>${rel.note ? `<p class="relationship-note">${esc(rel.note)}</p>` : ''}${rel.validFrom || rel.validTo ? `<span class="entity-meta">Period: ${esc(rel.validFrom || 'unknown')} → ${esc(rel.validTo || 'present / unknown')}</span>` : ''}${rel.evidence?.length ? `<span class="entity-meta">Evidence: ${rel.evidence.map(ev => ev.url ? `<a href="${esc(ev.url)}" target="_blank" rel="noopener noreferrer">${esc(ev.title)}</a>` : esc(ev.title)).join(' · ')}</span>` : ''}<span class="entity-meta">Provider: ${esc(rel.provider === 'southall-zettel' ? 'Southall-Zettel' : rel.provider || 'reviewed provider')}</span></li>`;
+    return `<li><span class="relationship-type">${esc(labelType(rel.type))}</span><h3>${from} → ${to}</h3>${rel.note ? `<p class="relationship-note">${esc(rel.note)}</p>` : ''}${rel.validFrom || rel.validTo ? `<span class="entity-meta">Period: ${esc(rel.validFrom || 'unknown')} → ${esc(rel.validTo || 'present / unknown')}</span>` : ''}${rel.evidence?.length ? `<span class="entity-meta">Evidence: ${rel.evidence.map(ev => ev.url ? `<a href="${esc(ev.url)}" target="_blank" rel="noopener noreferrer">${esc(ev.title)}</a>` : esc(ev.title)).join(' · ')}</span>` : ''}<span class="entity-meta">Provider: ${esc(providerLabel(rel.provider))}</span></li>`;
   }).join('')}</ul>`;
 }
 
