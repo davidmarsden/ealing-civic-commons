@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Explore civic entities — Civic Commons</title>
-  <meta name="description" content="Explore people, organisations, places and ongoing civic issues connected across the Southall & Ealing Civic Commons." />
+  <title>Explore the civic graph — Civic Commons</title>
+  <meta name="description" content="Explore topics, people, organisations, places and ongoing civic issues connected across the Southall & Ealing Civic Commons." />
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/explore.css?v=20260829-1" />
   <link rel="stylesheet" href="/issue.css?v=20260829-1" />
@@ -12,10 +12,22 @@
 <body>
   <header class="site-header"><div class="wrap header-inner"><div><a class="brand" href="/">Civic Commons</a><div class="strap">Southall & Ealing</div></div><nav aria-label="Primary"><a href="/">Latest</a><a href="/explore.html" aria-current="page">Explore</a><a href="/#sources">Sources</a><a href="/roadmap.html">Roadmap</a><a href="/documents/">Documents</a><a href="/#about">About</a></nav></div></header>
   <main>
-    <section class="explore-hero"><div class="wrap explore-hero-grid"><div><p class="eyebrow">Civic graph</p><h1>Explore the people, organisations, places and issues behind the stories.</h1><p class="lede">One civic identity can connect current material from many publishers with reviewed historical memory and evidence from independent providers.</p></div><aside class="principle"><strong>One civic object.</strong><span>Many sources.</span><span>Provenance stays visible.</span></aside></div></section>
+    <section class="explore-hero"><div class="wrap explore-hero-grid"><div><p class="eyebrow">Civic graph</p><h1>Explore the topics, people, organisations, places and issues behind the stories.</h1><p class="lede">Move from a broad civic theme into the specific issues, evidence and civic objects connected to it — while keeping every source and provider visible.</p></div><aside class="principle"><strong>One civic graph.</strong><span>Many routes in.</span><span>Provenance stays visible.</span></aside></div></section>
     <section class="wrap issue-spotlight"><p class="eyebrow">Ongoing civic issues</p><h2>Follow a question across the graph</h2><p>Issue pages connect several civic objects around a continuing public question, while keeping the underlying people, organisations, places and evidence independently identifiable.</p><p><a href="/issues/southall-gasworks-redevelopment">Southall Gasworks redevelopment →</a> <span>Planning, remediation, air quality, public health and accountability around the former gasworks site.</span></p></section>
+    <section class="wrap entity-directory-group"><div class="entity-directory-heading"><div><p class="eyebrow">Civic topics</p><h2>Start with a subject</h2></div><span>10</span></div><div class="entity-cards">
+      <a class="entity-card" href="/topics/air-pollution"><h3>Air pollution</h3><p>Air quality, emissions, monitoring and pollution-related public health.</p></a>
+      <a class="entity-card" href="/topics/housing"><h3>Housing</h3><p>Housing supply, affordability, council housing and delivery.</p></a>
+      <a class="entity-card" href="/topics/local-democracy"><h3>Local democracy</h3><p>Elections, councillors, scrutiny, petitions and participation.</p></a>
+      <a class="entity-card" href="/topics/planning-development"><h3>Planning and development</h3><p>Planning decisions, regeneration and major development.</p></a>
+      <a class="entity-card" href="/topics/council-accountability"><h3>Council accountability</h3><p>Scrutiny, transparency, complaints and information rights.</p></a>
+      <a class="entity-card" href="/topics/public-health"><h3>Public health</h3><p>Population health and health consequences of civic decisions.</p></a>
+      <a class="entity-card" href="/topics/governance"><h3>Governance</h3><p>How local decisions are made and institutions governed.</p></a>
+      <a class="entity-card" href="/topics/children-centres"><h3>Children's centres</h3><p>Family services and decisions affecting early-years provision.</p></a>
+      <a class="entity-card" href="/topics/waste-flytipping"><h3>Waste and fly-tipping</h3><p>Waste collection, recycling, street cleanliness and fly-tipping.</p></a>
+      <a class="entity-card" href="/topics/pensions-divestment"><h3>Pensions and divestment</h3><p>Pension governance, investment and divestment debates.</p></a>
+    </div></section>
     <section class="wrap explore-controls"><label for="entitySearch">Find an entity<input id="entitySearch" type="search" placeholder="Search people, organisations or places" autocomplete="off" /></label><div class="explore-tabs" role="group" aria-label="Entity type"><button class="explore-tab active" data-type="all" type="button">All <span id="allCount"></span></button><button class="explore-tab" data-type="place" type="button">Places <span id="placeCount"></span></button><button class="explore-tab" data-type="organisation" type="button">Organisations <span id="organisationCount"></span></button><button class="explore-tab" data-type="person" type="button">People <span id="personCount"></span></button></div></section>
-    <section class="wrap explore-main"><div id="exploreStatus" class="explore-status" aria-live="polite">Loading civic entities…</div><div id="entityDirectory" class="entity-directory" hidden></div><p class="explore-provenance">The directory merges Civic Commons-native identities with reviewed entities supplied by Southall-Zettel. Inclusion here does not imply that every relationship is reviewed; each entity and issue page labels the provenance of its data.</p></section>
+    <section class="wrap explore-main"><div id="exploreStatus" class="explore-status" aria-live="polite">Loading civic entities…</div><div id="entityDirectory" class="entity-directory" hidden></div><p class="explore-provenance">Topics and issues are Civic Commons public objects. The entity directory merges Civic Commons-native identities with reviewed entities supplied by Southall-Zettel. Each page labels the provenance of its data.</p></section>
   </main>
   <footer><div class="wrap footer-inner"><span>Southall & Ealing Civic Commons — Explore</span><span>Original sources remain canonical.</span></div></footer>
   <script src="/explore.js?v=20260829-1" type="module"></script>
