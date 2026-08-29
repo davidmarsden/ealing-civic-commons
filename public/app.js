@@ -12,7 +12,7 @@ const healthList = $('#healthList');
 
 const pillClass = type => type === 'Official record' ? 'official' : type === 'Journalism / publishing' ? 'journalism' : type === 'Independent civic data / analysis' ? 'analysis' : 'organisation';
 const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date(iso); return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' }).format(d); };
-const esc = s => String(s ?? '').replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]));
+const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const itemPath = item => `/items/${stableItemKey(item.id)}`;
 const threadId = item => `civic-item:${stableItemKey(item.id)}`;
 
@@ -255,5 +255,5 @@ $('#followingViewButton').addEventListener('click', () => setView('following'));
 document.querySelectorAll('[data-view-link]').forEach(link => link.addEventListener('click', event => { event.preventDefault(); setView(link.dataset.viewLink); document.querySelector('#latest').scrollIntoView(); }));
 $('#clearFollowsButton').addEventListener('click', () => { if (confirm('Clear all follows stored in this browser?')) { clearFollows(); render(); } });
 window.addEventListener('civic-follows-changed', render);
-window.addEventListener('storage', event => { if (event.key === 'civic-commons:follows:v1') render; });
+window.addEventListener('storage', event => { if (event.key === 'civic-commons:follows:v1') render(); });
 load();
