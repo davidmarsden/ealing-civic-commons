@@ -154,7 +154,8 @@ async function enrichDocumentMetadata(items) {
     item.documentDescription = metadata.description;
     item.title = period ? `${metadata.description} — ${period}` : metadata.description;
     item.summary = `Ealing Council classifies this document under “${item.documentCategory}”. The original council document remains the canonical source.`;
-    item.towns = inferTowns(`${item.rawSourceTitle} ${metadata.description}`);
+    const metadataTowns = inferTowns(metadata.description);
+    item.towns = [...new Set([...(item.towns || []), ...metadataTowns])];
     item.boroughWide = item.towns.length === 0;
     item.metadataEnriched = true;
     return true;
