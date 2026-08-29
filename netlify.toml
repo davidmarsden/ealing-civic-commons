@@ -26,6 +26,11 @@
   to = "/entity.html"
   status = 200
 
+[[redirects]]
+  from = "/issues/*"
+  to = "/issue.html"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]
