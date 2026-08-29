@@ -3,8 +3,8 @@ import { XMLParser } from 'fast-xml-parser';
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', textNodeName: '#text' });
 const arr = value => value == null ? [] : Array.isArray(value) ? value : [value];
 const textValue = value => value?.['#text'] ?? value ?? '';
-const towns = ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
 const DOCUMENT_TIMEOUT_MS = 1000;
+const knownTowns = ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
 
 const feeds = [
   ['201033','Council and local decisions',['Council & democracy']],
@@ -60,6 +60,28 @@ function freshness(lastPublishedAt) {
   return 'historical';
 }
 
+function displayTitle(feed, rawTitle) {
+  const title = strip(rawTitle) || 'Untitled council document';
+  const genericDownload = title.match(/^downloads?\s*:\s*(.+)$/i);
+  if (genericDownload) return `${feed.label} — ${genericDownload[1].trim()}`;
+  if (/^downloads?$/i.test(title)) return feed.label;
+  return title;
+}
+
+function inferTowns(value) {
+  const text = String(value || '')
+    .replace(/\b(?:the\s+)?London Borough of Ealing(?: Council)?\b/gi, ' ')
+    .replace(/\bEaling Council\b/gi, ' ')
+    .replace(/\bEaling LBC\b/gi, ' ');
+  return knownTowns.filter(town => new RegExp(`\\b${town.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(text));
+}
+
+function displaySummary(feed, rawTitle, description) {
+  const cleaned = strip(description);
+  if (cleaned && cleaned.toLowerCase() !== strip(rawTitle).toLowerCase()) return cleaned.slice(0, 420);
+  return `Official Ealing Council document published in “${feed.label}”. The Commons keeps the council document as the canonical source.`;
+}
+
 async function fetchFeed(feed) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), DOCUMENT_TIMEOUT_MS);
@@ -79,11 +101,13 @@ async function fetchFeed(feed) {
     if (!channel) throw new Error('Unrecognized RSS feed structure');
     const rawItems = arr(channel.item);
     const items = rawItems.slice(0, 20).map(item => {
-      const title = strip(textValue(item.title) || 'Untitled council document');
+      const rawTitle = strip(textValue(item.title) || 'Untitled council document');
       const link = canonical(itemLink(item));
       const publishedAt = iso(item.pubDate ?? item.published ?? item.updated ?? item.date);
       const description = strip(textValue(item.description ?? item.summary ?? ''));
-      const guid = textValue(item.guid) || link || title;
+      const title = displayTitle(feed, rawTitle);
+      const guid = textValue(item.guid) || link || `${feed.categoryId}:${rawTitle}`;
+      const towns = inferTowns(`${rawTitle} ${description}`);
       return {
         id: `ealing-council-documents:${guid}`,
         sourceId: 'ealing-council-documents',
@@ -91,13 +115,16 @@ async function fetchFeed(feed) {
         sourceClass: 'Official record',
         sourceHomepage: 'https://www.ealing.gov.uk/',
         title,
+        rawSourceTitle: rawTitle,
         url: link || 'https://www.ealing.gov.uk/',
         canonicalUrl: link,
-        summary: description.slice(0, 420),
+        summary: displaySummary(feed, rawTitle, description),
         publishedAt,
         towns,
+        boroughWide: towns.length === 0,
         topics: [...new Set(feed.topics)].slice(0,3),
         officialCategories: [feed.label],
+        documentCategory: feed.label,
         topicProvenance: 'Ealing Council document RSS',
         documentFeedCategoryId: feed.categoryId
       };
