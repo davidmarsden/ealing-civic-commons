@@ -4,6 +4,7 @@ import { fetchEalingCouncilDocuments } from './ealing-council-documents.mjs';
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', textNodeName: '#text' });
 const arr = value => value == null ? [] : Array.isArray(value) ? value : [value];
 const ENRICHMENT_TIMEOUT_MS = 500;
+const PROMOTED_DOCUMENT_CATEGORIES = new Set(['Local Plan', 'Our neighbourhoods', 'Housing regeneration', 'Air quality', 'Pollution']);
 
 const topicFeeds = [
   ['201033', 'https://www.ealing.gov.uk/rss/201033/news'],
@@ -88,6 +89,12 @@ function civicTopics(value) {
   return rules.filter(([, rx]) => rx.test(text)).map(([topic]) => topic);
 }
 
+function promoteDocumentToTimeline(item) {
+  if (item?.sourceId !== 'ealing-council-documents') return false;
+  if (item.boroughWide === false && Array.isArray(item.towns) && item.towns.length) return true;
+  return PROMOTED_DOCUMENT_CATEGORIES.has(item.documentCategory);
+}
+
 async function fetchTopicFeed(feed) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), ENRICHMENT_TIMEOUT_MS);
@@ -161,7 +168,8 @@ export async function enrichEalingCouncilTopics(items) {
   });
 
   const documents = await documentPromise;
-  const combined = [...enrichedItems, ...(documents.items || [])];
+  const promotedDocuments = (documents.items || []).filter(promoteDocumentToTimeline);
+  const combined = [...enrichedItems, ...promotedDocuments];
   const seen = new Set();
   const deduped = combined.filter(item => {
     const key = canonicalUrl(item.canonicalUrl) || item.id;
@@ -179,7 +187,12 @@ export async function enrichEalingCouncilTopics(items) {
       topicFeedsFailed: failed,
       matchedItems,
       timeoutMs: ENRICHMENT_TIMEOUT_MS,
-      documentWatch: documents.diagnostics
+      documentWatch: {
+        ...(documents.diagnostics || {}),
+        totalItems: (documents.items || []).length,
+        promotedItems: promotedDocuments.length,
+        promotionCategories: [...PROMOTED_DOCUMENT_CATEGORIES]
+      }
     }
   };
 }
