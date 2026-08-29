@@ -47,6 +47,42 @@ export const ENTITY_REGISTRY = [
     ]
   },
   {
+    route: 'people/louise-brett',
+    id: 'civic:person:louise-brett',
+    name: 'Louise Brett',
+    type: 'person',
+    description: 'Ealing councillor, Deputy Leader of Ealing Council and Cabinet Member for Safe and Genuinely Affordable Homes.',
+    aliases: ['Cllr Louise Brett'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/steve-donnelly',
+    id: 'civic:person:steve-donnelly',
+    name: 'Steve Donnelly',
+    type: 'person',
+    description: 'Ealing councillor and Cabinet Member for Inclusive Economy and Efficiency.',
+    aliases: ['Cllr Steve Donnelly'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/monica-hamidi',
+    id: 'civic:person:monica-hamidi',
+    name: 'Monica Hamidi',
+    type: 'person',
+    description: 'Ealing councillor and Cabinet Member for Good Growth, covering regeneration and planning policy.',
+    aliases: ['Cllr Monica Hamidi'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/dominic-moffitt',
+    id: 'civic:person:dominic-moffitt',
+    name: 'Dominic Moffitt',
+    type: 'person',
+    description: 'Ealing councillor and Cabinet Member for Climate Action, including air quality, transport, waste and environmental policy.',
+    aliases: ['Cllr Dominic Moffitt'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
     route: 'places/acton',
     id: 'civic:place:acton',
     name: 'Acton',
