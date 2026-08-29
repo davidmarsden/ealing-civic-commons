@@ -57,6 +57,15 @@ const sources = [
     defaultTopics: ['Council & democracy']
   },
   {
+    id: 'ealing-civic-society',
+    name: 'Ealing Civic Society',
+    url: 'https://ealingcivicsociety.org/feed/',
+    homepage: 'https://ealingcivicsociety.org/',
+    sourceClass: 'Organisation / campaign',
+    towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
+    defaultTopics: ['Planning & development', 'Culture & history']
+  },
+  {
     id: 'west-ealing-neighbours',
     name: 'West Ealing Neighbours',
     url: 'https://www.westealingneighbours.org.uk/feed/',
