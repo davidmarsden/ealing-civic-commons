@@ -37,6 +37,42 @@ export const ENTITY_REGISTRY = [
     ]
   },
   {
+    route: 'organisations/ealing-labour-group',
+    id: 'civic:organisation:ealing-labour-group',
+    name: 'Ealing Labour Group',
+    type: 'organisation',
+    description: 'The Labour political group on Ealing Council. Labour won 46 of 70 council seats in May 2026 and retained control of the council.',
+    aliases: ['Labour Group'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/ealing-liberal-democrat-group',
+    id: 'civic:organisation:ealing-liberal-democrat-group',
+    name: 'Ealing Liberal Democrat Group',
+    type: 'organisation',
+    description: 'The Liberal Democrat political group on Ealing Council and the main opposition group after the May 2026 election.',
+    aliases: ['Ealing Lib Dem Group', 'Liberal Democrat Group'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/ealing-conservative-group',
+    id: 'civic:organisation:ealing-conservative-group',
+    name: 'Ealing Conservative Group',
+    type: 'organisation',
+    description: 'The Conservative political group on Ealing Council. Five Conservative councillors were elected in May 2026.',
+    aliases: ['Conservative Group'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/ealing-green-group',
+    id: 'civic:organisation:ealing-green-group',
+    name: 'Ealing Green Group',
+    type: 'organisation',
+    description: 'The Green political group on Ealing Council. Five Green Party councillors were elected in May 2026.',
+    aliases: ['Green Group'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
     route: 'people/peter-mason',
     id: 'civic:person:peter-mason',
     name: 'Peter Mason',
@@ -96,7 +132,7 @@ export const ENTITY_REGISTRY = [
     id: 'civic:person:gary-busuttil',
     name: 'Gary Busuttil',
     type: 'person',
-    description: 'Ealing councillor and Vice Chair of the Overview and Scrutiny Committee for 2026/27.',
+    description: 'Ealing councillor, Vice Chair of the Overview and Scrutiny Committee for 2026/27 and Liberal Democrat transport spokesperson.',
     aliases: ['Cllr Gary Busuttil'],
     providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   },
@@ -114,7 +150,7 @@ export const ENTITY_REGISTRY = [
     id: 'civic:person:athena-zissimos',
     name: 'Athena Zissimos',
     type: 'person',
-    description: 'Ealing councillor and Vice Chair of the Housing and Environment Scrutiny Panel for 2026/27.',
+    description: 'Ealing councillor, Vice Chair of the Housing and Environment Scrutiny Panel for 2026/27 and Liberal Democrat environment and crime spokesperson.',
     aliases: ['Cllr Athena Zissimos'],
     providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   },
@@ -143,6 +179,69 @@ export const ENTITY_REGISTRY = [
     type: 'person',
     description: 'Ealing councillor and Vice Chair of the Planning Committee for 2026/27.',
     aliases: ['Cllr Katie Douglas'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/gary-malcolm',
+    id: 'civic:person:gary-malcolm',
+    name: 'Gary Malcolm',
+    type: 'person',
+    description: 'Ealing councillor and Leader of the Opposition for 2026/27.',
+    aliases: ['Cllr Gary Malcolm'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/jon-ball',
+    id: 'civic:person:jon-ball',
+    name: 'Jon Ball',
+    type: 'person',
+    description: 'Ealing councillor and Liberal Democrat opposition spokesperson for planning, licensing and regeneration.',
+    aliases: ['Cllr Jon Ball'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/jonathan-oxley',
+    id: 'civic:person:jonathan-oxley',
+    name: 'Jonathan Oxley',
+    type: 'person',
+    description: 'Ealing councillor and Liberal Democrat opposition spokesperson for finance.',
+    aliases: ['Cllr Jonathan Oxley'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/mark-sanders',
+    id: 'civic:person:mark-sanders',
+    name: 'Mark Sanders',
+    type: 'person',
+    description: 'Ealing councillor and Liberal Democrat opposition spokesperson for honesty and accountability.',
+    aliases: ['Cllr Mark Sanders'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/adam-keenan',
+    id: 'civic:person:adam-keenan',
+    name: 'Adam Keenan',
+    type: 'person',
+    description: 'Ealing councillor and Liberal Democrat opposition spokesperson for children’s services.',
+    aliases: ['Cllr Adam Keenan'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/andrew-steed',
+    id: 'civic:person:andrew-steed',
+    name: 'Andrew Steed',
+    type: 'person',
+    description: 'Ealing councillor and Liberal Democrat opposition spokesperson for adult services.',
+    aliases: ['Cllr Andrew Steed'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/connie-hersch',
+    id: 'civic:person:connie-hersch',
+    name: 'Connie Hersch',
+    type: 'person',
+    description: 'Ealing councillor and Deputy Leader of the Ealing Liberal Democrat group after the May 2026 election.',
+    aliases: ['Cllr Connie Hersch'],
     providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   },
   {
