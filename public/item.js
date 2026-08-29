@@ -5,6 +5,7 @@ const esc = s => String(s ?? '').replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&l
 const contributionTypeOrder = ['Correction','Evidence / document','Related source','Local information','Comment / context'];
 const pillClass = type => type === 'Official record' ? 'official' : type === 'Journalism / publishing' ? 'journalism' : type === 'Independent civic data / analysis' ? 'analysis' : 'organisation';
 const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date(iso); return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(d); };
+const relationshipLabel = value => String(value || 'related to').replaceAll('_', ' ');
 
 function routeKey() { const parts = window.location.pathname.split('/').filter(Boolean); return parts[0] === 'items' ? parts.slice(1).join('/') : ''; }
 function findItem(data, key) { return (data?.items || []).find(candidate => stableItemKey(candidate.id) === key); }
@@ -30,8 +31,73 @@ function fillContributionFields(item, key) {
 function renderItem(item, key) {
   document.title = `${item.title} — Civic Commons`; $('#itemStatus').hidden = true;
   const view = $('#itemView'); view.hidden = false;
-  view.innerHTML = `<div class="item-page-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass)}</span><span>${esc(item.source)}</span><span>${esc(fmtDate(item.publishedAt))}</span></div><h1>${esc(item.title)}</h1>${item.summary ? `<p class="item-page-summary">${esc(item.summary)}</p>` : ''}${item.derived ? `<p class="provenance-note"><strong>Commons-derived extract:</strong> ${esc(item.derivedFrom || 'derived from the source material')}.</p>` : ''}<div class="tags">${(item.towns || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}${(item.topics || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div><div class="item-page-actions"><a class="primary-source-link" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Read the original source ↗</a><a href="#contribute">Add to this story ↓</a></div><div id="itemFollowControls" class="item-follow-controls" aria-label="Follow this civic information"></div><p class="canonical-note">The original publisher remains the canonical source. This Commons URL exists so local context, evidence, corrections, discussion and follows can attach to a stable civic object.</p>`;
-  renderFollowControls(item, key); fillContributionFields(item, key); $('#contribute').hidden = false; $('#discussion').hidden = false; loadCivicMemory(item);
+  view.innerHTML = `<div class="item-page-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass)}</span><span>${esc(item.source)}</span><span>${esc(fmtDate(item.publishedAt))}</span></div><h1>${esc(item.title)}</h1>${item.summary ? `<p class="item-page-summary">${esc(item.summary)}</p>` : ''}${item.derived ? `<p class="provenance-note"><strong>Commons-derived extract:</strong> ${esc(item.derivedFrom || 'derived from the source material')}.</p>` : ''}<div class="tags">${(item.towns || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}${(item.topics || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div><section id="itemEntityLinks" class="item-entity-links" hidden aria-labelledby="itemEntityLinksTitle"><p class="eyebrow">Civic connections</p><h2 id="itemEntityLinksTitle">People and organisations in the graph</h2><div id="itemEntityLinksContent"></div></section><div class="item-page-actions"><a class="primary-source-link" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Read the original source ↗</a><a href="#contribute">Add to this story ↓</a></div><div id="itemFollowControls" class="item-follow-controls" aria-label="Follow this civic information"></div><p class="canonical-note">The original publisher remains the canonical source. This Commons URL exists so local context, evidence, corrections, discussion and follows can attach to a stable civic object.</p>`;
+  renderFollowControls(item, key); fillContributionFields(item, key); $('#contribute').hidden = false; $('#discussion').hidden = false; loadItemEntityLinks(item); loadCivicMemory(item);
+}
+
+function normalizedText(value) {
+  return String(value || '').normalize('NFKC').replace(/[‘’]/g, "'").replace(/[“”]/g, '"');
+}
+
+function phraseAppears(text, phrase) {
+  const candidate = normalizedText(phrase).trim();
+  if (candidate.length < 4 || !/[A-Za-z]/.test(candidate)) return false;
+  const escaped = candidate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^A-Za-z0-9])${escaped}([^A-Za-z0-9]|$)`, 'i').test(text);
+}
+
+function directEntityMatches(item, entities) {
+  const text = normalizedText(`${item.title || ''}\n${item.summary || ''}`);
+  return (entities || []).filter(entity => {
+    if (phraseAppears(text, entity.name)) return true;
+    return (entity.aliases || []).some(alias => normalizedText(alias).trim().length >= 6 && phraseAppears(text, alias));
+  }).sort((a, b) => b.name.length - a.name.length || a.name.localeCompare(b.name));
+}
+
+function entityChip(entity, suffix = '') {
+  const href = entity.route ? `/${entity.route}` : null;
+  const label = `${esc(entity.name)}${suffix ? ` <small>${esc(suffix)}</small>` : ''}`;
+  return href ? `<a class="entity-link-chip" href="${esc(href)}">${label}<span aria-hidden="true">→</span></a>` : `<span class="entity-link-chip">${label}</span>`;
+}
+
+async function reviewedConnectionsForEntity(entity) {
+  const route = entity.route;
+  if (!route) return [];
+  const endpoints = [
+    `/.netlify/functions/civic-entity?route=${encodeURIComponent(route)}`,
+    `/.netlify/functions/civic-assertions?route=${encodeURIComponent(route)}`
+  ];
+  const results = await Promise.allSettled(endpoints.map(url => fetch(url, { cache: 'no-store' }).then(response => response.ok ? response.json() : null)));
+  return results.flatMap(result => result.status === 'fulfilled' && result.value ? (result.value.relationships || result.value.assertions || []) : []);
+}
+
+async function loadItemEntityLinks(item) {
+  const section = $('#itemEntityLinks'); const content = $('#itemEntityLinksContent');
+  if (!section || !content) return;
+  section.hidden = true;
+  try {
+    const response = await fetch('/.netlify/functions/civic-entities', { cache: 'no-store' });
+    if (!response.ok) return;
+    const data = await response.json();
+    const direct = directEntityMatches(item, data.entities).slice(0, 8);
+    if (!direct.length) return;
+
+    const directIds = new Set(direct.map(entity => entity.id));
+    const relationshipSets = await Promise.all(direct.slice(0, 6).map(entity => reviewedConnectionsForEntity(entity)));
+    const related = new Map();
+    relationshipSets.flat().forEach(rel => {
+      const other = rel?.other;
+      if (!other?.id || directIds.has(other.id) || !other.commonsRoute) return;
+      const existing = related.get(other.id);
+      if (!existing) related.set(other.id, { id: other.id, name: other.name, route: other.commonsRoute, relationship: relationshipLabel(rel.type) });
+    });
+
+    const relatedItems = [...related.values()].sort((a, b) => a.name.localeCompare(b.name)).slice(0, 8);
+    content.innerHTML = `<div class="entity-link-row"><strong>Mentioned in this source</strong><div class="entity-link-chips">${direct.map(entity => entityChip(entity, entity.type)).join('')}</div></div>${relatedItems.length ? `<div class="entity-link-row"><strong>Connected through reviewed evidence</strong><div class="entity-link-chips">${relatedItems.map(entity => entityChip(entity, entity.relationship)).join('')}</div></div>` : ''}<p class="entity-link-note">Direct links come from exact names or aliases in the source excerpt. Related links are one step away in the reviewed civic graph; they are not claims made by the original publisher.</p>`;
+    section.hidden = false;
+  } catch (error) {
+    console.warn('Civic entity links unavailable', error);
+  }
 }
 
 function memoryList(items, kind, emptyText = 'Nothing selected yet.') {
