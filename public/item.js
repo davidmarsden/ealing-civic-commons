@@ -69,13 +69,46 @@ function renderContributions(contributions, key) {
 }
 
 async function loadApprovedContributions(key) { try { const response = await fetch('/data/contributions.json', { cache:'no-store' }); if (!response.ok) throw new Error(`HTTP ${response.status}`); const data = await response.json(); renderContributions(data.contributions, key); } catch (error) { $('#contributionCount').textContent=''; $('#contributionList').innerHTML='<div class="contribution-empty"><strong>Approved contributions are temporarily unavailable.</strong><span>The item and submission form are still available.</span></div>'; console.error('Approved contributions load failed', error); } }
-function renderMissing(key) { $('#itemStatus').innerHTML = `<h1>This item is not in the current live window.</h1><p>The permalink and thread identity are stable, but the prototype does not yet persist every ingested item in a civic data store.</p><p><strong>Item key:</strong> <code>${esc(key)}</code></p><p><a href="/">Return to the current civic timeline →</a></p>`; }
+function renderMissing(key) { $('#itemStatus').innerHTML = `<h1>This civic item has not been archived yet.</h1><p>The permalink and thread identity are stable. New live items are now copied into the persistent Civic Commons item store every 15 minutes, so this message should normally only appear for links created before the archive existed or before the next archive run.</p><p><strong>Item key:</strong> <code>${esc(key)}</code></p><p><a href="/">Return to the current civic timeline →</a></p>`; }
+
+async function loadArchivedItem(key) {
+  try {
+    const url = new URL('/.netlify/functions/civic-item', location.origin);
+    url.searchParams.set('key', key);
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data?.item || null;
+  } catch {
+    return null;
+  }
+}
 
 async function load() {
   const key = routeKey(); if (!key) { renderMissing('missing'); return; }
   const contributionsPromise = loadApprovedContributions(key);
-  try { const response = await fetch('/.netlify/functions/feed', { cache:'no-store' }); if (!response.ok) throw new Error(`HTTP ${response.status}`); const data = await response.json(); const item = findItem(data,key); if (!item) { renderMissing(key); return; } renderItem(item,key); }
-  catch (error) { const demoItem = findItem(window.CIVIC_COMMONS_DEMO,key); if (demoItem) { renderItem(demoItem,key); await contributionsPromise; return; } $('#itemStatus').innerHTML='<h1>Item temporarily unavailable.</h1><p>The live civic feed could not be loaded and this permalink is not present in the bundled prototype dataset.</p><p><a href="/">Return to the timeline →</a></p>'; console.error('Item load failed',error); }
+  const archivedPromise = loadArchivedItem(key);
+  try {
+    const response = await fetch('/.netlify/functions/feed', { cache:'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    const liveItem = findItem(data,key);
+    if (liveItem) renderItem(liveItem,key);
+    else {
+      const archivedItem = await archivedPromise;
+      if (archivedItem) renderItem(archivedItem,key);
+      else renderMissing(key);
+    }
+  }
+  catch (error) {
+    const archivedItem = await archivedPromise;
+    if (archivedItem) renderItem(archivedItem,key);
+    else {
+      const demoItem = findItem(window.CIVIC_COMMONS_DEMO,key);
+      if (demoItem) renderItem(demoItem,key);
+      else { $('#itemStatus').innerHTML='<h1>Item temporarily unavailable.</h1><p>Neither the live civic feed nor the persistent item archive could be loaded for this permalink.</p><p><a href="/">Return to the timeline →</a></p>'; console.error('Item load failed',error); }
+    }
+  }
   await contributionsPromise;
 }
 window.addEventListener('storage', event => { if (event.key === 'civic-commons:follows:v1') location.reload(); });
