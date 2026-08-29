@@ -15,6 +15,14 @@ export const INSTITUTIONAL_SOURCES = {
     url: 'https://harrow.moderngov.co.uk/ieListDocuments.aspx?CId=1367&MId=66324',
     reviewedAt: '2026-08-29'
   },
+  'ealing-safer-neighbourhood-board-current': {
+    id: 'commons-source:ealing-safer-neighbourhood-board-current',
+    title: 'Ealing Safer Neighbourhood Board — current membership',
+    publisher: 'Ealing Council / ModernGov',
+    sourceType: 'official-directory',
+    url: 'https://ealing.moderngov.co.uk/mgCommitteeMailingList.aspx?ID=188',
+    reviewedAt: '2026-08-29'
+  },
   'opdc-board-current': {
     id: 'commons-source:opdc-board-current',
     title: 'OPDC Board',
@@ -109,6 +117,7 @@ const org = (slug, name) => ({ id: `civic:organisation:${slug}`, name, type: 'or
 const person = (slug, name) => ({ id: `civic:person:${slug}`, name, type: 'person', route: `people/${slug}` });
 const council = org('ealing-council', 'Ealing Council');
 const wlwa = org('west-london-waste-authority', 'West London Waste Authority');
+const esnb = org('ealing-safer-neighbourhood-board', 'Ealing Safer Neighbourhood Board');
 const opdc = org('old-oak-and-park-royal-development-corporation', 'Old Oak and Park Royal Development Corporation');
 const opdcDisc = org('opdc-development-investment-and-sustainability-committee', 'OPDC Development, Investment and Sustainability Committee');
 const pensionPanel = org('ealing-pension-fund-panel', 'Ealing Pension Fund Panel');
@@ -125,6 +134,7 @@ export const INSTITUTIONAL_ASSERTIONS = [
   assertion({ id: 'commons-assertion:ealing-council-constituent-borough-of-wlwa', from: council, to: wlwa, type: 'constituent_borough_of', note: 'Ealing is one of the six constituent boroughs whose councillors make up the West London Waste Authority.', evidence: ['wlwa-members-chair-2026'] }),
   assertion({ id: 'commons-assertion:dominic-moffitt-member-of-wlwa-2026', from: person('dominic-moffitt', 'Dominic Moffitt'), to: wlwa, type: 'member_of', note: 'Dominic Moffitt is Ealing’s appointed member of the West London Waste Authority for 2026/27.', validFrom: '2026-06-23', validTo: '2027', evidence: ['wlwa-members-chair-2026', 'wlwa-authority-june-2026'] }),
   assertion({ id: 'commons-assertion:dominic-moffitt-chair-of-wlwa-2026', from: person('dominic-moffitt', 'Dominic Moffitt'), to: wlwa, type: 'chair_of', note: 'The Authority appointed Dominic Moffitt as Chair for the 2026/27 municipal year.', validFrom: '2026-06-23', validTo: '2027', evidence: ['wlwa-members-chair-2026', 'wlwa-authority-june-2026'] }),
+  assertion({ id: 'commons-assertion:jags-sanghera-member-of-esnb-current', from: person('jags-sanghera', 'Jags Sanghera'), to: esnb, type: 'member_of', note: 'Ealing Council’s current ModernGov directory lists Jags Sanghera as a member of the Ealing Safer Neighbourhood Board.', evidence: ['ealing-safer-neighbourhood-board-current'] }),
   assertion({ id: 'commons-assertion:peter-mason-board-member-of-opdc', from: person('peter-mason', 'Peter Mason'), to: opdc, type: 'board_member_of', note: 'London City Hall lists Peter Mason, in his capacity as Leader of Ealing Council, as a current OPDC Board member.', evidence: ['opdc-board-current'] }),
   assertion({ id: 'commons-assertion:opdc-disc-committee-of-opdc', from: opdcDisc, to: opdc, type: 'committee_of', note: 'The Development, Investment and Sustainability Committee is part of OPDC’s governance structure.', evidence: ['opdc-disc-current'] }),
   assertion({ id: 'commons-assertion:peter-mason-member-of-opdc-disc', from: person('peter-mason', 'Peter Mason'), to: opdcDisc, type: 'member_of', note: 'London City Hall lists Peter Mason among the current members of the OPDC Development, Investment and Sustainability Committee.', evidence: ['opdc-disc-current'] }),
