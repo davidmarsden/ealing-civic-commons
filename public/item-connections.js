@@ -106,8 +106,8 @@ async function renderConnections() {
   }
 }
 
-function start() {
-  if (renderConnections()) return;
+async function start() {
+  if (await renderConnections()) return;
   const observer = new MutationObserver(async () => {
     if (await renderConnections()) observer.disconnect();
   });
