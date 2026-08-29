@@ -74,6 +74,7 @@ export function itemMatchesFollows(item, state = loadFollows()) {
   const key = stableItemKey(item.id);
   if (state.items.some(entry => entry.id === key)) return true;
   if (state.sources.some(entry => entry.id === item.sourceId)) return true;
+  if (item.boroughWide === true && state.towns.length) return true;
   if ((item.towns || []).some(town => state.towns.some(entry => entry.id === town))) return true;
   if ((item.topics || []).some(topic => state.topics.some(entry => entry.id === topic))) return true;
   return false;
