@@ -1,6 +1,7 @@
 import { parseEntityRoute } from '../lib/entity-registry.mjs';
 import { commonsAssertionsForEntity, commonsSourcesForEntity } from '../lib/reviewed-assertions.mjs';
 import { politicalAssertionsForEntity, politicalSourcesForEntity } from '../lib/political-assertions.mjs';
+import { institutionalAssertionsForEntity, institutionalSourcesForEntity } from '../lib/institutional-assertions.mjs';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -25,11 +26,13 @@ export default async request => {
   const civicEntityId = `civic:${parsed.type}:${parsed.slug}`;
   const assertions = dedupeById([
     ...commonsAssertionsForEntity(civicEntityId),
-    ...politicalAssertionsForEntity(civicEntityId)
+    ...politicalAssertionsForEntity(civicEntityId),
+    ...institutionalAssertionsForEntity(civicEntityId)
   ]);
   const sources = dedupeById([
     ...commonsSourcesForEntity(civicEntityId),
-    ...politicalSourcesForEntity(civicEntityId)
+    ...politicalSourcesForEntity(civicEntityId),
+    ...institutionalSourcesForEntity(civicEntityId)
   ]);
 
   return json({
