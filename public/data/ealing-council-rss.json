@@ -1,104 +1,118 @@
 {
   "publisher": "Ealing Council",
   "homepage": "https://www.ealing.gov.uk/",
-  "notes": "The main news feed is ingested into the Civic Commons timeline. Category feeds are registered here for future topic-level follows and enrichment, but are not fetched into the live timeline yet to avoid duplicate council stories.",
+  "notes": "The main news feed is ingested into the Civic Commons timeline. Category feeds are fetched only as enrichment signals: matching stories are joined by canonical URL so official category membership can improve Civic Commons topic labels without adding duplicate timeline items.",
   "feeds": [
     {
       "id": "ealing-council-news",
       "url": "https://www.ealing.gov.uk/rss/news",
       "role": "primary-news",
-      "enabledForTimeline": true
+      "enabledForTimeline": true,
+      "enabledForEnrichment": false
     },
     {
       "id": "ealing-council-news-201033",
       "categoryId": "201033",
       "url": "https://www.ealing.gov.uk/rss/201033/news",
       "role": "topic-feed",
-      "enabledForTimeline": false
+      "enabledForTimeline": false,
+      "enabledForEnrichment": true
     },
     {
       "id": "ealing-council-news-201155",
       "categoryId": "201155",
       "url": "https://www.ealing.gov.uk/rss/201155/news",
       "role": "topic-feed",
-      "enabledForTimeline": false
+      "enabledForTimeline": false,
+      "enabledForEnrichment": true
     },
     {
       "id": "ealing-council-news-201149",
       "categoryId": "201149",
       "url": "https://www.ealing.gov.uk/rss/201149/news",
       "role": "topic-feed",
-      "enabledForTimeline": false
+      "enabledForTimeline": false,
+      "enabledForEnrichment": true
     },
     {
       "id": "ealing-council-news-201146",
       "categoryId": "201146",
       "url": "https://www.ealing.gov.uk/rss/201146/news",
       "role": "topic-feed",
-      "enabledForTimeline": false
+      "enabledForTimeline": false,
+      "enabledForEnrichment": true
     },
     {
       "id": "ealing-council-news-201167",
       "categoryId": "201167",
       "url": "https://www.ealing.gov.uk/rss/201167/news",
       "role": "topic-feed",
-      "enabledForTimeline": false
+      "enabledForTimeline": false,
+      "enabledForEnrichment": true
     },
     {
       "id": "ealing-council-news-200125",
       "categoryId": "200125",
       "url": "https://www.ealing.gov.uk/rss/200125/news",
       "role": "topic-feed",
-      "enabledForTimeline": false
+      "enabledForTimeline": false,
+      "enabledForEnrichment": true
     },
     {
       "id": "ealing-council-news-201137",
       "categoryId": "201137",
       "url": "https://www.ealing.gov.uk/rss/201137/news",
       "role": "topic-feed",
-      "enabledForTimeline": false
+      "enabledForTimeline": false,
+      "enabledForEnrichment": true
     },
     {
       "id": "ealing-council-news-201219",
       "categoryId": "201219",
       "url": "https://www.ealing.gov.uk/rss/201219/news",
       "role": "topic-feed",
-      "enabledForTimeline": false
+      "enabledForTimeline": false,
+      "enabledForEnrichment": true
     },
     {
       "id": "ealing-council-news-201226",
       "categoryId": "201226",
       "url": "https://www.ealing.gov.uk/rss/201226/news",
       "role": "topic-feed",
-      "enabledForTimeline": false
+      "enabledForTimeline": false,
+      "enabledForEnrichment": true
     },
     {
       "id": "ealing-council-news-201086",
       "categoryId": "201086",
       "url": "https://www.ealing.gov.uk/rss/201086/news",
       "role": "topic-feed",
-      "enabledForTimeline": false
+      "enabledForTimeline": false,
+      "enabledForEnrichment": true
     },
     {
       "id": "ealing-council-news-201020",
       "categoryId": "201020",
       "url": "https://www.ealing.gov.uk/rss/201020/news",
       "role": "topic-feed",
-      "enabledForTimeline": false
+      "enabledForTimeline": false,
+      "enabledForEnrichment": true
     },
     {
       "id": "ealing-council-news-201010",
       "categoryId": "201010",
       "url": "https://www.ealing.gov.uk/rss/201010/news",
       "role": "topic-feed",
-      "enabledForTimeline": false
+      "enabledForTimeline": false,
+      "enabledForEnrichment": true
     },
     {
       "id": "ealing-council-news-200146",
       "categoryId": "200146",
       "url": "https://www.ealing.gov.uk/rss/200146/news",
       "role": "topic-feed",
-      "enabledForTimeline": false
+      "enabledForTimeline": false,
+      "enabledForEnrichment": true
     }
   ]
 }
