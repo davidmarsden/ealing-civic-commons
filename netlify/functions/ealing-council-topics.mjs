@@ -1,4 +1,5 @@
 import { XMLParser } from 'fast-xml-parser';
+import { fetchEalingCouncilDocuments } from './ealing-council-documents.mjs';
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', textNodeName: '#text' });
 const arr = value => value == null ? [] : Array.isArray(value) ? value : [value];
@@ -120,6 +121,11 @@ async function fetchTopicFeed(feed) {
 }
 
 export async function enrichEalingCouncilTopics(items) {
+  const documentPromise = fetchEalingCouncilDocuments().catch(error => ({
+    ok: false,
+    items: [],
+    diagnostics: { enabledFeeds: 16, respondingFeeds: 0, error: String(error?.message || error) }
+  }));
   const settled = await Promise.allSettled(topicFeeds.map(fetchTopicFeed));
   const index = new Map();
   let fetched = 0;
@@ -154,15 +160,26 @@ export async function enrichEalingCouncilTopics(items) {
     };
   });
 
+  const documents = await documentPromise;
+  const combined = [...enrichedItems, ...(documents.items || [])];
+  const seen = new Set();
+  const deduped = combined.filter(item => {
+    const key = canonicalUrl(item.canonicalUrl) || item.id;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
   return {
-    items: enrichedItems,
+    items: deduped,
     diagnostics: {
       publisher: 'Ealing Council',
       topicFeedsTotal: topicFeeds.length,
       topicFeedsFetched: fetched,
       topicFeedsFailed: failed,
       matchedItems,
-      timeoutMs: ENRICHMENT_TIMEOUT_MS
+      timeoutMs: ENRICHMENT_TIMEOUT_MS,
+      documentWatch: documents.diagnostics
     }
   };
 }
