@@ -1,10 +1,10 @@
 export const PROVIDERS = {
   'southall-zettel': {
     id: 'southall-zettel',
-    name: 'Southall-Zettel',
+    name: 'Southall Stories research archive',
     label: 'Southall Stories research archive',
     role: 'Reviewed civic memory',
-    url: 'https://github.com/davidmarsden/Southall-Zettel'
+    url: 'https://southallstories.uk/'
   },
   'civic-commons': {
     id: 'civic-commons',
