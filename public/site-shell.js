@@ -2,6 +2,7 @@
   const NAV_ITEMS = [
     { label: 'Latest', href: '/' },
     { label: 'Explore', href: '/explore.html', match: path => path === '/explore.html' || path.startsWith('/people/') || path.startsWith('/organisations/') || path.startsWith('/places/') || path.startsWith('/issues/') || path.startsWith('/topics/') },
+    { label: 'Document Watch', href: '/document-watch.html', match: path => path === '/document-watch.html' },
     { label: 'Sources', href: '/#sources' },
     { label: 'Roadmap', href: '/roadmap.html', match: path => path === '/roadmap.html' },
     { label: 'Documents', href: '/documents/', match: path => path.startsWith('/documents/') },
