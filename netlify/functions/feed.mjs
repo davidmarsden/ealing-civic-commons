@@ -113,6 +113,16 @@ const sources = [
     defaultTopics: ['Council & democracy', 'Community']
   },
   {
+    id: 'ealing-council-youtube',
+    name: 'Ealing Council — YouTube',
+    url: 'https://www.youtube.com/feeds/videos.xml?user=EalingCouncil',
+    homepage: 'https://www.youtube.com/@EalingCouncil',
+    sourceClass: 'Official record',
+    towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
+    defaultTopics: ['Council & democracy'],
+    mediaType: 'video'
+  },
+  {
     id: 'open-council-network-reddit-ealing',
     name: 'Open Council Network — Ealing updates',
     url: 'https://www.reddit.com/r/OpenCouncilNetwork/search.rss?q=Ealing&restrict_sr=1&sort=new',
@@ -246,7 +256,8 @@ function normaliseItem(source, item) {
   const link = typeof linkRaw === 'string' ? linkRaw : Array.isArray(linkRaw)
     ? (linkRaw.find(l => l?.['@_rel'] === 'alternate')?.['@_href'] || linkRaw[0]?.['@_href'])
     : linkRaw?.['@_href'];
-  const rawDescription = textValue(item.description ?? item.summary ?? item['content:encoded'] ?? item.content);
+  const mediaDescription = item?.['media:group']?.['media:description'];
+  const rawDescription = textValue(item.description ?? item.summary ?? item['content:encoded'] ?? item.content ?? mediaDescription);
   const extracted = source.extractEalingSection ? extractEalingSection(rawDescription) : null;
   const description = extracted || strip(rawDescription);
   const title = extracted && !/^ealing\b/i.test(originalTitle) ? `Ealing — ${originalTitle}` : originalTitle;
@@ -260,6 +271,7 @@ function normaliseItem(source, item) {
     source: source.name,
     sourceClass: source.sourceClass,
     sourceHomepage: source.homepage,
+    mediaType: source.mediaType || null,
     title,
     url: link || source.homepage,
     canonicalUrl: link || null,
