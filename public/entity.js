@@ -24,6 +24,10 @@ function entityLink(entity, label = entity?.name) {
   if (entity?.commonsRoute) return `<a class="entity-inline-link" href="/${esc(entity.commonsRoute)}">${esc(label)}</a>`;
   return esc(label);
 }
+function topicLink(topic) {
+  const slug = String(topic?.id || '').replace(/^topic:/,'');
+  return slug ? `<a class="entity-topic" href="/topics/${esc(slug)}">${esc(topic.name)} · ${topic.count}</a>` : `<span class="entity-topic">${esc(topic?.name)} · ${topic.count}</span>`;
+}
 
 function renderHero(data) {
   const entity = data.entity;
@@ -43,7 +47,7 @@ function renderHero(data) {
 function renderStats(data) {
   const c = data.counts || {};
   $('#entityStats').innerHTML = `<div class="entity-stat"><strong>${c.reporting || 0}</strong><span>archive posts</span></div><div class="entity-stat"><strong>${c.relationships || 0}</strong><span>reviewed relationships</span></div><div class="entity-stat"><strong>${c.sources || 0}</strong><span>curated sources</span></div>`;
-  $('#entityTopics').innerHTML = (data.topics || []).map(topic => `<span class="entity-topic">${esc(topic.name)} · ${topic.count}</span>`).join('') || '<span class="entity-empty">No recurring topics found.</span>';
+  $('#entityTopics').innerHTML = (data.topics || []).map(topicLink).join('') || '<span class="entity-empty">No recurring topics found.</span>';
 }
 
 function renderProviders(items) {
