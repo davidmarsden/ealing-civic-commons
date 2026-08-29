@@ -45,7 +45,7 @@ export async function getArchivedItem(key, options = {}) {
   const blobs = store();
   const record = await blobs.get(itemBlobKey(key), {
     type: 'json',
-    consistency: options.consistency || 'eventual'
+    consistency: options.consistency || 'strong'
   });
   if (!record?.item || record.key !== key) return null;
   return record;
@@ -78,7 +78,10 @@ export async function archiveItems(items) {
   ));
 
   for (const result of writes) {
-    if (result.error) console.error(`Civic item archive write failed for ${result.key}`, result.error);
+    if (result.error) {
+      console.error(`Civic item archive write failed for ${result.key}`, result.error);
+      continue;
+    }
     known.add(result.key);
   }
 
