@@ -1,5 +1,5 @@
 const $ = sel => document.querySelector(sel);
-const state = { data: null, filters: { town: 'All', topic: 'All', category: 'All', thisWeek: false } };
+const state = { data: null, filters: { topic: 'All', category: 'All', thisWeek: false } };
 const timeline = $('#watchTimeline');
 const status = $('#watchStatus');
 const count = $('#watchCount');
@@ -38,12 +38,10 @@ function filteredItems() {
   const items = state.data?.items || [];
   const weekAgo = Date.now() - 7 * 86400000;
   return items.filter(item => {
-    const townOk = state.filters.town === 'All'
-      || (state.filters.town === 'Borough-wide' ? item.boroughWide === true : (item.towns || []).includes(state.filters.town));
     const topicOk = state.filters.topic === 'All' || (item.topics || []).includes(state.filters.topic);
     const categoryOk = state.filters.category === 'All' || item.documentCategory === state.filters.category;
     const weekOk = !state.filters.thisWeek || (item.publishedAt && Date.parse(item.publishedAt) >= weekAgo);
-    return townOk && topicOk && categoryOk && weekOk;
+    return topicOk && categoryOk && weekOk;
   });
 }
 
@@ -94,13 +92,11 @@ async function load() {
   }
 }
 
-$('#watchTown').addEventListener('change', event => { state.filters.town = event.target.value; render(); });
 $('#watchTopic').addEventListener('change', event => { state.filters.topic = event.target.value; render(); });
 $('#watchCategory').addEventListener('change', event => { state.filters.category = event.target.value; render(); });
 $('#watchThisWeek').addEventListener('click', () => { state.filters.thisWeek = !state.filters.thisWeek; render(); });
 $('#watchReset').addEventListener('click', () => {
-  state.filters = { town:'All', topic:'All', category:'All', thisWeek:false };
-  $('#watchTown').value = 'All';
+  state.filters = { topic:'All', category:'All', thisWeek:false };
   $('#watchTopic').value = 'All';
   $('#watchCategory').value = 'All';
   render();
