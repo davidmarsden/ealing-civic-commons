@@ -20,7 +20,9 @@ const stableItemKey = id => {
 function populateCategories(items) {
   const select = $('#watchCategory');
   const current = select.value;
-  const categories = [...new Set(items.map(item => item.documentCategory).filter(Boolean))].sort((a,b) => a.localeCompare(b));
+  const itemCategories = items.map(item => item.documentCategory).filter(Boolean);
+  const diagnosticCategories = (state.data?.diagnostics?.feeds || []).map(feed => feed.label).filter(Boolean);
+  const categories = [...new Set([...itemCategories, ...diagnosticCategories])].sort((a,b) => a.localeCompare(b));
   select.innerHTML = '<option value="All">All collections</option>' + categories.map(category => `<option>${esc(category)}</option>`).join('');
   select.value = categories.includes(current) ? current : 'All';
 }
