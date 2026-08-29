@@ -25,6 +25,13 @@ function populateCategories(items) {
   select.value = categories.includes(current) ? current : 'All';
 }
 
+function setCategoryFilter(category) {
+  state.filters.category = category || 'All';
+  $('#watchCategory').value = state.filters.category;
+  render();
+  document.querySelector('.watch-filters')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function filteredItems() {
   const items = state.data?.items || [];
   const weekAgo = Date.now() - 7 * 86400000;
@@ -38,9 +45,14 @@ function filteredItems() {
   });
 }
 
+function bindCategoryButtons(root = document) {
+  root.querySelectorAll('[data-watch-category]').forEach(button => button.addEventListener('click', () => setCategoryFilter(button.dataset.watchCategory)));
+}
+
 function renderHealth() {
   const feeds = state.data?.diagnostics?.feeds || [];
-  $('#watchHealth').innerHTML = feeds.map(feed => `<div class="watch-health-row"><span class="watch-health-dot ${esc(feed.freshness)}"></span><span>${esc(feed.label)}</span><span class="watch-health-state">${esc(feed.freshness)}</span></div>`).join('');
+  $('#watchHealth').innerHTML = feeds.map(feed => `<div class="watch-health-row"><span class="watch-health-dot ${esc(feed.freshness)}"></span><button class="watch-health-category" type="button" data-watch-category="${esc(feed.label)}">${esc(feed.label)}</button><span class="watch-health-state">${esc(feed.freshness)}</span></div>`).join('');
+  bindCategoryButtons($('#watchHealth'));
 }
 
 function render() {
@@ -56,8 +68,10 @@ function render() {
       ? '<span class="tag">Borough-wide</span>'
       : (item.towns || []).map(town => `<span class="tag">${esc(town)}</span>`).join('');
     const itemPath = `/items/${stableItemKey(item.id)}`;
-    return `<article class="item"><div class="item-meta"><span class="source-pill official">Official record</span><div class="item-source">Ealing Council</div><div>${esc(fmtDate(item.publishedAt))}</div></div><div><p class="document-category">${esc(item.documentCategory || 'Council document')}</p><h3><a href="${esc(itemPath)}">${esc(item.title)}</a></h3>${item.summary ? `<p class="item-summary">${esc(item.summary)}</p>` : ''}<div class="item-actions"><a href="${esc(itemPath)}">Add context →</a><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Open council document ↗</a></div><div class="tags">${places}${(item.topics || []).map(topic => `<span class="tag">${esc(topic)}</span>`).join('')}</div>${item.metadataEnriched ? '<div class="document-note">Description recovered from the linked Ealing Council download page.</div>' : ''}</div></article>`;
+    const category = item.documentCategory || 'Council document';
+    return `<article class="item"><div class="item-meta"><span class="source-pill official">Official record</span><div class="item-source">Ealing Council</div><div>${esc(fmtDate(item.publishedAt))}</div></div><div><button class="document-category" type="button" data-watch-category="${esc(category)}" title="Show only ${esc(category)} documents">${esc(category)}</button><h3><a href="${esc(itemPath)}">${esc(item.title)}</a></h3>${item.summary ? `<p class="item-summary">${esc(item.summary)}</p>` : ''}<div class="item-actions"><a href="${esc(itemPath)}">Add context →</a><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Open council document ↗</a></div><div class="tags">${places}${(item.topics || []).map(topic => `<span class="tag">${esc(topic)}</span>`).join('')}</div>${item.metadataEnriched ? '<div class="document-note">Description recovered from the linked Ealing Council download page.</div>' : ''}</div></article>`;
   }).join('');
+  bindCategoryButtons(timeline);
 }
 
 async function load() {
