@@ -1,19 +1,34 @@
-function linkPilotEntityTags() {
+const entityRoute = new Map([
+  ['person', 'people'],
+  ['organisation', 'organisations'],
+  ['place', 'places']
+]);
+
+function slugifyEntityLabel(value) {
+  return String(value || '').toLowerCase().trim().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+function linkReviewedEntityTags() {
   document.querySelectorAll('.memory-tag').forEach(tag => {
-    if (tag.dataset.entityLinked === 'true') return;
+    if (tag.dataset.entityLinked === 'true' || tag.tagName === 'A') return;
+    const type = tag.querySelector('small')?.textContent?.trim();
+    const segment = entityRoute.get(type);
+    if (!segment) return;
     const label = tag.childNodes[0]?.textContent?.trim();
-    if (label !== 'Southall Gasworks') return;
+    const slug = slugifyEntityLabel(label);
+    if (!label || !slug) return;
     const link = document.createElement('a');
-    link.href = '/places/southall-gasworks.html';
+    link.href = `/${segment}/${slug}`;
     link.className = 'memory-tag memory-tag-link';
     link.dataset.entityLinked = 'true';
+    link.setAttribute('aria-label', `Open Civic Commons ${type} page for ${label}`);
     while (tag.firstChild) link.appendChild(tag.firstChild);
     tag.replaceWith(link);
   });
 }
 
 function arrangeMemoryColumns() {
-  linkPilotEntityTags();
+  linkReviewedEntityTags();
   const grid = document.querySelector('.memory-grid');
   if (!grid || grid.dataset.columnsArranged === 'true') return;
 
@@ -39,7 +54,7 @@ function arrangeMemoryColumns() {
   right.append(related, people);
   grid.replaceChildren(left, right);
   grid.dataset.columnsArranged = 'true';
-  linkPilotEntityTags();
+  linkReviewedEntityTags();
 }
 
 const memoryRoot = document.getElementById('civicMemoryContent');
