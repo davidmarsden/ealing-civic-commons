@@ -41,7 +41,7 @@ function renderHero(data) {
   $('#entityStatus').hidden = true;
   const hero = $('#entityHero'); hero.hidden = false;
   const fallback = entity.type === 'person' ? 'A reviewed person in the civic-memory graph.' : entity.type === 'organisation' ? 'A reviewed organisation in the civic-memory graph.' : 'A reviewed place in the civic-memory graph.';
-  hero.innerHTML = `<h1>${esc(entity.name)}</h1><p class="lede">${esc(entity.description || fallback)}</p><div class="entity-kicker"><span class="tag">${esc(entity.type)}</span>${(entity.aliases || []).slice(0,5).map(alias => `<span class="tag">also: ${esc(alias)}</span>`).join('')}</div><div class="entity-actions"><a href="#relationshipsSection">Reviewed connections ↓</a><a href="#sourcesSection">Primary evidence ↓</a><a href="#reportingSection">Historical reporting ↓</a><a href="#currentSection">Current Commons ↓</a></div>`;
+  hero.innerHTML = `<h1>${esc(entity.name)}</h1><p class="lede">${esc(entity.description || fallback)}</p><div class="entity-kicker"><span class="tag">${esc(entity.type)}</span>${(entity.aliases || []).slice(0,5).map(alias => `<span class="tag">also: ${esc(alias)}</span>`).join('')}</div><div class="entity-actions"><a href="#commonsAssertionsSection">Commons-reviewed assertions ↓</a><a href="#relationshipsSection">Reviewed connections ↓</a><a href="#sourcesSection">Primary evidence ↓</a><a href="#reportingSection">Historical reporting ↓</a><a href="#currentSection">Current Commons ↓</a></div>`;
 }
 
 function renderStats(data) {
@@ -56,6 +56,20 @@ function renderProviders(items) {
   root.innerHTML = (items || []).map(provider => `<div class="entity-provider"><strong>${provider.url ? `<a href="${esc(provider.url)}" target="_blank" rel="noopener noreferrer">${esc(provider.label || provider.name)}</a>` : esc(provider.label || provider.name)}</strong><span>${esc(provider.role || provider.bindingRole || 'Data provider')}</span></div>`).join('') || '<span class="entity-empty">No provider metadata available.</span>';
 }
 
+function renderCommonsAssertions(data, entity) {
+  const items = data?.assertions || [];
+  const section = $('#commonsAssertionsSection');
+  if (!section || !items.length) return;
+  section.hidden = false;
+  const current = { ...entity, commonsRoute: window.__civicEntityRoute || null };
+  $('#commonsAssertions').innerHTML = `<ul class="entity-list">${items.map(assertion => {
+    const from = assertion.direction === 'outgoing' ? entityLink(current) : entityLink(assertion.other);
+    const to = assertion.direction === 'outgoing' ? entityLink(assertion.other) : entityLink(current);
+    const reviewed = assertion.reviewedBy ? `${assertion.reviewedBy}${assertion.reviewedAt ? ` · reviewed ${fmtDate(assertion.reviewedAt)}` : ''}` : 'Civic Commons';
+    return `<li><span class="relationship-type">${esc(labelType(assertion.type))}</span><h3>${from} → ${to}</h3>${assertion.note ? `<p class="relationship-note">${esc(assertion.note)}</p>` : ''}${assertion.validFrom || assertion.validTo ? `<span class="entity-meta">Period: ${esc(assertion.validFrom || 'unknown')} → ${esc(assertion.validTo || 'present / unknown')}</span>` : ''}${assertion.evidence?.length ? `<span class="entity-meta">External evidence: ${assertion.evidence.map(ev => ev.url ? `<a href="${esc(ev.url)}" target="_blank" rel="noopener noreferrer">${esc(ev.title)}</a>` : esc(ev.title)).join(' · ')}</span>` : ''}<span class="entity-meta">Provider: ${esc(reviewed)} · ${esc(assertion.provenance || 'commons-reviewed-assertion')}</span></li>`;
+  }).join('')}</ul>`;
+}
+
 function renderRelationships(items, entity) {
   const section = $('#relationshipsSection');
   if (!items?.length) return;
@@ -64,7 +78,7 @@ function renderRelationships(items, entity) {
   $('#relationships').innerHTML = `<ul class="entity-list">${items.map(rel => {
     const from = rel.direction === 'outgoing' ? entityLink(current(entity)) : entityLink(rel.other);
     const to = rel.direction === 'outgoing' ? entityLink(rel.other) : entityLink(current(entity));
-    return `<li><span class="relationship-type">${esc(labelType(rel.type))}</span><h3>${from} → ${to}</h3>${rel.note ? `<p class="relationship-note">${esc(rel.note)}</p>` : ''}${rel.validFrom || rel.validTo ? `<span class="entity-meta">Period: ${esc(rel.validFrom || 'unknown')} → ${esc(rel.validTo || 'present / unknown')}</span>` : ''}${rel.evidence?.length ? `<span class="entity-meta">Evidence: ${rel.evidence.map(ev => ev.url ? `<a href="${esc(ev.url)}" target="_blank" rel="noopener noreferrer">${esc(ev.title)}</a>` : esc(ev.title)).join(' · ')}</span>` : ''}</li>`;
+    return `<li><span class="relationship-type">${esc(labelType(rel.type))}</span><h3>${from} → ${to}</h3>${rel.note ? `<p class="relationship-note">${esc(rel.note)}</p>` : ''}${rel.validFrom || rel.validTo ? `<span class="entity-meta">Period: ${esc(rel.validFrom || 'unknown')} → ${esc(rel.validTo || 'present / unknown')}</span>` : ''}${rel.evidence?.length ? `<span class="entity-meta">Evidence: ${rel.evidence.map(ev => ev.url ? `<a href="${esc(ev.url)}" target="_blank" rel="noopener noreferrer">${esc(ev.title)}</a>` : esc(ev.title)).join(' · ')}</span>` : ''}<span class="entity-meta">Provider: ${esc(rel.provider === 'southall-zettel' ? 'Southall-Zettel' : rel.provider || 'reviewed provider')}</span></li>`;
   }).join('')}</ul>`;
 }
 
@@ -99,13 +113,19 @@ async function load() {
   }
   try {
     const endpoint = new URL('/.netlify/functions/civic-entity', location.origin); endpoint.searchParams.set('route', route.route);
-    const [entityResponse, feedResponse] = await Promise.all([fetch(endpoint,{cache:'no-store'}), fetch('/.netlify/functions/feed',{cache:'no-store'}).catch(() => null)]);
+    const assertionsEndpoint = new URL('/.netlify/functions/civic-assertions', location.origin); assertionsEndpoint.searchParams.set('route', route.route);
+    const [entityResponse, assertionsResponse, feedResponse] = await Promise.all([
+      fetch(endpoint,{cache:'no-store'}),
+      fetch(assertionsEndpoint,{cache:'no-store'}).catch(() => null),
+      fetch('/.netlify/functions/feed',{cache:'no-store'}).catch(() => null)
+    ]);
     if (!entityResponse.ok) throw new Error(`Entity HTTP ${entityResponse.status}`);
     const data = await entityResponse.json();
     if (!data.matched) throw new Error(data.reason || 'Entity not found');
     if (route.expectedType && data.entity.type !== route.expectedType) throw new Error(`Entity type mismatch: expected ${route.expectedType}, got ${data.entity.type}`);
     window.__civicEntityRoute = data.civicEntity?.route || route.route;
     renderHero(data); renderStats(data); renderProviders(data.providers); renderRelationships(data.relationships, data.entity); renderSources(data.sources); renderReporting(data.reporting);
+    if (assertionsResponse?.ok) { const assertions = await assertionsResponse.json(); if (assertions.matched) renderCommonsAssertions(assertions, data.entity); }
     if (feedResponse?.ok) { const feed = await feedResponse.json(); renderCurrent(currentMatches(feed,data.entity)); }
   } catch (error) {
     $('#entityStatus').innerHTML = `<h1>Civic entity temporarily unavailable.</h1><p>The civic entity service could not load this page. The rest of Civic Commons is unaffected.</p><p><a href="/">Return to the civic timeline →</a></p>`;
