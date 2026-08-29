@@ -106,7 +106,7 @@ async function fetchFeed(feed) {
     const channel = parsed?.rss?.channel;
     if (!channel) throw new Error('Unrecognized RSS feed structure');
     const rawItems = arr(channel.item);
-    const items = rawItems.slice(0, 20).map(item => {
+    const items = rawItems.map(item => {
       const rawTitle = strip(textValue(item.title) || 'Untitled council document');
       const link = canonical(itemLink(item));
       const publishedAt = iso(item.pubDate ?? item.published ?? item.updated ?? item.date);
