@@ -13,7 +13,9 @@ function renderCounts(counts = {}) {
 
 function card(entity) {
   const providers = (entity.providers || []).map(provider => `<span class="entity-provider-pill">${esc(provider.label || provider.id)}</span>`).join('');
-  return `<a class="entity-card" href="/${esc(entity.route)}"><h3>${esc(entity.name)}</h3>${entity.description ? `<p>${esc(entity.description)}</p>` : `<p>${esc(entity.type)}</p>`}<div class="entity-card-meta">${providers}</div></a>`;
+  const source = entity.source?.url ? `<a class="entity-source-link" href="${esc(entity.source.url)}" target="_blank" rel="noopener noreferrer">${esc(entity.source.label || 'Website / source')} ↗</a>` : '';
+  const description = entity.description || 'Description pending editorial review.';
+  return `<article class="entity-card"><a class="entity-card-main" href="/${esc(entity.route)}"><h3>${esc(entity.name)}</h3><p>${esc(description)}</p></a><div class="entity-card-footer"><div class="entity-card-meta">${providers}</div>${source}</div></article>`;
 }
 
 function render() {
@@ -34,6 +36,9 @@ async function load() {
     allEntities = data.entities || [];
     renderCounts(data.counts);
     render();
+    if (data.quality?.missingDescriptionCount) {
+      console.warn(`Explore entity-description audit: ${data.quality.missingDescriptionCount} entities still need editorial descriptions.`, data.quality.missingDescriptions);
+    }
   } catch (error) {
     $('#exploreStatus').textContent = 'The civic entity directory is temporarily unavailable.';
     console.error('Explore load failed', error);
