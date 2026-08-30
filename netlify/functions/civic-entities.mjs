@@ -69,7 +69,8 @@ export default async () => {
       byRoute.set(entity.route, {
         ...entity,
         description: entity.description || providerEntity?.description || null,
-        aliases: entity.aliases?.length ? entity.aliases : (providerEntity?.aliases || [])
+        aliases: entity.aliases?.length ? entity.aliases : (providerEntity?.aliases || []),
+        website: entity.website || providerEntity?.website || null
       });
     }
 
@@ -80,7 +81,8 @@ export default async () => {
       const merged = {
         ...entity,
         description: entity.description || providerEntity.description || null,
-        aliases: entity.aliases?.length ? entity.aliases : (providerEntity.aliases || [])
+        aliases: entity.aliases?.length ? entity.aliases : (providerEntity.aliases || []),
+        website: entity.website || providerEntity.website || null
       };
       if (!byRoute.has(merged.route)) byRoute.set(merged.route, merged);
     }
@@ -89,16 +91,22 @@ export default async () => {
     const entities = [...byRoute.values()].map(entity => view(entity, sourceByEntity)).sort((a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name));
     const counts = entities.reduce((acc, entity) => { acc[entity.type] = (acc[entity.type] || 0) + 1; return acc; }, {});
     const missingDescriptions = entities.filter(entity => !entity.description).map(entity => entity.route);
+    const missingSources = entities.filter(entity => !entity.source).map(entity => entity.route);
 
     return json({
       matched: true,
       schemaVersion: 1,
       counts,
       entities,
-      quality: { missingDescriptions, missingDescriptionCount: missingDescriptions.length },
+      quality: {
+        missingDescriptions,
+        missingDescriptionCount: missingDescriptions.length,
+        missingSources,
+        missingSourceCount: missingSources.length
+      },
       provenance: {
         source: 'Civic Commons entity registry + Southall Stories research archive',
-        method: 'Canonical Commons identities are merged with exact reviewed research-archive entity IDs. Entity note prose supplies descriptions when no Commons-specific description exists; reviewed source records may supply an external source link.'
+        method: 'Canonical Commons identities are merged with exact reviewed research-archive entity IDs. Entity note prose supplies descriptions; first-party or authoritative entity websites are preferred for external links, with reviewed source records used as fallback evidence.'
       }
     });
   } catch (error) {
@@ -106,6 +114,7 @@ export default async () => {
     const entities = baseRegistry().map(entity => view(entity)).sort((a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name));
     const counts = entities.reduce((acc, entity) => { acc[entity.type] = (acc[entity.type] || 0) + 1; return acc; }, {});
     const missingDescriptions = entities.filter(entity => !entity.description).map(entity => entity.route);
-    return json({ matched: true, degraded: true, schemaVersion: 1, counts, entities, quality: { missingDescriptions, missingDescriptionCount: missingDescriptions.length }, provenance: { source: 'Civic Commons entity registry', method: 'The historical research export was unavailable; Commons-native and explicitly registered identities remain available.' } }, 200, 60);
+    const missingSources = entities.filter(entity => !entity.source).map(entity => entity.route);
+    return json({ matched: true, degraded: true, schemaVersion: 1, counts, entities, quality: { missingDescriptions, missingDescriptionCount: missingDescriptions.length, missingSources, missingSourceCount: missingSources.length }, provenance: { source: 'Civic Commons entity registry', method: 'The historical research export was unavailable; Commons-native and explicitly registered identities remain available.' } }, 200, 60);
   }
 };
