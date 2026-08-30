@@ -22,16 +22,16 @@ Status values:
 | London City Hall / GLA selected RSS | official record | live, Ealing-filtered | Six documented City Hall RSS endpoints are consumed by `gla-feed.mjs`, filtered for explicit Ealing-area relevance and merged into the public combined feed. |
 | Ealing and Hounslow CVS (EHCVS) | voluntary-sector infrastructure | live page-watch | The Ealing community-services page is monitored with dated-card extraction. Stable publisher links remain canonical; extraction fails closed if the expected card/date structure disappears. |
 | Warren Farm Nature Reserve | community / environment campaign | live page-watch | The public blog listing is monitored via stable `/blog/...` permalinks and explicit card dates. Particularly valuable for FOI/evidence-rich posts and council-video timestamps. |
+| Ealing Friends of the Earth | organisation / campaign | live living-page watch | The current News section is captured as a content-hashed snapshot. Standalone linked evidence such as the Park Royal data-centre page remains canonical; no publication date is invented for homepage-only updates. |
+| The Monitoring Group | organisation / campaign | live living-page watch | The Drum is a living publication containing several reports on one canonical page. Civic Commons versions the monitored section by content hash rather than inventing article permalinks or dates. |
 | Ealing Transition | organisation / campaign | live | Website RSS already ingested. |
 
 ## High-priority verified sources
 
 | Source | Type | Status | Why it matters / next action |
 | --- | --- | --- | --- |
-| The Monitoring Group | organisation / campaign | page-watch candidate | Long-running anti-racism, policing and state-accountability material with deep Southall history. Current site includes new articles plus direct primary-source links to the Undercover Policing Inquiry, hearing transcripts and video evidence. No advertised RSS/feed found in the public page sweep. Needs a source-specific current-notice/article extractor rather than the EHCVS card pattern. |
 | Metropolitan Police — Ealing | official record | needs-local-filtering | Ealing neighbourhood policing pages and local channels are valuable; avoid dumping all London crime news into Commons. Develop Ealing/ward filtering first. |
 | Metropolitan Police YouTube | official video | needs-local-filtering | Official Met channel confirmed; ingest only when Ealing relevance can be determined reliably. |
-| Ealing Friends of the Earth | organisation / campaign | page-watch candidate | Active Ealing-specific environment source with current material on climate, clean air, green space, Heathrow and Park Royal/data-centre development. Current news is largely presented as homepage sections rather than a uniform dated article-card archive, so it needs its own extractor. |
 | Ealing Law Centre | legal / community organisation | verified reference source | High-value housing, immigration, welfare-rights and access-to-justice source. Publishing cadence is lower and there is no obvious current news feed, so treat primarily as an entity/reference source unless a stable updates endpoint emerges. |
 | London Assembly ModernGov | official record | verified | Committee pages expose meeting documents; useful companion to Assembly video and City Hall RSS. |
 | Bassam Mahfouz AM | elected representative | live graph / verified source | Canonical Commons entity and reviewed current Assembly roles added; City Hall profile and Assembly records are the evidence sources. |
@@ -46,6 +46,15 @@ Status values:
 - Environment and Climate Change publications — `https://www.london.gov.uk/rss-feeds/80644`
 
 `gla-feed.mjs` accepts an item only when its title/description contains an explicit local hook: Ealing, one of the seven towns, Ealing & Hillingdon/Bassam Mahfouz, Heathrow, OPDC/Old Oak, Warren Farm, the Green Quarter or Southall Gasworks. The filtered output is merged with local feeds by `combined-feed.mjs`, exposed on the public `/.netlify/functions/feed` route and included in the scheduled item archive. This deliberately favours precision over recall so City Hall cannot swamp the local corpus.
+
+### Page-watch models
+
+Civic Commons now uses two explicit models for publishers that do not expose a stable RSS/Atom feed:
+
+1. **Structured dated listings** (`community-page-feed.mjs`) — used for EHCVS and Warren Farm. Items require stable publisher permalinks plus a recognisable publication date. If the expected page structure disappears, the source fails closed and emits no guessed items.
+2. **Living publications** (`living-page-feed.mjs`) — used for EFoE's current News section and The Monitoring Group's Drum newsletter. The publisher keeps several changing updates on one canonical page, so Commons stores a content-hashed versioned snapshot. `publishedAt` remains empty unless the publisher exposes a reliable per-entry date.
+
+The combined source stream is also used by personal Civic Commons RSS, so follows and email alerts see the same source universe as the public timeline.
 
 ## Named community-source leads
 
