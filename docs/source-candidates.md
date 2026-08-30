@@ -32,9 +32,20 @@ Status values:
 | Ealing Law Centre | legal / community organisation | needs-feed-discovery | Housing, immigration and welfare-rights work; potentially strong source material for housing and social-justice issues. |
 | Ealing and Hounslow CVS (EHCVS) | voluntary-sector infrastructure | needs-feed-discovery | Community-sector news, networks, training and local voluntary-sector activity. |
 | Warren Farm Nature Reserve | community / environment campaign | needs-feed-discovery | Rich archive of campaign material, evidence, meeting links and timestamps into Ealing Council video records. |
-| London City Hall / GLA RSS | official record | verified | City Hall exposes extensive RSS feeds for decisions, consultations, press releases, Assembly publications and member material. Select a focused subset rather than ingesting everything. |
-| London Assembly ModernGov | official record | verified | Committee pages expose RSS and meeting documents; useful companion to Assembly video. |
-| Bassam Mahfouz AM | elected representative | verified | Current Ealing & Hillingdon Assembly Member; City Hall profile, press releases, committee responsibilities and Assembly video appearances. Prefer official City Hall/Assembly sources rather than a personal-content firehose. |
+| London City Hall / GLA RSS | official record | verified | City Hall publishes documented RSS endpoints. Selected endpoints below are ready to wire into the main feed. |
+| London Assembly ModernGov | official record | verified | Committee pages expose meeting documents; useful companion to Assembly video and City Hall RSS. |
+| Bassam Mahfouz AM | elected representative | live graph / verified source | Canonical Commons entity and reviewed current Assembly roles now added; City Hall profile and Assembly records are the evidence sources. |
+
+### Verified City Hall RSS endpoints selected for Commons
+
+- London Assembly press releases — `https://www.london.gov.uk/rss-feeds/80611`
+- London Assembly current investigations — `https://www.london.gov.uk/rss-feeds/80616`
+- London Assembly publications — `https://www.london.gov.uk/rss-feeds/80633`
+- Housing and land publications — `https://www.london.gov.uk/rss-feeds/80642`
+- Planning publications — `https://www.london.gov.uk/rss-feeds/80643`
+- Environment and Climate Change publications — `https://www.london.gov.uk/rss-feeds/80644`
+
+These should be ingested as `Official record` sources and filtered/ranked for Ealing relevance where possible rather than allowed to dominate the local feed.
 
 ## Named community-source leads
 
