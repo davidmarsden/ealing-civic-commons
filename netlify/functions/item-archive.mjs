@@ -1,4 +1,4 @@
-import feedHandler from './feed.mjs';
+import feedHandler from './combined-feed.mjs';
 import { fetchEalingCouncilDocuments } from './ealing-council-documents.mjs';
 import { archiveItems } from '../lib/civic-items.mjs';
 
