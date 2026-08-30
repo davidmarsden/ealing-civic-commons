@@ -123,6 +123,26 @@ const sources = [
     mediaType: 'video'
   },
   {
+    id: 'southall-black-sisters-youtube',
+    name: 'Southall Black Sisters — YouTube',
+    url: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCUsEWqUfUJYr9uwLtXymxVA',
+    homepage: 'https://www.youtube.com/@SouthallBlackSisters',
+    sourceClass: 'Organisation / campaign',
+    towns: ['Southall'],
+    defaultTopics: ['Community', 'Council & democracy'],
+    mediaType: 'video'
+  },
+  {
+    id: 'london-assembly-youtube',
+    name: 'London Assembly — YouTube',
+    url: 'https://www.youtube.com/feeds/videos.xml?user=LondonAssembly',
+    homepage: 'https://www.youtube.com/@LondonAssembly',
+    sourceClass: 'Official record',
+    towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
+    defaultTopics: ['Council & democracy'],
+    mediaType: 'video'
+  },
+  {
     id: 'open-council-network-reddit-ealing',
     name: 'Open Council Network — Ealing updates',
     url: 'https://www.reddit.com/r/OpenCouncilNetwork/search.rss?q=Ealing&restrict_sr=1&sort=new',
