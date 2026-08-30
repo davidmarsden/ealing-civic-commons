@@ -23,6 +23,17 @@ const sources = [
     startMarker: 'The Drum - news from The Monitoring Group',
     endMarker: 'The Monitoring Group 2 Langley Lane',
     titlePatterns: [/New:\s*Launch of Nottingham Solidarity Network/i, /Special report:\s*England 2024 riots and the cycle of racist violence/i]
+  },
+  {
+    id: 'ealing-community-independents-current',
+    name: 'Ealing Community Independents — Current publication',
+    url: 'https://ealingindependents.org/',
+    homepage: 'https://ealingindependents.org/',
+    sourceClass: 'Political organisation / campaign',
+    defaultTopics: ['Council & democracy', 'Community'],
+    startMarker: 'EALING COMMUNITY INDEPENDENTS',
+    endMarker: 'Contact',
+    titlePatterns: [/Your Voice/i, /We deserve better/i, /Why You Should Vote Ealing Community Independents/i]
   }
 ];
 
