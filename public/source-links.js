@@ -53,33 +53,57 @@ function isDocumentUrl(url) {
   }
 }
 
+let renderState = 'idle';
+
 async function renderSourceLinks() {
   const view = document.querySelector('#itemView');
   if (!view || view.hidden) return false;
-  if (view.querySelector('.source-links-panel')) return true;
+  if (view.querySelector('.source-links-panel')) {
+    renderState = 'done';
+    return true;
+  }
+  if (renderState === 'loading') return false;
+  if (renderState === 'done') return true;
 
   const summary = view.querySelector('.item-page-summary')?.textContent || '';
   const directUrls = extractUrls(summary);
-  if (!directUrls.length) return true;
+  if (!directUrls.length) {
+    renderState = 'done';
+    return true;
+  }
 
-  const landingUrls = directUrls.filter(url => !isDocumentUrl(url));
-  const discovered = (await Promise.all(landingUrls.slice(0, 4).map(enrichLandingPage))).flat();
-  const seen = new Set(directUrls);
-  const extraDocuments = discovered.filter(link => link?.url && !seen.has(link.url) && (seen.add(link.url), true));
+  renderState = 'loading';
+  try {
+    const landingUrls = directUrls.filter(url => !isDocumentUrl(url));
+    const discovered = (await Promise.all(landingUrls.slice(0, 4).map(enrichLandingPage))).flat();
+    const seen = new Set(directUrls);
+    const extraDocuments = discovered.filter(link => link?.url && !seen.has(link.url) && (seen.add(link.url), true));
 
-  const panel = document.createElement('section');
-  panel.className = 'source-links-panel';
-  panel.setAttribute('aria-labelledby', 'sourceLinksTitle');
-  panel.innerHTML = `<p class="eyebrow">Source links</p><h2 id="sourceLinksTitle">Follow the source trail</h2><p class="source-links-intro">The original item remains canonical. These links were supplied by that source, or discovered one step deeper on a recognised civic or publisher page it explicitly links to.</p><div class="source-links-grid"><div><strong>Linked from the source</strong><ul>${directUrls.map(url => row(classifyDirectUrl(url), url)).join('')}</ul></div>${extraDocuments.length ? `<div><strong>Documents on linked source pages</strong><ul>${extraDocuments.map(link => row(documentLabel(link), link.url, link.title || '')).join('')}</ul></div>` : ''}</div>`;
+    if (view.querySelector('.source-links-panel')) {
+      renderState = 'done';
+      return true;
+    }
 
-  const actions = view.querySelector('.item-page-actions');
-  if (actions) view.insertBefore(panel, actions);
-  else view.appendChild(panel);
-  return true;
+    const panel = document.createElement('section');
+    panel.className = 'source-links-panel';
+    panel.setAttribute('aria-labelledby', 'sourceLinksTitle');
+    panel.innerHTML = `<p class="eyebrow">Source links</p><h2 id="sourceLinksTitle">Follow the source trail</h2><p class="source-links-intro">The original item remains canonical. These links were supplied by that source, or discovered one step deeper on a recognised civic or publisher page it explicitly links to.</p><div class="source-links-grid"><div><strong>Linked from the source</strong><ul>${directUrls.map(url => row(classifyDirectUrl(url), url)).join('')}</ul></div>${extraDocuments.length ? `<div><strong>Documents on linked source pages</strong><ul>${extraDocuments.map(link => row(documentLabel(link), link.url, link.title || '')).join('')}</ul></div>` : ''}</div>`;
+
+    const actions = view.querySelector('.item-page-actions');
+    if (actions) view.insertBefore(panel, actions);
+    else view.appendChild(panel);
+    renderState = 'done';
+    return true;
+  } catch (error) {
+    console.warn('Source trail unavailable', error);
+    renderState = 'done';
+    return true;
+  }
 }
 
 let attempts = 0;
 const timer = setInterval(async () => {
   attempts += 1;
+  if (renderState === 'loading') return;
   if (await renderSourceLinks() || attempts > 30) clearInterval(timer);
 }, 150);
