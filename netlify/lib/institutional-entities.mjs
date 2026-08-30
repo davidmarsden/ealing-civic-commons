@@ -18,6 +18,60 @@ export const INSTITUTIONAL_ENTITIES = [
     providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   },
   {
+    route: 'organisations/london-assembly',
+    id: 'civic:organisation:london-assembly',
+    name: 'London Assembly',
+    type: 'organisation',
+    description: 'The elected body that scrutinises the Mayor of London and investigates issues affecting Londoners.',
+    aliases: ['GLA London Assembly'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/london-assembly-economy-culture-and-skills-committee',
+    id: 'civic:organisation:london-assembly-economy-culture-and-skills-committee',
+    name: 'London Assembly Economy, Culture and Skills Committee',
+    type: 'organisation',
+    description: 'London Assembly committee scrutinising economic development, culture, skills and employment policy.',
+    aliases: ['Economy, Culture and Skills Committee'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/london-assembly-gla-oversight-committee',
+    id: 'civic:organisation:london-assembly-gla-oversight-committee',
+    name: 'London Assembly GLA Oversight Committee',
+    type: 'organisation',
+    description: 'London Assembly committee scrutinising governance, staffing, performance and administration across the Greater London Authority.',
+    aliases: ['GLA Oversight Committee'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/london-assembly-transport-committee',
+    id: 'civic:organisation:london-assembly-transport-committee',
+    name: 'London Assembly Transport Committee',
+    type: 'organisation',
+    description: 'London Assembly committee scrutinising transport policy and services in London.',
+    aliases: ['Transport Committee'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/london-assembly-environment-committee',
+    id: 'civic:organisation:london-assembly-environment-committee',
+    name: 'London Assembly Environment Committee',
+    type: 'organisation',
+    description: 'London Assembly committee scrutinising environmental and climate issues affecting London.',
+    aliases: ['Environment Committee'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'people/bassam-mahfouz',
+    id: 'civic:person:bassam-mahfouz',
+    name: 'Bassam Mahfouz',
+    type: 'person',
+    description: 'London Assembly Member for Ealing and Hillingdon, elected in 2024, and Chair of the Assembly Economy, Culture and Skills Committee for 2026/27.',
+    aliases: ['Bassam Mahfouz AM'],
+    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
     route: 'organisations/old-oak-and-park-royal-development-corporation',
     id: 'civic:organisation:old-oak-and-park-royal-development-corporation',
     name: 'Old Oak and Park Royal Development Corporation',
