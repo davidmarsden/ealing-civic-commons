@@ -1,4 +1,4 @@
-import feedHandler from './feed.mjs';
+import feedHandler from './combined-feed.mjs';
 import { getArchivedItem } from '../lib/civic-items.mjs';
 
 const MAX_TARGETS_PER_TYPE = 50;
@@ -150,7 +150,7 @@ export default async request => {
   let upstream;
   const contributionsPromise = loadPublishedContributions(request.url);
   try {
-    upstream = await feedHandler();
+    upstream = await feedHandler(request);
   } catch (error) {
     console.error('Personal RSS upstream feed failed', error);
     return new Response('Civic Commons feed is temporarily unavailable.', {
