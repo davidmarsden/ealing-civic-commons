@@ -9,7 +9,22 @@ const sources = [
     defaultTopics: ['Community'],
     hostPattern: /^(?:www\.)?ehcvs\.org\.uk$/i,
     requireNearby: /Published\s+on/i,
-    excludePath: /^\/(?:$|about|contact|services|projects|training|events|whats-on|ealing-community-voluntary-services\/?$)/i
+    excludePath: /^\/(?:$|about|contact|services|projects|training|events|whats-on|ealing-community-voluntary-services\/?$)/i,
+    dateStyle: 'published-on'
+  },
+  {
+    id: 'warren-farm-nature-reserve-blog',
+    name: 'Warren Farm Nature Reserve — Blog',
+    url: 'https://www.warrenfarmnaturereserve.co.uk/blog',
+    homepage: 'https://www.warrenfarmnaturereserve.co.uk/',
+    sourceClass: 'Organisation / campaign',
+    towns: ['Southall', 'Hanwell'],
+    defaultTopics: ['Environment', 'Planning & development'],
+    hostPattern: /^(?:www\.)?warrenfarmnaturereserve\.co\.uk$/i,
+    requireNearby: /\b\d{1,2}\/\d{1,2}\/\d{2}\b/,
+    includePath: /^\/blog\/[a-z0-9][a-z0-9-]+\/?$/i,
+    excludePath: /^\/blog\/?$/i,
+    dateStyle: 'mdy-short'
   }
 ];
 
@@ -51,23 +66,39 @@ function absoluteUrl(href, base) {
   }
 }
 
-function parsePublishedDate(text = '') {
-  const match = String(text).match(/Published\s+on\s*:?[\s\u00a0]*([0-3]?\d\s+[A-Za-z]+\s+20\d{2})/i);
+function parsePublishedDate(text = '', source = {}) {
+  const value = String(text);
+  if (source.dateStyle === 'mdy-short') {
+    const match = value.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2})\b/);
+    if (!match) return null;
+    const month = Number.parseInt(match[1], 10);
+    const day = Number.parseInt(match[2], 10);
+    const year = 2000 + Number.parseInt(match[3], 10);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    return new Date(Date.UTC(year, month - 1, day)).toISOString();
+  }
+
+  const match = value.match(/Published\s+on\s*:?[\s\u00a0]*([0-3]?\d\s+[A-Za-z]+\s+20\d{2})/i);
   if (!match) return null;
   const timestamp = Date.parse(match[1]);
   return Number.isNaN(timestamp) ? null : new Date(timestamp).toISOString();
 }
 
+function removeDateText(text = '', source = {}) {
+  if (source.dateStyle === 'mdy-short') return String(text).replace(/\b\d{1,2}\/\d{1,2}\/\d{2}\b/g, ' ');
+  return String(text).replace(/Published\s+on\s*:?[\s\u00a0]*[0-3]?\d\s+[A-Za-z]+\s+20\d{2}/i, ' ');
+}
+
 function topicGuess(text, defaults = []) {
   const value = String(text || '').toLowerCase();
   const rules = [
-    ['Planning & development', /planning|development|hmo|licensing|housing scheme|regeneration/],
+    ['Planning & development', /planning|development|hmo|licensing|housing scheme|regeneration|sports pitch/],
     ['Housing', /housing|tenant|rent|homeless|hmo/],
-    ['Environment', /air quality|pollution|climate|green|park|tree|environment|recycling|waste|smoke-free/],
+    ['Environment', /air quality|pollution|climate|green|park|tree|environment|recycling|waste|smoke-free|nature reserve|rewild|biodiversity|meadow|wildlife/],
     ['Transport', /traffic|transport|bus|rail|road|parking|cycle|heathrow/],
     ['Schools & young people', /school|children|young people|youth|education|nursery/],
     ['Policing & safety', /police|crime|safety|domestic abuse|violence|asb|antisocial|anti-social/],
-    ['Council & democracy', /council|consultation|election|committee|scrutiny|petition/],
+    ['Council & democracy', /council|consultation|election|committee|scrutiny|petition|foi|freedom of information/],
     ['Public health', /health|vaccine|smoke-free|wellbeing|cancer|prostate/]
   ];
   return [...new Set([...rules.filter(([, rx]) => rx.test(value)).map(([name]) => name), ...defaults])].slice(0, 3);
@@ -79,22 +110,27 @@ function extractCards(source, html) {
   let match;
   while ((match = anchorPattern.exec(html))) {
     const url = absoluteUrl(match[1], source.url);
-    if (!url || !source.hostPattern.test(url.hostname) || source.excludePath.test(url.pathname)) continue;
+    if (!url || !source.hostPattern.test(url.hostname)) continue;
+    if (source.includePath && !source.includePath.test(url.pathname)) continue;
+    if (source.excludePath && source.excludePath.test(url.pathname)) continue;
 
     const title = strip(match[2]);
     if (title.length < 12 || title.length > 180) continue;
     if (/^(?:read more|learn more|find out more|back to news|news|events|projects)$/i.test(title)) continue;
 
-    const windowStart = Math.max(0, match.index - 350);
-    const windowEnd = Math.min(html.length, anchorPattern.lastIndex + 1100);
+    const windowStart = Math.max(0, match.index - 500);
+    const windowEnd = Math.min(html.length, anchorPattern.lastIndex + 1300);
     const nearbyHtml = html.slice(windowStart, windowEnd);
     const nearbyText = strip(nearbyHtml);
     if (source.requireNearby && !source.requireNearby.test(nearbyText)) continue;
 
-    const publishedAt = parsePublishedDate(nearbyText);
+    const publishedAt = parsePublishedDate(nearbyText, source);
     if (!publishedAt) continue;
 
-    let summary = nearbyText.replace(title, '').replace(/Published\s+on\s*:?[\s\u00a0]*[0-3]?\d\s+[A-Za-z]+\s+20\d{2}/i, '').trim();
+    let summary = removeDateText(nearbyText.replace(title, ' '), source)
+      .replace(/\b(?:Written By|Read More|ongoing)\b/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
     if (summary.length > 420) summary = summary.slice(0, 417).trimEnd() + '…';
 
     results.push({
@@ -112,7 +148,7 @@ function extractCards(source, html) {
       towns: source.towns,
       topics: topicGuess(`${title} ${summary}`, source.defaultTopics),
       derived: true,
-      derivedFrom: 'Structured public news listing'
+      derivedFrom: 'Structured public news/blog listing'
     });
   }
 
