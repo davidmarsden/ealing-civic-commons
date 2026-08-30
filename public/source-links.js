@@ -1,5 +1,7 @@
 const escapeHtml = value => String(value ?? '').replace(/[&<>'\"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '\"': '&quot;' }[char]));
 
+let renderState = 'idle';
+
 function extractUrls(text = '') {
   const matches = String(text).match(/https?:\/\/[^\s<>"']+/gi) || [];
   return [...new Set(matches.map(url => url.replace(/[),.;!?]+$/g, '')))];
@@ -45,6 +47,24 @@ async function enrichLandingPage(url) {
   }
 }
 
+async function recoverSourceDescriptionLinks(view) {
+  try {
+    const sourceUrl = view.querySelector('.primary-source-link')?.href;
+    const meta = [...view.querySelectorAll('.item-page-meta span')].map(node => node.textContent.trim());
+    const sourceName = meta[1] || '';
+    if (!sourceUrl) return [];
+    const endpoint = new URL('/.netlify/functions/source-links', location.origin);
+    endpoint.searchParams.set('sourceUrl', sourceUrl);
+    endpoint.searchParams.set('sourceName', sourceName);
+    const response = await fetch(endpoint, { cache: 'no-store' });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.sourceLinks || [];
+  } catch {
+    return [];
+  }
+}
+
 function isDocumentUrl(url) {
   try {
     return /\.(pdf|doc|docx|odt|rtf|xls|xlsx|ods|csv|ppt|pptx|odp)$/i.test(new URL(url).pathname);
@@ -53,36 +73,32 @@ function isDocumentUrl(url) {
   }
 }
 
-let renderState = 'idle';
+function preferCompleteUrls(urls) {
+  const unique = [...new Set(urls.filter(Boolean))];
+  return unique.filter(candidate => !unique.some(other => other !== candidate && other.startsWith(candidate) && other.length > candidate.length));
+}
 
 async function renderSourceLinks() {
   const view = document.querySelector('#itemView');
   if (!view || view.hidden) return false;
-  if (view.querySelector('.source-links-panel')) {
-    renderState = 'done';
-    return true;
-  }
+  if (view.querySelector('.source-links-panel')) { renderState = 'done'; return true; }
   if (renderState === 'loading') return false;
   if (renderState === 'done') return true;
 
-  const summary = view.querySelector('.item-page-summary')?.textContent || '';
-  const directUrls = extractUrls(summary);
-  if (!directUrls.length) {
-    renderState = 'done';
-    return true;
-  }
-
   renderState = 'loading';
   try {
+    const summary = view.querySelector('.item-page-summary')?.textContent || '';
+    const visibleUrls = extractUrls(summary);
+    const recoveredUrls = await recoverSourceDescriptionLinks(view);
+    const directUrls = preferCompleteUrls([...visibleUrls, ...recoveredUrls]);
+    if (!directUrls.length) { renderState = 'done'; return true; }
+
     const landingUrls = directUrls.filter(url => !isDocumentUrl(url));
     const discovered = (await Promise.all(landingUrls.slice(0, 4).map(enrichLandingPage))).flat();
     const seen = new Set(directUrls);
     const extraDocuments = discovered.filter(link => link?.url && !seen.has(link.url) && (seen.add(link.url), true));
 
-    if (view.querySelector('.source-links-panel')) {
-      renderState = 'done';
-      return true;
-    }
+    if (view.querySelector('.source-links-panel')) { renderState = 'done'; return true; }
 
     const panel = document.createElement('section');
     panel.className = 'source-links-panel';
@@ -96,14 +112,13 @@ async function renderSourceLinks() {
     return true;
   } catch (error) {
     console.warn('Source trail unavailable', error);
-    renderState = 'done';
-    return true;
+    renderState = 'idle';
+    return false;
   }
 }
 
 let attempts = 0;
 const timer = setInterval(async () => {
   attempts += 1;
-  if (renderState === 'loading') return;
   if (await renderSourceLinks() || attempts > 30) clearInterval(timer);
 }, 150);
