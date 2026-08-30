@@ -20,25 +20,49 @@ Status values:
 | Southall Black Sisters | organisation / campaign + YouTube | live | Official YouTube channel added as a video source; website/news archive is also high-value. |
 | London Assembly | official record + YouTube | live | Committee meetings, Mayor's Question Time and investigations; useful for Bassam Mahfouz and London-wide governance. |
 | London City Hall / GLA selected RSS | official record | live, Ealing-filtered | Six documented City Hall RSS endpoints are consumed by `gla-feed.mjs`, filtered for explicit Ealing-area relevance and merged into the public combined feed. |
-| Metropolitan Police — Ealing | official record | live, Ealing-filtered | `met-ealing-feed.mjs` filters the official Met newsroom for explicit Ealing-area terms and versions current priorities from Norwood Green, Southall Broadway, Southall Green and Southall West Safer Neighbourhood pages. |
-| Ealing Citizens / Citizens UK | organisation / campaign | live, Ealing-filtered | `ealing-citizens-feed.mjs` watches the dated West London Citizens news archive and admits entries with an explicit Ealing/Southall/local hook. |
-| Ealing and Hounslow CVS (EHCVS) | voluntary-sector infrastructure | live page-watch | The Ealing community-services page is monitored with dated-card extraction. Stable publisher links remain canonical; extraction fails closed if the expected card/date structure disappears. |
-| Warren Farm Nature Reserve | community / environment campaign | live page-watch | The public blog listing is monitored via stable `/blog/...` permalinks and explicit card dates. Particularly valuable for FOI/evidence-rich posts and council-video timestamps. |
-| Ealing Friends of the Earth | organisation / campaign | live living-page watch | The current News section is captured as a content-hashed snapshot. Standalone linked evidence such as the Park Royal data-centre page remains canonical; no publication date is invented for homepage-only updates. |
-| The Monitoring Group | organisation / campaign | live living-page watch | The Drum is a living publication containing several reports on one canonical page. Civic Commons versions the monitored section by content hash rather than inventing article permalinks or dates. |
+| Metropolitan Police — Ealing | official record | live, Ealing-filtered | Official newsroom plus Southall/Norwood Green Safer Neighbourhood priorities. |
+| Metropolitan Police YouTube | official video | live, Ealing-filtered | Official YouTube Atom feed admitted only when title/description contains explicit Ealing/Southall/local ward terms. |
+| Ealing Citizens / Citizens UK | organisation / campaign | live, Ealing-filtered | Dated West London Citizens news archive filtered for explicit Ealing/Southall relevance. |
+| Ealing and Hounslow CVS (EHCVS) | voluntary-sector infrastructure | live page-watch | Dated Ealing community-services cards. |
+| Warren Farm Nature Reserve | community / environment campaign | live page-watch | Stable blog permalinks and dates; strong FOI/video evidence material. |
+| Ealing Friends of the Earth | organisation / campaign | live living-page watch | Current News section content-hashed; no dates invented. |
+| The Monitoring Group | organisation / campaign | live living-page watch | The Drum living publication is content-hashed. |
 | Ealing Transition | organisation / campaign | live | Website RSS already ingested. |
+| Sri Guru Singh Sabha Southall | community / faith + YouTube | live, civic-filtered | Official YouTube channel filtered to lectures, community/interfaith/public-interest material; routine daily morning/evening livestreams suppressed. |
+| Ealing Synagogue | community / faith | live civic page-watch | Dated first-party civic/interfaith/community material only. |
+| St Anselm's Catholic Church Southall | community / faith | live civic page-watch | Dated parish-news material admitted only when it has a civic/community/interfaith hook. |
+| St John's Southall Green | community / faith | live living-page watch | Community/outreach programme monitored; routine worship content is not used as civic news. |
+| West London College | community / education | live, local civic-filtered | Dated college news admitted for explicit Ealing/Southall/public-interest relevance. |
 
-## High-priority verified sources
+## High-priority verified/reference sources
 
 | Source | Type | Status | Why it matters / next action |
 | --- | --- | --- | --- |
-| Metropolitan Police YouTube | official video | needs-local-filtering | Official Met channel confirmed; ingest only when Ealing relevance can be determined reliably from title/description/transcript. |
-| Ealing Law Centre | legal / community organisation | verified reference source | High-value housing, immigration, welfare-rights and access-to-justice source. Publishing cadence is lower and there is no obvious current news feed, so treat primarily as an entity/reference source unless a stable updates endpoint emerges. |
-| London Assembly ModernGov | official record | verified | Committee pages expose meeting documents; useful companion to Assembly video and City Hall RSS. |
-| Bassam Mahfouz AM | elected representative | live graph / verified source | Canonical Commons entity and reviewed current Assembly roles added; City Hall profile and Assembly records are the evidence sources. |
-| The Kings Centre Southall | community / faith | verified reference source | Charity Commission and the organisation's own website establish the Southall training/community hub. A sufficiently clear current-news/feed surface has not yet been confirmed, so do not substitute third-party or St John's material as its feed. |
+| Ealing Law Centre | legal / community organisation | verified reference source | Housing, immigration, welfare rights and social-justice material; seek a stable updates surface before live ingestion. |
+| London Assembly ModernGov | official record | verified | Meeting documents; useful companion to Assembly video and City Hall RSS. |
+| Bassam Mahfouz AM | elected representative | live graph / verified source | Current Assembly roles are reviewed graph evidence. |
+| The Kings Centre Southall | community / faith | verified reference source | First-party identity/site confirmed; no durable current-news feed yet. |
+| Guru Nanak Darbar Southall | community / faith | verified first-party source | First-party gurdwara site with media/kirtan resources; identify civic/community updates suitable for selective ingestion. |
+| Jamia Masjid Islamic Centre Southall | community / faith | verified first-party source | Townsend Road mosque with first-party website; look for durable community/public-interest update surface. |
+| Central Jamia Masjid Southall | community / faith | verified first-party source | First-party website/document trail confirmed; seek civic/community publishing surface. |
+| Vishwa Hindu Kendra Mandir | community / faith | verified first-party source | First-party site with events/news and wider community/education role. |
+| Shree Ram Mandir Southall | community / faith | verified first-party source | First-party site explicitly describes community service, interfaith work and major public cultural events. |
+| Christ the Redeemer Church Southall | community / faith | verified entity/source lead | Ealing Citizens member institution; locate durable first-party civic/community publishing surface. |
+| Villiers High School | community / education | verified source lead | Family bulletin has current local civic/policing material; investigate stable feed/watch. |
 
-### Live City Hall RSS endpoints selected for Commons
+## Faith/community discovery inventory
+
+Coverage should be plural by design. Current confirmed Southall/Ealing leads include:
+
+- **Sikh:** Sri Guru Singh Sabha Southall; Gurdwara Guru Nanak Darbar Southall; Ramgarhia Sabha; Shri Guru Ravidas Sabha; Gurdwara Nanaksar; Miri Piri Sahib; Guru Amardass Ji.
+- **Muslim:** Jamia Masjid Islamic Centre; Central Jamia Masjid; Abubakr Mosque / Islamic Educational & Recreational Institute; Darussalam Masjid & Cultural Centre.
+- **Hindu:** Vishwa Hindu Kendra Mandir; Shree Ram Mandir; Baba Balaknathji Temple and other Southall Hindu institutions identified through community/faith directories and first-party verification where available.
+- **Jewish:** Ealing United Synagogue / Ealing Synagogue, including civic and interfaith activity.
+- **Christian:** St Anselm's; St John's Southall Green; Christ the Redeemer; The Kings Centre; plus other Southall churches where civic/community publishing is substantial.
+
+The inclusion rule is **civic relevance, not theology**: routine worship/service notices are not automatically Commons items. Community organising, public meetings, interfaith work, social action, education, welfare, local campaigning, civic events and source material are in scope.
+
+## Live City Hall RSS endpoints selected for Commons
 
 - London Assembly press releases — `https://www.london.gov.uk/rss-feeds/80611`
 - London Assembly current investigations — `https://www.london.gov.uk/rss-feeds/80616`
@@ -47,33 +71,14 @@ Status values:
 - Planning publications — `https://www.london.gov.uk/rss-feeds/80643`
 - Environment and Climate Change publications — `https://www.london.gov.uk/rss-feeds/80644`
 
-`gla-feed.mjs` accepts an item only when its title/description contains an explicit local hook: Ealing, one of the seven towns, Ealing & Hillingdon/Bassam Mahfouz, Heathrow, OPDC/Old Oak, Warren Farm, the Green Quarter or Southall Gasworks. The filtered output is merged with local feeds by `combined-feed.mjs`, exposed on the public `/.netlify/functions/feed` route and included in the scheduled item archive. This deliberately favours precision over recall so City Hall cannot swamp the local corpus.
-
-### Page-watch models
-
-Civic Commons now uses two explicit models for publishers that do not expose a stable RSS/Atom feed:
-
-1. **Structured dated listings** (`community-page-feed.mjs`) — used for EHCVS and Warren Farm. Items require stable publisher permalinks plus a recognisable publication date. If the expected page structure disappears, the source fails closed and emits no guessed items.
-2. **Living publications** (`living-page-feed.mjs`) — used for EFoE's current News section and The Monitoring Group's Drum newsletter. The publisher keeps several changing updates on one canonical page, so Commons stores a content-hashed versioned snapshot. `publishedAt` remains empty unless the publisher exposes a reliable per-entry date.
-
-The Met and Ealing Citizens adapters use the same fail-closed principle but keep their source-specific filters separate because their public publishing structures are materially different. The combined source stream is also used by personal Civic Commons RSS, so follows and email alerts see the same source universe as the public timeline.
-
-## Named community-source leads
-
-| Source | Status | Notes |
-| --- | --- | --- |
-| The Kings Centre Southall | verified reference source | Official identity and website confirmed; continue looking for a durable first-party current-news/video surface before live ingestion. |
-| Local churches and faith organisations | research | West London Citizens' current Ealing alliance provides a useful discovery list including St Anselm's Catholic Church Southall, Christ the Redeemer Church Southall and other borough institutions. Add selectively where they publish civic/community work rather than routine worship content. |
-| Friends of Victoria Hall | verified organisation / research source | ModernGov and local reporting establish the group and its role in the Victoria Hall litigation/campaign. A dedicated durable publishing surface has not yet been confirmed; continue source discovery rather than ingesting third-party coverage as if it were the group's own feed. |
-| Other residents' associations and town groups | research | Prioritise groups with durable public archives and material tied to planning, environment, housing, transport or governance. |
-
 ## Source onboarding principles
 
 1. Preserve the original publisher URL as canonical.
-2. Distinguish `Official record`, `Journalism / publishing`, `Organisation / campaign`, `Community / faith`, and `Independent civic data / analysis` rather than flattening them into one trust category.
-3. Video is a media type, not a separate evidential class: an official council video remains an `Official record`; an advocacy group's video remains `Organisation / campaign`.
-4. Use titles/descriptions/transcripts for entity and topic discovery, but do not turn automatically detected relationships into reviewed assertions without human review.
-5. Broad London/national sources should be filtered for Ealing/Southall relevance before entering the main feed/archive.
-6. Prefer stable RSS/Atom/API feeds. Structured-page watching is acceptable where no feed is advertised, but should be explicit, conservative and fail gracefully.
-7. Captions/transcripts, where lawfully and technically available, should be treated as derived searchable text linked back to the canonical video — not as a replacement for the source.
-8. A third-party article about an organisation is evidence about that organisation, not a substitute for the organisation's own source channel.
+2. Distinguish `Official record`, `Journalism / publishing`, `Organisation / campaign`, `Community / faith`, `Community / education`, and `Independent civic data / analysis` rather than flattening them into one trust category.
+3. Video is a media type, not a separate evidential class.
+4. Use titles/descriptions/transcripts for entity/topic discovery, but never convert automatically detected relationships into reviewed assertions without human review.
+5. Broad London/national sources must be filtered for Ealing/Southall relevance.
+6. Prefer stable RSS/Atom/API feeds; monitored pages must be explicit, conservative and fail closed.
+7. Captions/transcripts may be derived searchable text but never replace the canonical video/source.
+8. Third-party reporting is evidence about an organisation, not a substitute for that organisation's own source channel.
+9. Faith/community sources are selected on civic/public-interest output, not religious tradition; apply the same rule consistently across faiths and non-faith civic institutions.
