@@ -23,6 +23,7 @@ Status values:
 | Metropolitan Police — Ealing | official record | live, Ealing-filtered | Official newsroom plus Southall/Norwood Green Safer Neighbourhood priorities. |
 | Metropolitan Police YouTube | official video | live, Ealing-filtered | Official YouTube Atom feed admitted only when title/description contains explicit Ealing/Southall/local ward terms. |
 | Ealing Citizens / Citizens UK | organisation / campaign | live, Ealing-filtered | Dated West London Citizens news archive filtered for explicit Ealing/Southall relevance. |
+| Ealing Community Independents | political organisation / campaign | live living-page watch | First-party site monitored as a content-hashed publication. The party contested the 2026 council elections; no elected ECI councillors are inferred from candidacy alone. |
 | Ealing and Hounslow CVS (EHCVS) | voluntary-sector infrastructure | live page-watch | Dated Ealing community-services cards. |
 | Warren Farm Nature Reserve | community / environment campaign | live page-watch | Stable blog permalinks and dates; strong FOI/video evidence material. |
 | Ealing Friends of the Earth | organisation / campaign | live living-page watch | Current News section content-hashed; no dates invented. |
@@ -33,6 +34,7 @@ Status values:
 | St Anselm's Catholic Church Southall | community / faith | live civic page-watch | Dated parish-news material admitted only when it has a civic/community/interfaith hook. |
 | St John's Southall Green | community / faith | live living-page watch | Community/outreach programme monitored; routine worship content is not used as civic news. |
 | West London College | community / education | live, local civic-filtered | Dated college news admitted for explicit Ealing/Southall/public-interest relevance. |
+| Villiers High School | community / education | live, local civic-filtered | Family Bulletin monitored for Southall/community/council/policing/public-interest material; ordinary school notices are filtered out. |
 
 ## High-priority verified/reference sources
 
@@ -43,12 +45,14 @@ Status values:
 | Bassam Mahfouz AM | elected representative | live graph / verified source | Current Assembly roles are reviewed graph evidence. |
 | The Kings Centre Southall | community / faith | verified reference source | First-party identity/site confirmed; no durable current-news feed yet. |
 | Guru Nanak Darbar Southall | community / faith | verified first-party source | First-party gurdwara site with media/kirtan resources; identify civic/community updates suitable for selective ingestion. |
+| Ramgarhia Sabha Southall | community / faith | verified entity/source lead | Canonical Commons identity added; continue first-party source verification before live ingestion. |
 | Jamia Masjid Islamic Centre Southall | community / faith | verified first-party source | Townsend Road mosque with first-party website; look for durable community/public-interest update surface. |
 | Central Jamia Masjid Southall | community / faith | verified first-party source | First-party website/document trail confirmed; seek civic/community publishing surface. |
+| Abubakr Mosque Southall | community / faith | verified first-party source | First-party website and current timetable/education material confirmed; look for community/public-interest updates and video suitable for selective ingestion. |
+| Darussalam Masjid & Cultural Centre Southall | community / faith | verified entity/source lead | Canonical Commons identity added; Villiers material already provides local civic cross-reference, but first-party publishing should remain canonical when onboarded. |
 | Vishwa Hindu Kendra Mandir | community / faith | verified first-party source | First-party site with events/news and wider community/education role. |
 | Shree Ram Mandir Southall | community / faith | verified first-party source | First-party site explicitly describes community service, interfaith work and major public cultural events. |
 | Christ the Redeemer Church Southall | community / faith | verified entity/source lead | Ealing Citizens member institution; locate durable first-party civic/community publishing surface. |
-| Villiers High School | community / education | verified source lead | Family bulletin has current local civic/policing material; investigate stable feed/watch. |
 
 ## Faith/community discovery inventory
 
@@ -74,7 +78,7 @@ The inclusion rule is **civic relevance, not theology**: routine worship/service
 ## Source onboarding principles
 
 1. Preserve the original publisher URL as canonical.
-2. Distinguish `Official record`, `Journalism / publishing`, `Organisation / campaign`, `Community / faith`, `Community / education`, and `Independent civic data / analysis` rather than flattening them into one trust category.
+2. Distinguish `Official record`, `Journalism / publishing`, `Organisation / campaign`, `Political organisation / campaign`, `Community / faith`, `Community / education`, and `Independent civic data / analysis` rather than flattening them into one trust category.
 3. Video is a media type, not a separate evidential class.
 4. Use titles/descriptions/transcripts for entity/topic discovery, but never convert automatically detected relationships into reviewed assertions without human review.
 5. Broad London/national sources must be filtered for Ealing/Southall relevance.
@@ -82,3 +86,4 @@ The inclusion rule is **civic relevance, not theology**: routine worship/service
 7. Captions/transcripts may be derived searchable text but never replace the canonical video/source.
 8. Third-party reporting is evidence about an organisation, not a substitute for that organisation's own source channel.
 9. Faith/community sources are selected on civic/public-interest output, not religious tradition; apply the same rule consistently across faiths and non-faith civic institutions.
+10. Political organisations are treated as attributed political sources, not neutral official records; candidacy, elected office and formal council status must remain distinct facts.
