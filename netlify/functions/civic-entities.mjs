@@ -1,5 +1,6 @@
 import { ENTITY_REGISTRY, findEntityByProviderId, makeZettelRegistryEntity, providerViews } from '../lib/entity-registry.mjs';
 import { INSTITUTIONAL_ENTITIES } from '../lib/institutional-entities.mjs';
+import { COMMUNITY_ENTITIES } from '../lib/community-entities.mjs';
 
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
 const EXPECTED_SCHEMA = 1;
@@ -21,7 +22,7 @@ function view(entity) {
 }
 
 function baseRegistry() {
-  return [...ENTITY_REGISTRY, ...INSTITUTIONAL_ENTITIES];
+  return [...ENTITY_REGISTRY, ...INSTITUTIONAL_ENTITIES, ...COMMUNITY_ENTITIES];
 }
 
 export default async () => {
