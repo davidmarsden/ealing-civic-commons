@@ -63,7 +63,8 @@ function renderHero(data) {
   $('#entityStatus').hidden = true;
   const hero = $('#entityHero'); hero.hidden = false;
   const fallback = entity.type === 'person' ? 'A reviewed person in the civic-memory graph.' : entity.type === 'organisation' ? 'A reviewed organisation in the civic-memory graph.' : 'A reviewed place in the civic-memory graph.';
-  hero.innerHTML = `<h1>${esc(entity.name)}</h1><p class="lede">${esc(entity.description || fallback)}</p><div class="entity-kicker"><span class="tag">${esc(entity.type)}</span>${(entity.aliases || []).slice(0,5).map(alias => `<span class="tag">also: ${esc(alias)}</span>`).join('')}</div><div class="entity-actions"><a href="#commonsAssertionsSection">Current civic facts ↓</a><a href="#relationshipsSection">Reviewed connections ↓</a><a href="#sourcesSection">Primary evidence ↓</a><a href="#reportingSection">Historical reporting ↓</a><a href="#currentSection">Current Commons ↓</a></div>`;
+  const website = entity.website?.url ? `<a class="tag" href="${esc(entity.website.url)}" target="_blank" rel="noopener noreferrer">${esc(entity.website.label || 'Website')} ↗</a>` : '';
+  hero.innerHTML = `<h1>${esc(entity.name)}</h1><p class="lede">${esc(entity.description || fallback)}</p><div class="entity-kicker"><span class="tag">${esc(entity.type)}</span>${(entity.aliases || []).slice(0,5).map(alias => `<span class="tag">also: ${esc(alias)}</span>`).join('')}${website}</div><div class="entity-actions"><a href="#commonsAssertionsSection">Current civic facts ↓</a><a href="#relationshipsSection">Reviewed connections ↓</a><a href="#sourcesSection">Primary evidence ↓</a><a href="#reportingSection">Historical reporting ↓</a><a href="#currentSection">Current Commons ↓</a></div>`;
 }
 
 function renderStats(data) {
