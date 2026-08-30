@@ -7,6 +7,12 @@
   node_bundler = "esbuild"
 
 [[redirects]]
+  from = "/.netlify/functions/feed"
+  to = "/.netlify/functions/combined-feed"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/items/*"
   to = "/item.html"
   status = 200
