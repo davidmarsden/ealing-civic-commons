@@ -10,6 +10,11 @@ export const COMMUNITY_ENTITIES = [
     aliases: ['West London Citizens Alliance'], providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   },
   {
+    route: 'organisations/ealing-community-independents', id: 'civic:organisation:ealing-community-independents', name: 'Ealing Community Independents', type: 'organisation',
+    description: 'A local political party formed to contest Ealing Council elections on a community-led platform across the borough.',
+    aliases: ['ECI', 'Ealing Community Independents Party'], providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
     route: 'organisations/the-kings-centre-southall', id: 'civic:organisation:the-kings-centre-southall', name: 'The Kings Centre Southall', type: 'organisation',
     description: 'A Southall training and community hub focused on equipping church and community leaders for social change in a diverse local context.',
     aliases: ["The King's Centre Southall", 'Kings Centre Southall', 'The Kings Centre'], providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
@@ -25,6 +30,11 @@ export const COMMUNITY_ENTITIES = [
     aliases: ['Guru Nanak Darbar Southall', 'Gurdwara Guru Nanak Darbar'], providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   },
   {
+    route: 'organisations/ramgarhia-sabha-southall', id: 'civic:organisation:ramgarhia-sabha-southall', name: 'Ramgarhia Sabha Southall', type: 'organisation',
+    description: 'A Sikh gurdwara and community institution serving Southall and the wider Sikh community.',
+    aliases: ['Ramgarhia Gurdwara Southall', 'Ramgarhia Sabha Gurdwara'], providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
     route: 'organisations/jamia-masjid-islamic-centre-southall', id: 'civic:organisation:jamia-masjid-islamic-centre-southall', name: 'Jamia Masjid Islamic Centre Southall', type: 'organisation',
     description: 'A longstanding Sunni Muslim mosque and Islamic centre on Townsend Road, Southall.',
     aliases: ['Jamia Masjid Islamic Centre', 'Jamia Masjid Southall'], providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
@@ -33,6 +43,16 @@ export const COMMUNITY_ENTITIES = [
     route: 'organisations/central-jamia-masjid-southall', id: 'civic:organisation:central-jamia-masjid-southall', name: 'Central Jamia Masjid Southall', type: 'organisation',
     description: 'A Muslim mosque and community institution on Montague Waye in Southall.',
     aliases: ['Central Jamia Masjid', 'Central Jamia Masjid Mosque'], providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/abubakr-mosque-southall', id: 'civic:organisation:abubakr-mosque-southall', name: 'Abubakr Mosque Southall', type: 'organisation',
+    description: 'A mosque and Islamic community institution on The Broadway, Southall, also operating educational and community programmes.',
+    aliases: ['Abubakr Mosque', 'Abubakr Masjid Southall', 'Abubakr Masjid'], providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/darussalam-masjid-southall', id: 'civic:organisation:darussalam-masjid-southall', name: 'Darussalam Masjid & Cultural Centre Southall', type: 'organisation',
+    description: 'A mosque and cultural centre serving Southall from Hayes Road/North Hyde House.',
+    aliases: ['Darussalam Masjid Southall', 'Darussalam Mosque Southall', 'Darussalam Masjid & Cultural Centre'], providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   },
   {
     route: 'organisations/vishwa-hindu-kendra-mandir', id: 'civic:organisation:vishwa-hindu-kendra-mandir', name: 'Vishwa Hindu Kendra Mandir', type: 'organisation',
