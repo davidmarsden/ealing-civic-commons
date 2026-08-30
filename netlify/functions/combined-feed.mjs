@@ -2,6 +2,8 @@ import localFeedHandler from './feed.mjs';
 import { fetchGlaFeed } from './gla-feed.mjs';
 import { fetchCommunityPageFeed } from './community-page-feed.mjs';
 import { fetchLivingPageFeed } from './living-page-feed.mjs';
+import { fetchMetEalingFeed } from './met-ealing-feed.mjs';
+import { fetchEalingCitizensFeed } from './ealing-citizens-feed.mjs';
 
 function canonical(value) {
   if (!value) return null;
@@ -27,22 +29,24 @@ function dedupe(items = []) {
 }
 
 export default async request => {
-  const [localResponse, gla, community, living] = await Promise.all([
+  const [localResponse, gla, community, living, met, citizens] = await Promise.all([
     localFeedHandler(request),
     fetchGlaFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'gla-filtered', name: 'London City Hall / Assembly', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchCommunityPageFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'community-page-watch', name: 'Community page watch', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchLivingPageFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'living-page-watch', name: 'Living publication pages', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }))
+    fetchLivingPageFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'living-page-watch', name: 'Living publication pages', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
+    fetchMetEalingFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'met-ealing', name: 'Metropolitan Police — Ealing', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
+    fetchEalingCitizensFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'ealing-citizens', name: 'Ealing Citizens / Citizens UK', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }))
   ]);
 
   const local = localResponse?.ok ? await localResponse.json() : { items: [], health: [], enrichment: {} };
-  const items = dedupe([...(local.items || []), ...(gla.items || []), ...(community.items || []), ...(living.items || [])])
+  const items = dedupe([...(local.items || []), ...(gla.items || []), ...(community.items || []), ...(living.items || []), ...(met.items || []), ...(citizens.items || [])])
     .sort((a, b) => Date.parse(b.publishedAt || 0) - Date.parse(a.publishedAt || 0))
-    .slice(0, 140);
+    .slice(0, 180);
 
   return new Response(JSON.stringify({
     generatedAt: new Date().toISOString(),
     items,
-    health: [...(local.health || []), ...(gla.health || []), ...(community.health || []), ...(living.health || [])],
+    health: [...(local.health || []), ...(gla.health || []), ...(community.health || []), ...(living.health || []), ...(met.health || []), ...(citizens.health || [])],
     enrichment: {
       ...(local.enrichment || {}),
       cityHallEalingFilter: {
@@ -56,6 +60,14 @@ export default async request => {
       livingPublicationWatch: {
         included: living.items?.length || 0,
         method: 'Content-hashed snapshots of configured living publication sections. No publication date is invented when the publisher does not expose one.'
+      },
+      metropolitanPoliceEaling: {
+        included: met.items?.length || 0,
+        method: 'Official Met newsroom items filtered for explicit Ealing-area terms plus content-hashed current priorities for Southall/Norwood Green Safer Neighbourhood teams.'
+      },
+      ealingCitizens: {
+        included: citizens.items?.length || 0,
+        method: 'Citizens UK West London news archive filtered for explicit Ealing-area relevance.'
       }
     }
   }), {
