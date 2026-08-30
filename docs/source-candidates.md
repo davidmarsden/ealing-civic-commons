@@ -20,6 +20,8 @@ Status values:
 | Southall Black Sisters | organisation / campaign + YouTube | live | Official YouTube channel added as a video source; website/news archive is also high-value. |
 | London Assembly | official record + YouTube | live | Committee meetings, Mayor's Question Time and investigations; useful for Bassam Mahfouz and London-wide governance. |
 | London City Hall / GLA selected RSS | official record | live, Ealing-filtered | Six documented City Hall RSS endpoints are consumed by `gla-feed.mjs`, filtered for explicit Ealing-area relevance and merged into the public combined feed. |
+| Metropolitan Police — Ealing | official record | live, Ealing-filtered | `met-ealing-feed.mjs` filters the official Met newsroom for explicit Ealing-area terms and versions current priorities from Norwood Green, Southall Broadway, Southall Green and Southall West Safer Neighbourhood pages. |
+| Ealing Citizens / Citizens UK | organisation / campaign | live, Ealing-filtered | `ealing-citizens-feed.mjs` watches the dated West London Citizens news archive and admits entries with an explicit Ealing/Southall/local hook. |
 | Ealing and Hounslow CVS (EHCVS) | voluntary-sector infrastructure | live page-watch | The Ealing community-services page is monitored with dated-card extraction. Stable publisher links remain canonical; extraction fails closed if the expected card/date structure disappears. |
 | Warren Farm Nature Reserve | community / environment campaign | live page-watch | The public blog listing is monitored via stable `/blog/...` permalinks and explicit card dates. Particularly valuable for FOI/evidence-rich posts and council-video timestamps. |
 | Ealing Friends of the Earth | organisation / campaign | live living-page watch | The current News section is captured as a content-hashed snapshot. Standalone linked evidence such as the Park Royal data-centre page remains canonical; no publication date is invented for homepage-only updates. |
@@ -30,11 +32,11 @@ Status values:
 
 | Source | Type | Status | Why it matters / next action |
 | --- | --- | --- | --- |
-| Metropolitan Police — Ealing | official record | needs-local-filtering | Ealing neighbourhood policing pages and local channels are valuable; avoid dumping all London crime news into Commons. Develop Ealing/ward filtering first. |
-| Metropolitan Police YouTube | official video | needs-local-filtering | Official Met channel confirmed; ingest only when Ealing relevance can be determined reliably. |
+| Metropolitan Police YouTube | official video | needs-local-filtering | Official Met channel confirmed; ingest only when Ealing relevance can be determined reliably from title/description/transcript. |
 | Ealing Law Centre | legal / community organisation | verified reference source | High-value housing, immigration, welfare-rights and access-to-justice source. Publishing cadence is lower and there is no obvious current news feed, so treat primarily as an entity/reference source unless a stable updates endpoint emerges. |
 | London Assembly ModernGov | official record | verified | Committee pages expose meeting documents; useful companion to Assembly video and City Hall RSS. |
 | Bassam Mahfouz AM | elected representative | live graph / verified source | Canonical Commons entity and reviewed current Assembly roles added; City Hall profile and Assembly records are the evidence sources. |
+| The Kings Centre Southall | community / faith | verified reference source | Charity Commission and the organisation's own website establish the Southall training/community hub. A sufficiently clear current-news/feed surface has not yet been confirmed, so do not substitute third-party or St John's material as its feed. |
 
 ### Live City Hall RSS endpoints selected for Commons
 
@@ -54,15 +56,14 @@ Civic Commons now uses two explicit models for publishers that do not expose a s
 1. **Structured dated listings** (`community-page-feed.mjs`) — used for EHCVS and Warren Farm. Items require stable publisher permalinks plus a recognisable publication date. If the expected page structure disappears, the source fails closed and emits no guessed items.
 2. **Living publications** (`living-page-feed.mjs`) — used for EFoE's current News section and The Monitoring Group's Drum newsletter. The publisher keeps several changing updates on one canonical page, so Commons stores a content-hashed versioned snapshot. `publishedAt` remains empty unless the publisher exposes a reliable per-entry date.
 
-The combined source stream is also used by personal Civic Commons RSS, so follows and email alerts see the same source universe as the public timeline.
+The Met and Ealing Citizens adapters use the same fail-closed principle but keep their source-specific filters separate because their public publishing structures are materially different. The combined source stream is also used by personal Civic Commons RSS, so follows and email alerts see the same source universe as the public timeline.
 
 ## Named community-source leads
 
 | Source | Status | Notes |
 | --- | --- | --- |
-| Ealing Citizens / Citizens UK | research | EHCVS currently carries Ealing Citizens' Tribunal material; locate the local chapter's own durable publishing/video surface before direct ingestion. |
-| The Kings Centre Southall | research | Identify official website/news and YouTube/video sources; likely useful for local community, faith and social-action material. |
-| Local churches and faith organisations | research | Add selectively where they publish civic/community work, consultations, food-bank/social-action activity or local public meetings; avoid treating routine worship content as civic news. |
+| The Kings Centre Southall | verified reference source | Official identity and website confirmed; continue looking for a durable first-party current-news/video surface before live ingestion. |
+| Local churches and faith organisations | research | West London Citizens' current Ealing alliance provides a useful discovery list including St Anselm's Catholic Church Southall, Christ the Redeemer Church Southall and other borough institutions. Add selectively where they publish civic/community work rather than routine worship content. |
 | Friends of Victoria Hall | verified organisation / research source | ModernGov and local reporting establish the group and its role in the Victoria Hall litigation/campaign. A dedicated durable publishing surface has not yet been confirmed; continue source discovery rather than ingesting third-party coverage as if it were the group's own feed. |
 | Other residents' associations and town groups | research | Prioritise groups with durable public archives and material tied to planning, environment, housing, transport or governance. |
 
