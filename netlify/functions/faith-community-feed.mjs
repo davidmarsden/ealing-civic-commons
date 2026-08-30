@@ -45,6 +45,17 @@ const sources = [
     mode: 'dated',
     include: /Ealing|Southall|community|MP|council|TfL|health|housing|climate|environment|citizens|documentary|public/i,
     topics: ['Community', 'Schools & young people']
+  },
+  {
+    id: 'villiers-high-school-civic',
+    name: 'Villiers High School — civic/community bulletin',
+    url: 'https://villiershighschool.blog/',
+    homepage: 'https://www.villiers.ealing.sch.uk/',
+    sourceClass: 'Community / education',
+    towns: ['Southall'],
+    mode: 'dated',
+    include: /Southall|community|council|councillor|police|Metropolitan Police|Darussalam|mosque|citizens|local area|antisocial|anti-social|public health|environment|housing|safeguarding|governor/i,
+    topics: ['Community', 'Schools & young people']
   }
 ];
 
@@ -67,7 +78,7 @@ function dateIso(raw) {
 
 function datedItems(source, html) {
   const text = strip(html);
-  const dateRx = /(?:^|\s)([0-3]?\d(?:st|nd|rd|th)?\s+[A-Za-z]+\s+20\d{2}|[0-3]?\d\s+[A-Za-z]+,?\s+20\d{2}|\d{1,2}\s+[A-Z][a-z]{2}\s+20\d{2})/g;
+  const dateRx = /(?:^|\s)([0-3]?\d(?:st|nd|rd|th)?\s+[A-Za-z]+\s+20\d{2}|[0-3]?\d\s+[A-Za-z]+,?\s+20\d{2}|\d{1,2}\s+[A-Z][a-z]{2}\s+20\d{2}|[A-Z][a-z]+\s+\d{1,2},\s+20\d{2})/g;
   const dates = [...text.matchAll(dateRx)];
   const out = [];
   dates.forEach((match,index)=>{
