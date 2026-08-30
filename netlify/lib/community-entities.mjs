@@ -2,17 +2,27 @@ export const COMMUNITY_ENTITIES = [
   {
     route: 'organisations/ealing-citizens', id: 'civic:organisation:ealing-citizens', name: 'Ealing Citizens', type: 'organisation',
     description: 'A borough-wide alliance of faith, education, charity and community organisations organising around housing, work, pay and other local priorities as part of West London Citizens.',
-    aliases: ['Ealing Citizens Alliance'], providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+    aliases: ['Ealing Citizens Alliance'], website: { label: 'Citizens UK — West London', url: 'https://www.citizensuk.org/chapters/west-london/' }, providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   },
   {
     route: 'organisations/west-london-citizens', id: 'civic:organisation:west-london-citizens', name: 'West London Citizens', type: 'organisation',
     description: 'The Citizens UK chapter organising alliances of schools, faith groups, unions, charities and community organisations across west London, including Ealing Citizens.',
-    aliases: ['West London Citizens Alliance'], providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+    aliases: ['West London Citizens Alliance'], website: { label: 'Citizens UK — West London', url: 'https://www.citizensuk.org/chapters/west-london/' }, providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   },
   {
     route: 'organisations/ealing-community-independents', id: 'civic:organisation:ealing-community-independents', name: 'Ealing Community Independents', type: 'organisation',
     description: 'A local political party formed to contest Ealing Council elections on a community-led platform across the borough.',
-    aliases: ['ECI', 'Ealing Community Independents Party'], providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+    aliases: ['ECI', 'Ealing Community Independents Party'], website: { label: 'Ealing Community Independents', url: 'https://ealingindependents.org/' }, providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/reform-uk', id: 'civic:organisation:reform-uk', name: 'Reform UK', type: 'organisation',
+    description: 'A UK political party that fielded candidates in Ealing at the May 2026 local elections. No councillors were elected under the Reform UK label to Ealing Council in that election.',
+    aliases: ['Reform'], website: { label: 'Reform UK', url: 'https://www.reformparty.uk/' }, providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+  },
+  {
+    route: 'organisations/the-monitoring-group', id: 'civic:organisation:the-monitoring-group', name: 'The Monitoring Group', type: 'organisation',
+    description: 'A grassroots anti-racism organisation with more than four decades of experience in advocacy, community organising, research and family-led justice campaigns, with deep historical roots in Southall.',
+    aliases: ['Monitoring Group', 'Southall Monitoring Group'], website: { label: 'The Monitoring Group', url: 'https://tmg-uk.org/' }, providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   },
   {
     route: 'organisations/the-kings-centre-southall', id: 'civic:organisation:the-kings-centre-southall', name: 'The Kings Centre Southall', type: 'organisation',
