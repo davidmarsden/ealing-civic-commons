@@ -27,6 +27,7 @@ function nativeEntityResponse(registryEntity) {
       type: registryEntity.type,
       aliases: registryEntity.aliases || [],
       description: registryEntity.description || null,
+      website: registryEntity.website || null,
       provenance: 'commons-entity-registry'
     },
     providers: providerViews(registryEntity),
@@ -107,11 +108,11 @@ export default async request => {
       matched: true,
       schemaVersion: data.schema_version,
       civicEntity: registryView(registryEntity),
-      entity: { id: entity.id, name: registryEntity.name || entity.name, type: registryEntity.type || entity.type, aliases: entity.aliases || registryEntity.aliases || [], description: entity.description || registryEntity.description || null, reviewStatus: entity.review_status, provenance: entity.provenance },
+      entity: { id: entity.id, name: registryEntity.name || entity.name, type: registryEntity.type || entity.type, aliases: entity.aliases || registryEntity.aliases || [], description: entity.description || registryEntity.description || null, website: registryEntity.website || entity.website || null, reviewStatus: entity.review_status, provenance: entity.provenance },
       providers,
       counts: { reporting: reporting.length, relationships: relationships.length, sources: sources.length },
       relationships, sources, reporting, topics,
-      provenance: { label: 'Civic memory', source: 'Southall Stories research archive via the Civic Commons entity registry', method: 'Civic Commons owns the public civic identity and route. The Southall Stories research archive supplies reviewed relationships, source records and deterministic historical-reporting matches as one provider.' }
+      provenance: { label: 'Civic memory', source: 'Southall Stories research archive via the Civic Commons entity registry', method: 'Civic Commons owns the public civic identity and route. The Southall Stories research archive supplies reviewed identity metadata, relationships, source records and deterministic historical-reporting matches as one provider.' }
     }, 200, 300);
   } catch (error) {
     console.error('Civic entity lookup failed', error);
