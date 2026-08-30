@@ -1,4 +1,17 @@
-const allowedHosts = new Set(['london.gov.uk', 'www.london.gov.uk']);
+const allowedHostSuffixes = [
+  'london.gov.uk',
+  'ealing.gov.uk',
+  'ealing.moderngov.co.uk',
+  'met.police.uk',
+  'southallblacksisters.org.uk',
+  'tmg-uk.org',
+  'ealingfoe.org.uk',
+  'warrenfarmnaturereserve.co.uk',
+  'ealinglawcentre.org.uk',
+  'ehcvs.org.uk',
+  'citizensuk.org',
+  'southallstories.uk'
+];
 
 const json = (statusCode, body) => ({
   statusCode,
@@ -20,6 +33,11 @@ function cleanText(value = '') {
     .trim();
 }
 
+function hostAllowed(hostname = '') {
+  const host = String(hostname).toLowerCase().replace(/^www\./, '');
+  return allowedHostSuffixes.some(suffix => host === suffix || host.endsWith(`.${suffix}`));
+}
+
 function absoluteUrl(href, base) {
   try {
     const url = new URL(href, base);
@@ -30,11 +48,24 @@ function absoluteUrl(href, base) {
   }
 }
 
+function documentType(url) {
+  try {
+    const pathname = new URL(url).pathname.toLowerCase();
+    const extension = pathname.match(/\.([a-z0-9]+)$/)?.[1] || '';
+    if (extension === 'pdf') return 'pdf';
+    if (['doc', 'docx', 'odt', 'rtf'].includes(extension)) return 'document';
+    if (['xls', 'xlsx', 'ods', 'csv'].includes(extension)) return 'spreadsheet';
+    if (['ppt', 'pptx', 'odp'].includes(extension)) return 'presentation';
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 function usefulDocument(url) {
   try {
     const parsed = new URL(url);
-    if (!allowedHosts.has(parsed.hostname)) return false;
-    return /\.pdf(?:$|[?#])/i.test(parsed.pathname + parsed.search + parsed.hash);
+    return hostAllowed(parsed.hostname) && Boolean(documentType(url));
   } catch {
     return false;
   }
@@ -51,7 +82,7 @@ export async function handler(event) {
     return json(400, { error: 'Invalid url' });
   }
 
-  if (landing.protocol !== 'https:' || !allowedHosts.has(landing.hostname)) {
+  if (landing.protocol !== 'https:' || !hostAllowed(landing.hostname)) {
     return json(400, { error: 'Unsupported source host' });
   }
 
@@ -72,8 +103,9 @@ export async function handler(event) {
       if (!href || !usefulDocument(href) || seen.has(href)) continue;
       seen.add(href);
       const text = cleanText(match[2]);
-      links.push({ url: href, title: text || 'Linked PDF document', mediaType: 'pdf' });
-      if (links.length >= 12) break;
+      const mediaType = documentType(href);
+      links.push({ url: href, title: text || `Linked ${mediaType}`, mediaType });
+      if (links.length >= 16) break;
     }
 
     return json(200, { landing: landing.href, links });
