@@ -8,9 +8,12 @@ function extractUrls(text = '') {
 function classifyDirectUrl(url) {
   try {
     const parsed = new URL(url);
-    if (/\.pdf$/i.test(parsed.pathname)) return 'Linked PDF';
-    if (/(^|\.)london\.gov\.uk$/i.test(parsed.hostname)) return 'Assembly publication page';
-    return 'Linked source';
+    const pathname = parsed.pathname.toLowerCase();
+    if (/\.pdf$/i.test(pathname)) return 'Linked PDF';
+    if (/\.(doc|docx|odt|rtf)$/i.test(pathname)) return 'Linked document';
+    if (/\.(xls|xlsx|ods|csv)$/i.test(pathname)) return 'Linked spreadsheet';
+    if (/\.(ppt|pptx|odp)$/i.test(pathname)) return 'Linked presentation';
+    return 'Linked source page';
   } catch {
     return 'Linked source';
   }
@@ -18,9 +21,11 @@ function classifyDirectUrl(url) {
 
 function documentLabel(link) {
   const text = String(link.title || '').trim();
-  if (/infographic/i.test(text) || /infographic/i.test(link.url)) return 'Infographic (PDF)';
-  if (/report|hot property|publication/i.test(text)) return 'Full report (PDF)';
-  return text ? `${text} (PDF)` : 'Linked PDF document';
+  const type = String(link.mediaType || '').toLowerCase();
+  if (/infographic/i.test(text) || /infographic/i.test(link.url)) return type === 'pdf' ? 'Infographic (PDF)' : 'Infographic';
+  if (/report|publication/i.test(text)) return type === 'pdf' ? 'Full report (PDF)' : text;
+  const suffix = type === 'pdf' ? 'PDF' : type === 'spreadsheet' ? 'spreadsheet' : type === 'presentation' ? 'presentation' : 'document';
+  return text ? `${text} (${suffix})` : `Linked ${suffix}`;
 }
 
 function row(label, url, meta = '') {
@@ -40,6 +45,14 @@ async function enrichLandingPage(url) {
   }
 }
 
+function isDocumentUrl(url) {
+  try {
+    return /\.(pdf|doc|docx|odt|rtf|xls|xlsx|ods|csv|ppt|pptx|odp)$/i.test(new URL(url).pathname);
+  } catch {
+    return false;
+  }
+}
+
 async function renderSourceLinks() {
   const view = document.querySelector('#itemView');
   if (!view || view.hidden) return false;
@@ -49,23 +62,15 @@ async function renderSourceLinks() {
   const directUrls = extractUrls(summary);
   if (!directUrls.length) return true;
 
-  const landingUrls = directUrls.filter(url => {
-    try {
-      const parsed = new URL(url);
-      return /(^|\.)london\.gov\.uk$/i.test(parsed.hostname) && !/\.pdf$/i.test(parsed.pathname);
-    } catch {
-      return false;
-    }
-  });
-
-  const discovered = (await Promise.all(landingUrls.slice(0, 3).map(enrichLandingPage))).flat();
+  const landingUrls = directUrls.filter(url => !isDocumentUrl(url));
+  const discovered = (await Promise.all(landingUrls.slice(0, 4).map(enrichLandingPage))).flat();
   const seen = new Set(directUrls);
   const extraDocuments = discovered.filter(link => link?.url && !seen.has(link.url) && (seen.add(link.url), true));
 
   const panel = document.createElement('section');
   panel.className = 'source-links-panel';
   panel.setAttribute('aria-labelledby', 'sourceLinksTitle');
-  panel.innerHTML = `<p class="eyebrow">Source links</p><h2 id="sourceLinksTitle">Follow the source trail</h2><p class="source-links-intro">The video remains the original source. These links were supplied in its description or found on the official publication page it points to.</p><div class="source-links-grid"><div><strong>Linked from the source description</strong><ul>${directUrls.map(url => row(classifyDirectUrl(url), url)).join('')}</ul></div>${extraDocuments.length ? `<div><strong>Documents on the linked publication page</strong><ul>${extraDocuments.map(link => row(documentLabel(link), link.url, link.title && !/report|infographic|hot property/i.test(link.title) ? link.title : '')).join('')}</ul></div>` : ''}</div>`;
+  panel.innerHTML = `<p class="eyebrow">Source links</p><h2 id="sourceLinksTitle">Follow the source trail</h2><p class="source-links-intro">The original item remains canonical. These links were supplied by that source, or discovered one step deeper on a recognised civic or publisher page it explicitly links to.</p><div class="source-links-grid"><div><strong>Linked from the source</strong><ul>${directUrls.map(url => row(classifyDirectUrl(url), url)).join('')}</ul></div>${extraDocuments.length ? `<div><strong>Documents on linked source pages</strong><ul>${extraDocuments.map(link => row(documentLabel(link), link.url, link.title || '')).join('')}</ul></div>` : ''}</div>`;
 
   const actions = view.querySelector('.item-page-actions');
   if (actions) view.insertBefore(panel, actions);
