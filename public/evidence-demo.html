@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Evidence component preview · Civic Commons</title>
+  <meta name="description" content="Preview of normalized Civic Commons evidence objects and simple graphics." />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/evidence-graphics.css" />
+  <link rel="stylesheet" href="/evidence-demo.css" />
+</head>
+<body>
+  <header class="site-header"><div class="wrap header-inner"><div><a class="brand" href="/">Civic Commons</a><div class="strap">Southall & Ealing</div></div><nav aria-label="Primary"><a href="/">Latest</a><a href="/explore.html">Explore</a><a href="/documents/">Documents</a><a href="/roadmap.html">Roadmap</a></nav></div></header>
+  <main>
+    <section class="evidence-hero"><div class="wrap"><p class="eyebrow">Phase 3 · normalized evidence</p><h1>One evidence model, several useful views.</h1><p class="lede">These cards are rendered from schema-validated evidence collections produced from the same live Ealing Data probe. The graphics are intentionally small: they add context without pretending the source is more precise than it is.</p></div></section>
+    <section class="wrap evidence-demo-status" aria-live="polite"><strong id="evidenceStatus">Loading normalized evidence…</strong><span id="evidenceMeta"></span></section>
+    <section class="wrap evidence-demo-grid" id="evidenceCollections"></section>
+  </main>
+  <footer><div class="wrap footer-inner"><span>Southall & Ealing Civic Commons — evidence component preview</span><span>Source: Ealing Council Data Explorer / ArcGIS.</span></div></footer>
+  <script src="/site-shell.js?v=20260829-1"></script>
+  <script type="module" src="/evidence-demo.js"></script>
+</body>
+</html>
