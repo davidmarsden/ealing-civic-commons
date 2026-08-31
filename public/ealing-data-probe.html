@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Southall evidence probe · Civic Commons</title>
+  <meta name="description" content="Experimental Southall evidence cards from Ealing Council's public InstantAtlas/ArcGIS data catalogue." />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/ealing-data-probe.css" />
+</head>
+<body>
+  <header class="site-header"><div class="wrap header-inner"><div><a class="brand" href="/">Civic Commons</a><div class="strap">Southall & Ealing</div></div><nav aria-label="Primary"><a href="/">Latest</a><a href="/explore.html">Explore</a><a href="/documents/">Documents</a><a href="/roadmap.html">Roadmap</a></nav></div></header>
+  <main>
+    <section class="probe-hero"><div class="wrap probe-hero-grid"><div><p class="eyebrow">Experimental evidence layer</p><h1>What does Ealing’s own data say about Southall?</h1><p class="lede">A live probe of neighbourhood-scale indicators in Ealing Council’s public Data Explorer. The aim is not merely to reproduce a council dashboard, but to make the geography, comparisons and limits of the evidence visible.</p></div><aside class="probe-note"><strong>Phase 2 probe</strong><span>IMD</span><span>Air quality</span><span>Overcrowding</span><span>Child poverty</span><span>Homelessness</span></aside></div></section>
+
+    <section class="wrap probe-status" aria-live="polite"><div><strong id="probeStatus">Loading Ealing Data…</strong><span id="probeMeta"></span></div><button id="probeRefresh" type="button">Refresh</button></section>
+
+    <section class="wrap probe-explainer"><div><p class="eyebrow">How to read this</p><h2>Evidence, not editorial.</h2></div><div><p>Southall town is treated as six wards: Dormers Wells, Lady Margaret, Norwood Green, Southall Broadway, Southall Green and Southall West. Hanwell Broadway, Northfield and Walpole are shown separately as Ealing Southall parliamentary-constituency context, not folded into Southall town statistics.</p><p>LSOA values use a human anchor — their ward name — while keeping the official LSOA label and code available for source checking. Comparator figures are calculated at the same geography across Ealing rather than mixing incomparable areas. Where Ealing only publishes a borough-wide figure, as with the homelessness indicator in this probe, the page says so and does not manufacture a neighbourhood map.</p></div></section>
+
+    <section class="wrap probe-scope" aria-labelledby="scopeTitle">
+      <div class="probe-scope-copy"><p class="eyebrow">Geography</p><h2 id="scopeTitle">What counts as Southall here?</h2><p>The map uses Ealing’s own ward geometries. The six darker wards make up the Southall town evidence scope. Hanwell Broadway, Northfield and Walpole are highlighted more lightly as additional Ealing Southall constituency context.</p><div class="probe-map-legend"><span><i class="legend-town"></i>Southall town ward</span><span><i class="legend-constituency"></i>Constituency context</span><span><i class="legend-ealing"></i>Other Ealing ward</span></div></div>
+      <div id="scopeMap" class="probe-map probe-map-overview" aria-label="Map of Southall wards within Ealing"></div>
+    </section>
+
+    <section class="wrap" id="probeGroups"></section>
+
+    <section class="wrap probe-diagnostics"><details><summary>Geography matching diagnostics</summary><div id="geoDiagnostics"></div></details></section>
+  </main>
+  <footer><div class="wrap footer-inner"><span>Southall & Ealing Civic Commons — evidence probe</span><span>Source: Ealing Council Data Explorer / ArcGIS.</span></div></footer>
+  <script src="/site-shell.js?v=20260829-1"></script>
+  <script src="/ealing-data-probe.js" type="module"></script>
+</body>
+</html>

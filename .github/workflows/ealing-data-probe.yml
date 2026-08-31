@@ -1,0 +1,95 @@
+name: Ealing data Southall probe
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'netlify/functions/ealing-data-probe.mjs'
+      - 'public/ealing-data-probe.*'
+      - '.github/workflows/ealing-data-probe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Invoke live Southall probe
+        run: |
+          node --input-type=module <<'NODE'
+          const mod = await import('./netlify/functions/ealing-data-probe.mjs');
+          const response = await mod.default();
+          const payload = await response.json();
+          if (!response.ok) throw new Error(`Probe returned HTTP ${response.status}: ${payload.error || 'unknown error'}`);
+          if (payload.status !== 'ok') throw new Error(`Unexpected probe status: ${payload.status}`);
+
+          const summary = (payload.groups || []).map(group => ({
+            id: group.id,
+            observations: (group.indicators || []).reduce(
+              (total, indicator) => total + (indicator.instances || []).reduce(
+                (subtotal, instance) => subtotal + (instance.observations?.length || 0), 0
+              ), 0
+            ),
+            instances: (group.indicators || []).flatMap(indicator =>
+              (indicator.instances || []).map(instance => ({
+                indicator: indicator.id,
+                date: instance.date,
+                geography: instance.geography?.name,
+                observations: instance.observations?.length || 0,
+                comparatorCount: instance.comparator?.values?.count || 0,
+                error: instance.error || null
+              }))
+            )
+          }));
+          console.log(JSON.stringify({
+            geographyDiagnostics: payload.geographyDiagnostics,
+            maps: { wards: payload.maps?.wards?.length || 0, lsoas: payload.maps?.lsoas?.length || 0, scope: payload.maps?.scope },
+            groups: summary
+          }, null, 2));
+
+          const expected = ['imd', 'air-quality', 'overcrowding', 'child-poverty', 'homelessness'];
+          const missing = expected.filter(id => !summary.some(group => group.id === id));
+          if (missing.length) throw new Error(`Missing probe groups: ${missing.join(', ')}`);
+          const empty = summary.filter(group => group.observations === 0);
+          if (empty.length) throw new Error(`Probe groups without observations: ${empty.map(group => group.id).join(', ')}`);
+
+          const lsoaGroups = summary.filter(group => ['imd', 'air-quality', 'overcrowding'].includes(group.id));
+          const badLsoa = lsoaGroups.flatMap(group => group.instances.filter(instance => instance.geography === 'LSOA 2021' && instance.observations !== 40));
+          if (badLsoa.length) throw new Error(`Expected 40 Southall LSOA observations for each neighbourhood LSOA instance; got ${JSON.stringify(badLsoa)}`);
+
+          const homelessness = payload.groups.find(group => group.id === 'homelessness');
+          const homelessnessInstances = homelessness?.indicators?.flatMap(indicator => indicator.instances || []) || [];
+          if (homelessnessInstances.length !== 1 || homelessnessInstances[0].geography?.name !== 'Ealing borough' || homelessnessInstances[0].observations?.length !== 1) {
+            throw new Error('Homelessness must be exposed as one Ealing borough value, not an LSOA breakdown');
+          }
+          if (!/borough-wide/i.test(homelessnessInstances[0].scopeNote || '')) throw new Error('Homelessness borough-scope warning missing');
+
+          const child = payload.groups.find(group => group.id === 'child-poverty');
+          const childInstances = child?.indicators?.flatMap(indicator => indicator.instances || []) || [];
+          const wardInstances = childInstances.filter(instance => instance.geography?.name === 'Ward');
+          if (!wardInstances.length || wardInstances.some(instance => instance.observations?.length !== 6)) throw new Error('Expected all six Southall town wards in child-poverty Ward observations');
+          const townInstances = childInstances.filter(instance => instance.geography?.name === 'Town Profile');
+          if (!townInstances.length || townInstances.some(instance => instance.observations?.length !== 1)) throw new Error('Expected one Southall Town Profile observation for each child-poverty indicator');
+
+          if ((payload.maps?.lsoas?.length || 0) !== 40) throw new Error(`Expected 40 Southall LSOA map polygons, got ${payload.maps?.lsoas?.length || 0}`);
+          const townWardNames = payload.maps?.scope?.southallTownWards || [];
+          if (townWardNames.length !== 6) throw new Error(`Expected six Southall town wards, got ${townWardNames.length}`);
+          const constituencyContext = payload.maps?.scope?.constituencyContextWards || [];
+          const expectedContext = ['Hanwell Broadway', 'Northfield', 'Walpole'];
+          if (constituencyContext.length !== 3 || expectedContext.some(name => !constituencyContext.includes(name))) throw new Error('Ealing Southall constituency context wards missing');
+
+          const numericInstances = payload.groups
+            .flatMap(group => group.indicators || [])
+            .flatMap(indicator => indicator.instances || [])
+            .filter(instance => instance.summary?.kind === 'numeric' && instance.geography?.name !== 'Ealing borough');
+          const withoutComparator = numericInstances.filter(instance => !instance.comparator?.values?.count);
+          if (withoutComparator.length) throw new Error(`Numeric neighbourhood instances missing Ealing same-geography comparators: ${withoutComparator.map(instance => instance.fieldId).join(', ')}`);
+          NODE
