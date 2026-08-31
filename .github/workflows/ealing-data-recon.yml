@@ -1,0 +1,36 @@
+name: Ealing data reconnaissance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/ealing-data-catalog.mjs"
+      - ".github/workflows/ealing-data-recon.yml"
+      - "package.json"
+
+permissions:
+  contents: read
+
+jobs:
+  catalogue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Fetch Ealing Data catalogue
+        run: npm run inspect:ealing-data
+
+      - name: Upload reconnaissance inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: ealing-data-catalogue
+          path: tmp/ealing-data/
+          if-no-files-found: error
+          retention-days: 14
