@@ -28,7 +28,7 @@ jobs:
           const mod = await import('./netlify/functions/ealing-data-probe.mjs');
           const response = await mod.default();
           const payload = await response.json();
-          console.log(JSON.stringify({
+          const summary = {
             httpStatus: response.status,
             status: payload.status,
             elapsedMs: payload.elapsedMs,
@@ -37,21 +37,26 @@ jobs:
               id: group.id,
               label: group.label,
               candidates: group.candidates,
-              error: group.error || null,
-              warning: group.warning || null,
+              observations: (group.indicators || []).reduce(
+                (total, indicator) => total + (indicator.instances || []).reduce(
+                  (subtotal, instance) => subtotal + (instance.observations?.length || 0), 0
+                ), 0
+              ),
               indicators: (group.indicators || []).map(indicator => ({
                 id: indicator.id,
                 name: indicator.name,
-                geography: indicator.geography?.name,
                 instances: (indicator.instances || []).map(instance => ({
                   date: instance.date,
                   geography: instance.geography?.name,
-                  observations: instance.observations?.length || 0,
+                  observations: instance.observations || [],
                   error: instance.error || null
                 }))
               }))
             }))
-          }, null, 2));
-          if (!response.ok) process.exit(1);
+          };
+          console.log(JSON.stringify(summary, null, 2));
+          if (!response.ok) throw new Error(`Probe returned HTTP ${response.status}`);
           if (!payload.groups?.length) throw new Error('Probe returned no groups');
+          const emptyGroups = summary.groups.filter(group => group.observations === 0);
+          if (emptyGroups.length) throw new Error(`Probe groups without Southall observations: ${emptyGroups.map(group => group.id).join(', ')}`);
           NODE
