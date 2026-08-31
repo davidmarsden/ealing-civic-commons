@@ -1,13 +1,13 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { getStore } from '@netlify/blobs';
+import { getDeployStore, getStore } from '@netlify/blobs';
 
 export const STORE_NAME = 'civic-commons-review-queue';
-export const MANIFEST_KEY = 'manifest/recent';
-export const MAX_MANIFEST_IDS = 2000;
 export const REVIEW_KINDS = ['item-contribution', 'source-submission', 'evidence-suggestion', 'relationship-suggestion'];
 export const REVIEW_STATUSES = ['pending', 'needs-info', 'accepted', 'rejected'];
 
-export const store = () => getStore(STORE_NAME);
+export const store = () => Netlify.context?.deploy?.context === 'production'
+  ? getStore(STORE_NAME, { consistency: 'strong' })
+  : getDeployStore(STORE_NAME);
 export const reviewKey = id => `review/${String(id || '').trim()}`;
 export const auditKey = (id, eventId) => `audit/${String(id || '').trim()}/${eventId}`;
 
@@ -81,51 +81,29 @@ export function normalizeReview(input = {}) {
   };
 }
 
-async function loadManifest(blobs) {
-  const manifest = await blobs.get(MANIFEST_KEY, { type: 'json', consistency: 'strong' }).catch(() => null);
-  return Array.isArray(manifest?.ids) ? manifest.ids.filter(id => /^rq-[A-Za-z0-9-]+$/.test(String(id))).slice(-MAX_MANIFEST_IDS) : [];
-}
-
-async function saveManifest(blobs, ids) {
-  const now = new Date().toISOString();
-  await blobs.setJSON(MANIFEST_KEY, { version: 1, updatedAt: now, ids: [...new Set(ids)].slice(-MAX_MANIFEST_IDS) });
-}
-
 export async function enqueueReview(input) {
   const blobs = store();
   const candidate = normalizeReview(input);
-  const existing = await blobs.get(reviewKey(candidate.id), { type: 'json', consistency: 'strong' }).catch(() => null);
+  const existing = await blobs.get(reviewKey(candidate.id), { type: 'json' }).catch(() => null);
   if (existing?.id === candidate.id) return { record: existing, created: false };
-
-  const write = await blobs.setJSON(reviewKey(candidate.id), candidate, {
-    onlyIfNew: true,
-    metadata: { kind: candidate.kind, status: candidate.status, source: candidate.source.slice(0, 120) }
-  });
-
-  const stored = write?.modified === false
-    ? await blobs.get(reviewKey(candidate.id), { type: 'json', consistency: 'strong' }).catch(() => candidate)
-    : candidate;
-  const created = write?.modified !== false;
-
-  const ids = await loadManifest(blobs);
-  if (!ids.includes(candidate.id)) {
-    ids.push(candidate.id);
-    await saveManifest(blobs, ids);
-  }
-  return { record: stored, created };
+  await blobs.setJSON(reviewKey(candidate.id), candidate);
+  return { record: candidate, created: true };
 }
 
 export async function getReview(id) {
   const cleanId = cleanText(id, 120);
   if (!cleanId) return null;
-  return store().get(reviewKey(cleanId), { type: 'json', consistency: 'strong' }).catch(() => null);
+  return store().get(reviewKey(cleanId), { type: 'json' }).catch(() => null);
 }
 
 export async function listReviews({ status = null, limit = 250 } = {}) {
   const blobs = store();
-  const ids = (await loadManifest(blobs)).slice(-Math.max(1, Math.min(Number(limit) || 250, 500))).reverse();
-  const records = await Promise.all(ids.map(id => blobs.get(reviewKey(id), { type: 'json', consistency: 'strong' }).catch(() => null)));
-  return records.filter(record => record?.id && (!status || record.status === status));
+  const listed = await blobs.list({ prefix: 'review/' });
+  const keys = listed.blobs.map(blob => blob.key).slice(-Math.max(1, Math.min(Number(limit) || 250, 500)));
+  const records = await Promise.all(keys.map(key => blobs.get(key, { type: 'json' }).catch(() => null)));
+  return records
+    .filter(record => record?.id && (!status || record.status === status))
+    .sort((a, b) => Date.parse(b.updatedAt || b.createdAt || 0) - Date.parse(a.updatedAt || a.createdAt || 0));
 }
 
 export async function decideReview(id, { status, reviewer, note = '' } = {}) {
@@ -153,8 +131,8 @@ export async function decideReview(id, { status, reviewer, note = '' } = {}) {
   });
 
   await Promise.all([
-    blobs.setJSON(reviewKey(current.id), updated, { metadata: { kind: updated.kind, status: updated.status, source: updated.source.slice(0, 120) } }),
-    blobs.setJSON(auditKey(current.id, event.id), event, { onlyIfNew: true, metadata: { status, at: now } })
+    blobs.setJSON(reviewKey(current.id), updated),
+    blobs.setJSON(auditKey(current.id, event.id), event)
   ]);
   return updated;
 }
