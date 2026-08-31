@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { decideReview, enqueueReview, listReviews, REVIEW_STATUSES } from '../lib/review-queue.mjs';
 import { fetchEalingPublicNoticeCandidates } from '../lib/public-notice-candidates.mjs';
+import { reconcileContributionPublication } from '../lib/public-contributions.mjs';
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status,
@@ -58,7 +59,31 @@ export default async request => {
         note: body.note
       });
       if (!record) return json({ error: 'Review item not found' }, 404);
-      return json({ ok: true, record });
+
+      let promotion = null;
+      if (record.kind === 'item-contribution') {
+        try {
+          const result = await reconcileContributionPublication(record.id);
+          promotion = {
+            type: 'public-contribution',
+            id: result.contribution?.id || `contrib-${record.id}`,
+            published: result.status === 'accepted' && result.action === 'published',
+            action: result.action,
+            created: result.created ?? false,
+            removed: result.removed ?? false,
+            authoritativeStatus: result.status
+          };
+        } catch (error) {
+          console.error('Contribution publication reconciliation failed', { reviewId: record.id, error });
+          return json({
+            error: `Review decision saved, but public contribution state could not be reconciled: ${error.message || error}`,
+            record,
+            promotion: { type: 'public-contribution', published: null }
+          }, 500);
+        }
+      }
+
+      return json({ ok: true, record, promotion });
     } catch (error) {
       return json({ error: error.message || 'Decision failed' }, 400);
     }

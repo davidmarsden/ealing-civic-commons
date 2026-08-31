@@ -17,6 +17,15 @@ async function api(path = '', options = {}) {
 
 function stateLabel(value) { return value === 'needs-info' ? 'Needs info' : value.charAt(0).toUpperCase() + value.slice(1); }
 
+function decisionButtons(record) {
+  const labels = [
+    ['accepted', record.kind === 'item-contribution' ? 'Accept & publish' : 'Accept'],
+    ['needs-info', 'Needs info'],
+    ['rejected', 'Reject']
+  ];
+  return `<div class="review-decision">${labels.filter(([status]) => status !== record.status).map(([status, label]) => `<button type="button" data-decision="${status}">${label}</button>`).join('')}</div>`;
+}
+
 function card(record) {
   const p = record.payload || {};
   const priv = record.private || {};
@@ -31,7 +40,7 @@ function card(record) {
     ${link ? `<p class="review-link"><a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open source ↗</a></p>` : ''}
     <p><small>${esc(record.provenance || '')}</small></p>
     ${privateBits.length ? `<div class="review-private"><strong>Private moderation data</strong><br>${privateBits.join('<br>')}</div>` : ''}
-    ${record.status === 'pending' || record.status === 'needs-info' ? `<div class="review-decision"><button type="button" data-decision="accepted">Accept</button><button type="button" data-decision="needs-info">Needs info</button><button type="button" data-decision="rejected">Reject</button></div>` : ''}
+    ${decisionButtons(record)}
     ${latest ? `<div class="review-history">Last decision: ${esc(latest.reviewer)} · ${esc(stateLabel(latest.to))} · ${esc(fmtDate(latest.at))}${latest.note ? ` — ${esc(latest.note)}` : ''}</div>` : ''}
   </article>`;
 }
@@ -57,7 +66,10 @@ function bindDecisions() {
     const note = status === 'accepted' ? '' : (window.prompt(`${stateLabel(status)} note (optional):`, '') || '');
     button.disabled = true;
     try {
-      await api('', { method:'POST', body: JSON.stringify({ action:'decision', id:cardEl.dataset.id, status, reviewer:reviewer(), note }) });
+      const data = await api('', { method:'POST', body: JSON.stringify({ action:'decision', id:cardEl.dataset.id, status, reviewer:reviewer(), note }) });
+      if (data.promotion?.type === 'public-contribution') {
+        $('#queueStatus').textContent = data.promotion.published ? 'Contribution accepted and published.' : 'Contribution withdrawn from public view.';
+      }
       await loadQueue();
     } catch (error) {
       $('#queueStatus').textContent = error.message;
