@@ -10,18 +10,16 @@ const SOURCE_ITEM_ID = "c83a8b7c1fdc4dcbbeb6ac8e87863bd1";
 const WEBMAP_ID = "82e2409105e34e1e989241172d0e2154";
 
 function parseArgs(argv) {
-  const args = { outDir: "tmp/ealing-data", masterTable: process.env.EALING_DATA_MASTER_TABLE_URL || DEFAULT_MASTER_TABLE };
+  const args = {
+    outDir: "tmp/ealing-data",
+    masterTable: process.env.EALING_DATA_MASTER_TABLE_URL || DEFAULT_MASTER_TABLE
+  };
 
   for (let i = 0; i < argv.length; i += 1) {
-    if (argv[i] === "--out-dir") {
-      args.outDir = argv[++i];
-    } else if (argv[i] === "--master-table") {
-      args.masterTable = argv[++i];
-    } else if (argv[i] === "--help" || argv[i] === "-h") {
-      args.help = true;
-    } else {
-      throw new Error(`Unknown argument: ${argv[i]}`);
-    }
+    if (argv[i] === "--out-dir") args.outDir = argv[++i];
+    else if (argv[i] === "--master-table") args.masterTable = argv[++i];
+    else if (argv[i] === "--help" || argv[i] === "-h") args.help = true;
+    else throw new Error(`Unknown argument: ${argv[i]}`);
   }
 
   if (!args.outDir) throw new Error("--out-dir requires a value");
@@ -53,49 +51,9 @@ async function fetchJson(url, label) {
   return payload;
 }
 
-function normalizeKey(value) {
-  return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
-function makeFieldLookup(fieldNames) {
-  return new Map(fieldNames.map((name) => [normalizeKey(name), name]));
-}
-
-function findField(lookup, candidates) {
-  for (const candidate of candidates) {
-    const actual = lookup.get(normalizeKey(candidate));
-    if (actual) return actual;
-  }
-  return null;
-}
-
-function valueFor(row, field) {
-  if (!field) return null;
-  const value = row[field];
-  return value === undefined || value === null || value === "" ? null : value;
-}
-
 function sortedUnique(values) {
   return [...new Set(values.filter((value) => value !== null && value !== undefined && value !== "").map(String))]
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
-}
-
-function makeResolvedFields(fieldNames) {
-  const lookup = makeFieldLookup(fieldNames);
-  return {
-    objectId: findField(lookup, ["OBJECTID", "FID"]),
-    themeId: findField(lookup, ["Theme_ID", "ThemeID"]),
-    themeName: findField(lookup, ["Theme", "Theme_Name", "ThemeName"]),
-    indicatorId: findField(lookup, ["Indicator_ID", "IndicatorID"]),
-    indicatorName: findField(lookup, ["Indicator", "Indicator_Name", "IndicatorName"]),
-    geographyId: findField(lookup, ["Geo_ID", "GeoID", "Geography_ID", "GeographyID"]),
-    geographyName: findField(lookup, ["Geo", "Geo_Name", "GeoName", "Geography", "Geography_Name", "GeographyName"]),
-    dateId: findField(lookup, ["Date_ID", "DateID", "Date"]),
-    serviceUrl: findField(lookup, ["Service_Url", "Service_URL", "ServiceUrl", "Service"]),
-    fieldId: findField(lookup, ["Field_ID", "FieldID", "Field"]),
-    source: findField(lookup, ["Source", "Data_Source", "DataSource"]),
-    unit: findField(lookup, ["Unit", "Units"])
-  };
 }
 
 async function fetchAllRows(masterTable, metadata) {
@@ -117,7 +75,6 @@ async function fetchAllRows(masterTable, metadata) {
     const page = await fetchJson(query, `Master table page at offset ${offset}`);
     const features = Array.isArray(page.features) ? page.features : [];
     rows.push(...features.map((feature) => feature.attributes || {}));
-
     process.stdout.write(`Fetched ${rows.length} catalogue rows\r`);
 
     if (features.length === 0 || (!page.exceededTransferLimit && features.length < pageSize)) break;
@@ -128,62 +85,145 @@ async function fetchAllRows(masterTable, metadata) {
   return rows;
 }
 
-function buildInventory(rows, metadata, masterTable) {
-  const fieldNames = metadata.fields?.map((field) => field.name) || Object.keys(rows[0] || {});
-  const fields = makeResolvedFields(fieldNames);
-  const groups = new Map();
+function themePath(themeId, themeById) {
+  const path = [];
+  const seen = new Set();
+  let currentId = themeId;
 
-  for (const row of rows) {
-    const indicatorId = valueFor(row, fields.indicatorId);
-    const indicatorName = valueFor(row, fields.indicatorName);
-    const key = String(indicatorId || indicatorName || "(unknown indicator)");
-
-    if (!groups.has(key)) {
-      groups.set(key, {
-        id: indicatorId,
-        name: indicatorName,
-        rowCount: 0,
-        themes: [],
-        geographies: [],
-        dates: [],
-        sources: [],
-        units: [],
-        services: new Map()
-      });
+  while (currentId && !seen.has(currentId)) {
+    seen.add(currentId);
+    const theme = themeById.get(String(currentId));
+    if (!theme) {
+      path.unshift(String(currentId));
+      break;
     }
+    path.unshift(theme.name || theme.id);
+    currentId = theme.parentId;
+  }
 
-    const group = groups.get(key);
-    group.rowCount += 1;
-    group.themes.push(valueFor(row, fields.themeName) || valueFor(row, fields.themeId));
-    group.geographies.push(valueFor(row, fields.geographyName) || valueFor(row, fields.geographyId));
-    group.dates.push(valueFor(row, fields.dateId));
-    group.sources.push(valueFor(row, fields.source));
-    group.units.push(valueFor(row, fields.unit));
+  return path;
+}
 
-    const serviceUrl = valueFor(row, fields.serviceUrl);
-    const fieldId = valueFor(row, fields.fieldId);
-    if (serviceUrl) {
-      if (!group.services.has(String(serviceUrl))) group.services.set(String(serviceUrl), new Set());
-      if (fieldId) group.services.get(String(serviceUrl)).add(String(fieldId));
+function buildInventory(rows, metadata, masterTable) {
+  const byType = new Map();
+  for (const row of rows) {
+    const type = String(row.Item_Type || "Unknown");
+    if (!byType.has(type)) byType.set(type, []);
+    byType.get(type).push(row);
+  }
+
+  const geoRows = byType.get("Geo") || [];
+  const themeRows = byType.get("Theme") || [];
+  const indicatorRows = byType.get("Indicator") || [];
+  const instanceRows = byType.get("Instance") || [];
+
+  const geoById = new Map();
+  for (const row of geoRows) {
+    const id = String(row.ID);
+    if (!geoById.has(id)) {
+      geoById.set(id, {
+        id,
+        name: row.Name || id,
+        order: row.Item_Order ?? null,
+        serviceUrl: row.Service_Url || null
+      });
     }
   }
 
-  const indicators = [...groups.values()].map((group) => ({
-    id: group.id,
-    name: group.name,
-    rowCount: group.rowCount,
-    themes: sortedUnique(group.themes),
-    geographies: sortedUnique(group.geographies),
-    dates: sortedUnique(group.dates),
-    sources: sortedUnique(group.sources),
-    units: sortedUnique(group.units),
-    services: [...group.services.entries()].map(([url, fieldIds]) => ({ url, fieldIds: [...fieldIds].sort() }))
-  })).sort((a, b) => String(a.name || a.id || "").localeCompare(String(b.name || b.id || ""), undefined, { numeric: true, sensitivity: "base" }));
+  const themeById = new Map();
+  for (const row of themeRows) {
+    const id = String(row.ID);
+    if (!themeById.has(id)) {
+      themeById.set(id, {
+        id,
+        name: row.Name || id,
+        parentId: row.Theme_ID ? String(row.Theme_ID) : null,
+        order: row.Item_Order ?? null
+      });
+    }
+  }
 
-  const serviceUrls = sortedUnique(rows.map((row) => valueFor(row, fields.serviceUrl)));
-  const themeValues = sortedUnique(rows.map((row) => valueFor(row, fields.themeName) || valueFor(row, fields.themeId)));
-  const geographyValues = sortedUnique(rows.map((row) => valueFor(row, fields.geographyName) || valueFor(row, fields.geographyId)));
-  const dateValues = sortedUnique(rows.map((row) => valueFor(row, fields.dateId)));
+  const indicators = new Map();
+  function ensureIndicator(id) {
+    const key = String(id);
+    if (!indicators.has(key)) {
+      indicators.set(key, {
+        id: key,
+        names: [],
+        shortNames: [],
+        themeIds: [],
+        geographyIds: [],
+        dataTypes: [],
+        dateIds: [],
+        dateLabels: [],
+        instanceCount: 0,
+        services: new Map()
+      });
+    }
+    return indicators.get(key);
+  }
+
+  for (const row of indicatorRows) {
+    if (!row.ID) continue;
+    const indicator = ensureIndicator(row.ID);
+    indicator.names.push(row.Name);
+    indicator.shortNames.push(row.Short_Name);
+    indicator.themeIds.push(row.Theme_ID);
+    indicator.geographyIds.push(row.Geo_ID);
+    indicator.dataTypes.push(row.Data_Type);
+  }
+
+  const globalServices = new Set();
+  for (const row of instanceRows) {
+    if (!row.Indicator_ID) continue;
+    const indicator = ensureIndicator(row.Indicator_ID);
+    indicator.instanceCount += 1;
+    indicator.geographyIds.push(row.Geo_ID);
+    indicator.dateIds.push(row.Date_ID);
+    indicator.dateLabels.push(row.Name);
+
+    if (row.Service_Url) {
+      const serviceUrl = String(row.Service_Url);
+      globalServices.add(serviceUrl);
+      if (!indicator.services.has(serviceUrl)) indicator.services.set(serviceUrl, new Set());
+      if (row.Field_ID) indicator.services.get(serviceUrl).add(String(row.Field_ID));
+    }
+  }
+
+  const indicatorList = [...indicators.values()].map((indicator) => {
+    const themeIds = sortedUnique(indicator.themeIds);
+    const geographyIds = sortedUnique(indicator.geographyIds);
+    const names = sortedUnique(indicator.names);
+    const shortNames = sortedUnique(indicator.shortNames);
+
+    return {
+      id: indicator.id,
+      name: names[0] || indicator.id,
+      alternateNames: names.slice(1),
+      shortName: shortNames[0] || null,
+      dataTypes: sortedUnique(indicator.dataTypes),
+      themes: themeIds.map((id) => ({
+        id,
+        name: themeById.get(id)?.name || id,
+        path: themePath(id, themeById)
+      })),
+      geographies: geographyIds.map((id) => ({ id, name: geoById.get(id)?.name || id })),
+      dates: sortedUnique(indicator.dateLabels),
+      dateIds: sortedUnique(indicator.dateIds),
+      instanceCount: indicator.instanceCount,
+      services: [...indicator.services.entries()].map(([url, fieldIds]) => ({
+        url,
+        fieldIds: [...fieldIds].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+      }))
+    };
+  }).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }));
+
+  const rootThemes = [...themeById.values()]
+    .filter((theme) => !theme.parentId)
+    .sort((a, b) => (a.order ?? 999999) - (b.order ?? 999999) || a.name.localeCompare(b.name));
+
+  const geographies = [...geoById.values()]
+    .sort((a, b) => (a.order ?? 999999) - (b.order ?? 999999) || a.name.localeCompare(b.name));
 
   return {
     generatedAt: new Date().toISOString(),
@@ -196,27 +236,28 @@ function buildInventory(rows, metadata, masterTable) {
     },
     summary: {
       catalogueRows: rows.length,
-      indicators: indicators.length,
-      themes: themeValues.length,
-      geographies: geographyValues.length,
-      dates: dateValues.length,
-      services: serviceUrls.length
+      itemTypes: Object.fromEntries([...byType.entries()].map(([type, items]) => [type, items.length]).sort()),
+      indicators: indicatorList.length,
+      themes: themeById.size,
+      rootThemes: rootThemes.length,
+      geographies: geographies.length,
+      dateLabels: sortedUnique(instanceRows.map((row) => row.Name)).length,
+      services: globalServices.size
     },
     schema: {
-      objectIdField: metadata.objectIdField || fields.objectId,
+      objectIdField: metadata.objectIdField || null,
       maxRecordCount: metadata.maxRecordCount || null,
-      fields: metadata.fields || fieldNames,
-      resolvedFields: fields
+      fields: metadata.fields || []
     },
-    themes: themeValues,
-    geographies: geographyValues,
-    dates: dateValues,
-    serviceUrls,
-    indicators
+    rootThemes,
+    themes: [...themeById.values()].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" })),
+    geographies,
+    serviceUrls: [...globalServices].sort(),
+    indicators: indicatorList
   };
 }
 
-function markdownTableCell(value) {
+function cell(value) {
   return String(value ?? "").replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
 }
 
@@ -233,40 +274,30 @@ function toMarkdown(inventory) {
     "",
     `- Catalogue rows: **${summary.catalogueRows}**`,
     `- Unique indicators: **${summary.indicators}**`,
-    `- Themes: **${summary.themes}**`,
+    `- Themes: **${summary.themes}** (${summary.rootThemes} top-level)`,
     `- Geographies: **${summary.geographies}**`,
-    `- Dates: **${summary.dates}**`,
-    `- Underlying ArcGIS services: **${summary.services}**`,
+    `- Distinct date labels: **${summary.dateLabels}**`,
+    `- Underlying ArcGIS data services: **${summary.services}**`,
+    `- Item types: ${Object.entries(summary.itemTypes).map(([key, value]) => `${key} ${value}`).join(", ")}`,
     "",
-    "## Resolved schema",
+    "## Top-level themes",
     "",
-    "```json",
-    JSON.stringify(inventory.schema.resolvedFields, null, 2),
-    "```",
-    "",
-    "## Themes",
-    "",
-    ...(inventory.themes.length ? inventory.themes.map((item) => `- ${item}`) : ["_No theme field was resolved._"]),
+    ...inventory.rootThemes.map((theme) => `- ${theme.name} (${theme.id})`),
     "",
     "## Geographies",
     "",
-    ...(inventory.geographies.length ? inventory.geographies.map((item) => `- ${item}`) : ["_No geography field was resolved._"]),
+    ...inventory.geographies.map((geo) => `- ${geo.name} (${geo.id})`),
     "",
     "## Indicators",
     "",
-    "| ID | Indicator | Themes | Geographies | Dates | Services | Rows |",
-    "| --- | --- | --- | --- | --- | ---: | ---: |"
+    "| ID | Indicator | Theme | Geographies | Dates | Services | Instances |",
+    "| --- | --- | --- | --- | ---: | ---: | ---: |"
   ];
 
   for (const indicator of inventory.indicators) {
-    lines.push(`| ${markdownTableCell(indicator.id)} | ${markdownTableCell(indicator.name)} | ${markdownTableCell(indicator.themes.join(", "))} | ${markdownTableCell(indicator.geographies.join(", "))} | ${markdownTableCell(indicator.dates.join(", "))} | ${indicator.services.length} | ${indicator.rowCount} |`);
-  }
-
-  lines.push("", "## Underlying services", "");
-  if (inventory.serviceUrls.length) {
-    inventory.serviceUrls.forEach((url) => lines.push(`- ${url}`));
-  } else {
-    lines.push("_No service URL field was resolved._");
+    const themes = indicator.themes.map((theme) => theme.path.join(" › ")).join("; ");
+    const geographies = indicator.geographies.map((geo) => geo.name).join(", ");
+    lines.push(`| ${cell(indicator.id)} | ${cell(indicator.name)} | ${cell(themes)} | ${cell(geographies)} | ${indicator.dates.length} | ${indicator.services.length} | ${indicator.instanceCount} |`);
   }
 
   return `${lines.join("\n")}\n`;
@@ -286,7 +317,6 @@ async function main() {
   metadataUrl.searchParams.set("f", "json");
   const metadata = await fetchJson(metadataUrl, "Master table metadata");
   const rows = await fetchAllRows(masterTable, metadata);
-
   if (!rows.length) throw new Error("Ealing master table returned no catalogue rows");
 
   const inventory = buildInventory(rows, metadata, masterTable);
@@ -297,12 +327,12 @@ async function main() {
   await writeFile(path.join(outDir, "inventory.json"), `${JSON.stringify(inventory, null, 2)}\n`);
   await writeFile(path.join(outDir, "inventory.md"), toMarkdown(inventory));
 
-  console.log(`\nEaling Data catalogue inventory complete.`);
-  console.log(`Rows:       ${inventory.summary.catalogueRows}`);
-  console.log(`Indicators: ${inventory.summary.indicators}`);
-  console.log(`Themes:     ${inventory.summary.themes}`);
-  console.log(`Geographies:${inventory.summary.geographies}`);
-  console.log(`Services:   ${inventory.summary.services}`);
+  console.log("\nEaling Data catalogue inventory complete.");
+  console.log(`Rows:        ${inventory.summary.catalogueRows}`);
+  console.log(`Indicators:  ${inventory.summary.indicators}`);
+  console.log(`Themes:      ${inventory.summary.themes}`);
+  console.log(`Geographies: ${inventory.summary.geographies}`);
+  console.log(`Services:    ${inventory.summary.services}`);
   console.log(`\nWrote:\n  ${path.join(outDir, "master-table.raw.json")}\n  ${path.join(outDir, "inventory.json")}\n  ${path.join(outDir, "inventory.md")}`);
 }
 
