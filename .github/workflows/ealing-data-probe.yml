@@ -59,11 +59,18 @@ jobs:
           const missing = expected.filter(id => !summary.some(group => group.id === id));
           if (missing.length) throw new Error(`Missing probe groups: ${missing.join(', ')}`);
           const empty = summary.filter(group => group.observations === 0);
-          if (empty.length) throw new Error(`Probe groups without Southall observations: ${empty.map(group => group.id).join(', ')}`);
+          if (empty.length) throw new Error(`Probe groups without observations: ${empty.map(group => group.id).join(', ')}`);
 
-          const lsoaGroups = summary.filter(group => ['imd', 'air-quality', 'overcrowding', 'homelessness'].includes(group.id));
+          const lsoaGroups = summary.filter(group => ['imd', 'air-quality', 'overcrowding'].includes(group.id));
           const badLsoa = lsoaGroups.flatMap(group => group.instances.filter(instance => instance.geography === 'LSOA 2021' && instance.observations !== 40));
-          if (badLsoa.length) throw new Error(`Expected 40 Southall LSOA observations for each LSOA instance; got ${JSON.stringify(badLsoa)}`);
+          if (badLsoa.length) throw new Error(`Expected 40 Southall LSOA observations for each neighbourhood LSOA instance; got ${JSON.stringify(badLsoa)}`);
+
+          const homelessness = payload.groups.find(group => group.id === 'homelessness');
+          const homelessnessInstances = homelessness?.indicators?.flatMap(indicator => indicator.instances || []) || [];
+          if (homelessnessInstances.length !== 1 || homelessnessInstances[0].geography?.name !== 'Ealing borough' || homelessnessInstances[0].observations?.length !== 1) {
+            throw new Error('Homelessness must be exposed as one Ealing borough value, not an LSOA breakdown');
+          }
+          if (!/borough-wide/i.test(homelessnessInstances[0].scopeNote || '')) throw new Error('Homelessness borough-scope warning missing');
 
           const child = payload.groups.find(group => group.id === 'child-poverty');
           const childInstances = child?.indicators?.flatMap(indicator => indicator.instances || []) || [];
@@ -76,9 +83,13 @@ jobs:
           const townWardNames = payload.maps?.scope?.southallTownWards || [];
           if (townWardNames.length !== 6) throw new Error(`Expected six Southall town wards, got ${townWardNames.length}`);
           const constituencyContext = payload.maps?.scope?.constituencyContextWards || [];
-          if (constituencyContext.length !== 2 || !constituencyContext.includes('Northfield') || !constituencyContext.includes('Walpole')) throw new Error('Ealing Southall constituency context wards missing');
+          const expectedContext = ['Hanwell Broadway', 'Northfield', 'Walpole'];
+          if (constituencyContext.length !== 3 || expectedContext.some(name => !constituencyContext.includes(name))) throw new Error('Ealing Southall constituency context wards missing');
 
-          const numericInstances = payload.groups.flatMap(group => group.indicators || []).flatMap(indicator => indicator.instances || []).filter(instance => instance.summary?.kind === 'numeric');
+          const numericInstances = payload.groups
+            .flatMap(group => group.indicators || [])
+            .flatMap(indicator => indicator.instances || [])
+            .filter(instance => instance.summary?.kind === 'numeric' && instance.geography?.name !== 'Ealing borough');
           const withoutComparator = numericInstances.filter(instance => !instance.comparator?.values?.count);
-          if (withoutComparator.length) throw new Error(`Numeric instances missing Ealing same-geography comparators: ${withoutComparator.map(instance => instance.fieldId).join(', ')}`);
+          if (withoutComparator.length) throw new Error(`Numeric neighbourhood instances missing Ealing same-geography comparators: ${withoutComparator.map(instance => instance.fieldId).join(', ')}`);
           NODE
