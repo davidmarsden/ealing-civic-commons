@@ -4,6 +4,11 @@ const statusEl = document.querySelector('#evidenceStatus');
 const metaEl = document.querySelector('#evidenceMeta');
 const gridEl = document.querySelector('#evidenceCollections');
 
+// Not every valid evidence collection benefits from graphical treatment.
+// IMD decile is less informative here than the continuous IMD score, while
+// homelessness is a single borough-wide figure rather than a local comparison.
+const CHART_EXCLUDED_INDICATORS = new Set(['I3089', 'I44455']);
+
 function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]));
 }
@@ -62,9 +67,10 @@ async function load() {
     const response = await fetch('/api/evidence/southall', { headers: { accept: 'application/json' } });
     const payload = await response.json();
     if (!response.ok || payload.status === 'error') throw new Error(payload.error || `HTTP ${response.status}`);
-    statusEl.textContent = `${payload.collections.length} validated evidence collections`;
-    metaEl.textContent = `Generated ${new Date(payload.generatedAt).toLocaleString('en-GB')} · ${payload.objects.length} source-checkable observations`;
-    gridEl.innerHTML = payload.collections.map(card).join('');
+    const visualCollections = payload.collections.filter(collection => !CHART_EXCLUDED_INDICATORS.has(collection.indicatorId));
+    statusEl.textContent = `${visualCollections.length} graphical evidence views`;
+    metaEl.textContent = `${payload.collections.length} validated collections · Generated ${new Date(payload.generatedAt).toLocaleString('en-GB')} · ${payload.objects.length} source-checkable observations`;
+    gridEl.innerHTML = visualCollections.map(card).join('');
   } catch (error) {
     statusEl.textContent = 'Evidence preview failed';
     metaEl.textContent = String(error?.message || error);
