@@ -34,18 +34,17 @@ jobs:
             const payload = await (await fetch(url)).json();
             return payload.features?.map(feature => feature.attributes || {}) || [];
           }
-          function compact(row) {
-            return Object.fromEntries(Object.entries(row || {}).filter(([key]) => !/^ID\d+D/i.test(key)));
-          }
-          const baseWard = await layerRows('https://services1.arcgis.com/HumUw0sDQHwJuboT/ArcGIS/rest/services/Ealing_BaseMaps/FeatureServer/2');
           const imdWard = await layerRows('https://services1.arcgis.com/HumUw0sDQHwJuboT/ArcGIS/rest/services/Ealing_Dep_IMD/FeatureServer/2');
-          const baseTown = await layerRows('https://services1.arcgis.com/HumUw0sDQHwJuboT/ArcGIS/rest/services/Ealing_BaseMaps/FeatureServer/5');
           const imdTown = await layerRows('https://services1.arcgis.com/HumUw0sDQHwJuboT/ArcGIS/rest/services/Ealing_Dep_IMD/FeatureServer/5');
-          console.log('JOIN DEBUG', JSON.stringify({
-            baseWardSouthall: baseWard.filter(row => Object.values(row).some(value => typeof value === 'string' && /southall/i.test(value))).map(compact),
-            imdWardSample: imdWard.slice(0, 4).map(compact),
-            baseTownSouthall: baseTown.filter(row => Object.values(row).some(value => typeof value === 'string' && /southall/i.test(value))).map(compact),
-            imdTownSample: imdTown.slice(0, 4).map(compact)
+          const wardSouthall = imdWard.find(row => row.NAME === 'Southall Broadway');
+          const townSouthall = imdTown.find(row => row.NAME === 'Southall');
+          const wanted = /3091|3089|25375|30920|30919|30922|44458|44455/i;
+          const picked = row => Object.fromEntries(Object.entries(row || {}).filter(([key]) => wanted.test(key)));
+          console.log('VALUE FIELD DEBUG', JSON.stringify({
+            wardKeys: Object.keys(wardSouthall || {}).filter(key => wanted.test(key)),
+            wardValues: picked(wardSouthall),
+            townKeys: Object.keys(townSouthall || {}).filter(key => wanted.test(key)),
+            townValues: picked(townSouthall)
           }, null, 2));
 
           const mod = await import('./netlify/functions/ealing-data-probe.mjs');
@@ -59,7 +58,6 @@ jobs:
             groups: (payload.groups || []).map(group => ({
               id: group.id,
               label: group.label,
-              candidates: group.candidates,
               observations: (group.indicators || []).reduce(
                 (total, indicator) => total + (indicator.instances || []).reduce(
                   (subtotal, instance) => subtotal + (instance.observations?.length || 0), 0
