@@ -11,8 +11,12 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
   }
 });
 
+function configuredToken() {
+  return String(Netlify.env.get('REVIEW_ADMIN_TOKEN') || '');
+}
+
 function authorised(request) {
-  const expected = String(process.env.REVIEW_ADMIN_TOKEN || '');
+  const expected = configuredToken();
   if (!expected) return false;
   const header = String(request.headers.get('authorization') || '');
   const supplied = header.startsWith('Bearer ') ? header.slice(7) : '';
@@ -28,7 +32,7 @@ async function parseBody(request) {
 }
 
 export default async request => {
-  if (!process.env.REVIEW_ADMIN_TOKEN) {
+  if (!configuredToken()) {
     return json({ error: 'Review queue is not configured. Set REVIEW_ADMIN_TOKEN on this deployment.' }, 503);
   }
   if (!authorised(request)) return json({ error: 'Unauthorised' }, 401);
@@ -38,11 +42,7 @@ export default async request => {
     const requested = String(url.searchParams.get('status') || '').trim();
     const status = REVIEW_STATUSES.includes(requested) ? requested : null;
     const records = await listReviews({ status, limit: 300 });
-    const counts = records.reduce((acc, record) => {
-      acc[record.status] = (acc[record.status] || 0) + 1;
-      return acc;
-    }, {});
-    return json({ ok: true, records, counts });
+    return json({ ok: true, records });
   }
 
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
