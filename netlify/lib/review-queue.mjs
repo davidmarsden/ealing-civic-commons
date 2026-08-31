@@ -81,11 +81,43 @@ export function normalizeReview(input = {}) {
   };
 }
 
+async function loadAuditEvents(blobs, id) {
+  const listed = await blobs.list({ prefix: `audit/${id}/` });
+  const events = await Promise.all(listed.blobs.map(blob => blobs.get(blob.key, { type: 'json' }).catch(() => null)));
+  return events
+    .filter(event => event?.id && REVIEW_STATUSES.includes(event.to) && event.to !== 'pending')
+    .sort((a, b) => {
+      const time = Date.parse(a.at || 0) - Date.parse(b.at || 0);
+      return time || String(a.id).localeCompare(String(b.id));
+    });
+}
+
+async function hydrateReview(blobs, record) {
+  if (!record?.id) return record;
+  const events = await loadAuditEvents(blobs, record.id);
+  if (!events.length) return record;
+
+  let status = 'pending';
+  const history = events.map(event => {
+    const hydrated = { ...event, from: status };
+    status = event.to;
+    return hydrated;
+  });
+  const last = history.at(-1);
+  return normalizeReview({
+    ...record,
+    status,
+    updatedAt: last?.at || record.updatedAt,
+    review: last ? { reviewer: last.reviewer, note: last.note, decidedAt: last.at } : record.review,
+    history: history.slice(-50)
+  });
+}
+
 export async function enqueueReview(input) {
   const blobs = store();
   const candidate = normalizeReview(input);
   const existing = await blobs.get(reviewKey(candidate.id), { type: 'json' }).catch(() => null);
-  if (existing?.id === candidate.id) return { record: existing, created: false };
+  if (existing?.id === candidate.id) return { record: await hydrateReview(blobs, existing), created: false };
   await blobs.setJSON(reviewKey(candidate.id), candidate);
   return { record: candidate, created: true };
 }
@@ -93,13 +125,16 @@ export async function enqueueReview(input) {
 export async function getReview(id) {
   const cleanId = cleanText(id, 120);
   if (!cleanId) return null;
-  return store().get(reviewKey(cleanId), { type: 'json' }).catch(() => null);
+  const blobs = store();
+  const record = await blobs.get(reviewKey(cleanId), { type: 'json' }).catch(() => null);
+  return hydrateReview(blobs, record);
 }
 
 export async function listReviews({ status = null, limit = 250 } = {}) {
   const blobs = store();
   const listed = await blobs.list({ prefix: 'review/' });
-  const records = await Promise.all(listed.blobs.map(blob => blobs.get(blob.key, { type: 'json' }).catch(() => null)));
+  const raw = await Promise.all(listed.blobs.map(blob => blobs.get(blob.key, { type: 'json' }).catch(() => null)));
+  const records = await Promise.all(raw.filter(record => record?.id).map(record => hydrateReview(blobs, record)));
   return records
     .filter(record => record?.id && (!status || record.status === status))
     .sort((a, b) => Date.parse(b.updatedAt || b.createdAt || 0) - Date.parse(a.updatedAt || a.createdAt || 0))
@@ -109,30 +144,31 @@ export async function listReviews({ status = null, limit = 250 } = {}) {
 export async function decideReview(id, { status, reviewer, note = '' } = {}) {
   if (!REVIEW_STATUSES.includes(status) || status === 'pending') throw new Error('Invalid review decision');
   const blobs = store();
-  const current = await getReview(id);
-  if (!current) return null;
+  const cleanId = cleanText(id, 120);
+  const base = await blobs.get(reviewKey(cleanId), { type: 'json' }).catch(() => null);
+  if (!base) return null;
 
   const now = new Date().toISOString();
   const event = {
     id: randomUUID(),
-    reviewId: current.id,
+    reviewId: base.id,
     at: now,
-    from: current.status,
     to: status,
     reviewer: cleanText(reviewer, 180) || 'Reviewer',
     note: cleanText(note, 4000)
   };
+
+  // Decision events are the authoritative history. They use unique keys, so
+  // simultaneous reviewers cannot overwrite one another. The review record is
+  // only a denormalised current snapshot and is rehydrated from the audit log.
+  await blobs.setJSON(auditKey(base.id, event.id), event);
+
   const updated = normalizeReview({
-    ...current,
+    ...base,
     status,
     updatedAt: now,
-    review: { reviewer: event.reviewer, note: event.note, decidedAt: now },
-    history: [...(Array.isArray(current.history) ? current.history : []), event].slice(-50)
+    review: { reviewer: event.reviewer, note: event.note, decidedAt: now }
   });
-
-  await Promise.all([
-    blobs.setJSON(reviewKey(current.id), updated),
-    blobs.setJSON(auditKey(current.id, event.id), event)
-  ]);
-  return updated;
+  await blobs.setJSON(reviewKey(base.id), updated);
+  return hydrateReview(blobs, updated);
 }
