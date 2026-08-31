@@ -1,7 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { decideReview, enqueueReview, listReviews, REVIEW_STATUSES } from '../lib/review-queue.mjs';
 import { fetchEalingPublicNoticeCandidates } from '../lib/public-notice-candidates.mjs';
-import { publishAcceptedContribution, withdrawContributionForReview } from '../lib/public-contributions.mjs';
+import { reconcileContributionPublication } from '../lib/public-contributions.mjs';
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status,
@@ -63,29 +63,22 @@ export default async request => {
       let promotion = null;
       if (record.kind === 'item-contribution') {
         try {
-          if (body.status === 'accepted') {
-            const result = await publishAcceptedContribution(record);
-            promotion = {
-              type: 'public-contribution',
-              id: result.contribution.id,
-              published: true,
-              created: result.created
-            };
-          } else {
-            const result = await withdrawContributionForReview(record.id);
-            promotion = {
-              type: 'public-contribution',
-              id: result.id,
-              published: false,
-              removed: result.removed
-            };
-          }
+          const result = await reconcileContributionPublication(record.id);
+          promotion = {
+            type: 'public-contribution',
+            id: result.contribution?.id || `contrib-${record.id}`,
+            published: result.status === 'accepted' && result.action === 'published',
+            action: result.action,
+            created: result.created ?? false,
+            removed: result.removed ?? false,
+            authoritativeStatus: result.status
+          };
         } catch (error) {
-          console.error('Contribution publication state update failed', { reviewId: record.id, error });
+          console.error('Contribution publication reconciliation failed', { reviewId: record.id, error });
           return json({
-            error: `Review decision saved, but public contribution state update failed: ${error.message || error}`,
+            error: `Review decision saved, but public contribution state could not be reconciled: ${error.message || error}`,
             record,
-            promotion: { type: 'public-contribution', published: body.status === 'accepted' ? false : null }
+            promotion: { type: 'public-contribution', published: null }
           }, 500);
         }
       }
