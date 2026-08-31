@@ -99,11 +99,19 @@ function identifierValues(row) {
   const values = new Set();
   for (const [key, value] of Object.entries(row || {})) {
     if (value === null || value === undefined || value === '') continue;
-    if (!/code|(^|_)cd($|_)|(^|_)id($|_)|name|ward|lsoa|msoa|town|lad|area/i.test(key)) continue;
+    if (/^objectid$|^globalid$/i.test(key)) continue;
+    if (typeof value !== 'string' && !/code|(^|_)cd($|_)|(^|_)id($|_)|name|ward|lsoa|msoa|town|lad|area/i.test(key)) continue;
     const normalized = String(value).trim();
     if (normalized) values.add(normalized);
   }
   return values;
+}
+
+function rowValues(row) {
+  return new Set(Object.entries(row || {})
+    .filter(([key, value]) => !/^objectid$|^globalid$/i.test(key) && value !== null && value !== undefined && value !== '')
+    .map(([, value]) => String(value).trim())
+    .filter(Boolean));
 }
 
 function makeSouthallReferences(rows) {
@@ -119,9 +127,9 @@ function matchReference(row, references) {
     const direct = references.find(reference => directLabel && reference.label === directLabel);
     return direct || { label: directLabel || 'Southall area', identifiers: new Set() };
   }
-  const rowIds = identifierValues(row);
-  if (!rowIds.size) return null;
-  return references.find(reference => [...rowIds].some(value => reference.identifiers.has(value))) || null;
+  const values = rowValues(row);
+  if (!values.size) return null;
+  return references.find(reference => [...reference.identifiers].some(value => values.has(value))) || null;
 }
 
 async function fetchJson(url, label) {
