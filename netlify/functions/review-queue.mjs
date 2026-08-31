@@ -1,7 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { decideReview, enqueueReview, listReviews, REVIEW_STATUSES } from '../lib/review-queue.mjs';
 import { fetchEalingPublicNoticeCandidates } from '../lib/public-notice-candidates.mjs';
-import { publishAcceptedContribution } from '../lib/public-contributions.mjs';
+import { publishAcceptedContribution, withdrawContributionForReview } from '../lib/public-contributions.mjs';
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status,
@@ -61,21 +61,31 @@ export default async request => {
       if (!record) return json({ error: 'Review item not found' }, 404);
 
       let promotion = null;
-      if (body.status === 'accepted' && record.kind === 'item-contribution') {
+      if (record.kind === 'item-contribution') {
         try {
-          const result = await publishAcceptedContribution(record);
-          promotion = {
-            type: 'public-contribution',
-            id: result.contribution.id,
-            published: true,
-            created: result.created
-          };
+          if (body.status === 'accepted') {
+            const result = await publishAcceptedContribution(record);
+            promotion = {
+              type: 'public-contribution',
+              id: result.contribution.id,
+              published: true,
+              created: result.created
+            };
+          } else {
+            const result = await withdrawContributionForReview(record.id);
+            promotion = {
+              type: 'public-contribution',
+              id: result.id,
+              published: false,
+              removed: result.removed
+            };
+          }
         } catch (error) {
-          console.error('Accepted contribution publication failed', { reviewId: record.id, error });
+          console.error('Contribution publication state update failed', { reviewId: record.id, error });
           return json({
-            error: `Review accepted, but public contribution publication failed: ${error.message || error}`,
+            error: `Review decision saved, but public contribution state update failed: ${error.message || error}`,
             record,
-            promotion: { type: 'public-contribution', published: false }
+            promotion: { type: 'public-contribution', published: body.status === 'accepted' ? false : null }
           }, 500);
         }
       }
