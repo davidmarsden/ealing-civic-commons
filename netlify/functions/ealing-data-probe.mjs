@@ -92,7 +92,36 @@ function containsSouthall(row) {
 function placeLabel(row) {
   const preferred = ['TownName', 'Town_Name', 'WardName', 'Ward_Name', 'LSOA21NM', 'LSOAName', 'Name', 'NAME'];
   for (const key of preferred) if (row?.[key]) return String(row[key]);
-  return textValues(row).find(value => value.toLowerCase().includes('southall')) || 'Southall area';
+  return textValues(row).find(value => value.toLowerCase().includes('southall')) || null;
+}
+
+function identifierValues(row) {
+  const values = new Set();
+  for (const [key, value] of Object.entries(row || {})) {
+    if (value === null || value === undefined || value === '') continue;
+    if (!/code|(^|_)cd($|_)|(^|_)id($|_)|name|ward|lsoa|msoa|town|lad|area/i.test(key)) continue;
+    const normalized = String(value).trim();
+    if (normalized) values.add(normalized);
+  }
+  return values;
+}
+
+function makeSouthallReferences(rows) {
+  return rows.filter(containsSouthall).map((row, index) => ({
+    label: placeLabel(row) || `Southall area ${index + 1}`,
+    identifiers: identifierValues(row)
+  }));
+}
+
+function matchReference(row, references) {
+  if (containsSouthall(row)) {
+    const directLabel = placeLabel(row);
+    const direct = references.find(reference => directLabel && reference.label === directLabel);
+    return direct || { label: directLabel || 'Southall area', identifiers: new Set() };
+  }
+  const rowIds = identifierValues(row);
+  if (!rowIds.size) return null;
+  return references.find(reference => [...rowIds].some(value => reference.identifiers.has(value))) || null;
 }
 
 async function fetchJson(url, label) {
@@ -130,13 +159,22 @@ function makeArcgisClient() {
 async function buildProbe() {
   const started = Date.now();
   const query = makeArcgisClient();
+  const southallByGeography = new Map();
 
   const geographyDiagnostics = await Promise.all(GEOGRAPHIES.map(async geo => {
     try {
       const rows = await query(geo.serviceUrl);
-      return { id: geo.id, name: geo.name, matchedFeatures: rows.filter(containsSouthall).length };
+      const references = makeSouthallReferences(rows);
+      southallByGeography.set(geo.name, references);
+      return {
+        id: geo.id,
+        name: geo.name,
+        matchedFeatures: references.length,
+        identifiers: new Set(references.flatMap(reference => [...reference.identifiers])).size
+      };
     } catch (error) {
-      return { id: geo.id, name: geo.name, matchedFeatures: 0, error: String(error?.message || error) };
+      southallByGeography.set(geo.name, []);
+      return { id: geo.id, name: geo.name, matchedFeatures: 0, identifiers: 0, error: String(error?.message || error) };
     }
   }));
 
@@ -147,10 +185,11 @@ async function buildProbe() {
       const resolvedInstances = await Promise.all(indicator.instances.map(async spec => {
         try {
           const rows = await query(spec.serviceUrl);
-          const matches = rows.filter(containsSouthall);
+          const references = southallByGeography.get(spec.geography) || [];
+          const matches = rows.map(row => ({ row, reference: matchReference(row, references) })).filter(item => item.reference);
           const observations = matches
-            .filter(row => row[spec.fieldId] !== undefined && row[spec.fieldId] !== null && row[spec.fieldId] !== '')
-            .map(row => ({ place: placeLabel(row), value: row[spec.fieldId], fieldId: spec.fieldId }));
+            .filter(({ row }) => row[spec.fieldId] !== undefined && row[spec.fieldId] !== null && row[spec.fieldId] !== '')
+            .map(({ row, reference }) => ({ place: reference.label, value: row[spec.fieldId], fieldId: spec.fieldId }));
           return {
             date: spec.date,
             geography: { name: spec.geography },
