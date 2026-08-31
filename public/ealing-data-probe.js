@@ -257,6 +257,33 @@ function renderGeographies(rows) {
   geoEl.innerHTML = (rows || []).map(row => `<div class="geo-row"><strong>${esc(row.name)}</strong><span>${esc(row.matchedFeatures)} Southall features</span><span>${row.error ? esc(row.error) : 'matched from Ealing geography service'}</span></div>`).join('') || '<p>No geography diagnostics returned.</p>';
 }
 
+function syncObservationDetailsByRow() {
+  groupsEl.addEventListener('toggle', event => {
+    const detail = event.target;
+    if (!(detail instanceof HTMLDetailsElement) || !detail.classList.contains('probe-observation-details')) return;
+    if (detail.dataset.rowSync === '1') return;
+
+    const card = detail.closest('.probe-card');
+    const grid = detail.closest('.probe-grid');
+    if (!card || !grid) return;
+
+    const rowTop = card.offsetTop;
+    const rowCards = [...grid.querySelectorAll(':scope > .probe-card')]
+      .filter(candidate => Math.abs(candidate.offsetTop - rowTop) < 2);
+
+    for (const siblingCard of rowCards) {
+      if (siblingCard === card) continue;
+      const siblingDetails = siblingCard.querySelectorAll('.probe-observation-details');
+      for (const siblingDetail of siblingDetails) {
+        if (siblingDetail.open === detail.open) continue;
+        siblingDetail.dataset.rowSync = '1';
+        siblingDetail.open = detail.open;
+        queueMicrotask(() => delete siblingDetail.dataset.rowSync);
+      }
+    }
+  }, true);
+}
+
 async function load({ fresh = false } = {}) {
   statusEl.textContent = 'Loading Ealing Data…';
   metaEl.textContent = 'Following curated catalogue pointers into ArcGIS services.';
@@ -282,5 +309,6 @@ async function load({ fresh = false } = {}) {
   }
 }
 
+syncObservationDetailsByRow();
 refreshEl.addEventListener('click', () => load({ fresh: true }));
 load();
