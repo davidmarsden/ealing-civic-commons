@@ -11,9 +11,10 @@ The Ealing Data probe proved that Civic Commons can turn Ealing Council's public
 2. **Geography is explicit.** Never infer that data stored on an LSOA-shaped service is LSOA-level evidence. The published geographic scope must be recorded separately from the technical source layer.
 3. **No synthetic aggregation by default.** Ward/Town values are only used when directly published, unless a later transformation explicitly records its method.
 4. **Comparators are first-class evidence.** A number without context is usually not useful. Comparators must use the same measure, period and compatible geography.
-5. **Method limits travel with the value.** Monitor uncertainty, modelled/background status, flat repeated values, boundary changes and other caveats are part of the evidence object rather than presentation-only warnings.
+5. **Method limits travel with the value.** Boundary changes, repeated values and other caveats are part of the evidence object rather than presentation-only warnings.
 6. **Source remains canonical.** Civic Commons stores a normalized evidence record and source pointers, not a substitute authoritative dataset.
 7. **Stable identity before presentation.** The same evidence object should be reusable on a story page, place page, topic page, map, feed card or later API.
+8. **Not every available dataset belongs in production.** A technically accessible indicator can still be excluded where provenance or methodology is too weak for responsible local interpretation.
 
 ## Proposed object
 
@@ -62,7 +63,7 @@ The Ealing Data probe proved that Civic Commons can turn Ealing Council's public
   },
   "methodology": {
     "publicationScope": "LSOA 2021",
-    "measurementType": "unknown",
+    "measurementType": "published-statistic",
     "aggregation": "direct-published-value",
     "warnings": []
   },
@@ -131,10 +132,6 @@ The probe exposed several cases that should become explicit flags rather than ad
 
 Suggested warning codes:
 
-- `flat-spatial-values` — all selected areas carry the same published value
-- `narrow-spatial-range` — variation is very small compared with the wider comparator range
-- `measurement-method-unknown` — source endpoint does not identify measured vs modelled/background methodology
-- `monitor-location-unknown` — relevant for air-quality measures where monitor location/type is not supplied
 - `borough-value-repeated-on-small-area-layer` — technical service repeats one borough value across smaller-area rows
 - `historic-boundary-mismatch` — periods use incompatible geography boundaries, e.g. IMD 2015/2019 vs LSOA 2021
 - `source-metadata-incomplete`
@@ -174,19 +171,13 @@ Detection may use source-specific rules plus repeated-value diagnostics, but the
 }
 ```
 
-## Air quality
+## Air quality is excluded from production
 
-Air-quality evidence needs stricter treatment than ordinary statistical indicators.
+The exploratory probe demonstrated that Ealing Data exposes air-quality indicator values, but the available endpoint does not establish monitor location, monitor type, or whether the values are measured, modelled or ambient/background estimates. The values are also spatially flat or near-flat across Southall.
 
-The Ealing Data endpoint currently exposed by the probe does not establish monitor location, monitor type, or whether values are measured, modelled or ambient/background estimates. Therefore:
+That combination makes the dataset poor evidence for local interpretation. The production normalizer therefore **excludes the entire air-quality group**. The exploratory probe and research notes retain the discovery for transparency, but Civic Commons does not publish those indicators as production evidence unless a later authoritative source adds sufficient monitoring/method provenance.
 
-- never call these values "local monitor readings" without additional source evidence;
-- preserve `measurementType: "unknown"`;
-- attach monitor/method warnings;
-- scale choropleths against an external same-geography comparator range rather than stretching tiny Southall differences;
-- suppress hotspot-style language when the source does not justify it.
-
-A later adapter may enrich the object with monitoring-station provenance from a separate authoritative source, but that should be an explicit evidence relationship rather than silently rewriting the original record.
+This is an intentional editorial-safety boundary at the data-selection layer, not merely a presentation choice.
 
 ## Storage and identity
 
@@ -238,11 +229,12 @@ Do not silently overwrite a materially changed evidential value without retainin
 
 The first production implementation should stay deliberately small:
 
-1. define JSON-schema validation for evidence objects and collections;
-2. normalize the same probe set into that schema;
-3. write/read evidence from a dedicated store;
-4. expose one read-only evidence API;
-5. render one reusable evidence component against normalized objects;
-6. keep the experimental `/ealing-data-probe.html` page until the normalized implementation reproduces its safeguards.
+1. define runtime/schema validation for evidence objects and collections;
+2. normalize the strongest probe set — IMD, overcrowding, child poverty/low income and borough-scoped homelessness — into that model;
+3. explicitly exclude the current AQ indicators from production normalization;
+4. write/read evidence from a dedicated store;
+5. expose one read-only evidence API;
+6. render reusable evidence components and simple graphics against normalized objects;
+7. keep the experimental `/ealing-data-probe.html` page as a research/debugging surface until the normalized implementation reproduces its safeguards.
 
-Do **not** yet ingest the full 16,897-indicator Ealing catalogue. Production starts with the curated probe set and expands only when the normalization and methodology rules are proven.
+Do **not** yet ingest the full 16,897-indicator Ealing catalogue. Production starts with the curated trustworthy set and expands only when normalization and methodology rules are proven.
