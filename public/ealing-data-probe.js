@@ -9,7 +9,7 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;
 
 function valueText(value, unit) {
   if (value === null || value === undefined || value === '') return '—';
-  const raw = typeof value === 'number' ? new Intl.NumberFormat('en-GB', { maximumFractionDigits: 2 }).format(value) : String(value);
+  const raw = typeof value === 'number' ? new Intl.NumberFormat('en-GB', { maximumFractionDigits: 3 }).format(value) : String(value);
   if (!unit) return raw;
   const normalized = String(unit).trim();
   if (!normalized) return raw;
@@ -17,13 +17,34 @@ function valueText(value, unit) {
   return `${raw} ${normalized}`;
 }
 
+function renderSummary(instance) {
+  const summary = instance.summary;
+  if (!summary?.values) return '';
+  if (summary.kind === 'distribution') {
+    return `<div class="probe-summary probe-summary-distribution"><strong>Distribution across ${esc(instance.observations?.length || 0)} Southall LSOAs</strong><div>${summary.values.map(item => `<span class="probe-chip">Decile ${esc(item.value)}: ${esc(item.count)}</span>`).join('')}</div></div>`;
+  }
+  const values = summary.values;
+  if (!values || values.count < 4) return '';
+  return `<div class="probe-summary"><div><span>LSOAs</span><strong>${esc(values.count)}</strong></div><div><span>Minimum</span><strong>${esc(valueText(values.min, instance.unit))}</strong></div><div><span>Median</span><strong>${esc(valueText(values.median, instance.unit))}</strong></div><div><span>Maximum</span><strong>${esc(valueText(values.max, instance.unit))}</strong></div></div>`;
+}
+
+function renderObservations(instance) {
+  const observations = instance.observations || [];
+  if (!observations.length) return '<div class="probe-empty">No Southall observation matched safely for this instance.</div>';
+  if (observations.length <= 8) {
+    return `<div class="probe-values">${observations.map(obs => `<div class="probe-value"><span>${esc(obs.place)}</span><strong>${esc(valueText(obs.value, instance.unit))}</strong></div>`).join('')}</div>`;
+  }
+  const sample = observations.slice(0, 6);
+  return `<details class="probe-observation-details"><summary>Show all ${esc(observations.length)} published LSOA values</summary><div class="probe-values">${sample.map(obs => `<div class="probe-value"><span>${esc(obs.place)}</span><strong>${esc(valueText(obs.value, instance.unit))}</strong></div>`).join('')}<p class="probe-sample-note">Showing the first 6 in the collapsed preview. Open the full list below.</p>${observations.slice(6).map(obs => `<div class="probe-value probe-value-extra"><span>${esc(obs.place)}</span><strong>${esc(valueText(obs.value, instance.unit))}</strong></div>`).join('')}</div></details>`;
+}
+
 function renderInstance(instance) {
   if (instance.error) return `<div class="probe-instance"><div class="probe-error">${esc(instance.error)}</div></div>`;
-  const observations = instance.observations || [];
   return `<div class="probe-instance">
     <div class="probe-instance-head"><strong>${esc(instance.date || 'Latest')}</strong><span>${esc(instance.geography?.name || '')}</span></div>
-    ${observations.length ? `<div class="probe-values">${observations.map(obs => `<div class="probe-value"><span>${esc(obs.place)}</span><strong>${esc(valueText(obs.value, instance.unit))}</strong></div>`).join('')}</div>` : `<div class="probe-empty">No Southall observation matched safely for this instance.</div>`}
-    <div class="probe-service">Field: ${esc(instance.fieldId || '—')} · matched rows: ${esc(instance.matchedRows ?? 0)}${instance.serviceUrl ? ` · ${esc(instance.serviceUrl)}` : ''}</div>
+    ${renderSummary(instance)}
+    ${renderObservations(instance)}
+    <div class="probe-service">Field: ${esc(instance.fieldId || '—')} · published Southall rows: ${esc(instance.matchedRows ?? 0)}${instance.serviceUrl ? ` · ${esc(instance.serviceUrl)}` : ''}</div>
   </div>`;
 }
 
@@ -43,6 +64,7 @@ function renderGroup(group) {
       : `<div class="probe-grid">${(group.indicators || []).map(renderIndicator).join('')}</div>`;
   return `<section class="probe-group">
     <div class="probe-group-header"><div><p class="eyebrow">Ealing Data probe</p><h2>${esc(group.label)}</h2></div><span class="probe-candidate-count">${esc(group.candidates ?? 0)} curated indicators</span></div>
+    ${group.note ? `<p class="probe-group-note">${esc(group.note)}</p>` : ''}
     ${body}
   </section>`;
 }
