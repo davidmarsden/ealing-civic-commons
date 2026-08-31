@@ -85,24 +85,45 @@ async function enrichNotice(link) {
   }
 }
 
+function roundRobin(groups, limit) {
+  const selected = [];
+  const seen = new Set();
+  let index = 0;
+  while (selected.length < limit) {
+    let added = false;
+    for (const group of groups) {
+      const link = group[index];
+      if (!link || seen.has(link.url)) continue;
+      seen.add(link.url);
+      selected.push(link);
+      added = true;
+      if (selected.length >= limit) break;
+    }
+    if (!added) break;
+    index += 1;
+  }
+  return selected;
+}
+
 export async function fetchEalingPublicNoticeCandidates({ limit = 16 } = {}) {
   const pageResults = await Promise.allSettled(CATEGORY_PAGES.map(async category => {
     const html = await fetchText(`${BASE}/latest/ealing/${category.slug}/index.html`);
-    return extractNoticeLinks(html, category);
+    return { category, links: extractNoticeLinks(html, category) };
   }));
 
-  const links = [];
-  const seen = new Set();
-  for (const result of pageResults) {
-    if (result.status !== 'fulfilled') continue;
-    for (const link of result.value) {
-      if (seen.has(link.url)) continue;
-      seen.add(link.url);
-      links.push(link);
-    }
+  const successful = pageResults
+    .filter(result => result.status === 'fulfilled')
+    .map(result => result.value);
+
+  if (!successful.length) {
+    const reasons = pageResults
+      .filter(result => result.status === 'rejected')
+      .map(result => result.reason?.message || String(result.reason || 'unknown failure'));
+    throw new Error(`All Public Notice Portal category scans failed${reasons.length ? `: ${reasons.join('; ')}` : ''}`);
   }
 
-  const selected = links.slice(0, Math.max(1, Math.min(Number(limit) || 16, 30)));
+  const boundedLimit = Math.max(1, Math.min(Number(limit) || 16, 30));
+  const selected = roundRobin(successful.map(result => result.links), boundedLimit);
   const notices = await Promise.all(selected.map(enrichNotice));
   return notices.filter(notice => notice.title && notice.url).map(notice => ({
     kind: 'evidence-suggestion',
