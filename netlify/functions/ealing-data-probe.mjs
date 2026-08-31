@@ -21,7 +21,7 @@ const SOUTHALL_TOWN_WARDS = [
   'Southall West'
 ];
 
-const EALING_SOUTHALL_CONTEXT_WARDS = ['Northfield', 'Walpole'];
+const EALING_SOUTHALL_CONTEXT_WARDS = ['Hanwell Broadway', 'Northfield', 'Walpole'];
 
 function instance(date, geography, serviceUrl, fieldId, options = {}) {
   return { date, geography, serviceUrl, fieldId, ...options };
@@ -94,9 +94,9 @@ const GROUPS = [
   {
     id: 'homelessness',
     label: 'Homelessness',
-    note: 'Ealing’s Ward and Town Profile rows are null for this indicator; the populated LSOA 2021 values are shown directly. The indicator title defines the value as a percentage of households.',
+    note: 'This field is repeated on the LSOA-shaped service, but the published value is borough-wide rather than a neighbourhood breakdown. The probe therefore collapses the repeated rows to one Ealing borough figure and does not draw an LSOA choropleth.',
     indicators: [
-      { id: 'I44455', name: 'Core homelessness rate (% of households)', dataType: 'rate', instances: [instance('2020–2023', 'LSOA 2021', IMD_LSOA, 'ID44455D20200101000000', { mode: 'southall-lsoa', unit: '%' })] }
+      { id: 'I44455', name: 'Core homelessness rate (% of households)', dataType: 'rate', instances: [instance('2020–2023', 'LSOA 2021', IMD_LSOA, 'ID44455D20200101000000', { mode: 'borough-repeated', unit: '%', boroughRepeated: true })] }
     ]
   }
 ];
@@ -240,6 +240,33 @@ async function resolveInstance(spec, client) {
   const rows = await client.attributes(spec.serviceUrl);
   const southallObservations = observationsFromRows(rows, spec, row => isSouthallTownRow(row, spec.geography));
   const ealingObservations = observationsFromRows(rows, spec, () => true);
+
+  if (spec.boroughRepeated) {
+    const uniqueValues = [...new Set(ealingObservations.map(item => String(item.value)))];
+    if (uniqueValues.length !== 1) {
+      throw new Error(`Expected one repeated borough-wide value for ${spec.fieldId}, found ${uniqueValues.length}`);
+    }
+    const value = ealingObservations[0]?.value;
+    const observations = [{
+      place: 'Ealing borough',
+      area: { name: 'Ealing borough', code: '', wardName: '', townName: '', msoaName: '' },
+      value,
+      fieldId: spec.fieldId
+    }];
+    return {
+      date: spec.date,
+      geography: { name: 'Ealing borough' },
+      observations,
+      matchedRows: ealingObservations.length,
+      serviceUrl: spec.serviceUrl,
+      fieldId: spec.fieldId,
+      unit: spec.unit || null,
+      summary: { kind: 'numeric', values: numericSummary(observations) },
+      comparator: null,
+      scopeNote: `The source service repeats the same borough-wide value across ${ealingObservations.length} LSOA-shaped rows; no neighbourhood variation is published here.`
+    };
+  }
+
   const summary = spec.categorical
     ? { kind: 'distribution', values: categoricalSummary(southallObservations) }
     : { kind: 'numeric', values: numericSummary(southallObservations) };
@@ -303,7 +330,7 @@ async function buildMaps(client) {
     scope: {
       southallTownWards: SOUTHALL_TOWN_WARDS,
       constituencyContextWards: EALING_SOUTHALL_CONTEXT_WARDS,
-      note: 'Southall town evidence uses the six Southall town wards. Northfield and Walpole are shown only as Ealing Southall parliamentary constituency context and are not added to Southall town statistics.'
+      note: 'Southall town evidence uses the six Southall town wards. Hanwell Broadway, Northfield and Walpole are shown only as Ealing Southall parliamentary constituency context and are not added to Southall town statistics.'
     }
   };
 }
