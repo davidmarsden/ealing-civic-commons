@@ -56,9 +56,33 @@ function sortedUnique(values) {
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
 }
 
+function validateMasterTableMetadata(metadata) {
+  if (metadata.advancedQueryCapabilities?.supportsPagination === false) {
+    throw new Error(
+      "Master table does not support resultOffset pagination; refusing to fetch because the server may repeat the first page indefinitely"
+    );
+  }
+
+  const fieldNames = new Set((metadata.fields || []).map((field) => field.name));
+  const requiredFields = ["Item_Type", "ID", "Indicator_ID"];
+  const missingFields = requiredFields.filter((field) => !fieldNames.has(field));
+  if (missingFields.length) {
+    throw new Error(
+      `Master table schema is incompatible with this InstantAtlas catalogue parser; missing required field(s): ${missingFields.join(", ")}`
+    );
+  }
+
+  const objectIdField = metadata.objectIdField || metadata.fields?.find((field) => field.type === "esriFieldTypeOID")?.name;
+  if (!objectIdField) {
+    throw new Error("Master table metadata does not expose an object ID field required for stable pagination");
+  }
+
+  return objectIdField;
+}
+
 async function fetchAllRows(masterTable, metadata) {
   const pageSize = Math.min(Number(metadata.maxRecordCount) || 2000, 2000);
-  const objectIdField = metadata.objectIdField || metadata.fields?.find((field) => field.type === "esriFieldTypeOID")?.name || "OBJECTID";
+  const objectIdField = validateMasterTableMetadata(metadata);
   const rows = [];
   let offset = 0;
 
@@ -117,6 +141,14 @@ function buildInventory(rows, metadata, masterTable) {
   const indicatorRows = byType.get("Indicator") || [];
   const instanceRows = byType.get("Instance") || [];
 
+  if (!indicatorRows.length) {
+    throw new Error("Master table contains no Item_Type=Indicator rows; refusing to generate a misleading empty inventory");
+  }
+
+  if (!instanceRows.length) {
+    throw new Error("Master table contains no Item_Type=Instance rows; indicator observations cannot be reconstructed");
+  }
+
   const geoById = new Map();
   for (const row of geoRows) {
     const id = String(row.ID);
@@ -145,6 +177,10 @@ function buildInventory(rows, metadata, masterTable) {
 
   const indicators = new Map();
   function ensureIndicator(id) {
+    if (id === null || id === undefined || id === "") {
+      throw new Error("Encountered an indicator record without an indicator ID");
+    }
+
     const key = String(id);
     if (!indicators.has(key)) {
       indicators.set(key, {
@@ -164,7 +200,9 @@ function buildInventory(rows, metadata, masterTable) {
   }
 
   for (const row of indicatorRows) {
-    if (!row.ID) continue;
+    if (!row.ID) {
+      throw new Error("Encountered an Item_Type=Indicator row without ID; catalogue schema/data is incompatible");
+    }
     const indicator = ensureIndicator(row.ID);
     indicator.names.push(row.Name);
     indicator.shortNames.push(row.Short_Name);
@@ -175,7 +213,9 @@ function buildInventory(rows, metadata, masterTable) {
 
   const globalServices = new Set();
   for (const row of instanceRows) {
-    if (!row.Indicator_ID) continue;
+    if (!row.Indicator_ID) {
+      throw new Error("Encountered an Item_Type=Instance row without Indicator_ID; catalogue schema/data is incompatible");
+    }
     const indicator = ensureIndicator(row.Indicator_ID);
     indicator.instanceCount += 1;
     indicator.geographyIds.push(row.Geo_ID);
