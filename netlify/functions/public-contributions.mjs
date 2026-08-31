@@ -4,7 +4,7 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status,
   headers: {
     'content-type': 'application/json; charset=utf-8',
-    'cache-control': 'public, max-age=30, stale-while-revalidate=120'
+    'cache-control': 'no-store'
   }
 });
 
