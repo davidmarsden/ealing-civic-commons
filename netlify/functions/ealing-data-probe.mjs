@@ -12,6 +12,17 @@ const GEOGRAPHIES = [
   { id: 'G113', name: 'LSOA 2021', serviceUrl: 'https://services1.arcgis.com/HumUw0sDQHwJuboT/ArcGIS/rest/services/Ealing_BaseMaps/FeatureServer/6' }
 ];
 
+const SOUTHALL_TOWN_WARDS = [
+  'Dormers Wells',
+  'Lady Margaret',
+  'Norwood Green',
+  'Southall Broadway',
+  'Southall Green',
+  'Southall West'
+];
+
+const EALING_SOUTHALL_CONTEXT_WARDS = ['Northfield', 'Walpole'];
+
 function instance(date, geography, serviceUrl, fieldId, options = {}) {
   return { date, geography, serviceUrl, fieldId, ...options };
 }
@@ -39,7 +50,7 @@ const GROUPS = [
   {
     id: 'air-quality',
     label: 'Air quality',
-    note: 'The Ward and Town Profile rows in Ealing’s service contain nulls for these fields. The published Southall LSOA 2021 values are shown directly instead.',
+    note: 'These are Ealing Data indicator values, not identified local monitor readings. The data returned by this probe does not say where a monitor was located, what type of monitor was used, or whether a value is measured, modelled or a background/ambient estimate. Maps use the Ealing-wide LSOA range so small Southall differences are not visually exaggerated.',
     indicators: [
       { id: 'I25375', name: 'Air quality indicator', instances: [instance('2023', 'LSOA 2021', IMD_LSOA, 'ID25375D20230101000000', { mode: 'southall-lsoa' })] },
       { id: 'I30920', name: 'Benzene (component of air quality indicator)', instances: [instance('2023', 'LSOA 2021', IMD_LSOA, 'ID30920D20230101000000', { mode: 'southall-lsoa' })] },
@@ -58,7 +69,7 @@ const GROUPS = [
   {
     id: 'child-poverty',
     label: 'Child poverty / low income',
-    note: 'Unlike the IMD-derived indicators, Ealing publishes populated Ward and Town Profile rows here, so the probe shows those directly rather than deriving them from LSOAs.',
+    note: 'Unlike the IMD-derived indicators, Ealing publishes populated Ward and Town Profile rows here. Southall town is treated as six wards: Dormers Wells, Lady Margaret, Norwood Green, Southall Broadway, Southall Green and Southall West.',
     indicators: [
       {
         id: 'I44674',
@@ -94,17 +105,52 @@ function textValues(row) {
   return Object.values(row || {}).filter(value => typeof value === 'string' && value.trim());
 }
 
-function containsSouthall(row) {
+function rowName(row) {
+  return String(row?.NAME || row?.WardName || row?.TownName || '').trim();
+}
+
+function isSouthallTownRow(row, geography) {
+  if (geography === 'LSOA 2021') {
+    return String(row?.ETWNE909Name || '').trim().toLowerCase() === 'southall';
+  }
+  if (geography === 'Ward') {
+    return SOUTHALL_TOWN_WARDS.includes(rowName(row));
+  }
+  if (geography === 'Town Profile') {
+    return rowName(row).toLowerCase() === 'southall';
+  }
   return textValues(row).some(value => /southall/i.test(value));
 }
 
-function placeLabel(row, geography) {
+function areaMetadata(row, geography) {
   if (geography === 'LSOA 2021') {
-    const name = row?.NAME || row?.LSOA2021Name || row?.LSOA21NM || 'LSOA';
-    const code = row?.LSOA2021Code || row?.LSOA21CD || '';
-    return code ? `${name} (${code})` : String(name);
+    const name = String(row?.NAME || row?.LSOA2021Name || row?.LSOA21NM || 'LSOA');
+    const code = String(row?.LSOA2021Code || row?.LSOA21CD || '');
+    const wardName = String(row?.WardName || '');
+    const townName = String(row?.ETWNE909Name || 'Southall');
+    return {
+      name,
+      code,
+      wardName,
+      townName,
+      msoaName: String(row?.MSOA2021Name || row?.MSOAName || '')
+    };
   }
-  return String(row?.NAME || row?.WardName || row?.TownName || textValues(row).find(value => /southall/i.test(value)) || 'Southall');
+  const name = rowName(row) || 'Southall';
+  return {
+    name,
+    code: String(row?.WardCode || row?.ETWNE909Code || ''),
+    wardName: geography === 'Ward' ? name : '',
+    townName: geography === 'Town Profile' ? name : 'Southall',
+    msoaName: ''
+  };
+}
+
+function friendlyPlace(area, geography) {
+  if (geography === 'LSOA 2021') {
+    return area.wardName ? `${area.wardName} — ${area.name}` : area.name;
+  }
+  return area.name;
 }
 
 function numericSummary(observations) {
@@ -142,77 +188,167 @@ async function fetchJson(url, label) {
 
 function makeArcgisClient() {
   const cache = new Map();
-  return async function query(layer) {
-    if (!cache.has(layer)) {
-      cache.set(layer, (async () => {
+
+  async function query(layer, { geometry = false, outFields = '*' } = {}) {
+    const key = `${layer}|${geometry ? 'geometry' : 'attributes'}|${outFields}`;
+    if (!cache.has(key)) {
+      cache.set(key, (async () => {
         const url = new URL(`${layer.replace(/\/$/, '')}/query`);
         url.searchParams.set('where', '1=1');
-        url.searchParams.set('outFields', '*');
-        url.searchParams.set('returnGeometry', 'false');
+        url.searchParams.set('outFields', outFields);
+        url.searchParams.set('returnGeometry', geometry ? 'true' : 'false');
+        if (geometry) {
+          url.searchParams.set('outSR', '4326');
+          url.searchParams.set('geometryPrecision', '5');
+          url.searchParams.set('maxAllowableOffset', '0.00005');
+        }
         url.searchParams.set('f', 'json');
         const payload = await fetchJson(url, `ArcGIS query ${layer}`);
-        return Array.isArray(payload.features) ? payload.features.map(feature => feature.attributes || {}) : [];
+        return Array.isArray(payload.features) ? payload.features : [];
       })());
     }
-    return cache.get(layer);
+    return cache.get(key);
+  }
+
+  return {
+    async attributes(layer) {
+      return (await query(layer)).map(feature => feature.attributes || {});
+    },
+    async geometry(layer, outFields) {
+      return query(layer, { geometry: true, outFields });
+    }
   };
 }
 
-async function resolveInstance(spec, query) {
-  const rows = await query(spec.serviceUrl);
-  const southallRows = rows.filter(containsSouthall);
-  const observations = southallRows
+function observationsFromRows(rows, spec, filterFn) {
+  return rows
+    .filter(filterFn)
     .filter(row => row[spec.fieldId] !== undefined && row[spec.fieldId] !== null && row[spec.fieldId] !== '')
-    .map(row => ({ place: placeLabel(row, spec.geography), value: row[spec.fieldId], fieldId: spec.fieldId }))
+    .map(row => {
+      const area = areaMetadata(row, spec.geography);
+      return {
+        place: friendlyPlace(area, spec.geography),
+        area,
+        value: row[spec.fieldId],
+        fieldId: spec.fieldId
+      };
+    })
     .sort((a, b) => a.place.localeCompare(b.place, undefined, { numeric: true, sensitivity: 'base' }));
+}
+
+async function resolveInstance(spec, client) {
+  const rows = await client.attributes(spec.serviceUrl);
+  const southallObservations = observationsFromRows(rows, spec, row => isSouthallTownRow(row, spec.geography));
+  const ealingObservations = observationsFromRows(rows, spec, () => true);
+  const summary = spec.categorical
+    ? { kind: 'distribution', values: categoricalSummary(southallObservations) }
+    : { kind: 'numeric', values: numericSummary(southallObservations) };
+  const comparator = spec.categorical
+    ? { label: `Ealing ${spec.geography} distribution`, kind: 'distribution', values: categoricalSummary(ealingObservations) }
+    : { label: `Ealing ${spec.geography} median`, kind: 'numeric', values: numericSummary(ealingObservations) };
 
   return {
     date: spec.date,
     geography: { name: spec.geography },
-    observations,
-    matchedRows: southallRows.length,
+    observations: southallObservations,
+    matchedRows: southallObservations.length,
     serviceUrl: spec.serviceUrl,
     fieldId: spec.fieldId,
     unit: spec.unit || null,
-    summary: spec.categorical ? { kind: 'distribution', values: categoricalSummary(observations) } : { kind: 'numeric', values: numericSummary(observations) }
+    summary,
+    comparator
+  };
+}
+
+function mapFeature(feature, scope = null) {
+  const row = feature.attributes || {};
+  return {
+    name: rowName(row) || String(row?.LSOA2021Name || ''),
+    code: String(row?.WardCode || row?.LSOA2021Code || row?.LSOA21CD || ''),
+    wardName: String(row?.WardName || ''),
+    townName: String(row?.ETWNE909Name || ''),
+    scope,
+    geometry: feature.geometry || null
+  };
+}
+
+async function buildMaps(client) {
+  const wardGeo = GEOGRAPHIES.find(item => item.name === 'Ward');
+  const lsoaGeo = GEOGRAPHIES.find(item => item.name === 'LSOA 2021');
+  const [wardFeatures, lsoaFeatures] = await Promise.all([
+    client.geometry(wardGeo.serviceUrl, 'WardCode,NAME'),
+    client.geometry(lsoaGeo.serviceUrl, 'LSOA2021Code,NAME,WardName,ETWNE909Name')
+  ]);
+
+  const wards = wardFeatures
+    .map(feature => {
+      const name = rowName(feature.attributes || {});
+      const scope = SOUTHALL_TOWN_WARDS.includes(name)
+        ? 'southall-town'
+        : EALING_SOUTHALL_CONTEXT_WARDS.includes(name)
+          ? 'constituency-context'
+          : 'ealing-context';
+      return mapFeature(feature, scope);
+    })
+    .filter(item => item.geometry);
+
+  const lsoas = lsoaFeatures
+    .filter(feature => isSouthallTownRow(feature.attributes || {}, 'LSOA 2021'))
+    .map(feature => mapFeature(feature, 'southall-town'))
+    .filter(item => item.geometry);
+
+  return {
+    wards,
+    lsoas,
+    scope: {
+      southallTownWards: SOUTHALL_TOWN_WARDS,
+      constituencyContextWards: EALING_SOUTHALL_CONTEXT_WARDS,
+      note: 'Southall town evidence uses the six Southall town wards. Northfield and Walpole are shown only as Ealing Southall parliamentary constituency context and are not added to Southall town statistics.'
+    }
   };
 }
 
 async function buildProbe() {
   const started = Date.now();
-  const query = makeArcgisClient();
+  const client = makeArcgisClient();
 
   const geographyDiagnostics = await Promise.all(GEOGRAPHIES.map(async geo => {
     try {
-      const rows = await query(geo.serviceUrl);
-      return { id: geo.id, name: geo.name, matchedFeatures: rows.filter(containsSouthall).length };
+      const rows = await client.attributes(geo.serviceUrl);
+      return { id: geo.id, name: geo.name, matchedFeatures: rows.filter(row => isSouthallTownRow(row, geo.name)).length };
     } catch (error) {
       return { id: geo.id, name: geo.name, matchedFeatures: 0, error: String(error?.message || error) };
     }
   }));
 
-  const groups = [];
-  for (const group of GROUPS) {
-    const indicators = [];
-    for (const indicator of group.indicators) {
-      const instances = [];
-      for (const spec of indicator.instances) {
-        try {
-          instances.push(await resolveInstance(spec, query));
-        } catch (error) {
-          instances.push({ date: spec.date, geography: { name: spec.geography }, observations: [], error: String(error?.message || error) });
+  const [maps, groups] = await Promise.all([
+    buildMaps(client),
+    (async () => {
+      const resolvedGroups = [];
+      for (const group of GROUPS) {
+        const indicators = [];
+        for (const indicator of group.indicators) {
+          const instances = [];
+          for (const spec of indicator.instances) {
+            try {
+              instances.push(await resolveInstance(spec, client));
+            } catch (error) {
+              instances.push({ date: spec.date, geography: { name: spec.geography }, observations: [], error: String(error?.message || error) });
+            }
+          }
+          indicators.push({
+            id: indicator.id,
+            name: indicator.name,
+            dataType: indicator.dataType || null,
+            geography: { name: [...new Set(indicator.instances.map(item => item.geography))].join(' + ') },
+            instances
+          });
         }
+        resolvedGroups.push({ id: group.id, label: group.label, note: group.note, candidates: group.indicators.length, indicators });
       }
-      indicators.push({
-        id: indicator.id,
-        name: indicator.name,
-        dataType: indicator.dataType || null,
-        geography: { name: [...new Set(indicator.instances.map(item => item.geography))].join(' + ') },
-        instances
-      });
-    }
-    groups.push({ id: group.id, label: group.label, note: group.note, candidates: group.indicators.length, indicators });
-  }
+      return resolvedGroups;
+    })()
+  ]);
 
   const hasObservations = groups.some(group => group.indicators.some(indicator => indicator.instances.some(item => item.observations?.length)));
   return {
@@ -223,6 +359,7 @@ async function buildProbe() {
     scope: 'Exploratory evidence probe — exact published observations only; no synthetic Ward/Town aggregation',
     provenance: { dataExplorer: EXPLORER, masterTable: MASTER_TABLE },
     geographyDiagnostics,
+    maps,
     groups
   };
 }
