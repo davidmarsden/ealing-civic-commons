@@ -1,4 +1,4 @@
-const endpoint = '/.netlify/functions/ealing-data-probe';
+const endpoint = '/api/ealing-data-probe';
 const statusEl = document.querySelector('#probeStatus');
 const metaEl = document.querySelector('#probeMeta');
 const groupsEl = document.querySelector('#probeGroups');
@@ -42,18 +42,18 @@ function renderGroup(group) {
       ? `<div class="probe-warning">${esc(group.warning)}</div>`
       : `<div class="probe-grid">${(group.indicators || []).map(renderIndicator).join('')}</div>`;
   return `<section class="probe-group">
-    <div class="probe-group-header"><div><p class="eyebrow">Ealing Data probe</p><h2>${esc(group.label)}</h2></div><span class="probe-candidate-count">${esc(group.candidates ?? 0)} catalogue candidates · ${(group.indicators || []).length} selected</span></div>
+    <div class="probe-group-header"><div><p class="eyebrow">Ealing Data probe</p><h2>${esc(group.label)}</h2></div><span class="probe-candidate-count">${esc(group.candidates ?? 0)} curated indicators</span></div>
     ${body}
   </section>`;
 }
 
 function renderGeographies(rows) {
-  geoEl.innerHTML = (rows || []).map(row => `<div class="geo-row"><strong>${esc(row.name)}</strong><span>${esc(row.matchedFeatures)} Southall features</span><span>${row.error ? esc(row.error) : `${esc(row.identifiers)} identifiers`}</span></div>`).join('') || '<p>No geography diagnostics returned.</p>';
+  geoEl.innerHTML = (rows || []).map(row => `<div class="geo-row"><strong>${esc(row.name)}</strong><span>${esc(row.matchedFeatures)} Southall features</span><span>${row.error ? esc(row.error) : 'matched from Ealing geography service'}</span></div>`).join('') || '<p>No geography diagnostics returned.</p>';
 }
 
 async function load({ fresh = false } = {}) {
   statusEl.textContent = 'Loading Ealing Data…';
-  metaEl.textContent = 'Following the public catalogue into ArcGIS services.';
+  metaEl.textContent = 'Following curated catalogue pointers into ArcGIS services.';
   refreshEl.disabled = true;
   if (fresh) groupsEl.innerHTML = '';
   try {
