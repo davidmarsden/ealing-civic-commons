@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "netlify dev",
     "validate:contributions": "node scripts/validate-contributions.mjs",
+    "validate:evidence": "node scripts/validate-evidence.mjs",
     "inspect:ealing-data": "node scripts/ealing-data-catalog.mjs",
-    "build": "npm run validate:contributions && mkdir -p dist/documents/content && cp -R public/. dist/ && cp docs/*.md dist/documents/content/"
+    "build": "npm run validate:contributions && npm run validate:evidence && mkdir -p dist/documents/content && cp -R public/. dist/ && cp docs/*.md dist/documents/content/"
   },
   "dependencies": {
     "@netlify/blobs": "^11.0.1",
