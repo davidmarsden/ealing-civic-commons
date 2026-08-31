@@ -231,9 +231,11 @@ function renderInstance(instance, indicator, group) {
 }
 
 function renderIndicator(indicator, group) {
+  const resolvedGeographies = [...new Set((indicator.instances || []).map(instance => instance.geography?.name).filter(Boolean))];
+  const geographyLabel = resolvedGeographies.length ? resolvedGeographies.join(' + ') : (indicator.geography?.name || 'Unknown geography');
   return `<article class="probe-card">
     <div><p class="eyebrow">${esc(indicator.id)}</p><h3>${esc(indicator.name)}</h3></div>
-    <div class="probe-card-meta"><span class="probe-chip">${esc(indicator.geography?.name || 'Unknown geography')}</span>${indicator.dataType ? `<span class="probe-chip">${esc(indicator.dataType)}</span>` : ''}</div>
+    <div class="probe-card-meta"><span class="probe-chip">${esc(geographyLabel)}</span>${indicator.dataType ? `<span class="probe-chip">${esc(indicator.dataType)}</span>` : ''}</div>
     ${(indicator.instances || []).map(instance => renderInstance(instance, indicator, group)).join('') || '<div class="probe-empty">No matching instances selected.</div>'}
   </article>`;
 }
