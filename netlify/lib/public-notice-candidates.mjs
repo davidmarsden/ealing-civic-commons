@@ -1,7 +1,7 @@
 const BASE = 'https://publicnoticeportal.uk';
 const CATEGORY_PAGES = [
   { slug: 'planning', label: 'Planning', topics: ['Planning & development'] },
-  { slug: 'traffic', label: 'Traffic & Roads', topics: ['Transport & streets'] },
+  { slug: 'traffic', label: 'Traffic & Roads', topics: ['Transport'] },
   { slug: 'licensing', label: 'Alcohol & Licensing', topics: ['Council & democracy'] },
   { slug: 'statutory', label: 'Statutory', topics: ['Council & democracy'] }
 ];
