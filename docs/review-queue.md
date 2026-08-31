@@ -14,11 +14,11 @@ The first implementation supports four review kinds:
 - `evidence-suggestion` — candidate public evidence discovered by an editor or importer;
 - `relationship-suggestion` — future candidate graph relationships.
 
-Netlify form submissions are mirrored into the queue by `submission-created.mjs`. The original form workflow remains intact during this phase.
+Verified Netlify form submissions are mirrored into the queue by the `formSubmitted` event handler in `review-form-events.mjs`. Netlify signs and verifies platform-event invocations before the handler runs. The original form workflow remains intact during this phase.
 
 ## Storage and privacy
 
-Queue records live in the site-wide Netlify Blobs store `civic-commons-review-queue`.
+Production queue records live in the site-wide Netlify Blobs store `civic-commons-review-queue`. Deploy previews and branch deploys use a deploy-scoped store so test data cannot pollute the production moderation queue.
 
 Each record has:
 
@@ -32,7 +32,7 @@ Each record has:
 
 Private submitter data such as email addresses is never copied into the public contribution registry automatically. Phase 7A does not publish anything from the queue.
 
-Every decision is also written as a separate immutable audit blob as well as being reflected in the record history.
+Every decision is also written as a separate audit blob as well as being reflected in the record history.
 
 ## Reviewer interface
 
@@ -41,6 +41,8 @@ Every decision is also written as a separate immutable audit blob as well as bei
 `REVIEW_ADMIN_TOKEN`
 
 The token is held in browser `sessionStorage`, not embedded in the deployed JavaScript bundle. The reviewer label is stored locally and attached to decisions.
+
+An **accepted** review item means “reviewed and potentially suitable for promotion”. It does not mean “published”. Phase 7B will add type-specific promotion handlers.
 
 ## Public Notice Portal test importer
 
@@ -52,10 +54,14 @@ Only discovery metadata is stored: title, canonical URL, notice type, broad Eali
 
 The Public Notice Portal remains canonical. It is operated by the News Media Association and receives public-notice data from local news publishers.
 
+## Netlify Forms
+
+The Civic Commons project must have Netlify Forms enabled for the two existing static forms to register. Phase 7A enables Forms and then relies on the existing `item-contribution` and `submit-source` form names. Once a production deploy containing those forms completes, Netlify will register them and verified submissions will trigger the review event handler.
+
 ## Phase boundary
 
 Phase 7A deliberately stops at **review state**.
 
-Accepting a queue item means “reviewed and potentially suitable for promotion”; it does **not** yet automatically publish a contribution, add a source or assert a graph relationship.
+Accepting a queue item does **not** automatically publish a contribution, add a source or assert a graph relationship. That keeps the constitutional boundary explicit while we test the queue itself.
 
 Phase 7B can add type-specific promotion handlers while preserving the same stable review IDs and audit history.
