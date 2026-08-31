@@ -45,19 +45,37 @@ async function queueSourceSubmission(data) {
   });
 }
 
+function identifyReviewKind(data) {
+  // Netlify's verified formSubmitted event exposes the submitted field data,
+  // but the special form-name field used for form detection is not guaranteed
+  // to be included in that data. Prefer an explicit marker when present, then
+  // fall back to the distinctive fields of the two registered Commons forms.
+  const explicit = text(data['review-kind'], 120);
+  if (explicit === 'item-contribution' || explicit === 'source-submission') return explicit;
+
+  if (data['thread-id'] || data['contribution-type'] || data['item-id']) return 'item-contribution';
+  if (data['source-url'] || data['source-name'] || data['source-type']) return 'source-submission';
+  return null;
+}
+
 export default {
   async formSubmitted(event) {
     const data = event?.data && typeof event.data === 'object' ? event.data : {};
     if (text(data['bot-field'], 40)) return;
-    const formName = text(data['form-name'] || data.form_name, 120);
 
-    if (formName === 'item-contribution') {
+    const kind = identifyReviewKind(data);
+    if (kind === 'item-contribution') {
       await queueItemContribution(data);
       return;
     }
 
-    if (formName === 'submit-source') {
+    if (kind === 'source-submission') {
       await queueSourceSubmission(data);
+      return;
     }
+
+    console.warn('Verified Civic Commons form submission could not be routed to the review queue', {
+      fields: Object.keys(data).filter(key => key !== 'email')
+    });
   }
 };
