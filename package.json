@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "netlify dev",
     "validate:contributions": "node scripts/validate-contributions.mjs",
+    "inspect:ealing-data": "node scripts/ealing-data-catalog.mjs",
     "build": "npm run validate:contributions && mkdir -p dist/documents/content && cp -R public/. dist/ && cp docs/*.md dist/documents/content/"
   },
   "dependencies": {
