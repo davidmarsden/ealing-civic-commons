@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Review queue — Civic Commons</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/review.css?v=20260831-1" />
+</head>
+<body>
+  <header class="site-header"><div class="wrap header-inner"><div><a class="brand" href="/">Civic Commons</a><div class="strap">Review queue</div></div><nav aria-label="Primary"><a href="/">Latest</a><a href="/roadmap.html">Roadmap</a></nav></div></header>
+  <main class="review-shell wrap">
+    <section class="review-hero"><p class="eyebrow">Phase 7A</p><h1>Structured civic review.</h1><p>Private queue for contributions, source suggestions and evidence candidates. Nothing here becomes public merely by entering the queue.</p></section>
+
+    <section id="loginPanel" class="review-login panel">
+      <h2>Reviewer access</h2><p>Enter the review token configured for this deployment. The token is kept only for this browser session.</p>
+      <form id="loginForm"><label>Review token<input id="tokenInput" type="password" autocomplete="current-password" required /></label><label>Reviewer name<input id="reviewerInput" type="text" value="Editor" maxlength="180" /></label><button class="submit-button" type="submit">Open review queue</button></form>
+      <p id="loginStatus" class="review-status" aria-live="polite"></p>
+    </section>
+
+    <section id="queuePanel" hidden>
+      <div class="review-toolbar">
+        <div class="review-tabs" role="tablist" aria-label="Review status">
+          <button type="button" data-status="pending" class="active">Pending</button><button type="button" data-status="needs-info">Needs info</button><button type="button" data-status="accepted">Accepted</button><button type="button" data-status="rejected">Rejected</button><button type="button" data-status="all">All</button>
+        </div>
+        <div class="review-actions"><button id="importNotices" type="button">Import current Ealing public notices</button><button id="refreshQueue" type="button">Refresh</button><button id="forgetToken" type="button">Lock</button></div>
+      </div>
+      <p id="queueStatus" class="review-status" aria-live="polite"></p>
+      <div id="queueList" class="review-list"></div>
+    </section>
+  </main>
+  <script src="/review.js?v=20260831-1" type="module"></script>
+</body>
+</html>
