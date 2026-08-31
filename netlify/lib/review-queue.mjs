@@ -99,11 +99,11 @@ export async function getReview(id) {
 export async function listReviews({ status = null, limit = 250 } = {}) {
   const blobs = store();
   const listed = await blobs.list({ prefix: 'review/' });
-  const keys = listed.blobs.map(blob => blob.key).slice(-Math.max(1, Math.min(Number(limit) || 250, 500)));
-  const records = await Promise.all(keys.map(key => blobs.get(key, { type: 'json' }).catch(() => null)));
+  const records = await Promise.all(listed.blobs.map(blob => blobs.get(blob.key, { type: 'json' }).catch(() => null)));
   return records
     .filter(record => record?.id && (!status || record.status === status))
-    .sort((a, b) => Date.parse(b.updatedAt || b.createdAt || 0) - Date.parse(a.updatedAt || a.createdAt || 0));
+    .sort((a, b) => Date.parse(b.updatedAt || b.createdAt || 0) - Date.parse(a.updatedAt || a.createdAt || 0))
+    .slice(0, Math.max(1, Math.min(Number(limit) || 250, 500)));
 }
 
 export async function decideReview(id, { status, reviewer, note = '' } = {}) {
