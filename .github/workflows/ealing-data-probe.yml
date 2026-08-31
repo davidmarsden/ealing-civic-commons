@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Invoke live probe
+      - name: Inspect live Southall LSOA values
         run: |
           node --input-type=module <<'NODE'
           async function layerRows(layer) {
@@ -32,52 +32,21 @@ jobs:
             url.searchParams.set('returnGeometry', 'false');
             url.searchParams.set('f', 'json');
             const payload = await (await fetch(url)).json();
+            if (payload.error) throw new Error(`${payload.error.code}: ${payload.error.message}`);
             return payload.features?.map(feature => feature.attributes || {}) || [];
           }
-          const imdWard = await layerRows('https://services1.arcgis.com/HumUw0sDQHwJuboT/ArcGIS/rest/services/Ealing_Dep_IMD/FeatureServer/2');
-          const imdTown = await layerRows('https://services1.arcgis.com/HumUw0sDQHwJuboT/ArcGIS/rest/services/Ealing_Dep_IMD/FeatureServer/5');
-          const wardSouthall = imdWard.find(row => row.NAME === 'Southall Broadway');
-          const townSouthall = imdTown.find(row => row.NAME === 'Southall');
-          const wanted = /3091|3089|25375|30920|30919|30922|44458|44455/i;
-          const picked = row => Object.fromEntries(Object.entries(row || {}).filter(([key]) => wanted.test(key)));
-          console.log('VALUE FIELD DEBUG', JSON.stringify({
-            wardKeys: Object.keys(wardSouthall || {}).filter(key => wanted.test(key)),
-            wardValues: picked(wardSouthall),
-            townKeys: Object.keys(townSouthall || {}).filter(key => wanted.test(key)),
-            townValues: picked(townSouthall)
-          }, null, 2));
-
-          const mod = await import('./netlify/functions/ealing-data-probe.mjs');
-          const response = await mod.default();
-          const payload = await response.json();
-          const summary = {
-            httpStatus: response.status,
-            status: payload.status,
-            elapsedMs: payload.elapsedMs,
-            geographyDiagnostics: payload.geographyDiagnostics,
-            groups: (payload.groups || []).map(group => ({
-              id: group.id,
-              label: group.label,
-              observations: (group.indicators || []).reduce(
-                (total, indicator) => total + (indicator.instances || []).reduce(
-                  (subtotal, instance) => subtotal + (instance.observations?.length || 0), 0
-                ), 0
-              ),
-              indicators: (group.indicators || []).map(indicator => ({
-                id: indicator.id,
-                name: indicator.name,
-                instances: (indicator.instances || []).map(instance => ({
-                  date: instance.date,
-                  geography: instance.geography?.name,
-                  observations: instance.observations || [],
-                  error: instance.error || null
-                }))
-              }))
-            }))
-          };
-          console.log(JSON.stringify(summary, null, 2));
-          if (!response.ok) throw new Error(`Probe returned HTTP ${response.status}`);
-          if (!payload.groups?.length) throw new Error('Probe returned no groups');
-          const emptyGroups = summary.groups.filter(group => group.observations === 0);
-          if (emptyGroups.length) throw new Error(`Probe groups without Southall observations: ${emptyGroups.map(group => group.id).join(', ')}`);
+          const imdLsoa = await layerRows('https://services1.arcgis.com/HumUw0sDQHwJuboT/ArcGIS/rest/services/Ealing_Dep_IMD/FeatureServer/6');
+          const southall = imdLsoa.filter(row => Object.values(row).some(value => typeof value === 'string' && /southall/i.test(value)));
+          const fields = [
+            'ID3091D20150101000000','ID3091D20190101000000','ID3091D20250101000000',
+            'ID3089D20150101000000','ID3089D20190101000000','ID3089D20250101000000',
+            'ID25375D20230101000000','ID30920D20230101000000','ID30919D20230101000000','ID30922D20230101000000',
+            'ID44458D20210101000000','ID44455D20200101000000'
+          ];
+          const compact = row => Object.fromEntries(Object.entries(row).filter(([key]) => /lsoa|msoa|town|ward|name|code/i.test(key) || fields.includes(key)));
+          const populated = Object.fromEntries(fields.map(field => [field, southall.filter(row => row[field] !== null && row[field] !== undefined && row[field] !== '').length]));
+          console.log(JSON.stringify({ southallRows: southall.length, populated, samples: southall.slice(0, 5).map(compact) }, null, 2));
+          if (southall.length < 1) throw new Error('No Southall LSOA rows found');
+          const emptyFields = Object.entries(populated).filter(([, count]) => count === 0).map(([field]) => field);
+          if (emptyFields.length) throw new Error(`Target fields empty across Southall LSOAs: ${emptyFields.join(', ')}`);
           NODE
