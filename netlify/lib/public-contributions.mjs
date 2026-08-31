@@ -57,6 +57,16 @@ export async function publishAcceptedContribution(review) {
   return { contribution, created: true };
 }
 
+export async function withdrawContributionForReview(reviewId) {
+  const id = contributionIdForReview(reviewId);
+  const blobs = store();
+  const key = contributionKey(id);
+  const existing = await blobs.get(key, { type: 'json' }).catch(() => null);
+  if (!existing?.id) return { removed: false, id };
+  await blobs.delete(key);
+  return { removed: true, id };
+}
+
 export async function listPublishedContributions({ threadId = null, limit = 500 } = {}) {
   const blobs = store();
   const listed = await blobs.list({ prefix: 'contribution/' });
