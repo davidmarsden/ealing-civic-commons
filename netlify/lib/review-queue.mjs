@@ -29,7 +29,7 @@ export function cleanHttpUrl(value) {
 
 export function stableReviewId(seed) {
   const normalized = cleanText(seed, 4096);
-  if (!normalized) return randomUUID();
+  if (!normalized) return `rq-${randomUUID()}`;
   return `rq-${createHash('sha256').update(normalized).digest('hex').slice(0, 24)}`;
 }
 
@@ -54,6 +54,7 @@ export function normalizeReview(input = {}) {
       title: cleanText(payload.title, 500),
       body: cleanText(payload.body, 12000),
       url,
+      relatedUrl: cleanHttpUrl(payload.relatedUrl),
       itemId: cleanText(payload.itemId, 1000),
       threadId: cleanText(payload.threadId, 1000),
       commonsPermalink: cleanHttpUrl(payload.commonsPermalink),
@@ -96,17 +97,22 @@ export async function enqueueReview(input) {
   const existing = await blobs.get(reviewKey(candidate.id), { type: 'json', consistency: 'strong' }).catch(() => null);
   if (existing?.id === candidate.id) return { record: existing, created: false };
 
-  await blobs.setJSON(reviewKey(candidate.id), candidate, {
+  const write = await blobs.setJSON(reviewKey(candidate.id), candidate, {
     onlyIfNew: true,
     metadata: { kind: candidate.kind, status: candidate.status, source: candidate.source.slice(0, 120) }
   });
+
+  const stored = write?.modified === false
+    ? await blobs.get(reviewKey(candidate.id), { type: 'json', consistency: 'strong' }).catch(() => candidate)
+    : candidate;
+  const created = write?.modified !== false;
 
   const ids = await loadManifest(blobs);
   if (!ids.includes(candidate.id)) {
     ids.push(candidate.id);
     await saveManifest(blobs, ids);
   }
-  return { record: candidate, created: true };
+  return { record: stored, created };
 }
 
 export async function getReview(id) {
