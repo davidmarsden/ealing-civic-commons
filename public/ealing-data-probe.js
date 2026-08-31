@@ -144,7 +144,7 @@ function renderScopeMap(maps) {
     const [x, y] = featureCentre(feature, project);
     return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" class="map-label ${feature.scope === 'constituency-context' ? 'map-label-context' : ''}">${esc(feature.name)}</text>`;
   }).join('');
-  scopeMapEl.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Ealing wards, highlighting the six Southall town wards and two additional Ealing Southall constituency wards">${paths}${labels}</svg>`;
+  scopeMapEl.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Ealing wards, highlighting the six Southall town wards and additional Ealing Southall constituency wards">${paths}${labels}</svg>`;
 }
 
 function valueLookup(instance) {
@@ -221,11 +221,12 @@ function renderInstance(instance, indicator, group) {
   if (instance.error) return `<div class="probe-instance"><div class="probe-error">${esc(instance.error)}</div></div>`;
   return `<div class="probe-instance">
     <div class="probe-instance-head"><strong>${esc(instance.date || 'Latest')}</strong><span>${esc(instance.geography?.name || '')}</span></div>
+    ${instance.scopeNote ? `<div class="probe-method-warning"><strong>Geography limit:</strong> ${esc(instance.scopeNote)}</div>` : ''}
     ${renderDataMap(instance, indicator)}
     ${renderSummary(instance)}
     ${renderVariation(instance, group)}
     ${renderObservations(instance)}
-    <div class="probe-service">Field: ${esc(instance.fieldId || '—')} · published Southall rows: ${esc(instance.matchedRows ?? 0)}${instance.serviceUrl ? ` · ${esc(instance.serviceUrl)}` : ''}</div>
+    <div class="probe-service">Field: ${esc(instance.fieldId || '—')} · published source rows: ${esc(instance.matchedRows ?? 0)}${instance.serviceUrl ? ` · ${esc(instance.serviceUrl)}` : ''}</div>
   </div>`;
 }
 
