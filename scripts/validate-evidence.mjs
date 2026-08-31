@@ -44,16 +44,13 @@ const probe = {
 };
 
 const normalized = normalizeEalingProbe(probe);
-assert.equal(normalized.objects.length, 5);
-assert.equal(normalized.collections.length, 3);
+assert.equal(normalized.objects.length, 3);
+assert.equal(normalized.collections.length, 2);
+assert.equal(normalized.exclusions.some(item => item.group === 'air-quality'), true);
+assert.equal(normalized.collections.some(item => item.indicatorId === 'I30920'), false);
 
 for (const object of normalized.objects) assert.equal(validateEvidenceObject(object).valid, true, object.id);
 for (const collection of normalized.collections) assert.equal(validateEvidenceCollection(collection).valid, true, collection.id);
-
-const benzene = normalized.collections.find(item => item.indicatorId === 'I30920');
-assert(benzene.methodology.warnings.includes('flat-spatial-values'));
-assert(benzene.methodology.warnings.includes('measurement-method-unknown'));
-assert(benzene.methodology.warnings.includes('monitor-location-unknown'));
 
 const homelessness = normalized.objects.find(item => item.indicator.id === 'I44455');
 assert.equal(homelessness.geography.level, 'Ealing borough');
@@ -64,4 +61,4 @@ const imd = normalized.collections.find(item => item.indicatorId === 'I3091');
 assert.equal(imd.comparator.population, 199);
 assert.equal(imd.comparator.value, 24.1);
 
-console.log(`Validated ${normalized.objects.length} evidence objects and ${normalized.collections.length} collections.`);
+console.log(`Validated ${normalized.objects.length} evidence objects and ${normalized.collections.length} collections; AQ excluded from production normalization.`);
