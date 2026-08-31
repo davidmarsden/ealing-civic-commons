@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { decideReview, enqueueReview, listReviews, REVIEW_STATUSES } from '../lib/review-queue.mjs';
 import { fetchEalingPublicNoticeCandidates } from '../lib/public-notice-candidates.mjs';
+import { publishAcceptedContribution } from '../lib/public-contributions.mjs';
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status,
@@ -58,7 +59,28 @@ export default async request => {
         note: body.note
       });
       if (!record) return json({ error: 'Review item not found' }, 404);
-      return json({ ok: true, record });
+
+      let promotion = null;
+      if (body.status === 'accepted' && record.kind === 'item-contribution') {
+        try {
+          const result = await publishAcceptedContribution(record);
+          promotion = {
+            type: 'public-contribution',
+            id: result.contribution.id,
+            published: true,
+            created: result.created
+          };
+        } catch (error) {
+          console.error('Accepted contribution publication failed', { reviewId: record.id, error });
+          return json({
+            error: `Review accepted, but public contribution publication failed: ${error.message || error}`,
+            record,
+            promotion: { type: 'public-contribution', published: false }
+          }, 500);
+        }
+      }
+
+      return json({ ok: true, record, promotion });
     } catch (error) {
       return json({ error: error.message || 'Decision failed' }, 400);
     }
