@@ -22,31 +22,46 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Inspect live Southall LSOA values
+      - name: Invoke live Southall probe
         run: |
           node --input-type=module <<'NODE'
-          async function layerRows(layer) {
-            const url = new URL(`${layer}/query`);
-            url.searchParams.set('where', '1=1');
-            url.searchParams.set('outFields', '*');
-            url.searchParams.set('returnGeometry', 'false');
-            url.searchParams.set('f', 'json');
-            const payload = await (await fetch(url)).json();
-            if (payload.error) throw new Error(`${payload.error.code}: ${payload.error.message}`);
-            return payload.features?.map(feature => feature.attributes || {}) || [];
-          }
-          const imdLsoa = await layerRows('https://services1.arcgis.com/HumUw0sDQHwJuboT/ArcGIS/rest/services/Ealing_Dep_IMD/FeatureServer/6');
-          const southall = imdLsoa.filter(row => Object.values(row).some(value => typeof value === 'string' && /southall/i.test(value)));
-          const fields = [
-            'ID3091D20150101000000','ID3091D20190101000000','ID3091D20250101000000',
-            'ID3089D20150101000000','ID3089D20190101000000','ID3089D20250101000000',
-            'ID25375D20230101000000','ID30920D20230101000000','ID30919D20230101000000','ID30922D20230101000000',
-            'ID44458D20210101000000','ID44455D20200101000000'
-          ];
-          const compact = row => Object.fromEntries(Object.entries(row).filter(([key]) => /lsoa|msoa|town|ward|name|code/i.test(key) || fields.includes(key)));
-          const populated = Object.fromEntries(fields.map(field => [field, southall.filter(row => row[field] !== null && row[field] !== undefined && row[field] !== '').length]));
-          console.log(JSON.stringify({ southallRows: southall.length, populated, samples: southall.slice(0, 5).map(compact) }, null, 2));
-          if (southall.length < 1) throw new Error('No Southall LSOA rows found');
-          const emptyFields = Object.entries(populated).filter(([, count]) => count === 0).map(([field]) => field);
-          if (emptyFields.length) throw new Error(`Target fields empty across Southall LSOAs: ${emptyFields.join(', ')}`);
+          const mod = await import('./netlify/functions/ealing-data-probe.mjs');
+          const response = await mod.default();
+          const payload = await response.json();
+          if (!response.ok) throw new Error(`Probe returned HTTP ${response.status}: ${payload.error || 'unknown error'}`);
+          if (payload.status !== 'ok') throw new Error(`Unexpected probe status: ${payload.status}`);
+
+          const summary = (payload.groups || []).map(group => ({
+            id: group.id,
+            observations: (group.indicators || []).reduce(
+              (total, indicator) => total + (indicator.instances || []).reduce(
+                (subtotal, instance) => subtotal + (instance.observations?.length || 0), 0
+              ), 0
+            ),
+            instances: (group.indicators || []).flatMap(indicator =>
+              (indicator.instances || []).map(instance => ({
+                indicator: indicator.id,
+                date: instance.date,
+                geography: instance.geography?.name,
+                observations: instance.observations?.length || 0,
+                error: instance.error || null
+              }))
+            )
+          }));
+          console.log(JSON.stringify({ geographyDiagnostics: payload.geographyDiagnostics, groups: summary }, null, 2));
+
+          const expected = ['imd', 'air-quality', 'overcrowding', 'child-poverty', 'homelessness'];
+          const missing = expected.filter(id => !summary.some(group => group.id === id));
+          if (missing.length) throw new Error(`Missing probe groups: ${missing.join(', ')}`);
+          const empty = summary.filter(group => group.observations === 0);
+          if (empty.length) throw new Error(`Probe groups without Southall observations: ${empty.map(group => group.id).join(', ')}`);
+
+          const lsoaGroups = summary.filter(group => ['imd', 'air-quality', 'overcrowding', 'homelessness'].includes(group.id));
+          const badLsoa = lsoaGroups.flatMap(group => group.instances.filter(instance => instance.geography === 'LSOA 2021' && instance.observations !== 40));
+          if (badLsoa.length) throw new Error(`Expected 40 Southall LSOA observations for each LSOA instance; got ${JSON.stringify(badLsoa)}`);
+
+          const child = payload.groups.find(group => group.id === 'child-poverty');
+          const childInstances = child?.indicators?.flatMap(indicator => indicator.instances || []) || [];
+          if (!childInstances.some(instance => instance.geography?.name === 'Ward' && instance.observations?.length >= 3)) throw new Error('Child-poverty Ward observations missing');
+          if (!childInstances.some(instance => instance.geography?.name === 'Town Profile' && instance.observations?.length >= 1)) throw new Error('Child-poverty Town Profile observation missing');
           NODE
