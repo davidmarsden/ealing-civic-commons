@@ -40,7 +40,7 @@ Every decision is also written as a separate audit blob as well as being reflect
 
 `REVIEW_ADMIN_TOKEN`
 
-The token is held in browser `sessionStorage`, not embedded in the deployed JavaScript bundle. The reviewer label is stored locally and attached to decisions.
+The token should be scoped to Netlify Functions/runtime and made available in both deploy-preview and production contexts so the private reviewer can be tested safely before merge and then used on the live site. The token is held in browser `sessionStorage`, not embedded in the deployed JavaScript bundle. The reviewer label is stored locally and attached to decisions.
 
 An **accepted** review item means “reviewed and potentially suitable for promotion”. It does not mean “published”. Phase 7B will add type-specific promotion handlers.
 
