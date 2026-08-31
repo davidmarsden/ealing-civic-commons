@@ -1,6 +1,7 @@
 import { assertEvidenceCollection, assertEvidenceObject } from './evidence.mjs';
 
 const EXPLORER_BASE = 'https://data.ealing.gov.uk/data-catalog-explorer/indicator/';
+const EXCLUDED_GROUPS = new Set(['air-quality']);
 
 function slug(value) {
   return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'unknown';
@@ -15,17 +16,6 @@ function scopeFor(level) {
 
 function warningCodes(groupId, instance) {
   const warnings = [];
-  if (groupId === 'air-quality') {
-    warnings.push('measurement-method-unknown', 'monitor-location-unknown');
-    const summary = instance.summary?.values;
-    const comparator = instance.comparator?.values;
-    if (summary && Number(summary.max) === Number(summary.min)) warnings.push('flat-spatial-values');
-    else if (summary && comparator) {
-      const localSpan = Number(summary.max) - Number(summary.min);
-      const widerSpan = Number(comparator.max) - Number(comparator.min);
-      if (Number.isFinite(localSpan) && Number.isFinite(widerSpan) && widerSpan > 0 && localSpan / widerSpan <= 0.2) warnings.push('narrow-spatial-range');
-    }
-  }
   if (instance.geography?.name === 'Ealing borough' && instance.scopeNote) warnings.push('borough-value-repeated-on-small-area-layer');
   return [...new Set(warnings)];
 }
@@ -96,6 +86,11 @@ export function normalizeEalingProbe(probe) {
   const retrievedAt = probe.generatedAt || new Date().toISOString();
 
   for (const group of probe.groups || []) {
+    // The experimental probe retains AQ for research transparency, but its
+    // current source does not expose enough measurement/monitor provenance to
+    // justify publishing it as production Civic Commons evidence.
+    if (EXCLUDED_GROUPS.has(group.id)) continue;
+
     for (const indicator of group.indicators || []) {
       for (const instance of indicator.instances || []) {
         if (instance.error || !instance.observations?.length) continue;
@@ -129,7 +124,7 @@ export function normalizeEalingProbe(probe) {
             },
             methodology: {
               publicationScope: instance.geography?.name || 'Unknown',
-              measurementType: group.id === 'air-quality' ? 'unknown' : 'published-statistic',
+              measurementType: 'published-statistic',
               aggregation: 'direct-published-value',
               warnings
             },
@@ -172,6 +167,10 @@ export function normalizeEalingProbe(probe) {
     schemaVersion: 1,
     generatedAt: retrievedAt,
     source: 'Ealing Data',
+    exclusions: [{
+      group: 'air-quality',
+      reason: 'Current Ealing Data AQ indicators lack sufficient monitor/location/measurement-method provenance for production Civic Commons evidence.'
+    }],
     objects,
     collections
   };
