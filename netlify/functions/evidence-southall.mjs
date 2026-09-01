@@ -1,15 +1,23 @@
-import { buildProbe } from './ealing-data-probe.mjs';
-import { normalizeEalingProbe } from '../lib/ealing-evidence.mjs';
+import { loadSouthallEvidence } from '../lib/southall-evidence-service.mjs';
+
+const cacheControl = () => Netlify.context?.deploy?.context === 'production'
+  ? 'public, max-age=900, stale-while-revalidate=3600'
+  : 'no-store';
 
 export default async () => {
   try {
-    const probe = await buildProbe();
-    const payload = normalizeEalingProbe(probe);
-    return new Response(JSON.stringify(payload), {
+    const result = await loadSouthallEvidence();
+    return new Response(JSON.stringify({
+      ...result.payload,
+      storage: {
+        cache: result.cache,
+        persistence: result.persistence || null
+      }
+    }), {
       status: 200,
       headers: {
         'content-type': 'application/json; charset=utf-8',
-        'cache-control': 'public, max-age=900, stale-while-revalidate=3600'
+        'cache-control': cacheControl()
       }
     });
   } catch (error) {
