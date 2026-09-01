@@ -1,11 +1,14 @@
 import { createHash } from 'node:crypto';
-import { getStore } from '@netlify/blobs';
+import { getDeployStore, getStore } from '@netlify/blobs';
 import { assertEvidenceCollection, assertEvidenceObject } from './evidence.mjs';
 
 export const EVIDENCE_STORE_NAME = 'civic-commons-evidence';
 export const EVIDENCE_STORE_VERSION = 1;
 
-const blobs = () => getStore(EVIDENCE_STORE_NAME);
+export const evidenceStore = () => Netlify.context?.deploy?.context === 'production'
+  ? getStore(EVIDENCE_STORE_NAME, { consistency: 'strong' })
+  : getDeployStore(EVIDENCE_STORE_NAME);
+
 const clean = value => String(value ?? '').trim();
 const placeSlug = value => clean(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'unknown';
 
@@ -40,7 +43,7 @@ async function readCurrent(kind, idOrKey, { isKey = false } = {}) {
   if (!validKind(kind)) return null;
   const key = isKey ? clean(idOrKey) : stableEvidenceKey(idOrKey);
   if (!key) return null;
-  const record = await blobs().get(currentKey(kind, key), { type: 'json', consistency: 'strong' }).catch(() => null);
+  const record = await evidenceStore().get(currentKey(kind, key), { type: 'json' }).catch(() => null);
   if (!record || record.kind !== kind || record.key !== key) return null;
   return record;
 }
@@ -50,7 +53,7 @@ async function writeCurrent(kind, value, now) {
   validate(value);
 
   const key = stableEvidenceKey(value.id);
-  const store = blobs();
+  const store = evidenceStore();
   const previous = await readCurrent(kind, key, { isKey: true });
   const semanticHash = evidenceSemanticHash(value);
   const changed = !previous || previous.semanticHash !== semanticHash;
@@ -58,7 +61,7 @@ async function writeCurrent(kind, value, now) {
 
   if (previous && changed) {
     const archiveKey = `${historyPrefix(kind, key)}${padRevision(previous.revision)}-${previous.semanticHash}`;
-    await store.setJSON(archiveKey, previous, { onlyIfNew: true }).catch(error => {
+    await store.setJSON(archiveKey, previous).catch(error => {
       console.error(`Evidence history write failed for ${kind} ${value.id}`, error);
     });
   }
@@ -76,16 +79,7 @@ async function writeCurrent(kind, value, now) {
     value
   };
 
-  await store.setJSON(currentKey(kind, key), record, {
-    metadata: {
-      kind,
-      id: String(value.id).slice(0, 300),
-      revision: String(revision),
-      semanticHash,
-      lastSeenAt: now
-    }
-  });
-
+  await store.setJSON(currentKey(kind, key), record);
   return { record, changed, created: !previous };
 }
 
@@ -108,9 +102,10 @@ export async function persistEvidencePayload(payload, now = new Date().toISOStri
     manifests.get(place).push({ id: collection.id, key: result.record.key });
   }
 
+  const store = evidenceStore();
   for (const [place, entries] of manifests) {
     entries.sort((a, b) => a.id.localeCompare(b.id));
-    await blobs().setJSON(placeManifestKey(place), {
+    await store.setJSON(placeManifestKey(place), {
       version: EVIDENCE_STORE_VERSION,
       place,
       updatedAt: now,
@@ -125,7 +120,7 @@ export async function persistEvidencePayload(payload, now = new Date().toISOStri
     generatedAt: payload.generatedAt || now,
     payload
   };
-  await blobs().setJSON(snapshotKey('southall'), snapshot);
+  await store.setJSON(snapshotKey('southall'), snapshot);
 
   return {
     persistedAt: now,
@@ -139,7 +134,7 @@ export async function persistEvidencePayload(payload, now = new Date().toISOStri
 }
 
 export async function getEvidenceSnapshot(name = 'southall') {
-  return blobs().get(snapshotKey(name), { type: 'json', consistency: 'strong' }).catch(() => null);
+  return evidenceStore().get(snapshotKey(name), { type: 'json' }).catch(() => null);
 }
 
 export async function getEvidenceRecord(kind, id) {
@@ -147,7 +142,8 @@ export async function getEvidenceRecord(kind, id) {
 }
 
 export async function getPlaceEvidence(place) {
-  const manifest = await blobs().get(placeManifestKey(place), { type: 'json', consistency: 'strong' }).catch(() => null);
+  const store = evidenceStore();
+  const manifest = await store.get(placeManifestKey(place), { type: 'json' }).catch(() => null);
   if (!manifest?.collections?.length) return null;
 
   const records = (await Promise.all(manifest.collections.map(entry => readCurrent('collection', entry.key, { isKey: true })))).filter(Boolean);
