@@ -16,7 +16,16 @@ const cleanUrl = value => {
   }
 };
 
-export const store = () => Netlify.context?.deploy?.context === 'production'
+export function publicationStoreScope() {
+  // Netlify's runtime context is authoritative when available. CONTEXT is a
+  // documented runtime/build fallback and protects production Functions from
+  // accidentally falling through to a deploy-scoped Blob store.
+  const runtimeContext = String(Netlify.context?.deploy?.context || '').trim();
+  const envContext = String(process.env.CONTEXT || '').trim();
+  return runtimeContext === 'production' || envContext === 'production' ? 'global' : 'deploy';
+}
+
+export const store = () => publicationStoreScope() === 'global'
   ? getStore(STORE_NAME, { consistency: 'strong' })
   : getDeployStore(STORE_NAME);
 
@@ -52,8 +61,7 @@ async function canonicalItemForReview(review) {
 
   // The item ID, stable thread and Commons permalink are the security binding.
   // Title and original source URL are display hints populated by the browser
-  // and may legitimately differ from the archived canonical representation
-  // (for example, alternate YouTube URL forms or publisher title changes).
+  // and may legitimately differ from the archived canonical representation.
   // Public output always uses the archived canonical item rather than trusting
   // those submitted display fields.
   return { key, threadId: expectedThread, item: archived.item };
@@ -82,17 +90,41 @@ export function publicContributionFromReview(review, canonical) {
   };
 }
 
+function samePublishedContribution(actual, expected) {
+  return actual?.status === 'published'
+    && actual.id === expected.id
+    && actual.reviewId === expected.reviewId
+    && actual.threadId === expected.threadId
+    && actual.itemId === expected.itemId
+    && actual.body === expected.body
+    && actual.publishedAt === expected.publishedAt;
+}
+
 export async function publishAcceptedContribution(review) {
   const canonical = await canonicalItemForReview(review);
   const contribution = publicContributionFromReview(review, canonical);
   const blobs = store();
   const key = contributionKey(contribution.id);
   const existing = await blobs.get(key, { type: 'json' });
-  if (existing?.id === contribution.id && existing.publishedAt === contribution.publishedAt) {
-    return { contribution: existing, created: false };
+
+  if (!samePublishedContribution(existing, contribution)) {
+    await blobs.setJSON(key, contribution);
   }
-  await blobs.setJSON(key, contribution);
-  return { contribution, created: !existing?.id };
+
+  // A successful Blob write is not enough to claim publication. Verify the
+  // exact public representation through the same store selection used by the
+  // public reader. In production the store is strongly consistent.
+  const persisted = await blobs.get(key, { type: 'json' });
+  if (!samePublishedContribution(persisted, contribution)) {
+    throw new Error(`Published contribution could not be read back from the ${publicationStoreScope()} Blob store`);
+  }
+
+  return {
+    contribution: persisted,
+    created: !existing?.id,
+    verified: true,
+    storeScope: publicationStoreScope()
+  };
 }
 
 export async function withdrawContributionForReview(reviewId) {
@@ -101,7 +133,7 @@ export async function withdrawContributionForReview(reviewId) {
   // Blob deletion is idempotent. Delete the deterministic key directly so a
   // transient read failure can never be mistaken for a successful withdrawal.
   await blobs.delete(contributionKey(id));
-  return { removed: true, id };
+  return { removed: true, id, storeScope: publicationStoreScope() };
 }
 
 export async function reconcileContributionPublication(reviewId, { attempts = 4 } = {}) {
@@ -115,10 +147,23 @@ export async function reconcileContributionPublication(reviewId, { attempts = 4 
 
     if (before.status === 'accepted') {
       const result = await publishAcceptedContribution(before);
-      lastAction = { status: before.status, action: 'published', contribution: result.contribution, created: result.created };
+      lastAction = {
+        status: before.status,
+        action: 'published',
+        contribution: result.contribution,
+        created: result.created,
+        verified: result.verified,
+        storeScope: result.storeScope
+      };
     } else {
       const result = await withdrawContributionForReview(before.id);
-      lastAction = { status: before.status, action: 'withdrawn', contribution: null, removed: result.removed };
+      lastAction = {
+        status: before.status,
+        action: 'withdrawn',
+        contribution: null,
+        removed: result.removed,
+        storeScope: result.storeScope
+      };
     }
 
     // Decision events are authoritative. If another reviewer changed the
