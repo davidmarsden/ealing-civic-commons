@@ -113,12 +113,18 @@ export async function listArchivedItems({ limit = 40, offset = 0, sourceId = nul
     .sort((a, b) => archiveSortTime(b) - archiveSortTime(a));
   const page = matching.slice(skip, skip + max);
   const hasMore = skip + page.length < matching.length;
+  let latestArchiveTime = 0;
+  let updatedAt = null;
+  for (const record of records) {
+    const candidate = Date.parse(record.archivedAt || '');
+    if (Number.isFinite(candidate) && candidate > latestArchiveTime) {
+      latestArchiveTime = candidate;
+      updatedAt = record.archivedAt;
+    }
+  }
 
   return {
-    updatedAt: records.reduce((latest, record) => {
-      const candidate = Date.parse(record.archivedAt || '');
-      return Number.isFinite(candidate) && candidate > Date.parse(latest || '') ? record.archivedAt : latest;
-    }, null),
+    updatedAt,
     archiveSize: records.length,
     matchedSize: matching.length,
     offset: skip,
