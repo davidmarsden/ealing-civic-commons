@@ -42,6 +42,32 @@ function evidenceCard(collection) {
   </article>`;
 }
 
+async function fetchPlaceEvidence(place) {
+  const response = await fetch(`/api/evidence/place?place=${encodeURIComponent(place)}`, {
+    cache: 'no-store',
+    headers: { accept: 'application/json' }
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload.status !== 'ok') throw new Error(payload.error || `HTTP ${response.status}`);
+  return payload;
+}
+
+async function fetchSouthallFallback() {
+  const response = await fetch('/api/evidence/southall', {
+    cache: 'no-store',
+    headers: { accept: 'application/json' }
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload.status === 'error') throw new Error(payload.error || `HTTP ${response.status}`);
+  return {
+    status: 'ok',
+    place: 'Southall',
+    updatedAt: payload.generatedAt,
+    collections: (payload.collections || []).filter(collection => collection.place === 'Southall'),
+    storage: { persisted: false, fallback: true }
+  };
+}
+
 async function loadPlaceEvidence() {
   const place = routePlace();
   if (place !== 'southall') return;
@@ -50,11 +76,16 @@ async function loadPlaceEvidence() {
   if (!section || !root) return;
 
   try {
-    const response = await fetch(`/api/evidence/place?place=${encodeURIComponent(place)}`, { headers: { accept: 'application/json' } });
-    const payload = await response.json();
-    if (!response.ok || payload.status !== 'ok') throw new Error(payload.error || `HTTP ${response.status}`);
+    let payload;
+    try {
+      payload = await fetchPlaceEvidence(place);
+    } catch (placeError) {
+      console.warn('Place evidence endpoint unavailable; falling back to Southall evidence payload', placeError);
+      payload = await fetchSouthallFallback();
+    }
+
     const selected = selectedCollections(payload.collections || []);
-    if (!selected.length) return;
+    if (!selected.length) throw new Error('No graphical Southall evidence collections were returned');
 
     root.className = 'entity-evidence-grid';
     root.innerHTML = selected.map(evidenceCard).join('');
@@ -63,10 +94,19 @@ async function loadPlaceEvidence() {
     const meta = $('#localEvidenceMeta');
     if (meta) {
       const updated = payload.updatedAt ? new Date(payload.updatedAt).toLocaleString('en-GB') : 'unknown';
-      meta.textContent = `Evidence snapshot updated ${updated}. ${payload.storage?.persisted ? 'Served from the persistent Civic Commons evidence store.' : 'Served live while persistent storage was unavailable.'}`;
+      const source = payload.storage?.persisted
+        ? 'Served from the persistent Civic Commons evidence store.'
+        : payload.storage?.fallback
+          ? 'Served from the normalized Southall evidence fallback.'
+          : 'Served live while persistent storage was unavailable.';
+      meta.textContent = `Evidence snapshot updated ${updated}. ${source}`;
     }
   } catch (error) {
     console.warn('Place evidence unavailable', error);
+    root.innerHTML = '<p class="entity-empty">Local evidence is temporarily unavailable.</p>';
+    const meta = $('#localEvidenceMeta');
+    if (meta) meta.textContent = 'The rest of this civic page is unaffected.';
+    section.hidden = false;
   }
 }
 
