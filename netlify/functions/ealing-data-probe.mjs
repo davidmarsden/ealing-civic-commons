@@ -335,7 +335,7 @@ async function buildMaps(client) {
   };
 }
 
-async function buildProbe() {
+export async function buildProbe() {
   const started = Date.now();
   const client = makeArcgisClient();
 
