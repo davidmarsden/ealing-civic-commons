@@ -15,35 +15,34 @@ civic-commons-evidence
 
 Deploy previews use a deploy-scoped store instead, so testing cannot write evidence into the production store.
 
-Current records use deterministic source-derived IDs encoded as blob-safe keys:
+Evidence refreshes are published as immutable generation-scoped records rather than by overwriting live keys one at a time:
 
 ```text
-current/object/{stable-key}
-current/collection/{stable-key}
+generation/{generation}/object/{stable-key}
+generation/{generation}/collection/{stable-key}
+generation/{generation}/manifest/place/southall
+generation/{generation}/manifest/place/ealing
+generation/{generation}/snapshot/southall
 ```
 
-Place manifests make the current collections discoverable without scanning the store:
+Readers follow one active pointer:
 
 ```text
-manifest/place/southall
-manifest/place/ealing
+active/southall
 ```
 
-The latest normalized Southall payload is also retained as a source snapshot:
-
-```text
-snapshot/southall
-```
+A refresh stages its complete generation first. Only after every record, manifest and snapshot write succeeds is `active/southall` switched to the new generation. A failed refresh therefore leaves readers on the complete previous generation rather than exposing a hybrid of old and new evidence.
 
 ## Revisions
 
-A semantic SHA-256 hash is calculated from the evidence content. Retrieval/storage timestamps are excluded from that hash.
+A semantic SHA-256 hash is calculated from the evidence content. Retrieval/storage timestamps are excluded from that hash. Source observations are also canonicalized into stable geographic order before normalization so an ArcGIS row-order change cannot create a false revision.
 
 Therefore:
 
 - fetching the same published value again updates `lastSeenAt` but does not create a new revision;
 - a substantive change to the normalized evidence increments `revision`;
-- the previous current record is copied to an immutable-style history key before the new current record replaces it.
+- the previous active record is archived before a changed generation may become active;
+- an archive failure aborts publication, preserving the previous active generation for retry.
 
 History keys use:
 
@@ -51,7 +50,7 @@ History keys use:
 history/{object|collection}/{stable-key}/{revision}-{semantic-hash}
 ```
 
-Each current record exposes:
+Each active record exposes:
 
 - `revision`
 - `semanticHash`
@@ -68,6 +67,8 @@ Evidence is refreshed in two ways:
 
 If the upstream Ealing service fails, the public endpoint may serve the last persisted snapshot rather than replacing evidence with an error. If persistence itself is unavailable during a successful live fetch, the normalized live response can still be served without claiming it was persisted.
 
+The scheduled refresh is stricter: a stale fallback or persistence failure is rethrown after logging so Netlify records the scheduled invocation as failed rather than reporting a missed refresh as successful.
+
 ## Public APIs
 
 ```text
@@ -78,7 +79,7 @@ If the upstream Ealing service fails, the public endpoint may serve the last per
 /api/evidence/record?kind=object&id={stable-id}
 ```
 
-The record endpoint is the stable inspection route for one normalized evidence object or collection.
+The record endpoint is the stable inspection route for one normalized evidence object or collection. Place and record readers resolve through the same active generation pointer.
 
 ## First page integration
 
