@@ -116,15 +116,21 @@ async function hydrateReview(blobs, record) {
   });
 }
 
+async function mapStatusToken(blobs, candidate) {
+  if (!candidate.private.statusTokenHash) return;
+  await blobs.setJSON(statusTokenKey(candidate.private.statusTokenHash), { reviewId: candidate.id, createdAt: candidate.createdAt });
+}
+
 export async function enqueueReview(input) {
   const blobs = store();
   const candidate = normalizeReview(input);
   const existing = await blobs.get(reviewKey(candidate.id), { type: 'json' }).catch(() => null);
-  if (existing?.id === candidate.id) return { record: await hydrateReview(blobs, existing), created: false };
-  await blobs.setJSON(reviewKey(candidate.id), candidate);
-  if (candidate.private.statusTokenHash) {
-    await blobs.setJSON(statusTokenKey(candidate.private.statusTokenHash), { reviewId: candidate.id, createdAt: candidate.createdAt });
+  if (existing?.id === candidate.id) {
+    await mapStatusToken(blobs, candidate);
+    return { record: await hydrateReview(blobs, existing), created: false };
   }
+  await blobs.setJSON(reviewKey(candidate.id), candidate);
+  await mapStatusToken(blobs, candidate);
   return { record: candidate, created: true };
 }
 
@@ -151,6 +157,10 @@ export async function claimNotification(id, event) {
   if (existing) return false;
   await blobs.setJSON(key, { reviewId: id, event, at: new Date().toISOString() });
   return true;
+}
+
+export async function releaseNotification(id, event) {
+  await store().delete(notificationKey(id, event));
 }
 
 export async function listReviews({ status = null, limit = 250 } = {}) {
