@@ -1,11 +1,15 @@
-import { buildProbe } from './ealing-data-probe.mjs';
-import { normalizeEalingProbe } from '../lib/ealing-evidence.mjs';
+import { loadSouthallEvidence } from '../lib/southall-evidence-service.mjs';
 
 export default async () => {
   try {
-    const probe = await buildProbe();
-    const payload = normalizeEalingProbe(probe);
-    return new Response(JSON.stringify(payload), {
+    const result = await loadSouthallEvidence();
+    return new Response(JSON.stringify({
+      ...result.payload,
+      storage: {
+        cache: result.cache,
+        persistence: result.persistence || null
+      }
+    }), {
       status: 200,
       headers: {
         'content-type': 'application/json; charset=utf-8',
