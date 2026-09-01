@@ -26,12 +26,6 @@ export function contributionIdForReview(reviewId) {
   return `contrib-${cleanText(reviewId, 120).replace(/[^A-Za-z0-9_-]/g, '')}`;
 }
 
-function sameCanonicalUrl(left, right) {
-  const a = cleanUrl(left);
-  const b = cleanUrl(right);
-  return Boolean(a && b && a === b);
-}
-
 async function canonicalItemForReview(review) {
   const itemId = cleanText(review?.payload?.itemId, 1000);
   if (!itemId) throw new Error('Accepted contribution is missing its civic item ID');
@@ -56,13 +50,12 @@ async function canonicalItemForReview(review) {
     throw new Error('Canonical civic item could not be verified in the persistent archive');
   }
 
-  if (cleanText(review?.payload?.title, 500) !== cleanText(archived.item.title, 500)) {
-    throw new Error('Submitted item title does not match the canonical civic item');
-  }
-  if (!sameCanonicalUrl(review?.payload?.originalUrl, archived.item.url)) {
-    throw new Error('Submitted original source URL does not match the canonical civic item');
-  }
-
+  // The item ID, stable thread and Commons permalink are the security binding.
+  // Title and original source URL are display hints populated by the browser
+  // and may legitimately differ from the archived canonical representation
+  // (for example, alternate YouTube URL forms or publisher title changes).
+  // Public output always uses the archived canonical item rather than trusting
+  // those submitted display fields.
   return { key, threadId: expectedThread, item: archived.item };
 }
 

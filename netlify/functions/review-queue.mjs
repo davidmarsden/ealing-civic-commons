@@ -1,7 +1,8 @@
 import { timingSafeEqual } from 'node:crypto';
-import { decideReview, enqueueReview, listReviews, REVIEW_STATUSES } from '../lib/review-queue.mjs';
+import { decideReview, enqueueReview, getReview, listReviews, REVIEW_STATUSES } from '../lib/review-queue.mjs';
 import { fetchEalingPublicNoticeCandidates } from '../lib/public-notice-candidates.mjs';
 import { reconcileContributionPublication } from '../lib/public-contributions.mjs';
+import { getArchivedItem, stableItemKey, validItemKey } from '../lib/civic-items.mjs';
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status,
@@ -32,6 +33,44 @@ async function parseBody(request) {
   catch { return null; }
 }
 
+function promotionPayload(record, result) {
+  return {
+    type: 'public-contribution',
+    id: result.contribution?.id || `contrib-${record.id}`,
+    published: result.status === 'accepted' && result.action === 'published',
+    action: result.action,
+    created: result.created ?? false,
+    removed: result.removed ?? false,
+    authoritativeStatus: result.status
+  };
+}
+
+async function withCanonicalTarget(record) {
+  if (record?.kind !== 'item-contribution') return record;
+  const itemId = String(record.payload?.itemId || '').trim();
+  if (!itemId) return { ...record, canonicalTarget: null };
+  const key = stableItemKey(itemId);
+  if (!validItemKey(key)) return { ...record, canonicalTarget: null };
+  try {
+    const archived = await getArchivedItem(key, { consistency: 'strong' });
+    if (!archived?.item || archived.item.id !== itemId) return { ...record, canonicalTarget: null };
+    return {
+      ...record,
+      canonicalTarget: {
+        key,
+        threadId: `civic-item:${key}`,
+        title: archived.item.title || 'Untitled civic item',
+        originalUrl: archived.item.url || null,
+        commonsPath: `/items/${key}`,
+        source: archived.item.source || null
+      }
+    };
+  } catch (error) {
+    console.error('Canonical review target lookup failed', { reviewId: record.id, error });
+    return { ...record, canonicalTarget: null };
+  }
+}
+
 export default async request => {
   if (!configuredToken()) {
     return json({ error: 'Review queue is not configured. Set REVIEW_ADMIN_TOKEN on this deployment.' }, 503);
@@ -43,7 +82,7 @@ export default async request => {
     const requested = String(url.searchParams.get('status') || '').trim();
     const status = REVIEW_STATUSES.includes(requested) ? requested : null;
     const records = await listReviews({ status, limit: 300 });
-    return json({ ok: true, records });
+    return json({ ok: true, records: await Promise.all(records.map(withCanonicalTarget)) });
   }
 
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
@@ -64,34 +103,41 @@ export default async request => {
       if (record.kind === 'item-contribution') {
         try {
           const result = await reconcileContributionPublication(record.id);
-          promotion = {
-            type: 'public-contribution',
-            id: result.contribution?.id || `contrib-${record.id}`,
-            published: result.status === 'accepted' && result.action === 'published',
-            action: result.action,
-            created: result.created ?? false,
-            removed: result.removed ?? false,
-            authoritativeStatus: result.status
-          };
+          promotion = promotionPayload(record, result);
         } catch (error) {
           console.error('Contribution publication reconciliation failed', { reviewId: record.id, error });
           return json({
             error: `Review decision saved, but public contribution state could not be reconciled: ${error.message || error}`,
-            record,
+            record: await withCanonicalTarget(record),
             promotion: { type: 'public-contribution', published: null }
           }, 500);
         }
       }
 
-      return json({ ok: true, record, promotion });
+      return json({ ok: true, record: await withCanonicalTarget(record), promotion });
     } catch (error) {
       return json({ error: error.message || 'Decision failed' }, 400);
     }
   }
 
+  if (body.action === 'reconcile-publication') {
+    try {
+      const record = await getReview(body.id);
+      if (!record) return json({ error: 'Review item not found' }, 404);
+      if (record.kind !== 'item-contribution') return json({ error: 'Only item contributions have a publication state to reconcile' }, 400);
+      const result = await reconcileContributionPublication(record.id);
+      const refreshed = await getReview(record.id);
+      if (!refreshed) return json({ error: 'Review item not found after reconciliation' }, 404);
+      return json({ ok: true, record: await withCanonicalTarget(refreshed), promotion: promotionPayload(refreshed, result) });
+    } catch (error) {
+      console.error('Contribution publication retry failed', { reviewId: body.id, error });
+      return json({ error: `Public contribution could not be reconciled: ${error.message || error}` }, 500);
+    }
+  }
+
   if (body.action === 'enqueue') {
     const result = await enqueueReview(body.review || {});
-    return json({ ok: true, created: result.created, record: result.record }, result.created ? 201 : 200);
+    return json({ ok: true, created: result.created, record: await withCanonicalTarget(result.record) }, result.created ? 201 : 200);
   }
 
   if (body.action === 'import-public-notices') {
