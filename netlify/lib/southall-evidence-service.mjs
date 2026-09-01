@@ -1,4 +1,4 @@
-import { buildProbe } from '../functions/ealing-data-probe.mjs';
+import { buildProductionEvidenceProbe } from './ealing-production-evidence.mjs';
 import { normalizeEalingProbe } from './ealing-evidence.mjs';
 import { getEvidenceSnapshot, persistEvidencePayload } from './evidence-store.mjs';
 
@@ -21,7 +21,7 @@ export async function loadSouthallEvidence({ forceRefresh = false, maxAgeMs = DE
   }
 
   try {
-    const probe = await buildProbe();
+    const probe = await buildProductionEvidenceProbe();
     const payload = normalizeEalingProbe(probe);
     let persistence = null;
     try {
