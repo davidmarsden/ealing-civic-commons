@@ -1,6 +1,5 @@
 import { enqueueReview } from '../lib/review-queue.mjs';
 import { newStatusToken, sendSubmissionReceipt, statusTokenHash } from '../lib/contributor-notifications.mjs';
-import { publicOrigin } from '../lib/email-alerts.mjs';
 
 const text = (value, max = 4000) => String(value ?? '').trim().slice(0, max);
 const validStatusToken = value => /^[A-Za-z0-9_-]{24,256}$/.test(text(value, 256));
@@ -58,9 +57,13 @@ export default {
       return;
     }
 
-    if (result.created && result.record?.private?.email) {
+    // Also try on deduplicated event deliveries/resubmissions. A successful
+    // receipt is idempotently marked; a failed send releases its claim, so the
+    // next verified delivery can retry it rather than silently losing mail.
+    if (result.record?.private?.email) {
       const origin = process.env.URL || process.env.DEPLOY_PRIME_URL || 'https://commons.southallstories.uk';
-      await sendSubmissionReceipt(result.record, { token: statusToken, origin: new URL(origin).origin });
+      const receipt = await sendSubmissionReceipt(result.record, { token: statusToken, origin: new URL(origin).origin });
+      if (receipt.reason === 'send-failed') throw new Error('Contributor receipt email could not be delivered');
     }
   }
 };
