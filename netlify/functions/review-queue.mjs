@@ -12,7 +12,7 @@ async function parseBody(request) { try { return await request.json(); } catch {
 function originFor(request) { return process.env.URL || process.env.DEPLOY_PRIME_URL || new URL(request.url).origin; }
 function promotionPayload(record, result) { return { type:'public-contribution', id:result.contribution?.id || `contrib-${record.id}`, published:result.status === 'accepted' && result.action === 'published', action:result.action, created:result.created ?? false, removed:result.removed ?? false, authoritativeStatus:result.status }; }
 
-async function withCanonicalTarget(record) {
+async function withCanonicalTarget(record, publicationByReview = null) {
   if (record?.kind !== 'item-contribution') return record;
   const itemId = String(record.payload?.itemId || '').trim();
   if (!itemId) return { ...record, canonicalTarget:null, publication:null };
@@ -22,9 +22,11 @@ async function withCanonicalTarget(record) {
     const archived = await getArchivedItem(key, { consistency:'strong' });
     if (!archived?.item || archived.item.id !== itemId) return { ...record, canonicalTarget:null, publication:null };
     const threadId = `civic-item:${key}`;
-    const published = record.status === 'accepted'
-      ? (await listPublishedContributions({ threadId, limit:250 })).find(entry => entry.reviewId === record.id) || null
-      : null;
+    let published = null;
+    if (record.status === 'accepted') {
+      if (publicationByReview) published = publicationByReview.get(record.id) || null;
+      else published = (await listPublishedContributions({ threadId, limit:250 })).find(entry => entry.reviewId === record.id) || null;
+    }
     return { ...record, canonicalTarget:{ key, threadId, title:archived.item.title || 'Untitled civic item', originalUrl:archived.item.url || null, commonsPath:`/items/${key}`, source:archived.item.source || null }, publication: published ? { published:true, id:published.id, url:`/items/${key}#contribution-${published.id}`, publishedAt:published.publishedAt } : { published:false } };
   } catch (error) { console.error('Canonical review target lookup failed', { reviewId:record.id, error }); return { ...record, canonicalTarget:null, publication:null }; }
 }
@@ -41,7 +43,12 @@ export default async request => {
   if (request.method === 'GET') {
     const url = new URL(request.url); const requested = String(url.searchParams.get('status') || '').trim(); const status = REVIEW_STATUSES.includes(requested) ? requested : null;
     const records = await listReviews({ status, limit:300 });
-    return json({ ok:true, records:await Promise.all(records.map(withCanonicalTarget)) });
+    let publicationByReview = null;
+    if (records.some(record => record.kind === 'item-contribution' && record.status === 'accepted')) {
+      const publications = await listPublishedContributions({ limit:1000 });
+      publicationByReview = new Map(publications.map(entry => [entry.reviewId, entry]));
+    }
+    return json({ ok:true, records:await Promise.all(records.map(record => withCanonicalTarget(record, publicationByReview))) });
   }
   if (request.method !== 'POST') return json({ error:'Method not allowed' }, 405);
   const body = await parseBody(request); if (!body || typeof body !== 'object') return json({ error:'Invalid request body' }, 400);
@@ -54,7 +61,13 @@ export default async request => {
       let promotion = null;
       if (record.kind === 'item-contribution') {
         try { const result = await reconcileContributionPublication(record.id); promotion = promotionPayload(record, result); }
-        catch (error) { console.error('Contribution publication reconciliation failed', { reviewId:record.id, error }); await notifyDecision(record, null, request); return json({ error:`Review decision saved, but public contribution state could not be reconciled: ${error.message || error}`, record:await withCanonicalTarget(record), promotion:{ type:'public-contribution', published:null } }, 500); }
+        catch (error) {
+          // Do not tell the contributor a withdrawal/publication state that we
+          // could not actually enforce. The moderation decision remains saved,
+          // but notification waits until a later successful reconciliation.
+          console.error('Contribution publication reconciliation failed', { reviewId:record.id, error });
+          return json({ error:`Review decision saved, but public contribution state could not be reconciled: ${error.message || error}`, record:await withCanonicalTarget(record), promotion:{ type:'public-contribution', published:null } }, 500);
+        }
       }
       await notifyDecision(record, promotion, request);
       return json({ ok:true, record:await withCanonicalTarget(record), promotion });
