@@ -14,8 +14,13 @@ function nonEmpty(value) {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
-function finiteOrString(value) {
-  return Number.isFinite(Number(value)) || nonEmpty(value);
+function publishedValue(value) {
+  return (typeof value === 'number' && Number.isFinite(value)) || nonEmpty(value);
+}
+
+function numericValue(value) {
+  if (typeof value === 'number') return Number.isFinite(value);
+  return nonEmpty(value) && Number.isFinite(Number(value.trim()));
 }
 
 function push(errors, condition, path, message) {
@@ -31,7 +36,7 @@ export function validateEvidenceObject(value) {
   push(errors, nonEmpty(value.id), 'id', 'must be a stable non-empty id');
   push(errors, OBJECT_KINDS.has(value.kind), 'kind', 'must be a supported evidence kind');
   push(errors, value.indicator && typeof value.indicator === 'object', 'indicator', 'is required');
-  push(errors, finiteOrString(value.value), 'value', 'must contain a published value');
+  push(errors, publishedValue(value.value), 'value', 'must contain a published number or non-empty string');
   push(errors, value.period && nonEmpty(value.period.label), 'period.label', 'is required');
   push(errors, value.geography && nonEmpty(value.geography.level), 'geography.level', 'is required');
   push(errors, value.geography && nonEmpty(value.geography.name), 'geography.name', 'is required');
@@ -58,7 +63,7 @@ export function validateEvidenceObject(value) {
   if (Array.isArray(comparators)) {
     comparators.forEach((comparator, index) => {
       push(errors, nonEmpty(comparator?.label), `comparators[${index}].label`, 'is required');
-      push(errors, finiteOrString(comparator?.value), `comparators[${index}].value`, 'is required');
+      push(errors, numericValue(comparator?.value), `comparators[${index}].value`, 'must be numeric');
       push(errors, nonEmpty(comparator?.geographyLevel), `comparators[${index}].geographyLevel`, 'is required');
       push(errors, nonEmpty(comparator?.method), `comparators[${index}].method`, 'is required');
       push(errors, Number.isInteger(comparator?.population) && comparator.population > 0, `comparators[${index}].population`, 'must be a positive integer');
@@ -94,8 +99,8 @@ export function validateEvidenceCollection(value) {
     if (summary.kind === 'distribution') {
       push(errors, Array.isArray(summary.values), 'summary.values', 'must be an array for a distribution');
     } else {
-      ['min', 'median', 'max'].forEach(key => push(errors, Number.isFinite(Number(summary[key])), `summary.${key}`, 'must be numeric'));
-      if ([summary.min, summary.median, summary.max].every(v => Number.isFinite(Number(v)))) {
+      ['min', 'median', 'max'].forEach(key => push(errors, numericValue(summary[key]), `summary.${key}`, 'must be numeric'));
+      if ([summary.min, summary.median, summary.max].every(numericValue)) {
         push(errors, Number(summary.min) <= Number(summary.median) && Number(summary.median) <= Number(summary.max), 'summary', 'must satisfy min <= median <= max');
       }
     }
@@ -105,6 +110,9 @@ export function validateEvidenceCollection(value) {
     push(errors, nonEmpty(value.comparator.label), 'comparator.label', 'is required');
     push(errors, Number.isInteger(value.comparator.population) && value.comparator.population > 0, 'comparator.population', 'must be a positive integer');
     push(errors, nonEmpty(value.comparator.method), 'comparator.method', 'is required');
+    if (value.comparator.method === 'median') {
+      push(errors, numericValue(value.comparator.value), 'comparator.value', 'must be numeric for a median comparator');
+    }
   }
 
   return { valid: errors.length === 0, errors };
