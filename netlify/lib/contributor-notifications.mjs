@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { cleanEmail, htmlEscape, mailConfigured, sendMail } from './email-alerts.mjs';
-import { claimNotification, hashStatusToken } from './review-queue.mjs';
+import { claimNotification, hashStatusToken, releaseNotification } from './review-queue.mjs';
 
 export const newStatusToken = () => randomBytes(32).toString('base64url');
 export const statusTokenHash = token => hashStatusToken(token);
@@ -29,6 +29,11 @@ async function sendOnce(review, event, mail) {
     await sendMail({ to: email, ...mail });
     return { sent: true };
   } catch (error) {
+    // A claim prevents duplicate concurrent sends, but a provider failure must
+    // release it so the verified event can be retried later.
+    await releaseNotification(review.id, event).catch(releaseError => {
+      console.error('Contributor notification claim could not be released', { reviewId: review.id, event, releaseError });
+    });
     console.error('Contributor notification failed', { reviewId: review.id, event, error });
     return { sent: false, reason: 'send-failed' };
   }
