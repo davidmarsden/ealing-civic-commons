@@ -28,17 +28,17 @@ Explore and the entity APIs should expose missing-description/source audits so i
 
 ## Phase 1 — Read-only civic aggregation
 
-**Status: complete for baseline; ongoing source expansion**
+**Status: complete**
 
-Live foundations include server-side RSS/Atom ingestion and normalisation; chronological provenance-rich timelines; video/YouTube ingestion; filtered London-wide sources; monitored structured pages; town/topic/source-class filtering; visible source health; source submissions; Ealing Council news feeds; Document Watch; selected City Hall/London Assembly material; filtered Met material; and a growing range of community, education, faith, campaign and local political sources.
+The original read-only Civic Commons foundation is live: server-side RSS/Atom ingestion and normalisation; chronological provenance-rich timelines; video/YouTube ingestion; filtered London-wide sources; monitored structured/public pages; town/topic/source-class filtering; visible source health; source submissions; Ealing Council news feeds; Document Watch; selected City Hall/London Assembly material; filtered Met material; the direct Open Council Network public Ealing summaries bridge; and a growing range of community, education, faith, campaign and local political sources.
 
-Still open:
+Further source discovery, registry migration, parser resilience and upstream interoperability are continuing operational/infrastructure work rather than unfinished Phase 1 scope. They now sit primarily in Phase 8 and normal source operations:
 
 - continue verifying useful local feeds, channels and public pages across all seven towns and communities;
 - expand first-party community/faith coverage without turning routine notices into civic news;
 - move remaining hard-coded source configuration toward a cleaner registry-driven model;
 - improve parser tests, conditional requests and caching;
-- keep ModernGov access work separate from the rest of the product.
+- continue ModernGov interoperability work separately without allowing one upstream service to block the Commons.
 
 ## Phase 2 — Stable civic items and moderated participation
 
@@ -112,12 +112,13 @@ Live now:
 - human-readable document descriptions where the council exposes them;
 - dedicated `/document-watch.html` filtering;
 - full Document Watch memory retained even when routine files stay out of Latest;
-- official Ealing Council, London Assembly/City Hall and filtered Met material in the same civic pipeline.
+- official Ealing Council, London Assembly/City Hall and filtered Met material in the same civic pipeline;
+- Open Council Network public Ealing meeting summaries integrated through a conservative public-page bridge, with direct links back to OCN.
 
 Parallel/unresolved:
 
-- ModernGov RSS works in ordinary readers but server-side requests receive HTTP 403;
-- OCN API access remains potentially valuable but is not a dependency;
+- ModernGov RSS works in ordinary readers but server-side requests are blocked or fail upstream; interoperability work continues separately;
+- formal OCN API access remains potentially valuable for richer structured meeting/document relationships, but the current public-page bridge already provides useful timeline coverage and the paid API is not a dependency;
 - historical/dormant council feeds need selective review rather than presentation as current.
 
 Next improvements:
@@ -217,6 +218,7 @@ Next:
 
 - scalable/sharded archive indexing rather than scanning the whole canonical store indefinitely;
 - stronger feed caching and parser regression tests;
+- registry-driven source configuration and safer source lifecycle handling;
 - source-health review tooling;
 - searchable/grouped source facets as the source universe grows;
 - automated completeness checks for public entities and provider/source links;
@@ -237,7 +239,7 @@ The Commons should preserve its own public URLs, source provenance, stable item/
 4. **Make source filtering scale** with searchable/grouped publisher families as the source universe grows.
 5. **Finish the public entity completeness audit** and automate checks for newly incomplete records.
 6. **Continue deliberate source expansion** while strengthening registry-driven configuration, caching, parser tests and source-health tooling.
-7. Continue **ModernGov and OCN work in parallel**, but do not let either block useful Commons development.
+7. **Continue ModernGov interoperability work and explore an OCN partnership/API arrangement in parallel.** The existing OCN public-page bridge is sufficient for current timeline coverage; neither is a blocker to useful Commons development.
 
 ## Non-negotiable design boundaries
 
