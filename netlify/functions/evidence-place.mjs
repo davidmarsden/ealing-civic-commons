@@ -2,6 +2,9 @@ import { getPlaceEvidence } from '../lib/evidence-store.mjs';
 import { loadSouthallEvidence } from '../lib/southall-evidence-service.mjs';
 
 const cleanPlace = value => String(value ?? '').trim().toLowerCase();
+const cacheControl = () => Netlify.context?.deploy?.context === 'production'
+  ? 'public, max-age=900, stale-while-revalidate=3600'
+  : 'no-store';
 
 function livePlacePayload(payload, place) {
   const wanted = place === 'southall' ? 'Southall' : place === 'ealing' ? 'Ealing' : null;
@@ -33,7 +36,7 @@ export default async request => {
     if (!payload) {
       return new Response(JSON.stringify({ status: 'not-found', place }), {
         status: 404,
-        headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=300' }
+        headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': cacheControl() }
       });
     }
     return new Response(JSON.stringify({
@@ -42,7 +45,7 @@ export default async request => {
       storage: { persisted: Boolean(persisted), cache: loaded.cache }
     }), {
       status: 200,
-      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=900, stale-while-revalidate=3600' }
+      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': cacheControl() }
     });
   } catch (error) {
     return new Response(JSON.stringify({ status: 'error', error: String(error?.message || error) }), {
