@@ -3,6 +3,7 @@ import { commonsAssertionsForEntity, commonsSourcesForEntity } from '../lib/revi
 import { politicalAssertionsForEntity, politicalSourcesForEntity } from '../lib/political-assertions.mjs';
 import { institutionalAssertionsForEntity, institutionalSourcesForEntity } from '../lib/institutional-assertions.mjs';
 import { londonAssemblyAssertionsForEntity, londonAssemblySourcesForEntity } from '../lib/london-assembly-assertions.mjs';
+import { southallAssertionsForEntity, southallSourcesForEntity } from '../lib/southall-assertions.mjs';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -27,12 +28,14 @@ export default async request => {
   const civicEntityId = `civic:${parsed.type}:${parsed.slug}`;
   const assertions = dedupeById([
     ...commonsAssertionsForEntity(civicEntityId),
+    ...southallAssertionsForEntity(civicEntityId),
     ...politicalAssertionsForEntity(civicEntityId),
     ...institutionalAssertionsForEntity(civicEntityId),
     ...londonAssemblyAssertionsForEntity(civicEntityId)
   ]);
   const sources = dedupeById([
     ...commonsSourcesForEntity(civicEntityId),
+    ...southallSourcesForEntity(civicEntityId),
     ...politicalSourcesForEntity(civicEntityId),
     ...institutionalSourcesForEntity(civicEntityId),
     ...londonAssemblySourcesForEntity(civicEntityId)
