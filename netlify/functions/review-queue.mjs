@@ -32,6 +32,18 @@ async function parseBody(request) {
   catch { return null; }
 }
 
+function promotionPayload(record, result) {
+  return {
+    type: 'public-contribution',
+    id: result.contribution?.id || `contrib-${record.id}`,
+    published: result.status === 'accepted' && result.action === 'published',
+    action: result.action,
+    created: result.created ?? false,
+    removed: result.removed ?? false,
+    authoritativeStatus: result.status
+  };
+}
+
 export default async request => {
   if (!configuredToken()) {
     return json({ error: 'Review queue is not configured. Set REVIEW_ADMIN_TOKEN on this deployment.' }, 503);
@@ -64,15 +76,7 @@ export default async request => {
       if (record.kind === 'item-contribution') {
         try {
           const result = await reconcileContributionPublication(record.id);
-          promotion = {
-            type: 'public-contribution',
-            id: result.contribution?.id || `contrib-${record.id}`,
-            published: result.status === 'accepted' && result.action === 'published',
-            action: result.action,
-            created: result.created ?? false,
-            removed: result.removed ?? false,
-            authoritativeStatus: result.status
-          };
+          promotion = promotionPayload(record, result);
         } catch (error) {
           console.error('Contribution publication reconciliation failed', { reviewId: record.id, error });
           return json({
@@ -86,6 +90,19 @@ export default async request => {
       return json({ ok: true, record, promotion });
     } catch (error) {
       return json({ error: error.message || 'Decision failed' }, 400);
+    }
+  }
+
+  if (body.action === 'reconcile-publication') {
+    try {
+      const result = await reconcileContributionPublication(body.id);
+      const records = await listReviews({ limit: 300 });
+      const record = records.find(candidate => candidate.id === body.id);
+      if (!record) return json({ error: 'Review item not found' }, 404);
+      return json({ ok: true, record, promotion: promotionPayload(record, result) });
+    } catch (error) {
+      console.error('Contribution publication retry failed', { reviewId: body.id, error });
+      return json({ error: `Public contribution could not be reconciled: ${error.message || error}` }, 500);
     }
   }
 
