@@ -184,7 +184,7 @@ Live now:
 - meaningful outcome emails for published, needs-info and not-published decisions;
 - private high-entropy submission-status URLs for contributors with or without email;
 - status pages expose only public-safe state, dates and links — never email addresses, private moderation notes or reviewer identity;
-- notification delivery is idempotent and fail-soft;
+- notification delivery is deduplicated for ordinary sequential retries and is fail-soft; concurrent duplicate deliveries are not yet protected by an atomic claim;
 - published context can create new Commons activity around an older archived story.
 
 ### 7C — unified civic review and promotion — next
