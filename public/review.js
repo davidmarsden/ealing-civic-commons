@@ -30,10 +30,20 @@ function decisionButtons(record) {
   return `<div class="review-decision">${retry}${decisions}</div>`;
 }
 
+function canonicalTarget(record) {
+  if (record.kind !== 'item-contribution') return '';
+  const target = record.canonicalTarget;
+  if (!target) return '<div class="review-private"><strong>Canonical civic target unavailable</strong><br>This contribution cannot be safely published until the archived item can be verified.</div>';
+  const source = target.source ? ` · ${esc(target.source)}` : '';
+  const original = target.originalUrl ? `<a href="${esc(target.originalUrl)}" target="_blank" rel="noopener noreferrer">Original source ↗</a>` : '';
+  return `<div class="review-private"><strong>Canonical civic target</strong><br><a href="${esc(target.commonsPath)}" target="_blank" rel="noopener noreferrer">${esc(target.title)}</a>${source}${original ? `<br>${original}` : ''}<br><small>${esc(target.threadId)}</small></div>`;
+}
+
 function card(record) {
   const p = record.payload || {};
   const priv = record.private || {};
-  const title = p.title || p.body?.slice(0, 100) || `${record.kind} candidate`;
+  const submittedTitle = p.title || p.body?.slice(0, 100) || `${record.kind} candidate`;
+  const title = record.kind === 'item-contribution' && record.canonicalTarget?.title ? record.canonicalTarget.title : submittedTitle;
   const link = p.url || p.relatedUrl || p.originalUrl || p.commonsPermalink;
   const privateBits = [priv.displayName && `Name: ${esc(priv.displayName)}`, priv.email && `Email: ${esc(priv.email)}`, priv.moderationContext && esc(priv.moderationContext)].filter(Boolean);
   const latest = Array.isArray(record.history) && record.history.length ? record.history[record.history.length - 1] : null;
@@ -41,21 +51,22 @@ function card(record) {
     <div class="review-card-head"><div><div class="review-meta"><span class="review-kind">${esc(record.kind)}</span><span>${esc(record.source)}</span><span>${esc(fmtDate(record.createdAt))}</span></div><h2>${esc(title)}</h2></div><span class="review-state ${esc(record.status)}">${esc(stateLabel(record.status))}</span></div>
     ${p.body ? `<p class="review-body">${esc(p.body)}</p>` : ''}
     <div class="review-meta">${p.contributionType ? `<span>${esc(p.contributionType)}</span>` : ''}${p.noticeType ? `<span>${esc(p.noticeType)}</span>` : ''}${p.area ? `<span>${esc(p.area)}</span>` : ''}${(p.topics || []).map(topic => `<span>${esc(topic)}</span>`).join('')}</div>
-    ${link ? `<p class="review-link"><a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open source ↗</a></p>` : ''}
+    ${link ? `<p class="review-link"><a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open submitted source ↗</a></p>` : ''}
     <p><small>${esc(record.provenance || '')}</small></p>
+    ${canonicalTarget(record)}
     ${privateBits.length ? `<div class="review-private"><strong>Private moderation data</strong><br>${privateBits.join('<br>')}</div>` : ''}
     ${decisionButtons(record)}
     ${latest ? `<div class="review-history">Last decision: ${esc(latest.reviewer)} · ${esc(stateLabel(latest.to))} · ${esc(fmtDate(latest.at))}${latest.note ? ` — ${esc(latest.note)}` : ''}</div>` : ''}
   </article>`;
 }
 
-async function loadQueue() {
+async function loadQueue(statusMessage = '') {
   $('#queueStatus').textContent = 'Loading review queue…';
   try {
     const query = currentStatus === 'all' ? '' : `?status=${encodeURIComponent(currentStatus)}`;
     const data = await api(query);
     $('#queueList').innerHTML = data.records.length ? data.records.map(card).join('') : '<div class="review-empty">Nothing in this part of the queue.</div>';
-    $('#queueStatus').textContent = `${data.records.length} ${currentStatus === 'all' ? 'review items' : currentStatus.replace('-', ' ')} item${data.records.length === 1 ? '' : 's'}.`;
+    $('#queueStatus').textContent = statusMessage || `${data.records.length} ${currentStatus === 'all' ? 'review items' : currentStatus.replace('-', ' ')} item${data.records.length === 1 ? '' : 's'}.`;
     bindDecisions();
   } catch (error) {
     $('#queueStatus').textContent = error.message;
@@ -71,10 +82,10 @@ function bindDecisions() {
     button.disabled = true;
     try {
       const data = await api('', { method:'POST', body: JSON.stringify({ action:'decision', id:cardEl.dataset.id, status, reviewer:reviewer(), note }) });
-      if (data.promotion?.type === 'public-contribution') {
-        $('#queueStatus').textContent = data.promotion.published ? 'Contribution accepted and published.' : 'Contribution withdrawn from public view.';
-      }
-      await loadQueue();
+      const message = data.promotion?.type === 'public-contribution'
+        ? (data.promotion.published ? 'Contribution accepted and published.' : 'Contribution withdrawn from public view.')
+        : `${stateLabel(status)} decision saved.`;
+      await loadQueue(message);
     } catch (error) {
       $('#queueStatus').textContent = error.message;
       button.disabled = false;
@@ -87,8 +98,8 @@ function bindDecisions() {
     $('#queueStatus').textContent = 'Reconciling public contribution…';
     try {
       const data = await api('', { method:'POST', body: JSON.stringify({ action:'reconcile-publication', id:cardEl.dataset.id }) });
-      $('#queueStatus').textContent = data.promotion?.published ? 'Contribution published.' : 'Contribution is not currently public.';
-      await loadQueue();
+      const message = data.promotion?.published ? 'Contribution published.' : 'Contribution is not currently public.';
+      await loadQueue(message);
     } catch (error) {
       $('#queueStatus').textContent = error.message;
       button.disabled = false;
@@ -119,7 +130,7 @@ $('#loginForm').addEventListener('submit', async event => {
 });
 
 $('#reviewerInput').value = reviewer();
-$('#refreshQueue').addEventListener('click', loadQueue);
+$('#refreshQueue').addEventListener('click', () => loadQueue());
 $('#forgetToken').addEventListener('click', lock);
 document.querySelectorAll('[data-status]').forEach(button => button.addEventListener('click', () => {
   currentStatus = button.dataset.status;
@@ -133,10 +144,10 @@ $('#importNotices').addEventListener('click', async () => {
   $('#queueStatus').textContent = 'Checking current Ealing notices on Public Notice Portal…';
   try {
     const data = await api('', { method:'POST', body: JSON.stringify({ action:'import-public-notices', limit:16 }) });
-    $('#queueStatus').textContent = `Public Notice Portal: ${data.discovered} found, ${data.created} newly queued, ${data.alreadyQueued} already present${data.failed ? `, ${data.failed} failed` : ''}.`;
+    const message = `Public Notice Portal: ${data.discovered} found, ${data.created} newly queued, ${data.alreadyQueued} already present${data.failed ? `, ${data.failed} failed` : ''}.`;
     currentStatus = 'pending';
     document.querySelectorAll('[data-status]').forEach(candidate => candidate.classList.toggle('active', candidate.dataset.status === 'pending'));
-    await loadQueue();
+    await loadQueue(message);
   } catch (error) { $('#queueStatus').textContent = error.message; }
   finally { button.disabled = false; }
 });
