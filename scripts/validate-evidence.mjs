@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { validateEvidenceCollection, validateEvidenceObject } from '../netlify/lib/evidence.mjs';
 import { normalizeEalingProbe } from '../netlify/lib/ealing-evidence.mjs';
+import { evidenceSemanticHash } from '../netlify/lib/evidence-store.mjs';
 
 const probe = {
   generatedAt: '2026-08-31T22:00:00.000Z',
@@ -75,4 +76,12 @@ const badComparator = {
 };
 assert.equal(validateEvidenceObject(badComparator).valid, false, 'boolean comparator values must be rejected');
 
-console.log(`Validated ${normalized.objects.length} evidence objects and ${normalized.collections.length} collections; AQ excluded and malformed values rejected.`);
+const retrievalOnlyChange = structuredClone(validObject);
+retrievalOnlyChange.provenance.retrievedAt = '2026-09-01T08:00:00.000Z';
+assert.equal(evidenceSemanticHash(retrievalOnlyChange), evidenceSemanticHash(validObject), 'retrieval timestamps must not create evidence revisions');
+
+const substantiveChange = structuredClone(validObject);
+substantiveChange.value = Number(validObject.value) + 1;
+assert.notEqual(evidenceSemanticHash(substantiveChange), evidenceSemanticHash(validObject), 'published value changes must create evidence revisions');
+
+console.log(`Validated ${normalized.objects.length} evidence objects and ${normalized.collections.length} collections; AQ excluded, malformed values rejected, revision hashing stable.`);
