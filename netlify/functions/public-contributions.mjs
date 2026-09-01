@@ -1,4 +1,4 @@
-import { listPublishedContributions } from '../lib/public-contributions.mjs';
+import { listPublishedContributions, publicationStoreScope } from '../lib/public-contributions.mjs';
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status,
@@ -14,7 +14,13 @@ export default async request => {
   const threadId = String(url.searchParams.get('thread') || '').trim() || null;
   try {
     const contributions = await listPublishedContributions({ threadId, limit: threadId ? 250 : 1000 });
-    return json({ version: 1, updatedAt: new Date().toISOString(), contributions });
+    return json({
+      version: 1,
+      updatedAt: new Date().toISOString(),
+      storeScope: publicationStoreScope(),
+      count: contributions.length,
+      contributions
+    });
   } catch (error) {
     console.error('Published contributions lookup failed', error);
     return json({ error: 'Published contributions are temporarily unavailable.' }, 503);
