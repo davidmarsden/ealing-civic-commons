@@ -274,13 +274,16 @@ function normaliseDate(value) {
 
 function ocnDateFromText(text = '') {
   const monthNames = 'January|February|March|April|May|June|July|August|September|October|November|December';
-  const match = String(text).match(new RegExp(`\\b(\\d{1,2})\\s+(${monthNames})\\s+(20\\d{2})\\b`, 'i'));
+  const match = String(text).match(new RegExp(`\b(\d{1,2})\s+(${monthNames})\s+(20\d{2})\b`, 'i'));
   return match ? normaliseDate(`${match[1]} ${match[2]} ${match[3]} 12:00 UTC`) : null;
 }
 
 function ocnTownsFromText(text = '') {
-  const haystack = ` ${String(text).toLowerCase()} `;
-  return BOROUGH_TOWNS.filter(town => new RegExp(`\\b${town.toLowerCase()}\\b`, 'i').test(haystack));
+  const haystack = String(text)
+    .replace(/\b(?:the\s+)?London Borough of Ealing(?: Council)?\b/gi, ' ')
+    .replace(/\bEaling Council\b/gi, ' ')
+    .replace(/\bEaling LBC\b/gi, ' ');
+  return BOROUGH_TOWNS.filter(town => new RegExp(`\b${town.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\b`, 'i').test(haystack));
 }
 
 function parseOcnPublicItems(source, html = '') {
