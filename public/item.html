@@ -38,7 +38,7 @@
         <label>What are you adding?<select name="contribution-type" required><option>Correction</option><option>Related source</option><option>Evidence / document</option><option>Local information</option><option>Comment / context</option></select></label>
         <label>Contribution<textarea name="body" rows="7" required placeholder="What should people know, and how do you know it?"></textarea></label>
         <label>Related link <span class="optional">Optional</span><input name="related-url" type="url" placeholder="https://" /></label>
-        <div class="form-row"><label>Your name <span class="optional">Optional</span><input name="name" type="text" /></label><label>Your email <span class="optional">Optional — for moderation follow-up</span><input name="email" type="email" /></label></div>
+        <div class="form-row"><label>Your name <span class="optional">Optional</span><input name="name" type="text" /></label><label>Your email <span class="optional">Optional — receive moderation updates</span><input name="email" type="email" /></label></div>
         <label class="consent-label"><input name="publication-consent" type="checkbox" value="yes" required /><span>I understand this submission may be published with moderation and provenance.</span></label>
         <button class="submit-button" type="submit">Submit for review</button>
       </form>
@@ -49,6 +49,7 @@
 
   <footer><div class="wrap footer-inner"><span>Southall & Ealing Civic Commons — social phase prototype</span><span>Original sources remain canonical.</span></div></footer>
   <script src="/site-shell.js?v=20260829-1"></script>
+  <script src="/submission-token.js?v=20260901-1"></script>
   <script src="/demo-data.js"></script><script src="/item.js?v=20260901-1" type="module"></script><script src="/item-connections.js?v=20260829-1" type="module"></script><script src="/source-links.js?v=20260830-4" type="module"></script><script src="/memory-columns.js?v=20260828-1" type="module"></script>
 </body>
 </html>

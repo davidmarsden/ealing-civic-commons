@@ -10,7 +10,7 @@
   <header class="site-header">
     <div class="wrap header-inner">
       <div><a class="brand" href="/">Civic Commons</a><div class="strap">Southall & Ealing</div></div>
-      <nav aria-label="Primary"><a href="/">Latest</a><a href="/documents/">Documents</a><a href="/#about">About</a></nav>
+      <nav aria-label="Primary"><a href="/">Latest</a><a href="/archive.html">Archive</a><a href="/#about">About</a></nav>
     </div>
   </header>
   <main>
@@ -19,11 +19,24 @@
         <p class="eyebrow">Contribution received</p>
         <h1>Thank you. It’s in the moderation queue.</h1>
         <p class="lede">Corrections, evidence, related sources and local information are reviewed before publication. Nothing is ranked by likes or engagement.</p>
+        <div id="statusLinkPanel" class="panel" style="margin-top:28px" hidden>
+          <strong>Keep track of what happens next</strong>
+          <p>Bookmark your private status page. If you supplied an email address, Civic Commons will also email you when your submission is received and when its moderation status meaningfully changes.</p>
+          <p><a id="statusLink" class="submit-button" href="#">Check submission status →</a></p>
+        </div>
         <p style="margin-top:28px"><a href="/" style="font-weight:800;color:var(--green)">Return to the civic timeline →</a></p>
       </div>
     </section>
   </main>
   <footer><div class="wrap footer-inner"><span>Southall & Ealing Civic Commons</span><span>Participate openly. Keep the sources visible.</span></div></footer>
   <script src="/site-shell.js?v=20260829-1"></script>
+  <script>
+    const token = sessionStorage.getItem('civic-commons:last-submission-status-token');
+    if (token) {
+      const link = document.querySelector('#statusLink');
+      link.href = `/submission-status.html?token=${encodeURIComponent(token)}`;
+      document.querySelector('#statusLinkPanel').hidden = false;
+    }
+  </script>
 </body>
 </html>

@@ -10,9 +10,12 @@ export const store = () => Netlify.context?.deploy?.context === 'production'
   : getDeployStore(STORE_NAME);
 export const reviewKey = id => `review/${String(id || '').trim()}`;
 export const auditKey = (id, eventId) => `audit/${String(id || '').trim()}/${eventId}`;
+export const statusTokenKey = hash => `status-token/${String(hash || '').trim()}`;
+export const notificationKey = (id, event) => `notification/${String(id || '').trim()}/${String(event || '').trim()}`;
 
 const cleanText = (value, max = 4000) => String(value ?? '').trim().slice(0, max);
 const cleanArray = (value, max = 20) => Array.isArray(value) ? value.map(item => cleanText(item, 180)).filter(Boolean).slice(0, max) : [];
+export const hashStatusToken = token => createHash('sha256').update(String(token || '')).digest('hex');
 
 export function cleanHttpUrl(value) {
   const raw = cleanText(value, 2048);
@@ -70,7 +73,8 @@ export function normalizeReview(input = {}) {
     private: {
       displayName: cleanText(input.private?.displayName || payload.displayName, 300),
       email: cleanText(input.private?.email || payload.email, 320),
-      moderationContext: cleanText(input.private?.moderationContext, 2000)
+      moderationContext: cleanText(input.private?.moderationContext, 2000),
+      statusTokenHash: cleanText(input.private?.statusTokenHash, 128)
     },
     review: {
       reviewer: cleanText(input.review?.reviewer, 180),
@@ -96,7 +100,6 @@ async function hydrateReview(blobs, record) {
   if (!record?.id) return record;
   const events = await loadAuditEvents(blobs, record.id);
   if (!events.length) return record;
-
   let status = 'pending';
   const history = events.map(event => {
     const hydrated = { ...event, from: status };
@@ -113,12 +116,21 @@ async function hydrateReview(blobs, record) {
   });
 }
 
+async function mapStatusToken(blobs, candidate) {
+  if (!candidate.private.statusTokenHash) return;
+  await blobs.setJSON(statusTokenKey(candidate.private.statusTokenHash), { reviewId: candidate.id, createdAt: candidate.createdAt });
+}
+
 export async function enqueueReview(input) {
   const blobs = store();
   const candidate = normalizeReview(input);
   const existing = await blobs.get(reviewKey(candidate.id), { type: 'json' }).catch(() => null);
-  if (existing?.id === candidate.id) return { record: await hydrateReview(blobs, existing), created: false };
+  if (existing?.id === candidate.id) {
+    await mapStatusToken(blobs, candidate);
+    return { record: await hydrateReview(blobs, existing), created: false };
+  }
   await blobs.setJSON(reviewKey(candidate.id), candidate);
+  await mapStatusToken(blobs, candidate);
   return { record: candidate, created: true };
 }
 
@@ -128,6 +140,27 @@ export async function getReview(id) {
   const blobs = store();
   const record = await blobs.get(reviewKey(cleanId), { type: 'json' }).catch(() => null);
   return hydrateReview(blobs, record);
+}
+
+export async function getReviewByStatusToken(token) {
+  const raw = cleanText(token, 256);
+  if (!raw) return null;
+  const blobs = store();
+  const lookup = await blobs.get(statusTokenKey(hashStatusToken(raw)), { type: 'json' }).catch(() => null);
+  return lookup?.reviewId ? getReview(lookup.reviewId) : null;
+}
+
+export async function claimNotification(id, event) {
+  const blobs = store();
+  const key = notificationKey(id, event);
+  const existing = await blobs.get(key, { type: 'json' }).catch(() => null);
+  if (existing) return false;
+  await blobs.setJSON(key, { reviewId: id, event, at: new Date().toISOString() });
+  return true;
+}
+
+export async function releaseNotification(id, event) {
+  await store().delete(notificationKey(id, event));
 }
 
 export async function listReviews({ status = null, limit = 250 } = {}) {
@@ -147,7 +180,6 @@ export async function decideReview(id, { status, reviewer, note = '' } = {}) {
   const cleanId = cleanText(id, 120);
   const base = await blobs.get(reviewKey(cleanId), { type: 'json' }).catch(() => null);
   if (!base) return null;
-
   const now = new Date().toISOString();
   const event = {
     id: randomUUID(),
@@ -157,12 +189,7 @@ export async function decideReview(id, { status, reviewer, note = '' } = {}) {
     reviewer: cleanText(reviewer, 180) || 'Reviewer',
     note: cleanText(note, 4000)
   };
-
-  // Decision events are the authoritative history. They use unique keys, so
-  // simultaneous reviewers cannot overwrite one another. The review record is
-  // only a denormalised current snapshot and is rehydrated from the audit log.
   await blobs.setJSON(auditKey(base.id, event.id), event);
-
   const updated = normalizeReview({
     ...base,
     status,

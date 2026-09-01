@@ -26,4 +26,26 @@
   if (footer) {
     footer.innerHTML = '<div class="wrap footer-inner"><span>Southall & Ealing Civic Commons</span><span>Open civic infrastructure. Original sources remain canonical.</span></div>';
   }
+
+  function newStatusToken() {
+    const bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    let binary = '';
+    bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  }
+
+  document.querySelectorAll('form[name="item-contribution"], form[name="submit-source"]').forEach(form => {
+    let input = form.querySelector('input[name="status-token"]');
+    if (!input) {
+      input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'status-token';
+      form.appendChild(input);
+    }
+    if (!input.value) input.value = newStatusToken();
+    form.addEventListener('submit', () => {
+      sessionStorage.setItem('civic-commons:last-submission-status-token', input.value);
+    });
+  });
 })();
