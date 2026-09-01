@@ -21,6 +21,11 @@ export default async request => {
     const combined = [...(data.items || []), ...(documents.items || [])];
     const seen = new Set();
     const items = combined.filter(item => {
+      // Reviewed-context activity is a transient timeline projection over an
+      // already archived parent item. Its body remains governed by the public
+      // contribution store, where a later moderation withdrawal can remove it.
+      // Never copy that synthetic activity into the append-only civic archive.
+      if (item?.activityType === 'new-context') return false;
       if (!item?.id || seen.has(item.id)) return false;
       seen.add(item.id);
       return true;
