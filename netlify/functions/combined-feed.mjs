@@ -48,8 +48,10 @@ async function reviewedContextActivity() {
         sourceClass: 'Reviewed civic context',
         sourceHomepage: '/',
         title: `New local context — ${parent.title}`,
-        url: `/items/${key}#contribution-${contribution.id}`,
-        canonicalUrl: `/items/${key}#contribution-${contribution.id}`,
+        // Keep the publisher URL as the original-source destination. The
+        // timeline uses parentItemKey/contributionId for the primary civic link.
+        url: parent.url || `/items/${key}`,
+        canonicalUrl: null,
         summary: contribution.body,
         publishedAt: contribution.publishedAt || contribution.submittedAt || null,
         originalPublishedAt: parent.publishedAt || null,
@@ -60,7 +62,8 @@ async function reviewedContextActivity() {
         derivedFrom: 'Human-reviewed contribution to an archived Civic Commons item',
         activityType: 'new-context',
         parentItemKey: key,
-        parentItemId: parent.id
+        parentItemId: parent.id,
+        contributionId: contribution.id
       };
     }));
     return activities.filter(Boolean);
