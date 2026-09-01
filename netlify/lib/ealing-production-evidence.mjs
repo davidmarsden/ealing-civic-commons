@@ -52,6 +52,12 @@ function observation(row, spec) {
   const a = area(row, spec.sourceGeography || spec.geography);
   return { place: spec.geography === 'LSOA 2021' && a.wardName ? `${a.wardName} — ${a.name}` : a.name, area:a, value:row[spec.fieldId], fieldId:spec.fieldId };
 }
+function observationKey(item) {
+  return [item.area?.code, item.area?.name, item.area?.wardName, item.area?.townName, item.place].map(value => String(value || '')).join('\u0000');
+}
+function canonicalObservations(values) {
+  return [...values].sort((a,b) => observationKey(a).localeCompare(observationKey(b), 'en-GB'));
+}
 function numeric(values) {
   const rows = values.map(x => Number(x.value)).filter(Number.isFinite).sort((a,b)=>a-b);
   if (!rows.length) return null;
@@ -79,8 +85,8 @@ export async function buildProductionEvidenceProbe() {
       instance = { date:spec.date, geography:{name:'Ealing borough'}, observations, matchedRows:populated.length, serviceUrl:spec.serviceUrl, fieldId:spec.fieldId, unit:spec.unit || null, summary:{kind:'numeric',values:numeric(observations)}, comparator:null, scopeNote:`The source repeats the same borough-wide value across ${populated.length} LSOA-shaped rows; no neighbourhood variation is published here.` };
     } else {
       const populated = rows.filter(row => row[spec.fieldId] !== null && row[spec.fieldId] !== undefined && row[spec.fieldId] !== '');
-      const all = populated.map(row => observation(row,spec));
-      const southall = populated.filter(row => inSouthall(row,spec.geography)).map(row => observation(row,spec));
+      const all = canonicalObservations(populated.map(row => observation(row,spec)));
+      const southall = canonicalObservations(populated.filter(row => inSouthall(row,spec.geography)).map(row => observation(row,spec)));
       if (!southall.length) throw new Error(`No Southall observations returned for ${spec.id} ${spec.geography}`);
       instance = { date:spec.date, geography:{name:spec.geography}, observations:southall, matchedRows:southall.length, serviceUrl:spec.serviceUrl, fieldId:spec.fieldId, unit:spec.unit || null, summary:spec.categorical ? {kind:'distribution',values:distribution(southall)} : {kind:'numeric',values:numeric(southall)}, comparator:spec.categorical ? {label:`Ealing ${spec.geography} distribution`,kind:'distribution',values:distribution(all)} : {label:`Ealing ${spec.geography} median`,kind:'numeric',values:numeric(all)} };
     }
