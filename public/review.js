@@ -23,7 +23,11 @@ function decisionButtons(record) {
     ['needs-info', 'Needs info'],
     ['rejected', 'Reject']
   ];
-  return `<div class="review-decision">${labels.filter(([status]) => status !== record.status).map(([status, label]) => `<button type="button" data-decision="${status}">${label}</button>`).join('')}</div>`;
+  const decisions = labels.filter(([status]) => status !== record.status).map(([status, label]) => `<button type="button" data-decision="${status}">${label}</button>`).join('');
+  const retry = record.kind === 'item-contribution' && record.status === 'accepted'
+    ? '<button type="button" data-reconcile-publication>Retry publish</button>'
+    : '';
+  return `<div class="review-decision">${retry}${decisions}</div>`;
 }
 
 function card(record) {
@@ -70,6 +74,20 @@ function bindDecisions() {
       if (data.promotion?.type === 'public-contribution') {
         $('#queueStatus').textContent = data.promotion.published ? 'Contribution accepted and published.' : 'Contribution withdrawn from public view.';
       }
+      await loadQueue();
+    } catch (error) {
+      $('#queueStatus').textContent = error.message;
+      button.disabled = false;
+    }
+  }));
+
+  document.querySelectorAll('[data-reconcile-publication]').forEach(button => button.addEventListener('click', async () => {
+    const cardEl = button.closest('[data-id]');
+    button.disabled = true;
+    $('#queueStatus').textContent = 'Reconciling public contribution…';
+    try {
+      const data = await api('', { method:'POST', body: JSON.stringify({ action:'reconcile-publication', id:cardEl.dataset.id }) });
+      $('#queueStatus').textContent = data.promotion?.published ? 'Contribution published.' : 'Contribution is not currently public.';
       await loadQueue();
     } catch (error) {
       $('#queueStatus').textContent = error.message;
