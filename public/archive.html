@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Civic Archive — Civic Commons</title>
+  <meta name="description" content="Browse civic items previously observed by the Southall & Ealing Civic Commons, even after they leave live source feeds." />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/archive.css" />
+</head>
+<body>
+  <header class="site-header"><div class="wrap header-inner"><div><a class="brand" href="/">Civic Commons</a><div class="strap">Southall & Ealing</div></div></div></header>
+  <main>
+    <section class="hero archive-hero"><div class="wrap"><p class="eyebrow">Persistent civic memory</p><h1>Civic Archive</h1><p class="lede">Items stay discoverable here after they roll out of publishers’ current feeds. Civic Commons stores normalized metadata and excerpts, while the original publisher remains canonical.</p></div></section>
+    <section class="wrap archive-controls" aria-label="Archive filters">
+      <label>Search<input id="archiveSearch" type="search" placeholder="Title, summary, source…" /></label>
+      <label>Place<select id="archiveTown"><option value="">All places</option><option>Acton</option><option>Ealing</option><option>Greenford</option><option>Hanwell</option><option>Northolt</option><option>Perivale</option><option>Southall</option></select></label>
+      <label>Topic<select id="archiveTopic"><option value="">All topics</option><option>Council & democracy</option><option>Planning & development</option><option>Housing</option><option>Environment</option><option>Transport</option><option>Community</option><option>Schools & young people</option><option>Policing & safety</option><option>Culture & history</option></select></label>
+      <label>Source<select id="archiveSource"><option value="">All sources</option></select></label>
+      <button id="archiveApply" type="button">Apply</button>
+    </section>
+    <section class="wrap archive-statusbar"><div id="archiveStatus" aria-live="polite">Loading the archive…</div><a href="/">Back to Latest →</a></section>
+    <section class="wrap archive-layout">
+      <div id="archiveList" class="archive-list"></div>
+      <button id="archiveMore" class="archive-more" type="button" hidden>Load more</button>
+    </section>
+  </main>
+  <footer></footer>
+  <script src="/site-shell.js?v=20260901-archive"></script>
+  <script src="/archive.js" type="module"></script>
+</body>
+</html>
