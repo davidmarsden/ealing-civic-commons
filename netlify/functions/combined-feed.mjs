@@ -42,16 +42,17 @@ async function reviewedContextActivity() {
       if (!archived?.item) return null;
       const parent = archived.item;
       return {
-        id: `civic-context:${contribution.id}`,
+        // This is activity *on* the stable parent civic object, not a new civic
+        // object. Keeping the parent identity makes every normal timeline link,
+        // follow and contribution-thread lookup land on the existing item page.
+        id: parent.id,
         sourceId: 'civic-commons-context',
         source: 'Civic Commons',
         sourceClass: 'Reviewed civic context',
         sourceHomepage: '/',
         title: `New local context — ${parent.title}`,
-        // Keep the publisher URL as the original-source destination. The
-        // timeline uses parentItemKey/contributionId for the primary civic link.
         url: parent.url || `/items/${key}`,
-        canonicalUrl: null,
+        canonicalUrl: parent.canonicalUrl || parent.url || null,
         summary: contribution.body,
         publishedAt: contribution.publishedAt || contribution.submittedAt || null,
         originalPublishedAt: parent.publishedAt || null,
