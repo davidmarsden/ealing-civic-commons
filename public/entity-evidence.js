@@ -2,6 +2,7 @@ import { renderEvidenceGraphic } from './evidence-graphics.js';
 
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]));
+const API_REVISION = '20260901-4';
 
 function fmt(value, unit = '') {
   const number = Number(value);
@@ -69,20 +70,19 @@ function watchHeroActions() {
 }
 
 async function fetchPlaceEvidence(place) {
-  const response = await fetch(`/api/evidence/place?place=${encodeURIComponent(place)}`, {
-    cache: 'no-store',
-    headers: { accept: 'application/json' }
-  });
+  const url = new URL('/api/evidence/place', location.origin);
+  url.searchParams.set('place', place);
+  url.searchParams.set('rev', API_REVISION);
+  const response = await fetch(url, { cache: 'no-store', headers: { accept: 'application/json' } });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload.status !== 'ok') throw new Error(payload.error || `HTTP ${response.status}`);
   return payload;
 }
 
 async function fetchSouthallFallback() {
-  const response = await fetch('/api/evidence/southall', {
-    cache: 'no-store',
-    headers: { accept: 'application/json' }
-  });
+  const url = new URL('/api/evidence/southall', location.origin);
+  url.searchParams.set('rev', API_REVISION);
+  const response = await fetch(url, { cache: 'no-store', headers: { accept: 'application/json' } });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload.status === 'error') throw new Error(payload.error || `HTTP ${response.status}`);
   return {
@@ -111,7 +111,10 @@ async function loadPlaceEvidence() {
     }
 
     const selected = selectedCollections(payload.collections || []);
-    if (!selected.length) throw new Error('No graphical Southall evidence collections were returned');
+    if (!selected.length) {
+      const returned = (payload.collections || []).map(item => `${item.indicatorId || '?'}:${item.geographyLevel || '?'}`).join(', ') || 'none';
+      throw new Error(`No graphical Southall evidence collections were returned (received: ${returned})`);
+    }
 
     root.className = 'entity-evidence-grid';
     root.innerHTML = selected.map(evidenceCard).join('');
