@@ -100,6 +100,21 @@ function samePublishedContribution(actual, expected) {
     && actual.publishedAt === expected.publishedAt;
 }
 
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function readBackPublishedContribution(blobs, key, expected) {
+  const deployScoped = publicationStoreScope() === 'deploy';
+  const attempts = deployScoped ? 8 : 1;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const persisted = await blobs.get(key, { type: 'json' });
+    if (samePublishedContribution(persisted, expected)) return persisted;
+    if (attempt + 1 < attempts) await wait(500);
+  }
+
+  return null;
+}
+
 export async function publishAcceptedContribution(review) {
   const canonical = await canonicalItemForReview(review);
   const contribution = publicContributionFromReview(review, canonical);
@@ -113,9 +128,11 @@ export async function publishAcceptedContribution(review) {
 
   // A successful Blob write is not enough to claim publication. Verify the
   // exact public representation through the same store selection used by the
-  // public reader. In production the store is strongly consistent.
-  const persisted = await blobs.get(key, { type: 'json' });
-  if (!samePublishedContribution(persisted, contribution)) {
+  // public reader. Production uses a strongly consistent global store; deploy
+  // stores may be eventually consistent, so preview/branch verification uses
+  // a short bounded retry before reporting a failure.
+  const persisted = await readBackPublishedContribution(blobs, key, contribution);
+  if (!persisted) {
     throw new Error(`Published contribution could not be read back from the ${publicationStoreScope()} Blob store`);
   }
 
