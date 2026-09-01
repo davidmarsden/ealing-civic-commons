@@ -1,5 +1,9 @@
 import { loadSouthallEvidence } from '../lib/southall-evidence-service.mjs';
 
+const cacheControl = () => Netlify.context?.deploy?.context === 'production'
+  ? 'public, max-age=900, stale-while-revalidate=3600'
+  : 'no-store';
+
 export default async () => {
   try {
     const result = await loadSouthallEvidence();
@@ -13,7 +17,7 @@ export default async () => {
       status: 200,
       headers: {
         'content-type': 'application/json; charset=utf-8',
-        'cache-control': 'public, max-age=900, stale-while-revalidate=3600'
+        'cache-control': cacheControl()
       }
     });
   } catch (error) {
