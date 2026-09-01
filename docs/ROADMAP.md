@@ -1,18 +1,19 @@
 # Southall & Ealing Civic Commons — roadmap
 
-**Updated:** 30 August 2026  
+**Updated:** 1 September 2026  
 **Status:** Public working roadmap
 
 This is the canonical implementation-level roadmap for the Civic Commons. The public version lives at `/roadmap.html`.
 
-The project has moved beyond the original read-only RSS prototype. It now has four working layers:
+The project has moved well beyond the original read-only RSS prototype. It now has five working layers:
 
 1. **Discovery** — local journalism, civic organisations, faith/community institutions, video and official publishing in one provenance-rich timeline.
 2. **Participation** — stable item pages, moderated contributions and public reviewed additions.
 3. **Following** — account-free browser follows, portable personal RSS and double-opt-in email alerts.
-4. **Memory** — persistent civic items, council Document Watch and a reviewed research/relationship layer.
+4. **Memory** — persistent civic items, a browsable Civic Archive, council Document Watch and reviewed research relationships.
+5. **Review** — a durable moderation queue with audit history, publication reconciliation, contributor receipts and private submission-status pages.
 
-The next work is therefore not “start the social phase”. The social primitives already exist. The priority is to make them durable, searchable, reviewable and useful at borough scale.
+The priority is no longer to invent the social layer. The social and review primitives are live. The next work is to extend structured promotion to more evidence types, improve archive/search infrastructure and keep source growth sustainable.
 
 ## Entity completeness standard
 
@@ -23,32 +24,18 @@ A civic entity is not considered complete merely because it has a stable ID and 
 3. **Provenance** — the provider/review layer responsible for the identity or assertion remains explicit.
 4. **Source or website** — a first-party website or authoritative source link where one exists; historical entities should link to reviewed evidence or an authoritative reference when a current first-party site is not appropriate.
 
-Explore and the entity APIs should expose missing-description/source audits so incomplete records are discoverable rather than silently rendered as bare names. New entity work should meet this standard as part of its acceptance criteria.
+Explore and the entity APIs should expose missing-description/source audits so incomplete records are discoverable rather than silently rendered as bare names.
 
 ## Phase 1 — Read-only civic aggregation
 
 **Status: complete for baseline; ongoing source expansion**
 
-Live foundations include:
-
-- server-side RSS/Atom ingestion and normalisation;
-- chronological timeline with canonical-source links;
-- YouTube/video Atom ingestion with canonical video provenance;
-- filtered London-wide feeds for Ealing relevance;
-- monitored structured pages and versioned living-publication watches where publishers do not expose feeds;
-- town/topic/source-class filtering;
-- visible source health and fetch diagnostics;
-- public source submissions;
-- founding pack, source register, architecture and prospectus;
-- Ealing Council website news RSS, ModernGov-derived records and Document Watch;
-- selected City Hall / London Assembly feeds and video;
-- Ealing-filtered Metropolitan Police material;
-- growing community, voluntary-sector, education, faith, campaigning and local political sources.
+Live foundations include server-side RSS/Atom ingestion and normalisation; chronological provenance-rich timelines; video/YouTube ingestion; filtered London-wide sources; monitored structured pages; town/topic/source-class filtering; visible source health; source submissions; Ealing Council news feeds; Document Watch; selected City Hall/London Assembly material; filtered Met material; and a growing range of community, education, faith, campaign and local political sources.
 
 Still open:
 
 - continue verifying useful local feeds, channels and public pages across all seven towns and communities;
-- expand first-party faith/community coverage without treating routine worship notices as civic news;
+- expand first-party community/faith coverage without turning routine notices into civic news;
 - move remaining hard-coded source configuration toward a cleaner registry-driven model;
 - improve parser tests, conditional requests and caching;
 - keep ModernGov access work separate from the rest of the product.
@@ -62,16 +49,11 @@ Live now:
 - deterministic Commons item URLs;
 - stable `civic-item:{key}` thread identities;
 - “Add to this story” submissions for corrections, evidence, related sources, local information and context;
-- Netlify Forms moderation inbox;
-- reviewed/public contributions stored separately from private submission data;
-- contribution validation at build time;
-- approved contributions rendered on item pages and surfaced as activity on the timeline.
+- public reviewed contributions stored separately from private moderation data;
+- approved contributions rendered on permanent item pages;
+- contribution activity can resurface an older archived story without pretending the original publisher republished it.
 
-Still open:
-
-- replace the manual publication registry with a structured review queue/moderation interface;
-- keep pending/accepted/rejected state and audit history explicit;
-- support contributor history without making a compulsory social account a prerequisite.
+The old manual JSON publication workflow has now been superseded by Phase 7B.
 
 ## Phase 3 — Follow, RSS and email delivery
 
@@ -81,8 +63,8 @@ Live now:
 
 - browser-local follows for stories, sources, places and topics;
 - a dedicated Following view;
-- portable personal RSS URLs using the same combined source stream as the public Commons;
-- approved contribution activity in personal feeds;
+- portable personal RSS URLs;
+- reviewed contribution activity in personal feeds;
 - account-free, double-opt-in email alerts via Resend;
 - confirmation and one-click unsubscribe;
 - no open tracking, click tracking, behavioural ranking or advertising profile;
@@ -91,29 +73,31 @@ Live now:
 Still open:
 
 - improve subscription management and explain snapshot semantics more clearly;
-- index persistent items so non-item follows can gain richer historical retrieval where useful;
-- consider lightweight optional identity only when it solves a real moderation/subscription problem.
+- use the persistent archive to make historical follows richer where useful;
+- consider optional identity only if it solves a real moderation/subscription problem.
 
 ## Phase 4 — Persistent civic memory
 
-**Status: core live**
+**Status: major v1 live**
 
 Live now:
 
 - Netlify Blobs store for normalised civic-item snapshots;
 - scheduled archival every 15 minutes;
 - stable item pages fall back to the archive after RSS items age out;
+- a first-class `/archive.html` Civic Archive with search, source, place and topic filtering plus pagination;
+- archive browsing reads the authoritative item store rather than imposing an arbitrary fixed-history ceiling;
 - directly followed stories remain resolvable in personal RSS;
-- canonical publisher URLs and provenance remain primary;
-- full Document Watch stream is archived even when only selected documents reach the main timeline;
-- living-publication watches create versioned snapshots without inventing dates or fake article URLs.
+- complete Document Watch stream is archived even when only selected documents reach Latest;
+- reviewed context can reactivate an older archived civic item as new Commons activity while preserving the original publication date and source.
 
 Still open:
 
-- archive indexes for search/browse by topic, source, place, date and civic issue;
-- retention/version rules for changed upstream items;
-- stronger link-rot resilience and preservation of key primary evidence;
-- distinguish “current representation” from historical versions where that matters.
+- optimise archive indexing as the collection grows into tens of thousands of records;
+- add stronger date/issue facets and richer full-text search;
+- define retention/version rules for changed upstream items;
+- improve link-rot resilience and preservation of key primary evidence;
+- distinguish current representation from historical versions where that matters.
 
 ## Phase 5 — Official publishing and Document Watch
 
@@ -121,28 +105,27 @@ Still open:
 
 Live now:
 
-- Ealing Council main news RSS as an official source;
-- 13 council news-category feeds used as enrichment signals rather than duplicate publishers;
+- Ealing Council main news RSS;
+- 13 council news-category feeds used as enrichment rather than duplicate publishers;
 - 47 council document-download feeds registered;
-- a curated live Document Watch set with per-feed freshness states;
-- human-readable council document descriptions where Ealing’s download pages expose them;
-- dedicated `/document-watch.html` with topic and council-collection filtering;
-- routine documents kept out of the main attention timeline unless locally specific or high-signal;
-- complete Document Watch stream retained in persistent civic memory;
-- official Ealing Council, London Assembly and filtered Met video/news sources feeding the same item pipeline.
+- curated Document Watch collections with freshness states;
+- human-readable document descriptions where the council exposes them;
+- dedicated `/document-watch.html` filtering;
+- full Document Watch memory retained even when routine files stay out of Latest;
+- official Ealing Council, London Assembly/City Hall and filtered Met material in the same civic pipeline.
 
 Parallel/unresolved:
 
 - ModernGov RSS works in ordinary readers but server-side requests receive HTTP 403;
 - OCN API access remains potentially valuable but is not a dependency;
-- historical/dormant council feeds need selective review rather than being presented as current.
+- historical/dormant council feeds need selective review rather than presentation as current.
 
 Next improvements:
 
 - better document search/indexing;
-- identify particularly important evidence streams for preservation and relationship-building;
+- preservation and relationship-building around high-value evidence streams;
 - transcript/caption enrichment for official video while keeping the original video canonical;
-- continue improving council taxonomy without reproducing the council website’s confusing information architecture.
+- continue improving council taxonomy without reproducing the council website’s information architecture.
 
 ## Phase 6 — Reviewed civic graph and research context
 
@@ -153,44 +136,69 @@ The Southall Stories research archive supplies a reviewed evidence layer while C
 Live now:
 
 - canonical people, organisation and place pages;
-- civic topic pages;
-- an Explore/graph surface;
+- civic topic pages and Explore/graph surface;
 - issue pages, beginning with Southall Gasworks redevelopment;
 - reviewed relationships and source records;
 - related civic memory on relevant stories;
-- Commons-native reviewed assertions can sit alongside research-archive evidence while preserving provenance;
-- entity-note prose from the research archive now flows into public descriptions;
-- Explore can expose first-party/authoritative website or source links;
-- current community, faith, political and institutional identities can coexist with clearly historical entities.
+- Commons-native reviewed assertions alongside research-archive evidence with provenance preserved;
+- entity-note prose flowing into public descriptions;
+- first-party/authoritative website or source links where available;
+- current and historical identities framed distinctly.
 
 Still open:
 
 - complete the entity audit until every public entity meets the **identity + description + provenance + source/website** standard;
 - deepen coherent evidence clusters rather than isolated links;
 - improve temporal relationships and roles;
-- connect newly archived official documents and videos to issues, entities and earlier reporting;
-- make relationship language consistently human-readable;
-- add automated validation so newly introduced incomplete entities are flagged before they become invisible housekeeping debt.
+- connect archived official documents, notices and videos to issues, entities and earlier reporting;
+- automate validation so newly introduced incomplete entities are flagged early.
 
-## Phase 7 — Review workflow and community knowledge
+## Phase 7 — Structured review and civic knowledge
 
-**Status: next major product phase**
+**Status: active — 7A and 7B complete; 7C next**
 
-Build a durable suggestions/review layer around the primitives already live.
+Phase 7 is the review membrane between submitted/discovered material and reviewed civic knowledge. Community participation is one input, not a prerequisite.
 
-Priorities:
+### 7A — durable review queue — complete
 
-- structured queue for proposed corrections, evidence, related sources and relationships;
-- pending / accepted / rejected states;
-- reviewer notes and audit trail;
-- explicit provenance for every accepted assertion;
-- safe promotion from community suggestion to reviewed civic knowledge;
-- entity candidates must satisfy the entity completeness standard before promotion to finished public identities;
-- moderation tools that do not expose private submission data publicly.
+Live now:
 
-The constitutional rule remains: community input can suggest reviewed knowledge; it must not silently rewrite it.
+- private Netlify Blobs review store;
+- `pending`, `needs-info`, `accepted` and `rejected` states;
+- append-only audit history and reviewer notes;
+- review types for item contributions, source submissions, evidence suggestions and relationship suggestions;
+- Public Notice Portal candidates can be imported into the queue for human review;
+- canonical target checking for item contributions;
+- private submitter details remain separate from public records.
 
-A future private-research bridge may feed source/assertion candidates from curated unpublished Markdown research, but unpublished material itself must remain private and candidate extraction must never bypass review.
+### 7B — contribution publication and contributor feedback — complete
+
+Live now:
+
+- **Accept & publish** automatically promotes reviewed `item-contribution` records into the public contribution store;
+- no manual `contributions.json` editing;
+- public records preserve stable contribution ID, civic thread, provenance and publication time;
+- accepted-but-unpublished and published states are distinguishable in review;
+- publication can be retried/reconciled safely and withdrawn if a later moderation decision changes;
+- contributor receipt emails when an address is supplied;
+- meaningful outcome emails for published, needs-info and not-published decisions;
+- private high-entropy submission-status URLs for contributors with or without email;
+- status pages expose only public-safe state, dates and links — never email addresses, private moderation notes or reviewer identity;
+- notification delivery is deduplicated for ordinary sequential retries and is fail-soft; concurrent duplicate deliveries are not yet protected by an atomic claim;
+- published context can create new Commons activity around an older archived story.
+
+### 7C — unified civic review and promotion — next
+
+Extend the same deliberate promotion model one review kind at a time:
+
+- define what accepting a `source-submission` means operationally and how a source enters the source registry safely;
+- define how accepted `evidence-suggestion` records become public evidence, Document Watch/Archive relationships or issue/entity links;
+- define how accepted `relationship-suggestion` records become reviewed graph assertions;
+- preserve an explicit audit link from review record to public representation;
+- never make one universal “Accept” button silently perform different dangerous actions;
+- keep machine/discovery suggestions, private-research candidates and community submissions subject to the same review boundary.
+
+The constitutional rule remains: suggestions can propose civic knowledge; they must not silently rewrite or become reviewed knowledge without an explicit human decision.
 
 ## Phase 8 — Sustainable automation, search and resilience
 
@@ -201,16 +209,16 @@ Already automated:
 - combined feed aggregation across RSS/Atom, video, filtered broad-area sources and monitored public pages;
 - scheduled email delivery;
 - scheduled civic-item archiving;
-- candidate discovery/research exports after curated changes;
-- public graph/export rebuilds;
+- browsable persistent Civic Archive;
+- research exports and public graph rebuilds after curated changes;
 - entity descriptions exported from curated research notes.
 
 Next:
 
-- automatically detect and preserve new/changed research material;
-- archive indexing and search;
+- scalable/sharded archive indexing rather than scanning the whole canonical store indefinitely;
 - stronger feed caching and parser regression tests;
 - source-health review tooling;
+- searchable/grouped source facets as the source universe grows;
 - automated completeness checks for public entities and provider/source links;
 - safer refresh/version handling across research and live civic items;
 - operational monitoring as the source set grows.
@@ -219,36 +227,27 @@ Next:
 
 RSS.chat, ActivityPub, AT Protocol or other open social systems remain possible bridges, not core dependencies.
 
-The Commons should preserve its own:
-
-- public URLs;
-- source provenance;
-- stable item/thread identities;
-- subscriptions;
-- reviewed contributions and civic relationships.
-
-External systems should be able to connect to those primitives without owning them.
+The Commons should preserve its own public URLs, source provenance, stable item/thread identities, subscriptions, reviewed contributions and civic relationships. External systems should be able to connect to those primitives without owning them.
 
 ## Immediate next slice
 
-Before adding another major feature family:
-
-1. **Finish the public entity completeness audit** — descriptions everywhere, useful source/website links where available, correct historical/current framing, and automated checks for future additions.
-2. **Continue deliberate source expansion** across faith/community organisations, education, law/advice, campaigning and local political sources while preserving first-party provenance and civic-relevance filters.
-3. **Build the Phase 7 review queue** so participation can scale beyond a manual JSON publication workflow and future private-research candidates have a safe destination.
-4. **Index persistent civic items** for useful archive/search views and richer historical follows.
-5. **Connect Document Watch and video to civic memory** by relating selected primary documents/transcripts to issues, entities and reporting.
-6. **Strengthen source/config infrastructure**: registry-driven sources, caching, parser tests and source-health tooling.
-7. Continue **ModernGov and OCN conversations in parallel**, but do not let either block useful Commons development.
+1. **Build Phase 7C promotion rules** for accepted source submissions and evidence suggestions first, then relationship suggestions.
+2. **Connect accepted evidence to civic memory** — archived stories, Document Watch records, issues, entities and earlier reporting — without duplicating canonical source material.
+3. **Improve archive/search indexing** so growth from dozens of sources to hundreds remains fast and complete rather than relying on whole-store scans.
+4. **Make source filtering scale** with searchable/grouped publisher families as the source universe grows.
+5. **Finish the public entity completeness audit** and automate checks for newly incomplete records.
+6. **Continue deliberate source expansion** while strengthening registry-driven configuration, caching, parser tests and source-health tooling.
+7. Continue **ModernGov and OCN work in parallel**, but do not let either block useful Commons development.
 
 ## Non-negotiable design boundaries
 
 - Original publishers and official records remain canonical.
 - Provenance stays visible.
-- A bare name is not a finished civic entity: public identities need meaningful description and supporting provenance/source context.
+- A bare name is not a finished civic entity.
 - Historical and current organisations must be framed temporally rather than flattened together.
 - Chronology is not replaced by engagement ranking.
-- Participation is moderated rather than popularity-ranked.
+- Participation and civic assertions are moderated rather than popularity-ranked.
+- Private submitter details never become public by accident.
 - No behavioural advertising.
 - No compulsory closed-platform identity.
 - The Commons must remain useful when any one external service is unavailable.

@@ -1,51 +1,52 @@
 # Civic Commons contribution moderation workflow
 
-**Status:** Social Phase A2 working process  
-**Date:** 27 August 2026
+**Status:** Phase 7B live workflow  
+**Updated:** 1 September 2026
 
 The Civic Commons accepts item-level contributions through the Netlify `item-contribution` form. Those submissions are **private moderation inputs**, not automatically public comments.
 
-Approved contributions are published from the version-controlled registry at:
+Approved item contributions are now published through the private Civic Commons review queue. The former manual `public/data/contributions.json` editing workflow is retired.
 
-`public/data/contributions.json`
-
-This creates a deliberate boundary between submission and publication. A contribution only becomes part of the public civic record after a human moderation decision and a reviewed repository change.
+The boundary remains deliberate: a contribution becomes part of the public civic record only after a human moderation decision and successful publication reconciliation.
 
 ## Privacy boundary
 
-The public registry must never contain submitter email addresses or other private moderation-only fields.
+Private review records may contain an email address, moderation context and reviewer notes. Those fields must never appear in the public contribution record or public submission-status page.
 
-Publish only information the contributor has agreed may be made public:
+Publish only information the contributor has agreed may be public:
 
-- contribution ID;
+- stable contribution ID;
 - stable Civic Commons thread ID;
 - contribution type;
 - contribution body;
 - optional related public URL;
 - optional display name;
-- submitted date where useful;
+- submitted date;
 - publication date;
 - public provenance note;
 - `status: published`.
 
-## Public contribution schema
+## Public contribution representation
+
+The Phase 7B public store preserves the same portable representation established by the original JSON registry. A public record is conceptually:
 
 ```json
 {
-  "id": "cc-2026-0001",
+  "id": "contrib-REVIEW_ID",
+  "reviewId": "rq-REVIEW_ID",
   "threadId": "civic-item:STABLE_ITEM_KEY",
   "type": "Evidence / document",
   "body": "The supporting planning document was published separately and adds useful context.",
   "relatedUrl": "https://example.org/public-document",
   "displayName": "Local resident",
-  "submittedAt": "2026-08-27T08:30:00Z",
-  "publishedAt": "2026-08-27T10:00:00Z",
-  "provenance": "Submitted to Civic Commons; link checked and contribution reviewed before publication.",
+  "submittedAt": "2026-09-01T20:30:00Z",
+  "publishedAt": "2026-09-01T20:35:00Z",
+  "provenance": "Submitted to Civic Commons and published after human review.",
   "status": "published"
 }
 ```
 
-Allowed contribution types currently match the submission form:
+Allowed contribution types match the public submission form:
 
 - `Correction`
 - `Related source`
@@ -53,27 +54,44 @@ Allowed contribution types currently match the submission form:
 - `Local information`
 - `Comment / context`
 
-## Moderation sequence
+## Current moderation sequence
 
-1. Review the submission in Netlify Forms.
-2. Check that it is attached to the intended `thread-id` and Commons item.
-3. Check any related URL and verify that it is safe and relevant.
-4. Decide whether the contribution should be published, rejected, or held for clarification.
-5. If publishing, copy only the approved public fields into `public/data/contributions.json`.
-6. Assign a stable contribution ID and set `status` to `published`.
-7. Record an accurate provenance note rather than implying independent verification where none occurred.
-8. Publish through the normal repository review/deploy process.
+1. Open the private `/review.html` queue and inspect the pending `item-contribution`.
+2. Confirm the **canonical civic target** shown by the queue is the intended Commons story/thread.
+3. Read the contribution and check any related HTTP/HTTPS URL for safety and relevance.
+4. Decide whether it should be **Accept & publish**, **Needs info**, or **Reject**.
+5. On **Accept & publish**, the server reconciles the authoritative review state with the public-contribution Blob store. The reviewer does not copy fields into a repository file.
+6. Publication is considered successful only when the public record can be read back and the review card shows **Published ✓** with a public link.
+7. If an accepted contribution is not verified as public, use **Retry publish** rather than creating a fake moderation decision.
+8. If a published contribution is later moved to **Needs info** or **Rejected**, publication reconciliation withdraws the public record while retaining the private audit history.
+9. Record reviewer notes accurately. Do not imply independent verification beyond what actually occurred.
+
+## Contributor feedback
+
+When a contributor supplies an email address:
+
+- a receipt is sent after the verified form submission enters the review queue;
+- meaningful moderation outcomes can generate email for publication, needs-info or rejection;
+- a mail-provider failure does not roll back the moderation decision.
+
+Every new public form submission also receives a high-entropy private status token. The contributor can bookmark `/submission-status.html?...` to see a public-safe state such as awaiting review, published after review, more information needed or not published.
+
+Status pages never expose email addresses, reviewer identity or private moderation notes. The token is a bearer secret and the status page uses a `no-referrer` policy.
+
+Notification claims currently suppress ordinary sequential retries. They are not an atomic concurrency lock, so two truly simultaneous deliveries could still race; do not describe the notification mechanism as exactly-once delivery.
 
 ## Display behaviour
 
-Item pages load the public registry and display only entries where:
+Permanent item pages display only public contribution records where:
 
 - `status` is exactly `published`; and
 - `threadId` exactly matches the item's stable Civic Commons thread ID.
 
-Published entries are grouped by contribution type. Within each group they are chronological rather than popularity-ranked.
+Published entries are grouped by contribution type and ordered chronologically rather than by popularity.
 
-The interface exposes publication date, public attribution, a moderation label and provenance. Related URLs are only rendered when they resolve to HTTP or HTTPS.
+The interface exposes publication date, public attribution, a moderation label and provenance. Related URLs are rendered only when they are valid HTTP or HTTPS links.
+
+Contribution activity may also resurface an older archived civic item in Latest as explicit Commons activity. This does not alter the original publisher, source URL or original publication date.
 
 ## Corrections
 
@@ -85,6 +103,10 @@ A published correction does not silently alter the original publisher's material
 
 If the original publisher later changes or corrects its own material, that can be recorded separately as provenance/history rather than rewriting the contribution record.
 
-## Next step
+## Other review kinds
 
-This registry is intentionally simple and portable. A later datastore or moderation console can replace the JSON editing workflow while preserving the same contribution IDs, thread IDs and public representation.
+Phase 7B automatic publication currently applies only to `item-contribution` records.
+
+`source-submission`, `evidence-suggestion` and `relationship-suggestion` records can be reviewed and accepted, but acceptance does **not** yet mean automatic public promotion. Phase 7C will add explicit promotion rules for those review kinds one at a time.
+
+The constitutional rule remains: entering or being accepted in the private review queue is not, by itself, publication or a reviewed public assertion.
