@@ -65,9 +65,34 @@ function archiveMatches(record, { sourceId, town, topic, q }) {
   return true;
 }
 
+function archiveSortTime(record) {
+  const published = Date.parse(record?.item?.publishedAt || '');
+  if (Number.isFinite(published)) return published;
+  const archived = Date.parse(record?.archivedAt || '');
+  return Number.isFinite(archived) ? archived : 0;
+}
+
+async function authoritativeArchiveRecords(blobs) {
+  // `item/*` blobs are the authoritative permanent archive. The bounded
+  // manifest is only a recent-key optimisation and must never define what is
+  // discoverable once the archive grows beyond its 5,000-key window.
+  const listed = await blobs.list({ prefix: 'item/' });
+  const keys = listed.blobs
+    .map(blob => String(blob.key || '').replace(/^item\//, ''))
+    .filter(validItemKey);
+  const records = [];
+  const batchSize = 100;
+  for (let cursor = 0; cursor < keys.length; cursor += batchSize) {
+    const batch = keys.slice(cursor, cursor + batchSize);
+    const loaded = await Promise.all(batch.map(key => blobs.get(itemBlobKey(key), { type: 'json' }).catch(() => null)));
+    records.push(...loaded.filter(record => record?.item && validItemKey(record.key)));
+  }
+  return records;
+}
+
 export async function listArchivedItems({ limit = 40, offset = 0, sourceId = null, town = null, topic = null, q = null } = {}) {
   const max = Math.max(1, Math.min(Number(limit) || 40, 100));
-  const skip = Math.max(0, Math.min(Number(offset) || 0, MAX_MANIFEST_KEYS));
+  const skip = Math.max(0, Number(offset) || 0);
   const filters = {
     sourceId: cleanFilter(sourceId),
     town: cleanFilter(town),
@@ -75,47 +100,36 @@ export async function listArchivedItems({ limit = 40, offset = 0, sourceId = nul
     q: cleanFilter(q, 240)
   };
   const blobs = getStore(STORE_NAME, { consistency: 'strong' });
-  const manifest = await blobs.get(MANIFEST_KEY, { type: 'json' });
-  const keys = (Array.isArray(manifest?.keys) ? manifest.keys : []).filter(validItemKey).reverse();
-  const results = [];
+  const records = await authoritativeArchiveRecords(blobs);
   const sources = new Map();
-  let matched = 0;
-  let exhausted = true;
-  const batchSize = 80;
 
-  for (let cursor = 0; cursor < keys.length; cursor += batchSize) {
-    const batch = keys.slice(cursor, cursor + batchSize);
-    const records = await Promise.all(batch.map(key => blobs.get(itemBlobKey(key), { type: 'json' }).catch(() => null)));
-    for (const record of records) {
-      if (record?.item?.sourceId) sources.set(record.item.sourceId, record.item.source || record.item.sourceId);
-      if (!archiveMatches(record, filters)) continue;
-      if (matched++ < skip) continue;
-      if (results.length < max) {
-        results.push({
-          key: record.key,
-          archivedAt: record.archivedAt,
-          item: record.item
-        });
-        continue;
-      }
-      exhausted = false;
-      break;
-    }
-    if (!exhausted) break;
+  // Facets describe the complete archive, not merely the current result page.
+  for (const record of records) {
+    if (record.item?.sourceId) sources.set(record.item.sourceId, record.item.source || record.item.sourceId);
   }
 
+  const matching = records
+    .filter(record => archiveMatches(record, filters))
+    .sort((a, b) => archiveSortTime(b) - archiveSortTime(a));
+  const page = matching.slice(skip, skip + max);
+  const hasMore = skip + page.length < matching.length;
+
   return {
-    updatedAt: manifest?.updatedAt || null,
-    archiveSize: keys.length,
+    updatedAt: records.reduce((latest, record) => {
+      const candidate = Date.parse(record.archivedAt || '');
+      return Number.isFinite(candidate) && candidate > Date.parse(latest || '') ? record.archivedAt : latest;
+    }, null),
+    archiveSize: records.length,
+    matchedSize: matching.length,
     offset: skip,
     limit: max,
-    hasMore: !exhausted,
-    nextOffset: !exhausted ? skip + results.length : null,
+    hasMore,
+    nextOffset: hasMore ? skip + page.length : null,
     filters,
     facets: {
       sources: [...sources.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name))
     },
-    records: results
+    records: page.map(record => ({ key: record.key, archivedAt: record.archivedAt, item: record.item }))
   };
 }
 
@@ -123,7 +137,10 @@ export async function archiveItems(items) {
   const blobs = store();
   const now = new Date().toISOString();
   const manifest = await blobs.get(MANIFEST_KEY, { type: 'json' }).catch(() => null);
-  const known = new Set(Array.isArray(manifest?.keys) ? manifest.keys.filter(validItemKey) : []);
+  const listed = await blobs.list({ prefix: 'item/' }).catch(() => ({ blobs: [] }));
+  const known = new Set(listed.blobs
+    .map(blob => String(blob.key || '').replace(/^item\//, ''))
+    .filter(validItemKey));
   const candidates = [];
 
   for (const item of Array.isArray(items) ? items : []) {
@@ -144,15 +161,18 @@ export async function archiveItems(items) {
       .catch(error => ({ key, modified: false, error }))
   ));
 
+  const recent = new Set(Array.isArray(manifest?.keys) ? manifest.keys.filter(validItemKey) : []);
   for (const result of writes) {
     if (result.error) {
       console.error(`Civic item archive write failed for ${result.key}`, result.error);
       continue;
     }
     known.add(result.key);
+    recent.delete(result.key);
+    recent.add(result.key);
   }
 
-  const keys = [...known].slice(-MAX_MANIFEST_KEYS);
+  const keys = [...recent].slice(-MAX_MANIFEST_KEYS);
   await blobs.setJSON(MANIFEST_KEY, { version: 1, updatedAt: now, keys }).catch(error => {
     console.error('Civic item manifest update failed', error);
   });
@@ -162,6 +182,7 @@ export async function archiveItems(items) {
     newCandidates: candidates.length,
     stored: writes.filter(result => result.modified).length,
     failed: writes.filter(result => result.error).length,
-    manifestSize: keys.length
+    manifestSize: keys.length,
+    archiveSize: known.size
   };
 }
