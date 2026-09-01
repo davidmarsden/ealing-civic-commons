@@ -6,11 +6,12 @@ import { londonAssemblyAssertionsForEntity, londonAssemblySourcesForEntity } fro
 import { southallAssertionsForEntity, southallSourcesForEntity } from '../lib/southall-assertions.mjs';
 
 function json(body, status = 200) {
+  const production = Netlify.context?.deploy?.context === 'production';
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       'content-type': 'application/json; charset=utf-8',
-      'cache-control': 'public, max-age=300, stale-while-revalidate=1800',
+      'cache-control': production ? 'public, max-age=300, stale-while-revalidate=1800' : 'no-store',
       'access-control-allow-origin': '*'
     }
   });
