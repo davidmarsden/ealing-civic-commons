@@ -42,6 +42,32 @@ function evidenceCard(collection) {
   </article>`;
 }
 
+function syncHeroActions() {
+  if (routePlace() !== 'southall') return false;
+  const actions = document.querySelector('.entity-actions');
+  if (!actions) return false;
+  const labels = [
+    ['#commonsAssertionsSection','Current civic facts ↓'],
+    ['#localEvidenceSection','Local evidence ↓'],
+    ['#relationshipsSection','Reviewed connections ↓'],
+    ['#sourcesSection','Primary evidence ↓'],
+    ['#currentSection','Current Commons ↓'],
+    ['#reportingSection','Historical reporting ↓']
+  ];
+  actions.innerHTML = labels.map(([href,label]) => `<a href="${href}">${label}</a>`).join('');
+  return true;
+}
+
+function watchHeroActions() {
+  if (syncHeroActions()) return;
+  const hero = $('#entityHero');
+  if (!hero) return;
+  const observer = new MutationObserver(() => {
+    if (syncHeroActions()) observer.disconnect();
+  });
+  observer.observe(hero, { childList:true, subtree:true });
+}
+
 async function fetchPlaceEvidence(place) {
   const response = await fetch(`/api/evidence/place?place=${encodeURIComponent(place)}`, {
     cache: 'no-store',
@@ -103,11 +129,12 @@ async function loadPlaceEvidence() {
     }
   } catch (error) {
     console.warn('Place evidence unavailable', error);
-    root.innerHTML = '<p class="entity-empty">Local evidence is temporarily unavailable.</p>';
+    root.innerHTML = `<p class="entity-empty">Local evidence is temporarily unavailable. ${esc(error?.message || '')}</p>`;
     const meta = $('#localEvidenceMeta');
     if (meta) meta.textContent = 'The rest of this civic page is unaffected.';
     section.hidden = false;
   }
 }
 
+watchHeroActions();
 loadPlaceEvidence();
