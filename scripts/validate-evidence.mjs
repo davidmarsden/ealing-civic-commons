@@ -61,4 +61,18 @@ const imd = normalized.collections.find(item => item.indicatorId === 'I3091');
 assert.equal(imd.comparator.population, 199);
 assert.equal(imd.comparator.value, 24.1);
 
-console.log(`Validated ${normalized.objects.length} evidence objects and ${normalized.collections.length} collections; AQ excluded from production normalization.`);
+const validObject = normalized.objects.find(item => item.indicator.id === 'I3091');
+for (const badValue of [null, '', false, [], {}]) {
+  const candidate = { ...validObject, value: badValue };
+  assert.equal(validateEvidenceObject(candidate).valid, false, `value ${JSON.stringify(badValue)} must be rejected`);
+}
+assert.equal(validateEvidenceObject({ ...validObject, value: '19.948' }).valid, true, 'numeric strings remain valid published values');
+assert.equal(validateEvidenceObject({ ...validObject, value: 'suppressed' }).valid, true, 'non-empty published text remains valid');
+
+const badComparator = {
+  ...validObject,
+  comparators: [{ ...validObject.comparators[0], value: false }]
+};
+assert.equal(validateEvidenceObject(badComparator).valid, false, 'boolean comparator values must be rejected');
+
+console.log(`Validated ${normalized.objects.length} evidence objects and ${normalized.collections.length} collections; AQ excluded and malformed values rejected.`);
