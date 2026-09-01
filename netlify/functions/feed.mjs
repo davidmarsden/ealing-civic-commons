@@ -1,6 +1,8 @@
 import { XMLParser } from 'fast-xml-parser';
 import { enrichEalingCouncilTopics } from './ealing-council-topics.mjs';
 
+const BOROUGH_TOWNS = ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
+
 const sources = [
   {
     id: 'southall-stories',
@@ -26,7 +28,7 @@ const sources = [
     url: 'https://neighbourspaper.org/feed/',
     homepage: 'https://neighbourspaper.org/',
     sourceClass: 'Journalism / publishing',
-    towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
+    towns: BOROUGH_TOWNS,
     defaultTopics: ['Council & democracy', 'Community']
   },
   {
@@ -53,7 +55,7 @@ const sources = [
     url: 'https://ealingmatters.org.uk/feed/',
     homepage: 'https://ealingmatters.org.uk/',
     sourceClass: 'Organisation / campaign',
-    towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
+    towns: BOROUGH_TOWNS,
     defaultTopics: ['Council & democracy']
   },
   {
@@ -62,7 +64,7 @@ const sources = [
     url: 'https://ealingcivicsociety.org/feed/',
     homepage: 'https://ealingcivicsociety.org/',
     sourceClass: 'Organisation / campaign',
-    towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
+    towns: BOROUGH_TOWNS,
     defaultTopics: ['Planning & development', 'Culture & history']
   },
   {
@@ -98,7 +100,7 @@ const sources = [
     url: 'https://ealing.moderngov.co.uk/mgRss.aspx?XXR=0',
     homepage: 'https://ealing.moderngov.co.uk/',
     sourceClass: 'Official record',
-    towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
+    towns: BOROUGH_TOWNS,
     defaultTopics: ['Council & democracy'],
     browserRetry: true,
     referer: 'https://ealing.moderngov.co.uk/mgWhatsNew.aspx?bcr=1'
@@ -109,7 +111,7 @@ const sources = [
     url: 'https://www.ealing.gov.uk/rss/news',
     homepage: 'https://www.ealing.gov.uk/news',
     sourceClass: 'Official record',
-    towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
+    towns: BOROUGH_TOWNS,
     defaultTopics: ['Council & democracy', 'Community']
   },
   {
@@ -118,7 +120,7 @@ const sources = [
     url: 'https://www.youtube.com/feeds/videos.xml?user=EalingCouncil',
     homepage: 'https://www.youtube.com/@EalingCouncil',
     sourceClass: 'Official record',
-    towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
+    towns: BOROUGH_TOWNS,
     defaultTopics: ['Council & democracy'],
     mediaType: 'video'
   },
@@ -138,19 +140,19 @@ const sources = [
     url: 'https://www.youtube.com/feeds/videos.xml?user=LondonAssembly',
     homepage: 'https://www.youtube.com/@LondonAssembly',
     sourceClass: 'Official record',
-    towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
+    towns: BOROUGH_TOWNS,
     defaultTopics: ['Council & democracy'],
     mediaType: 'video'
   },
   {
-    id: 'open-council-network-reddit-ealing',
-    name: 'Open Council Network — Ealing updates',
-    url: 'https://www.reddit.com/r/OpenCouncilNetwork/search.rss?q=Ealing&restrict_sr=1&sort=new',
-    homepage: 'https://www.reddit.com/r/OpenCouncilNetwork/',
+    id: 'open-council-network-ealing',
+    name: 'Open Council Network — Ealing',
+    url: 'https://opencouncil.network/councils/ealing',
+    homepage: 'https://opencouncil.network/councils/ealing',
     sourceClass: 'Independent civic data / analysis',
-    towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
+    towns: BOROUGH_TOWNS,
     defaultTopics: ['Council & democracy'],
-    extractEalingSection: true
+    htmlBridge: 'ocn-ealing'
   },
   {
     id: 'view-from-w5',
@@ -270,6 +272,81 @@ function normaliseDate(value) {
   return Number.isNaN(timestamp) ? null : new Date(timestamp).toISOString();
 }
 
+function ocnDateFromText(text = '') {
+  const monthNames = 'January|February|March|April|May|June|July|August|September|October|November|December';
+  const match = String(text).match(new RegExp(`\\b(\\d{1,2})\\s+(${monthNames})\\s+(20\\d{2})\\b`, 'i'));
+  return match ? normaliseDate(`${match[1]} ${match[2]} ${match[3]} 12:00 UTC`) : null;
+}
+
+function ocnTownsFromText(text = '') {
+  const haystack = ` ${String(text).toLowerCase()} `;
+  return BOROUGH_TOWNS.filter(town => new RegExp(`\\b${town.toLowerCase()}\\b`, 'i').test(haystack));
+}
+
+function parseOcnPublicItems(source, html = '') {
+  const marker = html.search(/Weekly updates/i);
+  const recentMeetings = html.search(/Recent meetings/i);
+  const weeklyHtml = marker >= 0
+    ? html.slice(marker, recentMeetings > marker ? recentMeetings : undefined)
+    : html;
+  const headingPattern = /<h2\b[^>]*>([\s\S]*?)<\/h2>([\s\S]*?)(?=<h2\b|$)/gi;
+  const items = [];
+  const seenMeetings = new Set();
+  let match;
+
+  while ((match = headingPattern.exec(weeklyHtml))) {
+    const title = strip(match[1]);
+    const body = match[2];
+    if (!title || /^(weekly updates|other matters|this week in ealing)$/i.test(title) || /^Ealing:\s/i.test(title)) continue;
+
+    const meetingLink = /<a\b[^>]*href=["']([^"']*\/meetings\/[^"'#?]+(?:[?#][^"']*)?)["'][^>]*>[\s\S]*?<\/a>/i.exec(body);
+    if (!meetingLink) continue;
+
+    let url;
+    try {
+      url = new URL(decodeEntities(meetingLink[1]), source.homepage).toString();
+    } catch {
+      continue;
+    }
+    if (seenMeetings.has(url)) continue;
+    seenMeetings.add(url);
+
+    const paragraphs = [];
+    const paragraphPattern = /<p\b[^>]*>([\s\S]*?)<\/p>/gi;
+    let paragraph;
+    while ((paragraph = paragraphPattern.exec(body))) {
+      const text = strip(paragraph[1]);
+      if (text && !/^This week in Ealing:?$/i.test(text)) paragraphs.push(text);
+    }
+    const description = paragraphs.join(' ').trim();
+    const combined = `${title} ${description}`;
+    const matchedTowns = ocnTownsFromText(combined);
+    const boroughWide = matchedTowns.length === 0;
+
+    items.push({
+      id: `${source.id}:${url}`,
+      sourceId: source.id,
+      source: source.name,
+      sourceClass: source.sourceClass,
+      sourceHomepage: source.homepage,
+      mediaType: null,
+      title,
+      url,
+      canonicalUrl: url,
+      summary: description.slice(0, 420),
+      publishedAt: ocnDateFromText(combined),
+      towns: boroughWide ? BOROUGH_TOWNS : matchedTowns,
+      boroughWide,
+      topics: topicGuess(combined, source.defaultTopics),
+      derived: true,
+      derivedFrom: 'OCN public Ealing council page',
+      aiGenerated: true
+    });
+  }
+
+  return items.slice(0, 15);
+}
+
 function normaliseItem(source, item) {
   const originalTitle = strip(textValue(item.title) || 'Untitled');
   const linkRaw = item.link;
@@ -306,7 +383,9 @@ function normaliseItem(source, item) {
 
 function requestHeaders(source, browserLike = false) {
   const headers = {
-    accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.5',
+    accept: source.htmlBridge
+      ? 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5'
+      : 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.5',
     'accept-language': 'en-GB,en;q=0.9',
     'user-agent': browserLike
       ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'
@@ -413,6 +492,16 @@ async function fetchSource(source) {
       items: [],
       diagnostics
     };
+  }
+
+  if (source.htmlBridge === 'ocn-ealing') {
+    try {
+      const items = parseOcnPublicItems(source, attempt.body);
+      if (!items.length) throw new Error('No public Ealing meeting summaries found');
+      return { source, ok: true, status: 'ok', items, diagnostics };
+    } catch (error) {
+      return { source, ok: false, status: 'error', error: errorMessage(error), items: [], diagnostics };
+    }
   }
 
   try {
