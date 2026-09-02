@@ -42,8 +42,8 @@ const sources = [
     homepage: 'https://www.wlc.ac.uk/',
     sourceClass: 'Community / education',
     towns: ['Ealing', 'Southall'],
-    mode: 'dated',
-    include: /Ealing|Southall|community|MP|council|TfL|health|housing|climate|environment|citizens|documentary|public/i,
+    mode: 'linked-news',
+    include: /Ealing|Southall|community|MP|council|TfL|health|housing|climate|environment|citizens|documentary|public|student|college/i,
     topics: ['Community', 'Schools & young people']
   },
   {
@@ -62,6 +62,7 @@ const sources = [
 const entities = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', rsquo: '’', ndash: '–', mdash: '—' };
 function decode(value='') { return String(value).replace(/&#x([0-9a-f]+);?/gi,(_,h)=>String.fromCodePoint(parseInt(h,16))).replace(/&#([0-9]+);?/g,(_,d)=>String.fromCodePoint(parseInt(d,10))).replace(/&([a-z][a-z0-9]+);/gi,(m,n)=>entities[n.toLowerCase()]??m); }
 function strip(value='') { return decode(String(value).replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ')).replace(/\s+/g,' ').trim(); }
+function absoluteUrl(href, base) { try { const url=new URL(decode(href),base); if(!/^https?:$/.test(url.protocol)) return null; url.hash=''; return url; } catch { return null; } }
 
 async function fetchHtml(url) {
   const controller = new AbortController(); const timeout = setTimeout(()=>controller.abort(),8000);
@@ -97,6 +98,40 @@ function datedItems(source, html) {
   return [...new Map(out.map(item=>[item.id,item])).values()].sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt)).slice(0,12);
 }
 
+function articleSummary(html) {
+  const meta = html.match(/<meta\b[^>]*(?:name|property)=["'](?:description|og:description)["'][^>]*content=["']([^"']+)["']/i)
+    || html.match(/<meta\b[^>]*content=["']([^"']+)["'][^>]*(?:name|property)=["'](?:description|og:description)["']/i);
+  if (meta?.[1]) {
+    const value=decode(meta[1]).replace(/\s+/g,' ').trim();
+    if(value.length>=60) return value.slice(0,700);
+  }
+  const paragraphs=[...html.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/gi)].map(match=>strip(match[1])).filter(text=>text.length>=60 && !/cookie|privacy|subscribe|open day/i.test(text));
+  return (paragraphs[0]||'').slice(0,700);
+}
+
+async function linkedNewsItems(source, html) {
+  const anchors=[];
+  const rx=/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let match;
+  while((match=rx.exec(html))) {
+    const url=absoluteUrl(match[1],source.url);
+    if(!url || !/^(?:www\.)?wlc\.ac\.uk$/i.test(url.hostname) || !/^\/20\d{2}\/\d{2}\/[a-z0-9][a-z0-9-]+\/?$/i.test(url.pathname)) continue;
+    const title=strip(match[2]);
+    if(title.length<12 || title.length>180 || !source.include.test(title)) continue;
+    const nearby=strip(html.slice(Math.max(0,match.index-180),Math.min(html.length,rx.lastIndex+160)));
+    const dateMatch=nearby.match(/\b([0-3]?\d\s+[A-Z][a-z]{2}\s+20\d{2})\b/);
+    const publishedAt=dateMatch ? dateIso(dateMatch[1]) : null;
+    if(!publishedAt) continue;
+    anchors.push({url:url.href,title,publishedAt});
+  }
+  const unique=[...new Map(anchors.map(item=>[item.url,item])).values()].sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt)).slice(0,8);
+  return Promise.all(unique.map(async entry=>{
+    let summary='';
+    try { summary=articleSummary(await fetchHtml(entry.url)); } catch {}
+    return { id:`${source.id}:${entry.url}`, sourceId:source.id, source:source.name, sourceClass:source.sourceClass, sourceHomepage:source.homepage, mediaType:null, title:entry.title, url:entry.url, canonicalUrl:entry.url, summary, publishedAt:entry.publishedAt, towns:source.towns, topics:source.topics, derived:true, derivedFrom:'Public publisher news listing with canonical article link and first-party article summary' };
+  }));
+}
+
 function livingItem(source, html) {
   const text = strip(html);
   const startMatch = text.match(source.sectionStart); if(!startMatch) return null;
@@ -110,13 +145,17 @@ function livingItem(source, html) {
 export async function fetchFaithCommunityFeed() {
   const results=await Promise.allSettled(sources.map(async source=>({source,html:await fetchHtml(source.url)})));
   const items=[]; const health=[];
-  results.forEach((result,index)=>{
-    const source=sources[index];
+  for (let index=0; index<results.length; index+=1) {
+    const result=results[index]; const source=sources[index];
     if(result.status==='fulfilled'){
-      const found=source.mode==='living' ? [livingItem(source,result.value.html)].filter(Boolean) : datedItems(source,result.value.html);
+      const found=source.mode==='living'
+        ? [livingItem(source,result.value.html)].filter(Boolean)
+        : source.mode==='linked-news'
+          ? await linkedNewsItems(source,result.value.html)
+          : datedItems(source,result.value.html);
       items.push(...found); health.push({id:source.id,name:source.name,homepage:source.homepage,ok:true,status:found.length?'ok':'empty',itemCount:found.length,error:found.length?null:'Page fetched but no current civic/community material matched the source rules'});
     } else health.push({id:source.id,name:source.name,homepage:source.homepage,ok:false,status:'error',itemCount:0,error:String(result.reason?.message||result.reason)});
-  });
+  }
   return {generatedAt:new Date().toISOString(),items,health};
 }
 
