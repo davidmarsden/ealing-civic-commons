@@ -22,12 +22,16 @@ function canonicalOrigin(request) {
   return `${proto}://${host}`;
 }
 
+function internalRequest(url, request) {
+  return new Request(url.toString(), { method: 'GET', headers: request.headers });
+}
+
 async function metadata(request, kind, path) {
   if (kind === 'item') {
     const apiUrl = new URL(request.url);
     apiUrl.search = '';
     apiUrl.searchParams.set('key', path);
-    const response = await civicItem(new Request(apiUrl, request));
+    const response = await civicItem(internalRequest(apiUrl, request));
     if (!response.ok) return null;
     const data = await response.json();
     const item = data?.item;
@@ -44,7 +48,7 @@ async function metadata(request, kind, path) {
     const apiUrl = new URL(request.url);
     apiUrl.search = '';
     apiUrl.searchParams.set('route', route);
-    const response = await civicEntity(new Request(apiUrl, request));
+    const response = await civicEntity(internalRequest(apiUrl, request));
     if (!response.ok) return null;
     const data = await response.json();
     const entity = data?.entity;
