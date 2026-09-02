@@ -181,14 +181,15 @@ async function fetchHtml(url) {
   }
 }
 
-async function fetchSource(source) {
+async function fetchSource(source, { deep = false } = {}) {
   const started = Date.now();
   const allItems = new Map();
   let pagesFetched = 0;
   let lastHttpStatus = null;
+  const pageLimit = deep ? (source.maxPages || 1) : 1;
 
   try {
-    for (let page = 1; page <= (source.maxPages || 1); page += 1) {
+    for (let page = 1; page <= pageLimit; page += 1) {
       const url = pageUrl(source, page);
       const { response, html } = await fetchHtml(url);
       lastHttpStatus = response.status;
@@ -201,15 +202,13 @@ async function fetchSource(source) {
       const before = allItems.size;
       pageItems.forEach(item => allItems.set(item.canonicalUrl, item));
 
-      // Paginated archives stop when a valid page yields no new canonical
-      // entries. This avoids hammering non-existent pages past the archive end.
-      if (source.paginated && page > 1 && allItems.size === before) break;
-      if (!source.paginated) break;
+      if (deep && source.paginated && page > 1 && allItems.size === before) break;
+      if (!deep || !source.paginated) break;
     }
 
     const archiveItems = [...allItems.values()]
       .sort((a, b) => Date.parse(b.publishedAt || 0) - Date.parse(a.publishedAt || 0))
-      .slice(0, source.archiveLimit || 100);
+      .slice(0, deep ? (source.archiveLimit || 100) : (source.currentLimit || 6));
 
     return {
       items: archiveItems.slice(0, source.currentLimit || 6),
@@ -223,7 +222,7 @@ async function fetchSource(source) {
         error: archiveItems.length ? null : 'Pages fetched but no dated rich-source entries matched the configured structure',
         itemCount: archiveItems.length,
         diagnostics: [{
-          mode: 'rich-source-structured-archive',
+          mode: deep ? 'rich-source-deep-archive' : 'rich-source-live',
           outcome: 'http-response',
           httpStatus: lastHttpStatus,
           pagesFetched,
@@ -244,7 +243,7 @@ async function fetchSource(source) {
         error: error?.name === 'AbortError' ? 'Timed out' : String(error?.message || error),
         itemCount: 0,
         diagnostics: [{
-          mode: 'rich-source-structured-archive',
+          mode: deep ? 'rich-source-deep-archive' : 'rich-source-live',
           outcome: 'transport-error',
           error: String(error?.message || error),
           pagesFetched,
@@ -255,8 +254,8 @@ async function fetchSource(source) {
   }
 }
 
-export async function fetchRichSourceFeed() {
-  const results = await Promise.all(sources.map(fetchSource));
+export async function fetchRichSourceFeed(options = {}) {
+  const results = await Promise.all(sources.map(source => fetchSource(source, options)));
   return {
     generatedAt: new Date().toISOString(),
     items: results.flatMap(result => result.items),
