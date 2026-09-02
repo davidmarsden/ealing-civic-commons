@@ -23,7 +23,7 @@ function renderHero(data) {
   document.title = `${data.issue.name} — Civic Commons`;
   $('#issueStatus').hidden = true;
   const hero = $('#issueHero'); hero.hidden = false;
-  hero.innerHTML = `<div class="issue-status-row"><span class="issue-status-pill">${esc(data.issue.status)}</span></div><h1>${esc(data.issue.name)}</h1><p class="lede">${esc(data.issue.description)}</p><div class="entity-actions"><a href="#actorsSection">Who & what ↓</a><a href="#relationshipsSection">Reviewed connections ↓</a><a href="#sourcesSection">Evidence ↓</a><a href="#reportingSection">Historical reporting ↓</a><a href="#currentSection">Current Commons ↓</a></div>`;
+  hero.innerHTML = `<div class="issue-status-row"><span class="issue-status-pill">${esc(data.issue.status)}</span></div><h1>${esc(data.issue.name)}</h1><p class="lede">${esc(data.issue.description)}</p><div class="entity-actions"><a href="#actorsSection">Who & what ↓</a><a href="#relationshipsSection">Reviewed connections ↓</a><a href="#sourcesSection">Evidence ↓</a><a href="#currentSection">Current Commons ↓</a><a href="#reportingSection">Historical reporting ↓</a></div>`;
 }
 function renderStats(data,historicalCount=null) {
   const c = data.counts || {};
