@@ -10,6 +10,9 @@ import { fetchFaithCommunityFeed } from './faith-community-feed.mjs';
 import { listPublishedContributions } from '../lib/public-contributions.mjs';
 import { getArchivedItem, stableItemKey } from '../lib/civic-items.mjs';
 
+const LIVE_LIMIT = 220;
+const COVERAGE_WINDOW_MS = 90 * 24 * 60 * 60 * 1000;
+
 function canonical(value) {
   if (!value) return null;
   try {
@@ -23,14 +26,54 @@ function canonical(value) {
   }
 }
 
+function itemKey(item) {
+  return canonical(item?.canonicalUrl) || item?.id || null;
+}
+
+function publishedTime(item) {
+  const value = Date.parse(item?.publishedAt || '');
+  return Number.isFinite(value) ? value : 0;
+}
+
 function dedupe(items = []) {
   const seen = new Set();
   return items.filter(item => {
-    const key = canonical(item.canonicalUrl) || item.id;
+    const key = itemKey(item);
     if (!key || seen.has(key)) return false;
     seen.add(key);
     return true;
   });
+}
+
+function coveragePreservingSlice(items = [], limit = LIVE_LIMIT) {
+  const sorted = [...items].sort((a, b) => publishedTime(b) - publishedTime(a));
+  const cutoff = Date.now() - COVERAGE_WINDOW_MS;
+  const reservedBySource = new Map();
+
+  // Preserve the newest recent item from each non-official source before the
+  // global cap is applied. This prevents high-volume official/document feeds
+  // from making quieter journalism and community sources disappear entirely.
+  for (const item of sorted) {
+    if (!item?.sourceId || item.sourceClass === 'Official record') continue;
+    if (publishedTime(item) < cutoff) continue;
+    if (!reservedBySource.has(item.sourceId)) reservedBySource.set(item.sourceId, item);
+  }
+
+  const selected = new Map();
+  for (const item of reservedBySource.values()) {
+    const key = itemKey(item);
+    if (key) selected.set(key, item);
+  }
+
+  for (const item of sorted) {
+    if (selected.size >= limit) break;
+    const key = itemKey(item);
+    if (key && !selected.has(key)) selected.set(key, item);
+  }
+
+  return [...selected.values()]
+    .sort((a, b) => publishedTime(b) - publishedTime(a))
+    .slice(0, limit);
 }
 
 async function reviewedContextActivity() {
@@ -87,9 +130,8 @@ export default async request => {
   ]);
 
   const local = localResponse?.ok ? await localResponse.json() : { items: [], health: [], enrichment: {} };
-  const items = dedupe([...(contextActivity || []), ...(local.items || []), ...(rich.items || []), ...(gla.items || []), ...(community.items || []), ...(living.items || []), ...(met.items || []), ...(citizens.items || []), ...(videos.items || []), ...(faith.items || [])])
-    .sort((a, b) => Date.parse(b.publishedAt || 0) - Date.parse(a.publishedAt || 0))
-    .slice(0, 220);
+  const combined = dedupe([...(contextActivity || []), ...(local.items || []), ...(rich.items || []), ...(gla.items || []), ...(community.items || []), ...(living.items || []), ...(met.items || []), ...(citizens.items || []), ...(videos.items || []), ...(faith.items || [])]);
+  const items = coveragePreservingSlice(combined);
 
   return new Response(JSON.stringify({
     generatedAt: new Date().toISOString(),
@@ -98,6 +140,7 @@ export default async request => {
     enrichment: {
       ...(local.enrichment || {}),
       reviewedCivicContext: { included: contextActivity.length, method: 'Human-approved contributions resurface their stable archived civic item as new Commons activity without changing the original publisher or publication date.' },
+      liveSourceCoverage: { method: 'Chronological live feed capped at 220 items while reserving the newest item from each non-official source published in the last 90 days, preventing high-volume official feeds from crowding quieter civic sources out entirely.' },
       richSourceSites: { included: rich.items?.length || 0, archiveCandidates: rich.archiveItems?.length || 0, method: 'Dated first-party archive/listing surfaces from evidence-rich civic sites are extracted separately from the live-feed cutoff so their older material can become durable civic memory.' },
       cityHallEalingFilter: { included: gla.items?.length || 0, method: 'Exact locality, constituency and locally significant institution terms in City Hall RSS titles/descriptions.' },
       communityPageWatch: { included: community.items?.length || 0, method: 'Source-specific structured public-page extraction. A watched page returns no items rather than guessing when its expected dated-card structure is not found.' },
