@@ -2,6 +2,7 @@ import localFeedHandler from './feed.mjs';
 import { fetchGlaFeed } from './gla-feed.mjs';
 import { fetchCommunityPageFeed } from './community-page-feed.mjs';
 import { fetchLivingPageFeed } from './living-page-feed.mjs';
+import { fetchRichSourceFeed } from './rich-source-feed.mjs';
 import { fetchMetEalingFeed } from './met-ealing-feed.mjs';
 import { fetchEalingCitizensFeed } from './ealing-citizens-feed.mjs';
 import { fetchFilteredVideoFeed } from './filtered-video-feed.mjs';
@@ -42,9 +43,6 @@ async function reviewedContextActivity() {
       if (!archived?.item) return null;
       const parent = archived.item;
       return {
-        // This is activity *on* the stable parent civic object, not a new civic
-        // object. Keeping the parent identity makes every normal timeline link,
-        // follow and contribution-thread lookup land on the existing item page.
         id: parent.id,
         sourceId: 'civic-commons-context',
         source: 'Civic Commons',
@@ -75,11 +73,12 @@ async function reviewedContextActivity() {
 }
 
 export default async request => {
-  const [localResponse, gla, community, living, met, citizens, videos, faith, contextActivity] = await Promise.all([
+  const [localResponse, gla, community, living, rich, met, citizens, videos, faith, contextActivity] = await Promise.all([
     localFeedHandler(request),
     fetchGlaFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'gla-filtered', name: 'London City Hall / Assembly', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchCommunityPageFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'community-page-watch', name: 'Community page watch', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchLivingPageFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'living-page-watch', name: 'Living publication pages', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
+    fetchRichSourceFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'rich-source-watch', name: 'Rich civic source sites', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchMetEalingFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'met-ealing', name: 'Metropolitan Police — Ealing', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchEalingCitizensFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'ealing-citizens', name: 'Ealing Citizens / Citizens UK', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchFilteredVideoFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'filtered-video', name: 'Filtered civic video sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
@@ -88,17 +87,18 @@ export default async request => {
   ]);
 
   const local = localResponse?.ok ? await localResponse.json() : { items: [], health: [], enrichment: {} };
-  const items = dedupe([...(contextActivity || []), ...(local.items || []), ...(gla.items || []), ...(community.items || []), ...(living.items || []), ...(met.items || []), ...(citizens.items || []), ...(videos.items || []), ...(faith.items || [])])
+  const items = dedupe([...(contextActivity || []), ...(local.items || []), ...(rich.items || []), ...(gla.items || []), ...(community.items || []), ...(living.items || []), ...(met.items || []), ...(citizens.items || []), ...(videos.items || []), ...(faith.items || [])])
     .sort((a, b) => Date.parse(b.publishedAt || 0) - Date.parse(a.publishedAt || 0))
     .slice(0, 220);
 
   return new Response(JSON.stringify({
     generatedAt: new Date().toISOString(),
     items,
-    health: [...(local.health || []), ...(gla.health || []), ...(community.health || []), ...(living.health || []), ...(met.health || []), ...(citizens.health || []), ...(videos.health || []), ...(faith.health || [])],
+    health: [...(local.health || []), ...(rich.health || []), ...(gla.health || []), ...(community.health || []), ...(living.health || []), ...(met.health || []), ...(citizens.health || []), ...(videos.health || []), ...(faith.health || [])],
     enrichment: {
       ...(local.enrichment || {}),
       reviewedCivicContext: { included: contextActivity.length, method: 'Human-approved contributions resurface their stable archived civic item as new Commons activity without changing the original publisher or publication date.' },
+      richSourceSites: { included: rich.items?.length || 0, archiveCandidates: rich.archiveItems?.length || 0, method: 'Dated first-party archive/listing surfaces from evidence-rich civic sites are extracted separately from the live-feed cutoff so their older material can become durable civic memory.' },
       cityHallEalingFilter: { included: gla.items?.length || 0, method: 'Exact locality, constituency and locally significant institution terms in City Hall RSS titles/descriptions.' },
       communityPageWatch: { included: community.items?.length || 0, method: 'Source-specific structured public-page extraction. A watched page returns no items rather than guessing when its expected dated-card structure is not found.' },
       livingPublicationWatch: { included: living.items?.length || 0, method: 'Content-hashed snapshots of configured living publication sections. No publication date is invented when the publisher does not expose one.' },
