@@ -44,6 +44,8 @@ export function issuesForProviderEntity(entityId) {
     route: issue.route,
     name: issue.name,
     status: issue.status,
-    description: issue.description
+    description: issue.description,
+    primaryEntityId: issue.primaryEntityId,
+    isPrimaryForEntity: issue.primaryEntityId === entityId
   }));
 }
