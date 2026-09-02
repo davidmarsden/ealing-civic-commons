@@ -75,6 +75,27 @@ function strip(html = '') {
     .trim();
 }
 
+function safeHtmlWindow(html, rawStart, rawEnd) {
+  let start = Math.max(0, rawStart);
+  let end = Math.min(html.length, rawEnd);
+
+  // A character-count window can begin or end halfway through a tag. If that
+  // fragment is handed to strip(), orphaned attributes such as srcset/data-src
+  // become visible text. Move both edges outside any partial tag first.
+  const openBeforeStart = html.lastIndexOf('<', start);
+  const closeBeforeStart = html.lastIndexOf('>', start);
+  if (openBeforeStart > closeBeforeStart) {
+    const closeAfterStart = html.indexOf('>', start);
+    if (closeAfterStart !== -1 && closeAfterStart < end) start = closeAfterStart + 1;
+  }
+
+  const openBeforeEnd = html.lastIndexOf('<', end);
+  const closeBeforeEnd = html.lastIndexOf('>', end);
+  if (openBeforeEnd > closeBeforeEnd && openBeforeEnd > start) end = openBeforeEnd;
+
+  return html.slice(start, end);
+}
+
 function absoluteUrl(href, base) {
   try {
     const url = new URL(decodeEntities(href), base);
@@ -129,7 +150,8 @@ function extractItems(source, html, baseUrl = source.url) {
     if (!url || !source.hostPattern.test(url.hostname) || !source.includePath.test(url.pathname)) continue;
     const title = strip(match[2]);
     if (title.length < 12 || title.length > 220 || /^(?:read more|learn more|news|campaigns)$/i.test(title)) continue;
-    const nearby = strip(html.slice(Math.max(0, match.index - 650), Math.min(html.length, pattern.lastIndex + 900)));
+    const nearbyHtml = safeHtmlWindow(html, match.index - 650, pattern.lastIndex + 900);
+    const nearby = strip(nearbyHtml);
     const publishedAt = parseDate(nearby, source.dateStyle);
     if (!publishedAt) continue;
     let summary = nearby.replace(title, ' ').replace(/\s+/g, ' ').trim();
