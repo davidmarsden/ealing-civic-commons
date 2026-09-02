@@ -1,6 +1,6 @@
 const sources = [
   {
-    id: 'warren-farm-nature-reserve-blog-rich',
+    id: 'warren-farm-nature-reserve-blog',
     name: 'Warren Farm Nature Reserve — Blog',
     url: 'https://www.warrenfarmnaturereserve.co.uk/blog',
     homepage: 'https://www.warrenfarmnaturereserve.co.uk/',
@@ -11,7 +11,8 @@ const sources = [
     includePath: /^\/blog\/[a-z0-9][a-z0-9-]+\/?$/i,
     dateStyle: 'mdy-short',
     currentLimit: 6,
-    archiveLimit: 30
+    archiveLimit: 100,
+    maxPages: 1
   },
   {
     id: 'southall-black-sisters-news',
@@ -25,7 +26,9 @@ const sources = [
     includePath: /^\/news\/[a-z0-9][a-z0-9-]+\/?$/i,
     dateStyle: 'dmy-text',
     currentLimit: 6,
-    archiveLimit: 30
+    archiveLimit: 500,
+    maxPages: 40,
+    paginated: true
   },
   {
     id: 'southall-black-sisters-campaigns',
@@ -39,7 +42,9 @@ const sources = [
     includePath: /^\/submissions-campaigns\/[a-z0-9][a-z0-9-]+\/?$/i,
     dateStyle: 'dmy-text',
     currentLimit: 6,
-    archiveLimit: 30
+    archiveLimit: 500,
+    maxPages: 40,
+    paginated: true
   }
 ];
 
@@ -115,12 +120,12 @@ function topicGuess(text, defaults = []) {
   return [...new Set([...rules.filter(([, rx]) => rx.test(value)).map(([topic]) => topic), ...defaults])].slice(0, 3);
 }
 
-function extractItems(source, html) {
+function extractItems(source, html, baseUrl = source.url) {
   const anchors = [];
   const pattern = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
   let match;
   while ((match = pattern.exec(html))) {
-    const url = absoluteUrl(match[1], source.url);
+    const url = absoluteUrl(match[1], baseUrl);
     if (!url || !source.hostPattern.test(url.hostname) || !source.includePath.test(url.pathname)) continue;
     const title = strip(match[2]);
     if (title.length < 12 || title.length > 220 || /^(?:read more|learn more|news|campaigns)$/i.test(title)) continue;
@@ -147,31 +152,65 @@ function extractItems(source, html) {
       derivedFrom: 'Structured public archive/listing page'
     });
   }
-  const unique = [...new Map(anchors.map(item => [item.canonicalUrl, item])).values()];
-  return unique.sort((a, b) => Date.parse(b.publishedAt || 0) - Date.parse(a.publishedAt || 0)).slice(0, source.archiveLimit || 30);
+  return anchors;
+}
+
+function pageUrl(source, page) {
+  if (page <= 1 || !source.paginated) return source.url;
+  const url = new URL(source.url);
+  url.pathname = `${url.pathname.replace(/\/+$/, '')}/page/${page}/`;
+  return url.href;
+}
+
+async function fetchHtml(url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      redirect: 'follow',
+      headers: {
+        accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5',
+        'accept-language': 'en-GB,en;q=0.9',
+        'user-agent': 'Southall-Ealing-Civic-Commons/0.1 (+public-interest prototype)'
+      }
+    });
+    return { response, html: response.ok ? await response.text() : null };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function fetchSource(source) {
   const started = Date.now();
+  const allItems = new Map();
+  let pagesFetched = 0;
+  let lastHttpStatus = null;
+
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    let response;
-    try {
-      response = await fetch(source.url, {
-        signal: controller.signal,
-        redirect: 'follow',
-        headers: {
-          accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5',
-          'accept-language': 'en-GB,en;q=0.9',
-          'user-agent': 'Southall-Ealing-Civic-Commons/0.1 (+public-interest prototype)'
-        }
-      });
-    } finally {
-      clearTimeout(timeout);
+    for (let page = 1; page <= (source.maxPages || 1); page += 1) {
+      const url = pageUrl(source, page);
+      const { response, html } = await fetchHtml(url);
+      lastHttpStatus = response.status;
+
+      if (page > 1 && response.status === 404) break;
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      pagesFetched += 1;
+      const pageItems = extractItems(source, html, url);
+      const before = allItems.size;
+      pageItems.forEach(item => allItems.set(item.canonicalUrl, item));
+
+      // Paginated archives stop when a valid page yields no new canonical
+      // entries. This avoids hammering non-existent pages past the archive end.
+      if (source.paginated && page > 1 && allItems.size === before) break;
+      if (!source.paginated) break;
     }
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const archiveItems = extractItems(source, await response.text());
+
+    const archiveItems = [...allItems.values()]
+      .sort((a, b) => Date.parse(b.publishedAt || 0) - Date.parse(a.publishedAt || 0))
+      .slice(0, source.archiveLimit || 100);
+
     return {
       items: archiveItems.slice(0, source.currentLimit || 6),
       archiveItems,
@@ -181,9 +220,15 @@ async function fetchSource(source) {
         homepage: source.homepage,
         ok: true,
         status: archiveItems.length ? 'ok' : 'empty',
-        error: archiveItems.length ? null : 'Page fetched but no dated rich-source entries matched the configured structure',
+        error: archiveItems.length ? null : 'Pages fetched but no dated rich-source entries matched the configured structure',
         itemCount: archiveItems.length,
-        diagnostics: [{ mode: 'rich-source-structured-archive', outcome: 'http-response', httpStatus: response.status, elapsedMs: Date.now() - started }]
+        diagnostics: [{
+          mode: 'rich-source-structured-archive',
+          outcome: 'http-response',
+          httpStatus: lastHttpStatus,
+          pagesFetched,
+          elapsedMs: Date.now() - started
+        }]
       }
     };
   } catch (error) {
@@ -198,7 +243,13 @@ async function fetchSource(source) {
         status: 'error',
         error: error?.name === 'AbortError' ? 'Timed out' : String(error?.message || error),
         itemCount: 0,
-        diagnostics: [{ mode: 'rich-source-structured-archive', outcome: 'transport-error', error: String(error?.message || error), elapsedMs: Date.now() - started }]
+        diagnostics: [{
+          mode: 'rich-source-structured-archive',
+          outcome: 'transport-error',
+          error: String(error?.message || error),
+          pagesFetched,
+          elapsedMs: Date.now() - started
+        }]
       }
     };
   }
