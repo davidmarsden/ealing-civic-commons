@@ -163,7 +163,7 @@ function renderHistorical(route, items) {
   root.innerHTML = `<ul class="entity-list">${items.map(post => `<li><h3><a href="${esc(post.url)}" target="_blank" rel="noopener noreferrer">${esc(post.title)}</a></h3>${post.summary ? `<p>${esc(post.summary)}</p>` : ''}<span class="entity-meta">${esc(post.source || 'Publisher')} · ${esc(fmtDate(post.date))}${post.reviewedMatch ? ' · reviewed match' : ' · Civic Archive match'}</span></li>`).join('')}</ul>`;
 }
 
-function renderPrimaryIssueHub(route, issue) {
+function renderPrimaryIssueHub(issue) {
   const current = document.querySelector('#currentSection');
   const reporting = document.querySelector('#reportingSection');
   if (current) current.hidden = true;
@@ -186,6 +186,18 @@ function renderPrimaryIssueHub(route, issue) {
   const stack = document.querySelector('.entity-stack');
   const relationships = document.querySelector('#relationshipsSection');
   if (stack) stack.insertBefore(section, relationships || stack.firstChild);
+}
+
+function keepPrimaryIssueHub(issue) {
+  const watched = ['#entityHero', '#currentSection', '#reportingSection', '#entityStats'].map(selector => document.querySelector(selector)).filter(Boolean);
+  let observer = null;
+  const apply = () => {
+    if (observer) observer.disconnect();
+    renderPrimaryIssueHub(issue);
+    if (observer) watched.forEach(root => observer.observe(root, { childList:true, subtree:true, attributes:true, attributeFilter:['hidden'] }));
+  };
+  observer = new MutationObserver(() => apply());
+  apply();
 }
 
 async function primaryIssueForEntity(data) {
@@ -212,7 +224,7 @@ if (route) {
       if (route.kind === 'entity') {
         const primaryIssue = await primaryIssueForEntity(data).catch(() => null);
         if (primaryIssue) {
-          renderPrimaryIssueHub(route, primaryIssue);
+          keepPrimaryIssueHub(primaryIssue);
           return;
         }
       }
