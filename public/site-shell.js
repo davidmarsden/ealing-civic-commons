@@ -48,4 +48,11 @@
       sessionStorage.setItem('civic-commons:last-submission-status-token', input.value);
     });
   });
+
+  if (/^\/(people|organisations|places|issues|topics)\//.test(path)) {
+    import('/context-reporting.js?v=20260902-1').catch(error => console.warn('Context reporting module unavailable', error));
+  }
+  if (path === '/explore.html') {
+    import('/explore-issue-hubs.js?v=20260902-1').catch(error => console.warn('Explore issue hubs unavailable', error));
+  }
 })();
