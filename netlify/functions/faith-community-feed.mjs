@@ -31,8 +31,8 @@ const sources = [
     sourceClass: 'Community / faith',
     towns: ['Southall'],
     mode: 'living',
-    sectionStart: /WHAT.?S ON/i,
-    sectionStop: /St John.?s Southall Green/i,
+    sectionStart: /EVENTS\s+WHAT.?S ON\s+ST JOHN.?S CHURCH,\s*SOUTHALL/i,
+    sectionStop: /(?:Venue Hire|Little Angels|Bumps\s*&\s*Babies|Giving|Footer|©)/i,
     topics: ['Community']
   },
   {
@@ -42,7 +42,7 @@ const sources = [
     homepage: 'https://www.wlc.ac.uk/',
     sourceClass: 'Community / education',
     towns: ['Ealing', 'Southall'],
-    mode: 'dated',
+    mode: 'wlc-news',
     include: /Ealing|Southall|community|MP|council|TfL|health|housing|climate|environment|citizens|documentary|public/i,
     topics: ['Community', 'Schools & young people']
   },
@@ -97,12 +97,62 @@ function datedItems(source, html) {
   return [...new Map(out.map(item=>[item.id,item])).values()].sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt)).slice(0,12);
 }
 
+function metaDescription(html='') {
+  const match = String(html).match(/<meta\b[^>]*(?:name=["']description["']|property=["']og:description["'])[^>]*content=["']([^"']+)["'][^>]*>/i)
+    || String(html).match(/<meta\b[^>]*content=["']([^"']+)["'][^>]*(?:name=["']description["']|property=["']og:description["'])[^>]*>/i);
+  return match ? strip(match[1]) : '';
+}
+
+async function wlcItems(source, html) {
+  const links = [];
+  const rx = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let match;
+  while ((match = rx.exec(html))) {
+    let url;
+    try { url = new URL(match[1], source.url); } catch { continue; }
+    if (!/^(?:www\.)?wlc\.ac\.uk$/i.test(url.hostname) || !/^\/news\/[a-z0-9][a-z0-9-]+\/?$/i.test(url.pathname)) continue;
+    const title = strip(match[2]);
+    if (title.length < 12 || title.length > 220 || !source.include.test(title)) continue;
+    links.push({ url: url.href, title });
+  }
+
+  const unique = [...new Map(links.map(entry => [entry.url, entry])).values()].slice(0, 12);
+  const enriched = await Promise.all(unique.map(async entry => {
+    try {
+      const articleHtml = await fetchHtml(entry.url);
+      const text = strip(articleHtml);
+      const dateMatch = text.match(/\b([0-3]?\d(?:st|nd|rd|th)?\s+[A-Za-z]+\s+20\d{2}|[A-Z][a-z]+\s+\d{1,2},\s+20\d{2})\b/);
+      const publishedAt = dateMatch ? dateIso(dateMatch[1].replace(/(\d)(st|nd|rd|th)/i,'$1')) : null;
+      const summary = metaDescription(articleHtml);
+      return {
+        id: `${source.id}:${entry.url}`,
+        sourceId: source.id,
+        source: source.name,
+        sourceClass: source.sourceClass,
+        sourceHomepage: source.homepage,
+        mediaType: null,
+        title: entry.title,
+        url: entry.url,
+        canonicalUrl: entry.url,
+        summary: summary.slice(0, 700),
+        publishedAt,
+        towns: source.towns,
+        topics: source.topics,
+        derived: true,
+        derivedFrom: 'West London College first-party news listing and canonical article metadata'
+      };
+    } catch { return null; }
+  }));
+  return enriched.filter(Boolean).sort((a,b)=>Date.parse(b.publishedAt||0)-Date.parse(a.publishedAt||0));
+}
+
 function livingItem(source, html) {
   const text = strip(html);
   const startMatch = text.match(source.sectionStart); if(!startMatch) return null;
-  let section = text.slice(startMatch.index, startMatch.index + 2600);
-  const stop = section.slice(50).search(source.sectionStop); if(stop>100) section=section.slice(0,stop+50);
-  section=section.trim(); if(section.length<100) return null;
+  let section = text.slice(startMatch.index, startMatch.index + 2600).trim();
+  const stop = section.slice(Math.min(80, section.length)).search(source.sectionStop);
+  if(stop >= 0) section=section.slice(0, stop + Math.min(80, section.length)).trim();
+  if(section.length<100) return null;
   const hash=createHash('sha256').update(section).digest('hex').slice(0,16);
   return { id:`${source.id}:${hash}`, sourceId:source.id, source:source.name, sourceClass:source.sourceClass, sourceHomepage:source.homepage, mediaType:null, title:`${source.name}: current community programme`, url:source.url, canonicalUrl:`${source.url}#commons-version-${hash}`, summary:section.slice(0,800), publishedAt:null, towns:source.towns, topics:source.topics, derived:true, derivedFrom:'Content-hashed living community/outreach page; no publication date invented' };
 }
@@ -110,13 +160,16 @@ function livingItem(source, html) {
 export async function fetchFaithCommunityFeed() {
   const results=await Promise.allSettled(sources.map(async source=>({source,html:await fetchHtml(source.url)})));
   const items=[]; const health=[];
-  results.forEach((result,index)=>{
-    const source=sources[index];
+  for (let index=0; index<results.length; index+=1) {
+    const result=results[index]; const source=sources[index];
     if(result.status==='fulfilled'){
-      const found=source.mode==='living' ? [livingItem(source,result.value.html)].filter(Boolean) : datedItems(source,result.value.html);
+      let found;
+      if (source.mode==='living') found=[livingItem(source,result.value.html)].filter(Boolean);
+      else if (source.mode==='wlc-news') found=await wlcItems(source,result.value.html);
+      else found=datedItems(source,result.value.html);
       items.push(...found); health.push({id:source.id,name:source.name,homepage:source.homepage,ok:true,status:found.length?'ok':'empty',itemCount:found.length,error:found.length?null:'Page fetched but no current civic/community material matched the source rules'});
     } else health.push({id:source.id,name:source.name,homepage:source.homepage,ok:false,status:'error',itemCount:0,error:String(result.reason?.message||result.reason)});
-  });
+  }
   return {generatedAt:new Date().toISOString(),items,health};
 }
 

@@ -11,20 +11,6 @@ const sources = [
     requireNearby: /Published\s+on/i,
     excludePath: /^\/(?:$|about|contact|services|projects|training|events|whats-on|ealing-community-voluntary-services\/?$)/i,
     dateStyle: 'published-on'
-  },
-  {
-    id: 'warren-farm-nature-reserve-blog',
-    name: 'Warren Farm Nature Reserve — Blog',
-    url: 'https://www.warrenfarmnaturereserve.co.uk/blog',
-    homepage: 'https://www.warrenfarmnaturereserve.co.uk/',
-    sourceClass: 'Organisation / campaign',
-    towns: ['Southall', 'Hanwell'],
-    defaultTopics: ['Environment', 'Planning & development'],
-    hostPattern: /^(?:www\.)?warrenfarmnaturereserve\.co\.uk$/i,
-    requireNearby: /\b\d{1,2}\/\d{1,2}\/\d{2}\b/,
-    includePath: /^\/blog\/[a-z0-9][a-z0-9-]+\/?$/i,
-    excludePath: /^\/blog\/?$/i,
-    dateStyle: 'mdy-short'
   }
 ];
 
@@ -66,26 +52,14 @@ function absoluteUrl(href, base) {
   }
 }
 
-function parsePublishedDate(text = '', source = {}) {
-  const value = String(text);
-  if (source.dateStyle === 'mdy-short') {
-    const match = value.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2})\b/);
-    if (!match) return null;
-    const month = Number.parseInt(match[1], 10);
-    const day = Number.parseInt(match[2], 10);
-    const year = 2000 + Number.parseInt(match[3], 10);
-    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-    return new Date(Date.UTC(year, month - 1, day)).toISOString();
-  }
-
-  const match = value.match(/Published\s+on\s*:?[\s\u00a0]*([0-3]?\d\s+[A-Za-z]+\s+20\d{2})/i);
+function parsePublishedDate(text = '') {
+  const match = String(text).match(/Published\s+on\s*:?[\s\u00a0]*([0-3]?\d\s+[A-Za-z]+\s+20\d{2})/i);
   if (!match) return null;
   const timestamp = Date.parse(match[1]);
   return Number.isNaN(timestamp) ? null : new Date(timestamp).toISOString();
 }
 
-function removeDateText(text = '', source = {}) {
-  if (source.dateStyle === 'mdy-short') return String(text).replace(/\b\d{1,2}\/\d{1,2}\/\d{2}\b/g, ' ');
+function removeDateText(text = '') {
   return String(text).replace(/Published\s+on\s*:?[\s\u00a0]*[0-3]?\d\s+[A-Za-z]+\s+20\d{2}/i, ' ');
 }
 
@@ -111,7 +85,6 @@ function extractCards(source, html) {
   while ((match = anchorPattern.exec(html))) {
     const url = absoluteUrl(match[1], source.url);
     if (!url || !source.hostPattern.test(url.hostname)) continue;
-    if (source.includePath && !source.includePath.test(url.pathname)) continue;
     if (source.excludePath && source.excludePath.test(url.pathname)) continue;
 
     const title = strip(match[2]);
@@ -120,14 +93,13 @@ function extractCards(source, html) {
 
     const windowStart = Math.max(0, match.index - 500);
     const windowEnd = Math.min(html.length, anchorPattern.lastIndex + 1300);
-    const nearbyHtml = html.slice(windowStart, windowEnd);
-    const nearbyText = strip(nearbyHtml);
+    const nearbyText = strip(html.slice(windowStart, windowEnd));
     if (source.requireNearby && !source.requireNearby.test(nearbyText)) continue;
 
-    const publishedAt = parsePublishedDate(nearbyText, source);
+    const publishedAt = parsePublishedDate(nearbyText);
     if (!publishedAt) continue;
 
-    let summary = removeDateText(nearbyText.replace(title, ' '), source)
+    let summary = removeDateText(nearbyText.replace(title, ' '))
       .replace(/\b(?:Written By|Read More|ongoing)\b/gi, ' ')
       .replace(/\s+/g, ' ')
       .trim();
@@ -176,8 +148,7 @@ async function fetchSource(source) {
       clearTimeout(timeout);
     }
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const html = await response.text();
-    const items = extractCards(source, html);
+    const items = extractCards(source, await response.text());
     return {
       items,
       health: {
