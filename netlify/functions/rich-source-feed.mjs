@@ -78,21 +78,15 @@ function strip(html = '') {
 function safeHtmlWindow(html, rawStart, rawEnd) {
   let start = Math.max(0, rawStart);
   let end = Math.min(html.length, rawEnd);
-
-  // A character-count window can begin or end halfway through a tag. If that
-  // fragment is handed to strip(), orphaned attributes such as srcset/data-src
-  // become visible text. Move both edges outside any partial tag first.
   const openBeforeStart = html.lastIndexOf('<', start);
   const closeBeforeStart = html.lastIndexOf('>', start);
   if (openBeforeStart > closeBeforeStart) {
     const closeAfterStart = html.indexOf('>', start);
     if (closeAfterStart !== -1 && closeAfterStart < end) start = closeAfterStart + 1;
   }
-
   const openBeforeEnd = html.lastIndexOf('<', end);
   const closeBeforeEnd = html.lastIndexOf('>', end);
   if (openBeforeEnd > closeBeforeEnd && openBeforeEnd > start) end = openBeforeEnd;
-
   return html.slice(start, end);
 }
 
@@ -154,8 +148,6 @@ function extractItems(source, html, baseUrl = source.url) {
     const nearby = strip(nearbyHtml);
     const publishedAt = parseDate(nearby, source.dateStyle);
     if (!publishedAt) continue;
-    let summary = nearby.replace(title, ' ').replace(/\s+/g, ' ').trim();
-    if (summary.length > 420) summary = `${summary.slice(0, 417).trimEnd()}…`;
     anchors.push({
       id: `${source.id}:${url.href}`,
       sourceId: source.id,
@@ -166,10 +158,10 @@ function extractItems(source, html, baseUrl = source.url) {
       title,
       url: url.href,
       canonicalUrl: url.href,
-      summary,
+      summary: '',
       publishedAt,
       towns: source.towns,
-      topics: topicGuess(`${title} ${summary}`, source.defaultTopics),
+      topics: topicGuess(title, source.defaultTopics),
       derived: true,
       derivedFrom: 'Structured public archive/listing page'
     });
@@ -203,6 +195,48 @@ async function fetchHtml(url) {
   }
 }
 
+function articleSummary(html, title = '') {
+  const candidates = [];
+  const metaRx = /<meta\b[^>]*(?:name|property)=["'](?:description|og:description|twitter:description)["'][^>]*content=["']([^"']+)["'][^>]*>|<meta\b[^>]*content=["']([^"']+)["'][^>]*(?:name|property)=["'](?:description|og:description|twitter:description)["'][^>]*>/gi;
+  let meta;
+  while ((meta = metaRx.exec(html))) candidates.push(decodeEntities(meta[1] || meta[2] || ''));
+
+  const paragraphRx = /<p\b[^>]*>([\s\S]*?)<\/p>/gi;
+  let paragraph;
+  let checked = 0;
+  while ((paragraph = paragraphRx.exec(html)) && checked < 12) {
+    checked += 1;
+    candidates.push(strip(paragraph[1]));
+  }
+
+  for (const candidate of candidates) {
+    const clean = String(candidate || '').replace(/\s+/g, ' ').trim();
+    if (clean.length < 60) continue;
+    if (title && clean.toLowerCase() === title.toLowerCase()) continue;
+    if (/cookie|privacy policy|sign the petition|call us for help|donate now/i.test(clean)) continue;
+    return clean.length > 420 ? `${clean.slice(0, 417).trimEnd()}…` : clean;
+  }
+  return '';
+}
+
+async function enrichLiveItems(items) {
+  return Promise.all(items.map(async item => {
+    try {
+      const { response, html } = await fetchHtml(item.url);
+      if (!response.ok || !html) return item;
+      const summary = articleSummary(html, item.title);
+      if (!summary) return item;
+      return {
+        ...item,
+        summary,
+        topics: topicGuess(`${item.title} ${summary}`, item.topics || [])
+      };
+    } catch {
+      return item;
+    }
+  }));
+}
+
 async function fetchSource(source, { deep = false } = {}) {
   const started = Date.now();
   const allItems = new Map();
@@ -215,15 +249,12 @@ async function fetchSource(source, { deep = false } = {}) {
       const url = pageUrl(source, page);
       const { response, html } = await fetchHtml(url);
       lastHttpStatus = response.status;
-
       if (page > 1 && response.status === 404) break;
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
       pagesFetched += 1;
       const pageItems = extractItems(source, html, url);
       const before = allItems.size;
       pageItems.forEach(item => allItems.set(item.canonicalUrl, item));
-
       if (deep && source.paginated && page > 1 && allItems.size === before) break;
       if (!deep || !source.paginated) break;
     }
@@ -231,9 +262,11 @@ async function fetchSource(source, { deep = false } = {}) {
     const archiveItems = [...allItems.values()]
       .sort((a, b) => Date.parse(b.publishedAt || 0) - Date.parse(a.publishedAt || 0))
       .slice(0, deep ? (source.archiveLimit || 100) : (source.currentLimit || 6));
+    const currentBase = archiveItems.slice(0, source.currentLimit || 6);
+    const items = deep ? currentBase : await enrichLiveItems(currentBase);
 
     return {
-      items: archiveItems.slice(0, source.currentLimit || 6),
+      items,
       archiveItems,
       health: {
         id: source.id,
