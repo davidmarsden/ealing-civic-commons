@@ -11,6 +11,7 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
 
 const clean = (value, max = 180) => String(value ?? '').trim().slice(0, max);
 const cleanList = (values, max = 180) => [...new Set((values || []).map(value => clean(value, max)).filter(value => value.length >= 3))].slice(0, 20);
+const escapeRegex = value => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 function sortTime(record) {
   const published = Date.parse(record?.item?.publishedAt || '');
@@ -19,12 +20,19 @@ function sortTime(record) {
   return Number.isFinite(archived) ? archived : 0;
 }
 
+function termMatches(haystack, term) {
+  if (term.length > 4) return haystack.includes(term);
+  // Short aliases are commonly acronyms (for example ECI). Substring matching
+  // would also match them inside ordinary words such as "decision".
+  return new RegExp(`\\b${escapeRegex(term)}\\b`, 'i').test(haystack);
+}
+
 function matches(record, terms, topics) {
   const item = record?.item;
   if (!item || item.sourceClass !== 'Journalism / publishing') return false;
   const topicMatch = topics.length && (item.topics || []).some(topic => topics.includes(String(topic).toLowerCase()));
   const haystack = `${item.title || ''}\n${item.summary || ''}\n${item.source || ''}\n${(item.towns || []).join(' ')}\n${(item.topics || []).join(' ')}`.toLowerCase();
-  const termMatch = terms.length && terms.some(term => haystack.includes(term));
+  const termMatch = terms.length && terms.some(term => termMatches(haystack, term));
   return Boolean(topicMatch || termMatch);
 }
 
