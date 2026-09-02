@@ -1,5 +1,5 @@
 const $ = sel => document.querySelector(sel);
-const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt',"'":'&#39;','"':'&quot;'}[c]));
 const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date(iso); return new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'long',year:'numeric'}).format(d); };
 const relationshipLabels = new Map([
   ['leader_of','leader of'],
@@ -51,6 +51,39 @@ function topicLink(topic) {
   return slug ? `<a class="entity-topic" href="/topics/${esc(slug)}">${esc(topic.name)} · ${topic.count}</a>` : `<span class="entity-topic">${esc(topic?.name)} · ${topic.count}</span>`;
 }
 
+function canonicalUrl(value) {
+  try { const url = new URL(value, location.origin); url.hash = ''; if (url.pathname !== '/') url.pathname = url.pathname.replace(/\/+$/,''); return url.toString(); }
+  catch { return String(value || '').trim(); }
+}
+
+function mergeReporting(reviewed = [], archived = []) {
+  const merged = [];
+  const seen = new Set();
+  const add = item => {
+    const key = canonicalUrl(item.url);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    merged.push(item);
+  };
+  reviewed.forEach(post => add({ ...post, source: post.source || 'Southall Stories', date: post.date || post.publishedAt || null, reviewedMatch: true }));
+  archived.forEach(record => {
+    const item = record?.item;
+    if (!item?.url) return;
+    add({ title: item.title, url: item.url, summary: item.summary, date: item.publishedAt || record.archivedAt, source: item.source || 'Archived publisher', archivedMatch: true });
+  });
+  return merged.sort((a,b) => (Date.parse(b.date || '') || 0) - (Date.parse(a.date || '') || 0));
+}
+
+async function archivedReporting(terms = [], topics = []) {
+  const endpoint = new URL('/.netlify/functions/historical-reporting', location.origin);
+  [...new Set(terms.filter(term => String(term || '').trim().length >= 3))].slice(0,20).forEach(term => endpoint.searchParams.append('term', term));
+  [...new Set(topics.filter(Boolean))].slice(0,20).forEach(topic => endpoint.searchParams.append('topic', topic));
+  endpoint.searchParams.set('limit','100');
+  const response = await fetch(endpoint,{cache:'no-store'});
+  if (!response.ok) throw new Error(`Historical reporting HTTP ${response.status}`);
+  return (await response.json()).records || [];
+}
+
 function renderHero(data) {
   const entity = data.entity;
   document.title = `${entity.name} — Civic Commons`;
@@ -67,9 +100,10 @@ function renderHero(data) {
   hero.innerHTML = `<h1>${esc(entity.name)}</h1><p class="lede">${esc(entity.description || fallback)}</p><div class="entity-kicker"><span class="tag">${esc(entity.type)}</span>${(entity.aliases || []).slice(0,5).map(alias => `<span class="tag">also: ${esc(alias)}</span>`).join('')}${website}</div><div class="entity-actions"><a href="#commonsAssertionsSection">Current civic facts ↓</a><a href="#relationshipsSection">Reviewed connections ↓</a><a href="#sourcesSection">Primary evidence ↓</a><a href="#reportingSection">Historical reporting ↓</a><a href="#currentSection">Current Commons ↓</a></div>`;
 }
 
-function renderStats(data) {
+function renderStats(data, historicalCount = null) {
   const c = data.counts || {};
-  $('#entityStats').innerHTML = `<div class="entity-stat"><strong>${c.reporting || 0}</strong><span>archive posts</span></div><div class="entity-stat"><strong>${c.relationships || 0}</strong><span>reviewed relationships</span></div><div class="entity-stat"><strong>${c.sources || 0}</strong><span>curated sources</span></div>`;
+  const reporting = historicalCount == null ? (c.reporting || 0) : historicalCount;
+  $('#entityStats').innerHTML = `<div class="entity-stat"><strong>${reporting}</strong><span>historical reports</span></div><div class="entity-stat"><strong>${c.relationships || 0}</strong><span>reviewed relationships</span></div><div class="entity-stat"><strong>${c.sources || 0}</strong><span>curated sources</span></div>`;
   $('#entityTopics').innerHTML = (data.topics || []).map(topicLink).join('') || '<span class="entity-empty">No recurring topics found.</span>';
 }
 
@@ -112,7 +146,7 @@ function renderSources(items) {
 
 function renderReporting(items) {
   const section = $('#reportingSection'); if (!items?.length) return; section.hidden = false;
-  $('#reporting').innerHTML = `<ul class="entity-list">${items.map(post => `<li><h3><a href="${esc(post.url)}" target="_blank" rel="noopener noreferrer">${esc(post.title)}</a></h3>${post.summary ? `<p>${esc(post.summary)}</p>` : ''}<span class="entity-meta">Southall Stories · ${esc(fmtDate(post.date))}</span></li>`).join('')}</ul>`;
+  $('#reporting').innerHTML = `<ul class="entity-list">${items.map(post => `<li><h3><a href="${esc(post.url)}" target="_blank" rel="noopener noreferrer">${esc(post.title)}</a></h3>${post.summary ? `<p>${esc(post.summary)}</p>` : ''}<span class="entity-meta">${esc(post.source || 'Publisher')} · ${esc(fmtDate(post.date))}${post.reviewedMatch ? ' · reviewed match' : ' · Civic Archive match'}</span></li>`).join('')}</ul>`;
 }
 
 function currentMatches(feed, entity) {
@@ -136,18 +170,22 @@ async function load() {
   }
   try {
     const endpoint = new URL('/.netlify/functions/civic-entity', location.origin); endpoint.searchParams.set('route', route.route);
-    const assertionsEndpoint = new URL('/.netlify/functions/civic-assertions', location.origin); assertionsEndpoint.searchParams.set('route', route.route);
-    const [entityResponse, assertionsResponse, feedResponse] = await Promise.all([
-      fetch(endpoint,{cache:'no-store'}),
-      fetch(assertionsEndpoint,{cache:'no-store'}).catch(() => null),
-      fetch('/.netlify/functions/feed',{cache:'no-store'}).catch(() => null)
-    ]);
+    const entityResponse = await fetch(endpoint,{cache:'no-store'});
     if (!entityResponse.ok) throw new Error(`Entity HTTP ${entityResponse.status}`);
     const data = await entityResponse.json();
     if (!data.matched) throw new Error(data.reason || 'Entity not found');
     if (route.expectedType && data.entity.type !== route.expectedType) throw new Error(`Entity type mismatch: expected ${route.expectedType}, got ${data.entity.type}`);
     window.__civicEntityRoute = data.civicEntity?.route || route.route;
-    renderHero(data); renderStats(data); renderProviders(data.providers); renderRelationships(data.relationships, data.entity); renderSources(data.sources); renderReporting(data.reporting);
+    renderHero(data); renderStats(data); renderProviders(data.providers); renderRelationships(data.relationships, data.entity); renderSources(data.sources);
+
+    const assertionsEndpoint = new URL('/.netlify/functions/civic-assertions', location.origin); assertionsEndpoint.searchParams.set('route', route.route);
+    const [archiveResult, assertionsResponse, feedResponse] = await Promise.all([
+      archivedReporting([data.entity.name, ...(data.entity.aliases || [])]).catch(() => []),
+      fetch(assertionsEndpoint,{cache:'no-store'}).catch(() => null),
+      fetch('/.netlify/functions/feed',{cache:'no-store'}).catch(() => null)
+    ]);
+    const historical = mergeReporting(data.reporting, archiveResult);
+    renderReporting(historical); renderStats(data, historical.length);
     if (assertionsResponse?.ok) { const assertions = await assertionsResponse.json(); if (assertions.matched) renderCommonsAssertions(assertions, data.entity); }
     if (feedResponse?.ok) { const feed = await feedResponse.json(); renderCurrent(currentMatches(feed,data.entity)); }
   } catch (error) {
