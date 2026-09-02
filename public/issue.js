@@ -53,7 +53,10 @@ function renderSources(items) {
 function renderReporting(items) {
   if (!items?.length) return;
   $('#reportingSection').hidden = false;
-  $('#issueReporting').innerHTML = `<ul class="entity-list">${items.slice(0,60).map(post => `<li><h3><a href="${esc(post.url)}" target="_blank" rel="noopener noreferrer">${esc(post.title)}</a></h3>${post.summary ? `<p>${esc(post.summary)}</p>` : ''}<span class="entity-meta">${esc(post.source || 'Publisher')} · ${esc(fmtDate(post.date))}${post.reviewedMatch ? ` · reviewed match${Number.isFinite(post.entityMatches) ? ` · ${post.entityMatches} entity match${post.entityMatches === 1 ? '' : 'es'}` : ''}${Number.isFinite(post.topicMatches) ? ` · ${post.topicMatches} topic match${post.topicMatches === 1 ? '' : 'es'}` : ''}` : ' · Civic Archive match'}</span></li>`).join('')}</ul>`;
+  const reviewed = items.filter(post => post.reviewedMatch);
+  const archived = items.filter(post => !post.reviewedMatch).slice(0,60);
+  const visible = [...reviewed, ...archived].sort((a,b) => (Date.parse(b.date || '') || 0) - (Date.parse(a.date || '') || 0));
+  $('#issueReporting').innerHTML = `<ul class="entity-list">${visible.map(post => `<li><h3><a href="${esc(post.url)}" target="_blank" rel="noopener noreferrer">${esc(post.title)}</a></h3>${post.summary ? `<p>${esc(post.summary)}</p>` : ''}<span class="entity-meta">${esc(post.source || 'Publisher')} · ${esc(fmtDate(post.date))}${post.reviewedMatch ? ` · reviewed match${Number.isFinite(post.entityMatches) ? ` · ${post.entityMatches} entity match${post.entityMatches === 1 ? '' : 'es'}` : ''}${Number.isFinite(post.topicMatches) ? ` · ${post.topicMatches} topic match${post.topicMatches === 1 ? '' : 'es'}` : ''}` : ' · Civic Archive match'}</span></li>`).join('')}</ul>`;
 }
 function currentMatches(feed, issue) {
   const terms = [issue.name, ...(issue.aliases || [])].filter(Boolean).sort((a,b)=>b.length-a.length);
