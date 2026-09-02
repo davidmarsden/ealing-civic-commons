@@ -64,7 +64,7 @@ async function metadata(request, kind, path) {
   return null;
 }
 
-function inject(html, meta, canonical) {
+function inject(html, meta, canonical, imageUrl) {
   if (!meta) return html;
   const fullTitle = `${meta.title} — Civic Commons`;
   const tags = [
@@ -74,9 +74,15 @@ function inject(html, meta, canonical) {
     `<meta property="og:title" content="${esc(meta.title)}" />`,
     `<meta property="og:description" content="${esc(meta.description)}" />`,
     `<meta property="og:url" content="${esc(canonical)}" />`,
-    '<meta name="twitter:card" content="summary" />',
+    `<meta property="og:image" content="${esc(imageUrl)}" />`,
+    '<meta property="og:image:width" content="1200" />',
+    '<meta property="og:image:height" content="630" />',
+    '<meta property="og:image:alt" content="Southall &amp; Ealing Civic Commons" />',
+    '<meta name="twitter:card" content="summary_large_image" />',
     `<meta name="twitter:title" content="${esc(meta.title)}" />`,
-    `<meta name="twitter:description" content="${esc(meta.description)}" />`
+    `<meta name="twitter:description" content="${esc(meta.description)}" />`,
+    `<meta name="twitter:image" content="${esc(imageUrl)}" />`,
+    '<meta name="twitter:image:alt" content="Southall &amp; Ealing Civic Commons" />'
   ].join('\n  ');
 
   return html
@@ -98,17 +104,23 @@ export default async request => {
   if (!shellResponse.ok) return new Response('Page shell unavailable', { status: 503 });
 
   const route = kind === 'item' ? `/items/${path}` : `/${path.replace(/^\/+/, '')}`;
-  const canonical = `${canonicalOrigin(request)}${route}`;
+  const origin = canonicalOrigin(request);
+  const canonical = `${origin}${route}`;
+  const imageUrl = `${origin}/.netlify/images?url=/og-image.svg&w=1200&h=630&fit=cover&fm=png`;
   let meta = null;
   try { meta = await metadata(request, kind, path); }
   catch (error) { console.error('Social metadata lookup failed', error); }
 
-  const body = inject(await shellResponse.text(), meta, canonical);
+  const body = inject(await shellResponse.text(), meta, canonical, imageUrl);
   return new Response(body, {
     status: 200,
     headers: {
       'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'public, max-age=300, stale-while-revalidate=1800'
+      'cache-control': 'public, max-age=300, stale-while-revalidate=1800',
+      'x-frame-options': 'DENY',
+      'x-content-type-options': 'nosniff',
+      'referrer-policy': 'strict-origin-when-cross-origin',
+      'permissions-policy': 'camera=(), microphone=(), geolocation=()'
     }
   });
 };
