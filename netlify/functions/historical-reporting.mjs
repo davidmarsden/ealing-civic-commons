@@ -20,20 +20,34 @@ function sortTime(record) {
   return Number.isFinite(archived) ? archived : 0;
 }
 
-function termMatches(haystack, term) {
-  if (term.length > 4) return haystack.includes(term);
-  // Short aliases are commonly acronyms (for example ECI). Substring matching
-  // would also match them inside ordinary words such as "decision".
-  return new RegExp(`\\b${escapeRegex(term)}\\b`, 'i').test(haystack);
+function termMatches(text, term) {
+  if (term.length > 4) return text.includes(term);
+  return new RegExp(`\\b${escapeRegex(term)}\\b`, 'i').test(text);
 }
 
-function matches(record, terms, topics) {
+function relevanceScore(record, terms, topics) {
   const item = record?.item;
-  if (!item || item.sourceClass !== 'Journalism / publishing') return false;
-  const topicMatch = topics.length && (item.topics || []).some(topic => topics.includes(String(topic).toLowerCase()));
-  const haystack = `${item.title || ''}\n${item.summary || ''}\n${item.source || ''}\n${(item.towns || []).join(' ')}\n${(item.topics || []).join(' ')}`.toLowerCase();
-  const termMatch = terms.length && terms.some(term => termMatches(haystack, term));
-  return Boolean(topicMatch || termMatch);
+  if (!item || item.sourceClass !== 'Journalism / publishing') return 0;
+
+  let score = 0;
+  const title = String(item.title || '').toLowerCase();
+  const summary = String(item.summary || '').toLowerCase();
+  const itemTopics = (item.topics || []).map(topic => String(topic).toLowerCase());
+
+  if (topics.some(topic => itemTopics.includes(topic))) score += 5;
+
+  for (const term of terms) {
+    if (termMatches(title, term)) {
+      score += 4;
+      continue;
+    }
+    // Summary-only matches are deliberately weak. Generic one-word concepts
+    // such as housing/planning/community cannot qualify from a passing mention.
+    const usefulPhrase = term.includes(' ') || term.length >= 12;
+    if (usefulPhrase && termMatches(summary, term)) score += 2;
+  }
+
+  return score;
 }
 
 export default async request => {
@@ -41,7 +55,7 @@ export default async request => {
   const url = new URL(request.url);
   const terms = cleanList(url.searchParams.getAll('term'), 240).map(value => value.toLowerCase());
   const topics = cleanList(url.searchParams.getAll('topic')).map(value => value.toLowerCase());
-  const limit = Math.max(1, Math.min(Number(url.searchParams.get('limit')) || 60, 100));
+  const limit = Math.max(1, Math.min(Number(url.searchParams.get('limit')) || 20, 100));
 
   if (!terms.length && !topics.length) return json({ version: 1, count: 0, records: [] });
 
@@ -61,15 +75,17 @@ export default async request => {
     }
 
     const matching = records
-      .filter(record => matches(record, terms, topics))
-      .sort((a, b) => sortTime(b) - sortTime(a));
+      .map(record => ({ record, score: relevanceScore(record, terms, topics) }))
+      .filter(entry => entry.score >= 4)
+      .sort((a, b) => b.score - a.score || sortTime(b.record) - sortTime(a.record));
 
     return json({
       version: 1,
       count: matching.length,
-      records: matching.slice(0, limit).map(record => ({
+      records: matching.slice(0, limit).map(({ record, score }) => ({
         key: record.key,
         archivedAt: record.archivedAt,
+        matchScore: score,
         item: record.item
       }))
     });
