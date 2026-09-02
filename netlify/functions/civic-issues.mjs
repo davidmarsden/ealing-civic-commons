@@ -12,7 +12,8 @@ export default async request => {
     route: issue.route,
     name: issue.name,
     status: issue.status,
-    description: issue.description
+    description: issue.description,
+    primaryEntityId: issue.primaryEntityId
   }));
   return json({ matched: true, issues, count: issues.length }, 200, 300);
 };
