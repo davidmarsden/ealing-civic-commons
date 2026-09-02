@@ -11,7 +11,7 @@ export default async request => {
         console.error('Document Watch archive enrichment failed', error);
         return { items: [] };
       }),
-      fetchRichSourceFeed().catch(error => {
+      fetchRichSourceFeed({ deep: true }).catch(error => {
         console.error('Rich source archive enrichment failed', error);
         return { archiveItems: [] };
       })
