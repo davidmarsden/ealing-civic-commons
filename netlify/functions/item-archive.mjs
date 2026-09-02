@@ -1,14 +1,19 @@
 import feedHandler from './combined-feed.mjs';
 import { fetchEalingCouncilDocuments } from './ealing-council-documents.mjs';
+import { fetchRichSourceFeed } from './rich-source-feed.mjs';
 import { archiveItems } from '../lib/civic-items.mjs';
 
 export default async request => {
   try {
-    const [response, documents] = await Promise.all([
+    const [response, documents, rich] = await Promise.all([
       feedHandler(request),
       fetchEalingCouncilDocuments().catch(error => {
         console.error('Document Watch archive enrichment failed', error);
         return { items: [] };
+      }),
+      fetchRichSourceFeed().catch(error => {
+        console.error('Rich source archive enrichment failed', error);
+        return { archiveItems: [] };
       })
     ]);
 
@@ -18,20 +23,16 @@ export default async request => {
     }
 
     const data = await response.json();
-    const combined = [...(data.items || []), ...(documents.items || [])];
+    const combined = [...(data.items || []), ...(documents.items || []), ...(rich.archiveItems || [])];
     const seen = new Set();
     const items = combined.filter(item => {
-      // Reviewed-context activity is a transient timeline projection over an
-      // already archived parent item. Its body remains governed by the public
-      // contribution store, where a later moderation withdrawal can remove it.
-      // Never copy that synthetic activity into the append-only civic archive.
       if (item?.activityType === 'new-context') return false;
       if (!item?.id || seen.has(item.id)) return false;
       seen.add(item.id);
       return true;
     });
     const result = await archiveItems(items);
-    console.log(`Civic item archive complete: ${result.stored} stored; ${result.newCandidates} candidates; ${result.failed} failed; manifest ${result.manifestSize}`);
+    console.log(`Civic item archive complete: ${result.stored} stored; ${result.newCandidates} candidates; ${result.failed} failed; manifest ${result.manifestSize}; rich-source candidates ${rich.archiveItems?.length || 0}`);
   } catch (error) {
     console.error('Civic item archive failed', error);
   }
