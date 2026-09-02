@@ -1,7 +1,6 @@
 import { createHash } from 'node:crypto';
 
 const NEWS_URL = 'https://news.met.police.uk/latest_news';
-const EALING_HOME = 'https://www.met.police.uk/area/your-area/met/ealing/';
 
 const localityTerms = [
   'Ealing', 'Southall', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale',
@@ -32,14 +31,53 @@ const topics = text => {
   return [...new Set(out)].slice(0, 3);
 };
 
-async function fetchHtml(url) {
+function requestHeaders(browserCompatible = false) {
+  return browserCompatible
+    ? {
+        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'accept-language': 'en-GB,en;q=0.9',
+        'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36'
+      }
+    : {
+        accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5',
+        'accept-language': 'en-GB,en;q=0.9',
+        'user-agent': 'Southall-Ealing-Civic-Commons/0.1 (+public-interest prototype)'
+      };
+}
+
+async function requestHtml(url, browserCompatible = false) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
-    const response = await fetch(url, { redirect: 'follow', signal: controller.signal, headers: { accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5', 'accept-language': 'en-GB,en;q=0.9', 'user-agent': 'Southall-Ealing-Civic-Commons/0.1 (+public-interest prototype)' } });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return { html: await response.text(), status: response.status };
+    const response = await fetch(url, {
+      redirect: 'follow',
+      signal: controller.signal,
+      headers: requestHeaders(browserCompatible)
+    });
+    return { response, html: response.ok ? await response.text() : null };
   } finally { clearTimeout(timeout); }
+}
+
+async function fetchHtml(url) {
+  const diagnostics = [];
+  const started = Date.now();
+  let result = await requestHtml(url, false);
+  diagnostics.push({ mode: 'initial', outcome: 'http-response', httpStatus: result.response.status, elapsedMs: Date.now() - started });
+
+  if ([401, 403, 406, 429].includes(result.response.status)) {
+    const retryStarted = Date.now();
+    result = await requestHtml(url, true);
+    diagnostics.push({ mode: 'browser-compatible', outcome: 'http-response', httpStatus: result.response.status, elapsedMs: Date.now() - retryStarted });
+  }
+
+  if (!result.response.ok) {
+    const error = new Error(`HTTP ${result.response.status}`);
+    error.httpStatus = result.response.status;
+    error.diagnostics = diagnostics;
+    throw error;
+  }
+
+  return { html: result.html, status: result.response.status, diagnostics };
 }
 
 function parseNews(html) {
@@ -110,26 +148,43 @@ function prioritySnapshot(html, slug, name, url) {
   };
 }
 
+function priorityUrl(slug) {
+  return `https://www.met.police.uk/area/your-area/met/ealing/${slug}/contact-us/our-priorities`;
+}
+
 export async function fetchMetEalingFeed() {
   const started = Date.now();
   const results = await Promise.allSettled([
     fetchHtml(NEWS_URL),
-    ...wards.map(([slug]) => fetchHtml(`https://www.met.police.uk/area/your-area/met/ealing/${slug}/meetings-and-events/our-priorities`))
+    ...wards.map(([slug]) => fetchHtml(priorityUrl(slug)))
   ]);
   const health = [];
   const items = [];
   if (results[0].status === 'fulfilled') {
     const news = parseNews(results[0].value.html); items.push(...news);
-    health.push({ id: 'met-ealing-news', name: 'Metropolitan Police — Ealing-relevant news', homepage: NEWS_URL, ok: true, status: news.length ? 'ok' : 'empty', itemCount: news.length, error: news.length ? null : 'Newsroom fetched but no current items matched the Ealing-area filter' });
-  } else health.push({ id: 'met-ealing-news', name: 'Metropolitan Police — Ealing-relevant news', homepage: NEWS_URL, ok: false, status: 'error', itemCount: 0, error: String(results[0].reason?.message || results[0].reason) });
+    health.push({ id: 'met-ealing-news', name: 'Metropolitan Police — Ealing-relevant news', homepage: NEWS_URL, ok: true, status: news.length ? 'ok' : 'empty', itemCount: news.length, error: news.length ? null : 'Newsroom fetched but no current items matched the Ealing-area filter', diagnostics: results[0].value.diagnostics });
+  } else health.push({ id: 'met-ealing-news', name: 'Metropolitan Police — Ealing-relevant news', homepage: NEWS_URL, ok: false, status: 'error', itemCount: 0, error: String(results[0].reason?.message || results[0].reason), diagnostics: results[0].reason?.diagnostics || [] });
 
   wards.forEach(([slug, name], index) => {
     const result = results[index + 1];
-    const url = `https://www.met.police.uk/area/your-area/met/ealing/${slug}/meetings-and-events/our-priorities`;
+    const url = priorityUrl(slug);
     if (result.status === 'fulfilled') {
       const item = prioritySnapshot(result.value.html, slug, name, url); if (item) items.push(item);
-      health.push({ id: `met-ealing-${slug}`, name: `Metropolitan Police — ${name}`, homepage: url, ok: true, status: item ? 'ok' : 'empty', itemCount: item ? 1 : 0, error: item ? null : 'Page fetched but no priorities section matched' });
-    } else health.push({ id: `met-ealing-${slug}`, name: `Metropolitan Police — ${name}`, homepage: url, ok: false, status: 'error', itemCount: 0, error: String(result.reason?.message || result.reason) });
+      health.push({ id: `met-ealing-${slug}`, name: `Metropolitan Police — ${name}`, homepage: url, ok: true, status: item ? 'ok' : 'empty', itemCount: item ? 1 : 0, error: item ? null : 'Page fetched but no priorities section matched', diagnostics: result.value.diagnostics });
+    } else {
+      const httpStatus = Number(result.reason?.httpStatus || 0);
+      const upstreamBlocked = [401,403,406,429].includes(httpStatus);
+      health.push({
+        id: `met-ealing-${slug}`,
+        name: `Metropolitan Police — ${name}`,
+        homepage: url,
+        ok: false,
+        status: upstreamBlocked ? 'blocked' : 'error',
+        itemCount: 0,
+        error: upstreamBlocked ? `Upstream blocked automated fetch (HTTP ${httpStatus})` : String(result.reason?.message || result.reason),
+        diagnostics: result.reason?.diagnostics || []
+      });
+    }
   });
 
   return { generatedAt: new Date().toISOString(), items, health, elapsedMs: Date.now() - started };
