@@ -15,7 +15,8 @@
     const mark = document.createElement('img');
     mark.className = 'entity-place-mark';
     mark.src = `/brand/towns/${brand.slug}.webp`;
-    mark.alt = `${brand.label} civic mark`;
+    mark.alt = '';
+    mark.setAttribute('aria-hidden', 'true');
     mark.width = 132;
     mark.height = 132;
     hero.classList.add('entity-hero-branded');
