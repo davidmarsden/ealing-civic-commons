@@ -31,13 +31,22 @@
   const description = document.querySelector('meta[name="description"]');
   if (description?.content) description.content = normaliseCommonsIdentity(description.content);
 
+  if (!document.querySelector('link[rel="icon"][data-commons-brand]')) {
+    const icon = document.createElement('link');
+    icon.rel = 'icon';
+    icon.type = 'image/svg+xml';
+    icon.href = '/brand/ealing-oak.svg';
+    icon.dataset.commonsBrand = 'ealing-oak';
+    document.head.appendChild(icon);
+  }
+
   if (header) {
     const nav = NAV_ITEMS.map(item => {
       const active = item.match ? item.match(path) : item.href === '/' && path === '/';
       return `<a href="${item.href}"${active ? ' aria-current="page"' : ''}>${item.label}</a>`;
     }).join('');
 
-    header.innerHTML = `<div class="wrap header-inner"><div><a class="brand" href="/">Civic Commons</a><div class="strap">${strap}</div></div><nav aria-label="Primary">${nav}</nav></div>`;
+    header.innerHTML = `<div class="wrap header-inner"><a class="brand-lockup" href="/" aria-label="${commonsName}"><img class="brand-mark" src="/brand/ealing-oak.svg" alt="" aria-hidden="true"><span class="brand-copy"><strong class="brand">Civic Commons</strong><span class="strap">${strap}</span></span></a><nav aria-label="Primary">${nav}</nav></div>`;
   }
 
   if (footer) {
