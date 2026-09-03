@@ -1,28 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
   <title id="title">Ealing Civic Commons</title>
-  <desc id="desc">Branded social sharing card for Ealing Civic Commons.</desc>
-  <rect width="1200" height="630" fill="#f6f4ee"/>
-  <rect width="1200" height="630" fill="url(#wash)"/>
-  <defs>
-    <radialGradient id="wash" cx="82%" cy="20%" r="70%"><stop offset="0" stop-color="#dce8df"/><stop offset="1" stop-color="#f6f4ee" stop-opacity="0"/></radialGradient>
-  </defs>
-  <rect width="26" height="630" fill="#1f5b42"/>
-  <g transform="translate(78 70)">
-    <circle cx="92" cy="92" r="84" fill="none" stroke="#1f5b42" stroke-width="10"/>
-    <g fill="#1f5b42">
-      <circle cx="65" cy="68" r="25"/><circle cx="92" cy="56" r="30"/><circle cx="119" cy="69" r="25"/>
-      <circle cx="76" cy="88" r="27"/><circle cx="108" cy="88" r="27"/>
-      <path d="M84 84h16v44c0 10 9 16 19 21H65c10-5 19-11 19-21z"/>
-      <path d="M90 127c-12 10-24 13-37 14 12 4 25 5 39 5s27-1 39-5c-13-1-25-4-37-14z"/>
-    </g>
+  <desc id="desc">Approved Ealing Civic Commons social sharing treatment using the rooted oak badge.</desc>
+  <rect width="1200" height="630" rx="18" fill="#0f4a37"/>
+  <rect y="490" width="1200" height="140" fill="#789579"/>
+  <image href="/brand/ealing-oak-approved.webp" x="54" y="64" width="300" height="266" preserveAspectRatio="xMidYMid meet"/>
+  <text x="408" y="112" fill="#e7dfc8" font-family="Georgia,Times New Roman,serif" font-size="34">Ealing</text>
+  <text x="404" y="204" fill="#fff9ea" font-family="Georgia,Times New Roman,serif" font-size="74" font-weight="500" letter-spacing="6">CIVIC</text>
+  <text x="404" y="286" fill="#fff9ea" font-family="Georgia,Times New Roman,serif" font-size="74" font-weight="500" letter-spacing="3">COMMONS</text>
+  <line x1="405" y1="316" x2="520" y2="316" stroke="#d5bc68" stroke-width="4"/>
+  <text x="404" y="376" fill="#e7dfc8" font-family="Georgia,Times New Roman,serif" font-size="34" font-style="italic">What’s happening to Ealing?</text>
+  <g fill="#fff9ea" font-family="Inter,Arial,sans-serif" font-size="24">
+    <text x="82" y="548">Publish</text><text x="82" y="579">anywhere.</text>
+    <text x="340" y="548">Discuss</text><text x="340" y="579">anywhere.</text>
+    <text x="590" y="548">Connect</text><text x="590" y="579">locally.</text>
+    <text x="835" y="548">Remember</text><text x="835" y="579">civically.</text>
   </g>
-  <text x="310" y="108" fill="#1f5b42" font-family="Inter,Arial,sans-serif" font-size="27" font-weight="800" letter-spacing="4">EALING</text>
-  <text x="306" y="205" fill="#18221d" font-family="Georgia,Times New Roman,serif" font-size="84" font-weight="700">Civic Commons</text>
-  <text x="310" y="275" fill="#48524c" font-family="Georgia,Times New Roman,serif" font-size="36" font-style="italic">What’s happening to Ealing?</text>
-  <line x1="82" y1="456" x2="1118" y2="456" stroke="#1f5b42" stroke-width="3"/>
-  <text x="82" y="516" fill="#173f30" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="700">Publish anywhere.</text>
-  <text x="328" y="516" fill="#173f30" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="700">Connect locally.</text>
-  <text x="548" y="516" fill="#173f30" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="700">Remember civically.</text>
-  <text x="82" y="570" fill="#68726c" font-family="Inter,Arial,sans-serif" font-size="22">Open civic infrastructure · Original sources remain canonical</text>
-  <text x="1118" y="570" text-anchor="end" fill="#1f5b42" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="800">ealing.civiccommons.co.uk</text>
+  <g stroke="#e7dfc8" stroke-width="2" opacity=".72"><line x1="300" y1="514" x2="300" y2="598"/><line x1="550" y1="514" x2="550" y2="598"/><line x1="800" y1="514" x2="800" y2="598"/></g>
+  <text x="1120" y="584" text-anchor="end" fill="#eef4ea" font-family="Inter,Arial,sans-serif" font-size="18" opacity=".9">ealing.civiccommons.co.uk</text>
 </svg>
