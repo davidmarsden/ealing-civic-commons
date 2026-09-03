@@ -9,7 +9,8 @@
     "validate:evidence": "node scripts/validate-evidence.mjs",
     "inspect:ealing-data": "node scripts/ealing-data-catalog.mjs",
     "render:social-cards": "node scripts/render-social-cards.mjs",
-    "build": "npm run validate:contributions && npm run validate:evidence && mkdir -p dist/documents/content && cp -R public/. dist/ && cp docs/*.md dist/documents/content/ && npm run render:social-cards"
+    "verify:social-cards": "node scripts/verify-social-cards.mjs",
+    "build": "npm run validate:contributions && npm run validate:evidence && mkdir -p dist/documents/content && cp -R public/. dist/ && cp docs/*.md dist/documents/content/ && npm run render:social-cards && npm run verify:social-cards"
   },
   "dependencies": {
     "@netlify/blobs": "^11.0.1",
