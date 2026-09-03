@@ -1,6 +1,5 @@
-import { clearFollows, followCount, itemMatchesFollows, loadFollows, stableItemKey } from './follow-store.js';
+import { clearFollows, followCount, itemMatchesFollows, itemPlaceScope, loadFollows, stableItemKey } from './follow-store.js';
 
-const BOROUGH_TOWNS = ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
 const initialFollowing = location.hash === '#following';
 const state = { data: null, contributions: [], filters: { town: initialFollowing ? 'All' : 'Southall', topic: 'All', type: 'All' }, view: initialFollowing ? 'following' : 'latest' };
 const $ = sel => document.querySelector(sel);
@@ -16,22 +15,6 @@ const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date
 const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const itemPath = item => `/items/${stableItemKey(item.id)}`;
 const threadId = item => `civic-item:${stableItemKey(item.id)}`;
-
-function explicitTownsFromText(item) {
-  const haystack = `${item?.title || ''} ${item?.summary || ''}`
-    .replace(/\b(?:the\s+)?London Borough of Ealing(?: Council)?\b/gi, ' ')
-    .replace(/\bEaling Council\b/gi, ' ')
-    .replace(/\bEaling LBC\b/gi, ' ');
-  return BOROUGH_TOWNS.filter(town => new RegExp(`\\b${town}\\b`, 'i').test(haystack));
-}
-
-function itemPlaceScope(item) {
-  const assigned = Array.isArray(item?.towns) ? item.towns.filter(town => BOROUGH_TOWNS.includes(town)) : [];
-  const sourceLooksBoroughWide = item?.boroughWide === true || BOROUGH_TOWNS.every(town => assigned.includes(town));
-  if (!sourceLooksBoroughWide) return { boroughWide: false, towns: assigned };
-  const explicit = explicitTownsFromText(item);
-  return explicit.length ? { boroughWide: false, towns: explicit } : { boroughWide: true, towns: [] };
-}
 
 function contributionStats(item) {
   const entries = state.contributions.filter(entry => entry?.status === 'published' && entry.threadId === threadId(item));
