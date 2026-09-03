@@ -19,12 +19,6 @@
   force = true
 
 [[redirects]]
-  from = "/.netlify/functions/feed"
-  to = "/.netlify/functions/combined-feed"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/data/contributions.json"
   to = "/.netlify/functions/public-contributions"
   status = 200
