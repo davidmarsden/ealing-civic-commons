@@ -15,11 +15,11 @@ for (const slug of socialSlugs) {
 }
 
 for (const slug of townSlugs) {
-  const file = path.resolve(`dist/brand/towns/${slug}.webp`);
+  const file = path.resolve(`dist/brand/towns/${slug}.svg`);
   await access(file);
   const info = await stat(file);
-  if (info.size < 500) {
-    throw new Error(`${slug}.webp looks unexpectedly small (${info.size} bytes)`);
+  if (info.size < 100) {
+    throw new Error(`${slug}.svg looks unexpectedly small (${info.size} bytes)`);
   }
-  console.log(`${slug}.webp ${info.size} bytes`);
+  console.log(`${slug}.svg ${info.size} bytes`);
 }
