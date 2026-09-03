@@ -6,16 +6,27 @@
 [functions]
   node_bundler = "esbuild"
 
+# Keep the retired Southall hostname as a doorway into the canonical Commons.
+# Use temporary redirects until the new destination has been verified across browsers,
+# avoiding another permanently cached incorrect root redirect.
 [[redirects]]
   from = "https://commons.southallstories.uk/"
   to = "https://ealing.civiccommons.co.uk/?town=Southall"
-  status = 301
+  status = 302
   force = true
 
 [[redirects]]
   from = "https://commons.southallstories.uk/*"
   to = "https://ealing.civiccommons.co.uk/:splat"
-  status = 301
+  status = 302
+  force = true
+
+# Social crawlers receive a simple, stable JPEG URL. Netlify renders the approved
+# SVG source internally so WhatsApp/Bluesky do not have to consume an Image CDN URL.
+[[redirects]]
+  from = "/brand/social/:town.jpg"
+  to = "/.netlify/images?url=/brand/social/:town.svg&w=1200&h=630&fit=cover&fm=jpg"
+  status = 200
   force = true
 
 [[redirects]]
@@ -53,6 +64,11 @@
   from = "/topics/*"
   to = "/topic.html"
   status = 200
+
+[[headers]]
+  for = "/brand/social/*.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
 
 [[headers]]
   for = "/*"

@@ -1,4 +1,4 @@
-const SOCIAL_CRAWLER = /(?:facebookexternalhit|facebot|whatsapp|twitterbot|linkedinbot|slackbot|discordbot|telegrambot|pinterestbot|skypeuripreview|vkshare|mastodon|bluesky|bsky|embedly|quora link preview|outbrain|rogerbot|showyoubot)/i;
+const SOCIAL_CRAWLER = /(?:facebookexternalhit|facebot|whatsapp|twitterbot|linkedinbot|slackbot|discordbot|telegrambot|pinterestbot|skypeuripreview|vkshare|mastodon|bluesky|bsky|cardyb|embedly|quora link preview|outbrain|rogerbot|showyoubot)/i;
 const LEGACY_HOST = 'commons.southallstories.uk';
 const CANONICAL_ORIGIN = 'https://ealing.civiccommons.co.uk';
 
@@ -13,12 +13,17 @@ function routeMetadata(pathname) {
   return null;
 }
 
+function legacyDestination(url) {
+  if (url.pathname === '/' && !url.search) return `${CANONICAL_ORIGIN}/?town=Southall`;
+  return `${CANONICAL_ORIGIN}${url.pathname}${url.search}`;
+}
+
 export default async (request, context) => {
   if (!['GET', 'HEAD'].includes(request.method)) return context.next();
 
   const url = new URL(request.url);
   if (url.hostname.toLowerCase() === LEGACY_HOST) {
-    return Response.redirect(`${CANONICAL_ORIGIN}${url.pathname}${url.search}`, 301);
+    return Response.redirect(legacyDestination(url), 302);
   }
 
   const userAgent = request.headers.get('user-agent') || '';
@@ -45,5 +50,5 @@ export default async (request, context) => {
 };
 
 export const config = {
-  path: ['/items/*', '/people/*', '/organisations/*', '/places/*']
+  path: ['/', '/items/*', '/people/*', '/organisations/*', '/places/*']
 };
