@@ -1,15 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
-  <title id="title">Southall &amp; Ealing Civic Commons</title>
-  <desc id="desc">Branded social sharing card for Civic Commons.</desc>
-  <rect width="1200" height="630" fill="#f6f4ee"/>
-  <rect width="24" height="630" fill="#1f5b42"/>
-  <circle cx="1060" cy="70" r="250" fill="#e5ece7"/>
-  <text x="82" y="105" fill="#1f5b42" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="800" letter-spacing="3">SOUTHALL &amp; EALING</text>
-  <text x="78" y="225" fill="#18221d" font-family="Georgia,Times New Roman,serif" font-size="82" font-weight="700">Civic Commons</text>
-  <text x="82" y="300" fill="#48524c" font-family="Inter,Arial,sans-serif" font-size="35">What’s happening to our towns?</text>
-  <line x1="82" y1="468" x2="1118" y2="468" stroke="#1f5b42" stroke-width="4"/>
-  <rect x="82" y="508" width="690" height="70" rx="18" fill="#fffdf8" stroke="#d9d8cf"/>
-  <text x="110" y="551" fill="#173f30" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700">Publish anywhere. Discuss anywhere.</text>
-  <text x="845" y="535" fill="#1f5b42" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="800" letter-spacing="1">CONNECT LOCALLY</text>
-  <text x="845" y="570" fill="#173f30" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="800" letter-spacing="1">REMEMBER CIVICALLY</text>
+  <title id="title">Ealing Civic Commons</title>
+  <desc id="desc">Approved Ealing Civic Commons social sharing treatment using the rooted oak badge.</desc>
+  <rect width="1200" height="630" rx="18" fill="#0f4a37"/>
+  <rect y="490" width="1200" height="140" fill="#789579"/>
+  <image href="/brand/ealing-oak-approved.webp" x="54" y="64" width="300" height="266" preserveAspectRatio="xMidYMid meet"/>
+  <text x="408" y="112" fill="#e7dfc8" font-family="Georgia,Times New Roman,serif" font-size="34">Ealing</text>
+  <text x="404" y="204" fill="#fff9ea" font-family="Georgia,Times New Roman,serif" font-size="74" font-weight="500" letter-spacing="6">CIVIC</text>
+  <text x="404" y="286" fill="#fff9ea" font-family="Georgia,Times New Roman,serif" font-size="74" font-weight="500" letter-spacing="3">COMMONS</text>
+  <line x1="405" y1="316" x2="520" y2="316" stroke="#d5bc68" stroke-width="4"/>
+  <text x="404" y="376" fill="#e7dfc8" font-family="Georgia,Times New Roman,serif" font-size="34" font-style="italic">What’s happening to Ealing?</text>
+  <g fill="#fff9ea" font-family="Inter,Arial,sans-serif" font-size="24">
+    <text x="82" y="548">Publish</text><text x="82" y="579">anywhere.</text>
+    <text x="340" y="548">Discuss</text><text x="340" y="579">anywhere.</text>
+    <text x="590" y="548">Connect</text><text x="590" y="579">locally.</text>
+    <text x="835" y="548">Remember</text><text x="835" y="579">civically.</text>
+  </g>
+  <g stroke="#e7dfc8" stroke-width="2" opacity=".72"><line x1="300" y1="514" x2="300" y2="598"/><line x1="550" y1="514" x2="550" y2="598"/><line x1="800" y1="514" x2="800" y2="598"/></g>
+  <text x="1120" y="584" text-anchor="end" fill="#eef4ea" font-family="Inter,Arial,sans-serif" font-size="18" opacity=".9">ealing.civiccommons.co.uk</text>
 </svg>
