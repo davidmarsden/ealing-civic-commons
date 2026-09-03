@@ -27,28 +27,14 @@ for (const file of files) {
   if (slug !== "ealing") {
     const badgeOutput = path.join(townOutputDir, `${slug}.webp`);
 
-    if (slug === "northolt") {
-      // Do not decode the embedded JPEG independently: the source payload in
-      // this legacy SVG is malformed enough for libjpeg to reject it with
-      // "Bogus marker length". librsvg can nevertheless render the complete
-      // approved social card successfully, as proven by northolt.jpg above.
-      // Render the SVG once more and crop the approved roundel directly in the
-      // same pipeline, avoiding both the corrupt-JPEG decode and a JPEG
-      // round-trip.
-      await sharp(input, { density: 144 })
-        .resize(1200, 630, { fit: "cover" })
-        .flatten({ background: "#0f4a37" })
-        .extract({ left: 39, top: 69, width: 352, height: 352 })
-        .resize(256, 256)
-        .webp({ quality: 92 })
-        .toFile(badgeOutput);
-    } else {
-      await sharp(output)
-        .extract({ left: 39, top: 69, width: 352, height: 352 })
-        .resize(256, 256)
-        .webp({ quality: 90 })
-        .toFile(badgeOutput);
-    }
+    // Every town badge is derived in exactly the same way from the rendered
+    // 1200x630 social card. Keeping Northolt on this common path avoids the
+    // special-case SVG/JPEG decoding and crop bugs introduced in PR #64.
+    await sharp(output)
+      .extract({ left: 39, top: 69, width: 352, height: 352 })
+      .resize(256, 256)
+      .webp({ quality: 90 })
+      .toFile(badgeOutput);
 
     console.log(`Rendered ${path.relative(path.resolve("dist"), badgeOutput)}`);
   }
