@@ -25,9 +25,7 @@
   }
   const description = document.querySelector('meta[name="description"]');
   if (description?.content) {
-    description.content = description.content
-      .replace(/Southall\s*(?:&|and)\s*Ealing Civic Commons/gi, commonsName)
-      .replace(/Southall\s*(?:&|and)\s*Ealing Civic Commons/gi, commonsName);
+    description.content = description.content.replace(/Southall\s*(?:&|and)\s*Ealing Civic Commons/gi, commonsName);
   }
 
   if (header) {
