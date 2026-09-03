@@ -81,16 +81,17 @@
     if (!mark || !strapLabel) return;
 
     if (brand) {
-      mark.src = `/brand/towns/${brand.slug}.webp`;
+      const asset = `/brand/towns/${brand.slug}.svg`;
+      mark.src = asset;
       mark.classList.add('brand-mark-town');
       strapLabel.textContent = brand.label;
-      if (icon) icon.href = `/brand/towns/${brand.slug}.webp`;
+      if (icon) { icon.type = 'image/svg+xml'; icon.href = asset; }
       document.documentElement.dataset.commonsTown = brand.slug;
     } else {
       mark.src = '/brand/ealing-oak-approved.webp';
       mark.classList.remove('brand-mark-town');
       strapLabel.textContent = 'Ealing';
-      if (icon) icon.href = '/brand/ealing-oak-approved.webp';
+      if (icon) { icon.type = 'image/webp'; icon.href = '/brand/ealing-oak-approved.webp'; }
       delete document.documentElement.dataset.commonsTown;
     }
   }
