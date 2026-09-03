@@ -2,6 +2,7 @@ export const FOLLOW_STORAGE_KEY = 'civic-commons:follows:v1';
 
 const followTypes = ['items', 'towns', 'topics', 'sources'];
 const emptyState = () => ({ version: 1, items: [], towns: [], topics: [], sources: [] });
+export const BOROUGH_TOWNS = ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
 
 function normaliseEntry(entry) {
   if (!entry || typeof entry !== 'object') return null;
@@ -15,6 +16,30 @@ export function stableItemKey(id) {
   let binary = '';
   bytes.forEach(byte => { binary += String.fromCharCode(byte); });
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function explicitTownsFromText(item) {
+  const haystack = `${item?.title || ''} ${item?.summary || ''}`
+    .replace(/\b(?:the\s+)?London Borough of Ealing(?: Council)?\b/gi, ' ')
+    .replace(/\bEaling Council\b/gi, ' ')
+    .replace(/\bEaling LBC\b/gi, ' ')
+    .replace(/\bEaling and Hillingdon\b/gi, ' ')
+    .replace(/\bEaling Citizens\b/gi, ' ');
+
+  const towns = BOROUGH_TOWNS.filter(town => town !== 'Ealing' && new RegExp(`\\b${town}\\b`, 'i').test(haystack));
+  const ealingTown = /\b(?:Ealing town|Ealing Broadway|West Ealing|Ealing Common|Ealing Green|Northfields?)\b/i.test(haystack);
+  if (ealingTown) towns.unshift('Ealing');
+  return towns;
+}
+
+export function itemPlaceScope(item) {
+  const assigned = Array.isArray(item?.towns) ? item.towns.filter(town => BOROUGH_TOWNS.includes(town)) : [];
+  const explicit = explicitTownsFromText(item);
+  if (explicit.length) return { boroughWide: false, towns: explicit };
+
+  const sourceLooksBoroughWide = item?.boroughWide === true || BOROUGH_TOWNS.every(town => assigned.includes(town));
+  if (sourceLooksBoroughWide) return { boroughWide: true, towns: [] };
+  return { boroughWide: false, towns: assigned };
 }
 
 export function loadFollows() {
@@ -74,8 +99,8 @@ export function itemMatchesFollows(item, state = loadFollows()) {
   const key = stableItemKey(item.id);
   if (state.items.some(entry => entry.id === key)) return true;
   if (state.sources.some(entry => entry.id === item.sourceId)) return true;
-  if (item.boroughWide === true && state.towns.length) return true;
-  if ((item.towns || []).some(town => state.towns.some(entry => entry.id === town))) return true;
+  const place = itemPlaceScope(item);
+  if (!place.boroughWide && place.towns.some(town => state.towns.some(entry => entry.id === town))) return true;
   if ((item.topics || []).some(topic => state.topics.some(entry => entry.id === topic))) return true;
   return false;
 }

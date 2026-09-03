@@ -10,6 +10,13 @@ function json(body, status = 200, maxAge = 300) {
 }
 function byId(items = []) { return new Map(items.map(item => [item.id, item])); }
 function dateValue(value) { const n = Date.parse(value || ''); return Number.isFinite(n) ? n : 0; }
+function topicProviderViews(registryTopic) {
+  return providerViews({ providers: registryTopic.providers }).map(provider => {
+    if (provider.id === 'civic-commons') return { ...provider, name: 'Ealing Civic Commons', label: 'Ealing Civic Commons', role: 'Live civic source network and canonical public topic', url: 'https://ealing.civiccommons.co.uk/' };
+    if (provider.id === 'southall-zettel') return { id: 'reviewed-archive', name: 'Reviewed research archive', label: 'Reviewed research archive', role: 'Historical evidence and reviewed civic memory', url: null, bindingRole: provider.bindingRole || null, entityId: null };
+    return provider;
+  });
+}
 
 export default async request => {
   const route = new URL(request.url).searchParams.get('route');
@@ -29,7 +36,7 @@ export default async request => {
     if (!topic) return json({ matched: false, reason: 'provider-topic-not-found' }, 404, 300);
 
     const postIds = new Set((data.links || []).filter(link => link.type === 'mentioned-in' && link.source === topic.id && link.target.startsWith('post:')).map(link => link.target));
-    const reporting = [...postIds].map(id => postsById.get(id)).filter(Boolean).sort((a,b) => dateValue(b.date)-dateValue(a.date)).map(post => ({ id: post.id, title: post.title, summary: post.summary, date: post.date, url: post.url, provider: 'southall-zettel' }));
+    const reporting = [...postIds].map(id => postsById.get(id)).filter(Boolean).sort((a,b) => dateValue(b.date)-dateValue(a.date)).map(post => ({ id: post.id, title: post.title, summary: post.summary, date: post.date, url: post.url, provider: 'reviewed-archive' }));
 
     const entityCounts = new Map();
     for (const link of data.links || []) {
@@ -42,7 +49,7 @@ export default async request => {
       return { id, name: entity.name, type: entity.type, count, commonsRoute: registry?.route || null };
     }).filter(Boolean).sort((a,b) => b.count-a.count || a.name.localeCompare(b.name)).slice(0,24);
 
-    const sources = (data.sources || []).filter(source => source.review_status === 'reviewed' && (source.related_topics || []).includes(topic.id)).sort((a,b) => dateValue(b.publication_date || b.meeting_date)-dateValue(a.publication_date || a.meeting_date)).map(source => ({ id: source.id, title: source.title, publisher: source.publisher, sourceType: source.source_type, date: source.publication_date || source.meeting_date || null, url: source.canonical_url, provider: 'southall-zettel' }));
+    const sources = (data.sources || []).filter(source => source.review_status === 'reviewed' && (source.related_topics || []).includes(topic.id)).sort((a,b) => dateValue(b.publication_date || b.meeting_date)-dateValue(a.publication_date || a.meeting_date)).map(source => ({ id: source.id, title: source.title, publisher: source.publisher, sourceType: source.source_type, date: source.publication_date || source.meeting_date || null, url: source.canonical_url, provider: 'reviewed-archive' }));
 
     const issues = ISSUE_REGISTRY.filter(issue => issue.topicIds.includes(topic.id)).map(issue => ({ id: issue.id, route: issue.route, name: issue.name, status: issue.status, description: issue.description }));
 
@@ -51,11 +58,11 @@ export default async request => {
       schemaVersion: data.schema_version,
       civicTopic: { id: registryTopic.id, route: registryTopic.route, name: registryTopic.name },
       topic: { id: topic.id, name: registryTopic.name || topic.name, aliases: registryTopic.aliases || topic.aliases || [], description: registryTopic.description || null },
-      providers: providerViews({ providers: registryTopic.providers }),
+      providers: topicProviderViews(registryTopic),
       feedTopics: registryTopic.feedTopics || [],
       counts: { reporting: reporting.length, entities: entities.length, sources: sources.length, issues: issues.length },
       entities, issues, sources, reporting,
-      provenance: { label: 'Civic topic', source: 'Civic Commons topic registry + Southall-Zettel', method: 'Civic Commons owns the public topic route. Southall-Zettel supplies reviewed historical topic mentions and curated source records as one provider.' }
+      provenance: { label: 'Civic topic', source: 'Ealing Civic Commons + reviewed research archive', method: 'Ealing Civic Commons owns the public topic route and live current layer. A separately attributed reviewed archive contributes historical evidence and civic memory.' }
     }, 200, 300);
   } catch (error) {
     console.error('Civic topic lookup failed', error);
