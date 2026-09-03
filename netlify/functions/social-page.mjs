@@ -23,8 +23,8 @@ function canonicalOrigin(request) {
 function identityForOrigin(origin) {
   const host = new URL(origin).hostname.toLowerCase();
   return host === 'commons.southallstories.uk'
-    ? { siteName: 'Southall Civic Commons', imageAlt: 'Southall Civic Commons' }
-    : { siteName: 'Ealing Civic Commons', imageAlt: 'Ealing Civic Commons' };
+    ? { siteName: 'Southall Civic Commons', imageAlt: 'Southall Civic Commons', imagePath: '/og-image-southall.svg' }
+    : { siteName: 'Ealing Civic Commons', imageAlt: 'Ealing Civic Commons', imagePath: '/og-image.svg' };
 }
 
 function internalRequest(url, request) {
@@ -112,7 +112,7 @@ export default async request => {
   const origin = canonicalOrigin(request);
   const canonical = `${origin}${route}`;
   const identity = identityForOrigin(origin);
-  const imageUrl = `${origin}/.netlify/images?url=/og-image.svg&w=1200&h=630&fit=cover&fm=png`;
+  const imageUrl = `${origin}/.netlify/images?url=${encodeURIComponent(identity.imagePath)}&w=1200&h=630&fit=cover&fm=png`;
   let meta = null;
   try { meta = await metadata(request, kind, path); }
   catch (error) { console.error('Social metadata lookup failed', error); }
