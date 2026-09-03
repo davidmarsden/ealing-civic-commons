@@ -1,13 +1,16 @@
 .brand-lockup { display: inline-flex; align-items: center; gap: 11px; min-width: max-content; color: inherit; text-decoration: none; }
 .brand-mark { width: 48px; height: 43px; object-fit: contain; flex: 0 0 48px; display: block; }
+.brand-mark-town { width: 43px; height: 43px; flex-basis: 43px; object-fit: cover; border-radius: 50%; }
 .brand-divider { width: 1px; height: 36px; background: rgba(31,91,66,.45); }
 .brand-copy { display: grid; line-height: 1; }
 .brand-copy .brand { display: block; font-family: Georgia, 'Times New Roman', serif; font-size: 1.02rem; font-weight: 500; letter-spacing: .085em; white-space: nowrap; }
 .brand-copy .strap { margin-top: 6px; width: 100%; display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: center; column-gap: 9px; font-size: .58rem; line-height: 1; letter-spacing: .2em; text-transform: uppercase; text-align: center; font-weight: 700; color: var(--green); }
 .brand-copy .strap > span { display: block; width: 100%; height: 1px; background: currentColor; opacity: .75; }
+.brand-copy .strap > .strap-label { width: auto; height: auto; background: none; opacity: 1; white-space: nowrap; }
 @media (max-width: 560px) {
   .brand-lockup { gap: 7px; }
   .brand-mark { width: 38px; height: 35px; flex-basis: 38px; }
+  .brand-mark-town { width: 35px; height: 35px; flex-basis: 35px; }
   .brand-divider { height: 30px; }
   .brand-copy .brand { font-size: .78rem; letter-spacing: .07em; }
   .brand-copy .strap { column-gap: 6px; font-size: .5rem; letter-spacing: .14em; }
