@@ -1,0 +1,11 @@
+.brand-lockup { display: inline-flex; align-items: center; gap: 10px; min-width: max-content; color: inherit; text-decoration: none; }
+.brand-mark { width: 42px; height: 42px; flex: 0 0 42px; display: block; }
+.brand-copy { display: grid; line-height: 1.05; }
+.brand-copy .brand { display: block; font-family: Georgia, 'Times New Roman', serif; font-size: 1.08rem; font-weight: 700; letter-spacing: -.025em; }
+.brand-copy .strap { margin-top: 4px; font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 800; color: var(--green); }
+@media (max-width: 560px) {
+  .brand-lockup { gap: 7px; }
+  .brand-mark { width: 34px; height: 34px; flex-basis: 34px; }
+  .brand-copy .brand { font-size: .92rem; }
+  .brand-copy .strap { font-size: .6rem; }
+}
