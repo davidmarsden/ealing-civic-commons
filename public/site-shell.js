@@ -20,6 +20,16 @@
 
   document.documentElement.dataset.commonsScope = southallDoorway ? 'southall' : 'ealing';
 
+  if (/Southall\s*(?:&|and)\s*Ealing Civic Commons/i.test(document.title)) {
+    document.title = document.title.replace(/Southall\s*(?:&|and)\s*Ealing Civic Commons/gi, commonsName);
+  }
+  const description = document.querySelector('meta[name="description"]');
+  if (description?.content) {
+    description.content = description.content
+      .replace(/Southall\s*(?:&|and)\s*Ealing Civic Commons/gi, commonsName)
+      .replace(/Southall\s*(?:&|and)\s*Ealing Civic Commons/gi, commonsName);
+  }
+
   if (header) {
     const nav = NAV_ITEMS.map(item => {
       const active = item.match ? item.match(path) : item.href === '/' && path === '/';
