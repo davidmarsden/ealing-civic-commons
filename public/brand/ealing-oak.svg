@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Ealing Civic Commons oak</title>
+  <desc id="desc">A circular oak tree emblem for Ealing Civic Commons.</desc>
+  <circle cx="64" cy="64" r="58" fill="none" stroke="#1f5b42" stroke-width="7"/>
+  <g fill="#1f5b42">
+    <circle cx="45" cy="47" r="17"/>
+    <circle cx="64" cy="39" r="20"/>
+    <circle cx="83" cy="48" r="17"/>
+    <circle cx="53" cy="61" r="18"/>
+    <circle cx="75" cy="61" r="18"/>
+    <path d="M58 58h12v30c0 7 6 11 13 15H45c7-4 13-8 13-15z"/>
+    <path d="M62 88c-8 7-16 9-25 10 8 2 17 3 27 3s19-1 27-3c-9-1-17-3-25-10z"/>
+  </g>
+</svg>
