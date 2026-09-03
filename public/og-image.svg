@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
   <title id="title">Ealing Civic Commons</title>
-  <desc id="desc">Approved Ealing Civic Commons social sharing treatment using the rooted oak badge.</desc>
+  <desc id="desc">Ealing Civic Commons social sharing treatment using the rooted oak badge.</desc>
   <rect width="1200" height="630" rx="18" fill="#0f4a37"/>
   <rect y="490" width="1200" height="140" fill="#789579"/>
   <image href="/brand/ealing-oak-approved.webp" x="54" y="64" width="300" height="266" preserveAspectRatio="xMidYMid meet"/>
@@ -16,5 +16,4 @@
     <text x="835" y="548">Remember</text><text x="835" y="579">civically.</text>
   </g>
   <g stroke="#e7dfc8" stroke-width="2" opacity=".72"><line x1="300" y1="514" x2="300" y2="598"/><line x1="550" y1="514" x2="550" y2="598"/><line x1="800" y1="514" x2="800" y2="598"/></g>
-  <text x="1120" y="584" text-anchor="end" fill="#eef4ea" font-family="Inter,Arial,sans-serif" font-size="18" opacity=".9">ealing.civiccommons.co.uk</text>
 </svg>
