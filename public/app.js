@@ -1,5 +1,6 @@
 import { clearFollows, followCount, itemMatchesFollows, loadFollows, stableItemKey } from './follow-store.js';
 
+const BOROUGH_TOWNS = ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
 const initialFollowing = location.hash === '#following';
 const state = { data: null, contributions: [], filters: { town: initialFollowing ? 'All' : 'Southall', topic: 'All', type: 'All' }, view: initialFollowing ? 'following' : 'latest' };
 const $ = sel => document.querySelector(sel);
@@ -15,6 +16,22 @@ const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date
 const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const itemPath = item => `/items/${stableItemKey(item.id)}`;
 const threadId = item => `civic-item:${stableItemKey(item.id)}`;
+
+function explicitTownsFromText(item) {
+  const haystack = `${item?.title || ''} ${item?.summary || ''}`
+    .replace(/\b(?:the\s+)?London Borough of Ealing(?: Council)?\b/gi, ' ')
+    .replace(/\bEaling Council\b/gi, ' ')
+    .replace(/\bEaling LBC\b/gi, ' ');
+  return BOROUGH_TOWNS.filter(town => new RegExp(`\\b${town}\\b`, 'i').test(haystack));
+}
+
+function itemPlaceScope(item) {
+  const assigned = Array.isArray(item?.towns) ? item.towns.filter(town => BOROUGH_TOWNS.includes(town)) : [];
+  const sourceLooksBoroughWide = item?.boroughWide === true || BOROUGH_TOWNS.every(town => assigned.includes(town));
+  if (!sourceLooksBoroughWide) return { boroughWide: false, towns: assigned };
+  const explicit = explicitTownsFromText(item);
+  return explicit.length ? { boroughWide: false, towns: explicit } : { boroughWide: true, towns: [] };
+}
 
 function contributionStats(item) {
   const entries = state.contributions.filter(entry => entry?.status === 'published' && entry.threadId === threadId(item));
@@ -150,7 +167,8 @@ function filteredItems() {
   if (!state.data) return [];
   const follows = loadFollows();
   return state.data.items.filter(item => {
-    const townOk = state.filters.town === 'All' || item.boroughWide === true || item.towns.includes(state.filters.town);
+    const place = itemPlaceScope(item);
+    const townOk = state.filters.town === 'All' || (!place.boroughWide && place.towns.includes(state.filters.town));
     const topicOk = state.filters.topic === 'All' || item.topics.includes(state.filters.topic);
     const typeOk = state.filters.type === 'All' || item.sourceClass === state.filters.type;
     const followOk = state.view === 'latest' || itemMatchesFollows(item, follows);
@@ -196,9 +214,10 @@ function render() {
     const stats = contributionStats(item);
     const label = contributionLabel(stats);
     const additions = label ? `<a class="contribution-count" href="${esc(itemPath(item))}#discussion">${esc(label)}</a>` : '';
-    const placeTags = item.boroughWide === true
+    const place = itemPlaceScope(item);
+    const placeTags = place.boroughWide
       ? '<span class="tag">Borough-wide</span>'
-      : item.towns.map(t => `<span class="tag">${esc(t)}</span>`).join('');
+      : place.towns.map(t => `<span class="tag">${esc(t)}</span>`).join('');
     return `<article class="item"><div class="item-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass)}</span><div class="item-source">${esc(item.source)}</div><div>${esc(fmtDate(item.publishedAt))}</div></div><div><h3><a href="${esc(itemPath(item))}">${esc(item.title)}</a></h3>${item.summary ? `<p class="item-summary">${esc(item.summary)}</p>` : ''}<div class="item-actions"><a href="${esc(itemPath(item))}">Add context →</a>${additions}<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Read original ↗</a></div><div class="tags">${placeTags}${item.topics.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div></div></article>`;
   }).join('');
 }
