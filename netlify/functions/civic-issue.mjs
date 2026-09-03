@@ -1,5 +1,5 @@
 import { findIssueByRoute } from '../lib/issue-registry.mjs';
-import { findEntityByProviderId, makeZettelRegistryEntity, providerViews } from '../lib/entity-registry.mjs';
+import { findEntityByProviderId, makeZettelRegistryEntity } from '../lib/entity-registry.mjs';
 
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
 const EXPECTED_SCHEMA = 1;
@@ -51,7 +51,7 @@ export default async request => {
       const score = (primary ? 100 : 0) + entityHits.length * 10 + topicHits.length * 2;
       return { post, qualifies, score, entityHits, topicHits };
     }).filter(entry => entry.qualifies).sort((a, b) => b.score - a.score || dateValue(b.post.date) - dateValue(a.post.date)).map(({ post, entityHits, topicHits }) => ({
-      id: post.id, title: post.title, summary: post.summary, date: post.date, url: post.url, categories: post.categories || [], entityMatches: entityHits.length, topicMatches: topicHits.length, provider: 'southall-zettel'
+      id: post.id, title: post.title, summary: post.summary, date: post.date, url: post.url, categories: post.categories || [], entityMatches: entityHits.length, topicMatches: topicHits.length, provider: 'reviewed-archive'
     }));
 
     const relationships = (data.relationships || []).filter(rel => rel.review_status === 'reviewed' && (selectedEntityIds.has(rel.from) || selectedEntityIds.has(rel.to))).map(rel => {
@@ -67,7 +67,7 @@ export default async request => {
       return {
         id: rel.id, type: rel.type, note: rel.note || null, validFrom: rel.valid_from || null, validTo: rel.valid_to || null, confidence: rel.confidence,
         from: { id: rel.from, name: from?.name || rel.from, type: from?.type || 'entity', commonsRoute: fromRegistry?.route || null },
-        to: { id: rel.to, name: to?.name || rel.to, type: to?.type || 'entity', commonsRoute: toRegistry?.route || null }, evidence, provider: 'southall-zettel'
+        to: { id: rel.to, name: to?.name || rel.to, type: to?.type || 'entity', commonsRoute: toRegistry?.route || null }, evidence, provider: 'reviewed-archive'
       };
     }).sort((a, b) => Number(b.from.id === issue.primaryEntityId || b.to.id === issue.primaryEntityId) - Number(a.from.id === issue.primaryEntityId || a.to.id === issue.primaryEntityId) || a.type.localeCompare(b.type));
 
@@ -79,7 +79,7 @@ export default async request => {
       const score = (primary ? 100 : 0) + entityHits.length * 10 + topicHits.length * 2;
       return { source, qualifies, score };
     }).filter(entry => entry.qualifies).sort((a, b) => b.score - a.score || dateValue(b.source.publication_date || b.source.meeting_date) - dateValue(a.source.publication_date || a.source.meeting_date)).map(({ source }) => ({
-      id: source.id, title: source.title, publisher: source.publisher, sourceType: source.source_type, date: source.publication_date || source.meeting_date || null, url: source.canonical_url, archiveUrls: source.archive_urls || [], provider: 'southall-zettel'
+      id: source.id, title: source.title, publisher: source.publisher, sourceType: source.source_type, date: source.publication_date || source.meeting_date || null, url: source.canonical_url, archiveUrls: source.archive_urls || [], provider: 'reviewed-archive'
     }));
 
     return json({
@@ -88,11 +88,11 @@ export default async request => {
       issue: { id: issue.id, route: issue.route, name: issue.name, status: issue.status, description: issue.description, aliases: issue.aliases || [] },
       providers: [
         { id: 'civic-commons', name: 'Ealing Civic Commons', label: 'Ealing Civic Commons', role: 'Live civic source network and canonical public issue', url: 'https://ealing.civiccommons.co.uk/' },
-        { id: 'southall-zettel', name: 'Southall-Zettel', label: 'Reviewed research archive', role: 'Historical evidence and reviewed civic memory', url: 'https://github.com/davidmarsden/Southall-Zettel' }
+        { id: 'reviewed-archive', name: 'Reviewed research archive', label: 'Reviewed research archive', role: 'Historical evidence and reviewed civic memory', url: null }
       ],
       counts: { entities: entities.length, topics: topics.length, reporting: reporting.length, relationships: relationships.length, sources: sources.length },
       entities, topics, relationships, sources, reporting,
-      provenance: { label: 'Civic issue', source: 'Ealing Civic Commons + reviewed research archive', method: 'Ealing Civic Commons defines the ongoing issue and its stable public route. Reviewed historical relationships, source records and reporting are selected from Southall-Zettel by exact entity/topic IDs; current Commons material is a separately labelled live layer.' }
+      provenance: { label: 'Civic issue', source: 'Ealing Civic Commons + reviewed research archive', method: 'Ealing Civic Commons defines the ongoing issue and its stable public route. Reviewed historical relationships, source records and reporting are selected from the reviewed archive by exact entity/topic IDs; current Commons material is a separately labelled live layer.' }
     }, 200, 300);
   } catch (error) {
     console.error('Civic issue lookup failed', error);
