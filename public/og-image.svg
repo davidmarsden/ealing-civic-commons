@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Southall &amp; Ealing Civic Commons</title>
+  <desc id="desc">Branded social sharing card for Civic Commons.</desc>
+  <rect width="1200" height="630" fill="#f6f4ee"/>
+  <rect width="24" height="630" fill="#1f5b42"/>
+  <circle cx="1060" cy="70" r="250" fill="#e5ece7"/>
+  <text x="82" y="105" fill="#1f5b42" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="800" letter-spacing="3">SOUTHALL &amp; EALING</text>
+  <text x="78" y="225" fill="#18221d" font-family="Georgia,Times New Roman,serif" font-size="82" font-weight="700">Civic Commons</text>
+  <text x="82" y="300" fill="#48524c" font-family="Inter,Arial,sans-serif" font-size="35">What’s happening to our towns?</text>
+  <line x1="82" y1="468" x2="1118" y2="468" stroke="#1f5b42" stroke-width="4"/>
+  <rect x="82" y="508" width="690" height="70" rx="18" fill="#fffdf8" stroke="#d9d8cf"/>
+  <text x="110" y="551" fill="#173f30" font-family="Inter,Arial,sans-serif" font-size="25" font-weight="700">Publish anywhere. Discuss anywhere.</text>
+  <text x="845" y="535" fill="#1f5b42" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="800" letter-spacing="1">CONNECT LOCALLY</text>
+  <text x="845" y="570" fill="#173f30" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="800" letter-spacing="1">REMEMBER CIVICALLY</text>
+</svg>

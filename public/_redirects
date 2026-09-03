@@ -1,7 +1,7 @@
 /data/contributions.json  /.netlify/functions/public-contributions  200!
-/items/*  /item.html  200
-/people/*  /entity.html  200
-/organisations/*  /entity.html  200
-/places/*  /entity.html  200
+/items/*  /.netlify/functions/social-page?kind=item&path=:splat  200!
+/people/*  /.netlify/functions/social-page?kind=entity&path=people/:splat  200!
+/organisations/*  /.netlify/functions/social-page?kind=entity&path=organisations/:splat  200!
+/places/*  /.netlify/functions/social-page?kind=entity&path=places/:splat  200!
 /issues/*  /issue.html  200
 /topics/*  /topic.html  200
