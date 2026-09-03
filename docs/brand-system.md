@@ -15,9 +15,19 @@ It must not imply ownership by any one borough or publisher.
 
 ## Ealing mark
 
-**Ealing Civic Commons** uses the **oak**.
+**Ealing Civic Commons** uses the **approved rooted-oak identity** from the agreed brand board.
 
-The oak is a place identity for the London Borough of Ealing, not the global Civic Commons logo. It can also remain the fallback mark for town-filtered views within the Ealing Commons until distinct town marks are introduced.
+The approved treatment is not a generic tree icon. Its defining elements are:
+- a detailed rooted oak;
+- circular badge treatment, including dark-green/cream inverse variants;
+- a serif, uppercase **CIVIC COMMONS** wordmark;
+- dark civic green and warm cream as the primary palette;
+- locality shown as a restrained secondary line;
+- social artwork using the dark-green field and Publish / Discuss / Connect / Remember footer treatment.
+
+The oak is a place identity for the London Borough of Ealing, not the global Civic Commons logo. It can remain the fallback mark for town-filtered views within the Ealing Commons until distinct town marks are introduced.
+
+The repository asset `public/brand/ealing-oak-approved.webp` is derived directly from the approved brand board supplied for the project. Do not substitute or redraw the oak without explicit approval.
 
 Use it for:
 - `ealing.civiccommons.co.uk`;
@@ -30,4 +40,4 @@ Town marks may later sit below the Ealing oak in the hierarchy — for example a
 
 ## Principle
 
-**CC = the Commons network. Oak = Ealing. Future local icons = town lenses.**
+**CC = the Commons network. Approved rooted oak = Ealing. Future local icons = town lenses.**
