@@ -21,14 +21,6 @@
   status = 302
   force = true
 
-# Social crawlers receive a simple, stable JPEG URL. Netlify renders the approved
-# SVG source internally so WhatsApp/Bluesky do not have to consume an Image CDN URL.
-[[redirects]]
-  from = "/brand/social/:town.jpg"
-  to = "/.netlify/images?url=/brand/social/:town.svg&w=1200&h=630&fit=cover&fm=jpg"
-  status = 200
-  force = true
-
 [[redirects]]
   from = "/data/contributions.json"
   to = "/.netlify/functions/public-contributions"
@@ -69,6 +61,7 @@
   for = "/brand/social/*.jpg"
   [headers.values]
     Cache-Control = "public, max-age=86400"
+    Content-Type = "image/jpeg"
 
 [[headers]]
   for = "/*"
