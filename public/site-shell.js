@@ -11,12 +11,12 @@
   ];
 
   const TOWN_BRANDS = {
-    Acton: { slug: 'acton', label: 'Acton' },
+    Acton: { slug: 'acton', label: 'Acton', staticMark: true },
     Ealing: { slug: 'ealing-town', label: 'Ealing town' },
-    Greenford: { slug: 'greenford', label: 'Greenford' },
+    Greenford: { slug: 'greenford', label: 'Greenford', staticMark: true },
     Hanwell: { slug: 'hanwell', label: 'Hanwell' },
-    Northolt: { slug: 'northolt', label: 'Northolt' },
-    Perivale: { slug: 'perivale', label: 'Perivale' },
+    Northolt: { slug: 'northolt', label: 'Northolt', staticMark: true },
+    Perivale: { slug: 'perivale', label: 'Perivale', staticMark: true },
     Southall: { slug: 'southall', label: 'Southall' }
   };
   const TOWN_BY_SLUG = Object.fromEntries(Object.entries(TOWN_BRANDS).map(([town, brand]) => [brand.slug, town]));
@@ -58,6 +58,11 @@
     return TOWN_BRANDS[town] || null;
   }
 
+  function assetForBrand(brand) {
+    if (!brand) return '/brand/ealing-oak-approved.webp';
+    return `/brand/towns/${brand.slug}.${brand.staticMark ? 'svg' : 'webp'}`;
+  }
+
   function townFromPlacePath() {
     const match = path.match(/^\/places\/([^/]+)/i);
     if (!match) return null;
@@ -81,11 +86,11 @@
     if (!mark || !strapLabel) return;
 
     if (brand) {
-      const asset = `/brand/towns/${brand.slug}.svg`;
+      const asset = assetForBrand(brand);
       mark.src = asset;
       mark.classList.add('brand-mark-town');
       strapLabel.textContent = brand.label;
-      if (icon) { icon.type = 'image/svg+xml'; icon.href = asset; }
+      if (icon) { icon.type = brand.staticMark ? 'image/svg+xml' : 'image/webp'; icon.href = asset; }
       document.documentElement.dataset.commonsTown = brand.slug;
     } else {
       mark.src = '/brand/ealing-oak-approved.webp';
@@ -101,7 +106,8 @@
     setTown: applyTownBrand,
     reset: () => applyTownBrand(null),
     townFromPlacePath,
-    brandForTown
+    brandForTown,
+    assetForBrand
   };
 
   if (header) {
