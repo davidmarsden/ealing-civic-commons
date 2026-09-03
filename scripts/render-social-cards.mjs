@@ -1,4 +1,4 @@
-import { readdir, mkdir, readFile } from "node:fs/promises";
+import { readdir, mkdir } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 
@@ -28,16 +28,18 @@ for (const file of files) {
     const badgeOutput = path.join(townOutputDir, `${slug}.webp`);
 
     if (slug === "northolt") {
-      // Northolt's approved roundel is already embedded as a JPEG inside the
-      // approved social-card SVG. Extract that source image directly rather
-      // than rasterising/cropping the SVG: librsvg/Sharp has proved unreliable
-      // with this SVG's clipPath/image combination and can yield a blank badge.
-      const svg = await readFile(input, "utf8");
-      const match = svg.match(/href="data:image\/jpeg;base64,([^"]+)"/i);
-      if (!match) throw new Error("Northolt social card does not contain its embedded JPEG roundel");
-      const badgeJpeg = Buffer.from(match[1], "base64");
-      await sharp(badgeJpeg)
-        .resize(256, 256, { fit: "cover" })
+      // Do not decode the embedded JPEG independently: the source payload in
+      // this legacy SVG is malformed enough for libjpeg to reject it with
+      // "Bogus marker length". librsvg can nevertheless render the complete
+      // approved social card successfully, as proven by northolt.jpg above.
+      // Render the SVG once more and crop the approved roundel directly in the
+      // same pipeline, avoiding both the corrupt-JPEG decode and a JPEG
+      // round-trip.
+      await sharp(input, { density: 144 })
+        .resize(1200, 630, { fit: "cover" })
+        .flatten({ background: "#0f4a37" })
+        .extract({ left: 39, top: 69, width: 352, height: 352 })
+        .resize(256, 256)
         .webp({ quality: 92 })
         .toFile(badgeOutput);
     } else {
