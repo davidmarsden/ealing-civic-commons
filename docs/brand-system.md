@@ -58,8 +58,12 @@ These marks identify a **town lens onto Ealing Civic Commons**, not a separate d
 
 ## Southall doorway
 
-`commons.southallstories.uk` is a Southall-first doorway onto the same underlying Ealing Civic Commons. Its public identity is **Southall Civic Commons**, using the approved Southall Town Hall town mark rather than the Ealing oak.
+`ealing.civiccommons.co.uk` is the single canonical Ealing Civic Commons origin.
+
+`commons.southallstories.uk` remains as a permanent Southall shortcut rather than a second live Commons. Its homepage redirects to `https://ealing.civiccommons.co.uk/?town=Southall`; deep links preserve their path on the canonical Ealing hostname.
+
+The Southall town view uses the approved Southall Town Hall identity, but follows, civic memory, stable item URLs and application state belong to the same Ealing Civic Commons.
 
 ## Principle
 
-**CC = Civic Commons network. Rooted oak = Ealing borough. Local landmark = town lens.**
+**CC = Civic Commons network. Rooted oak = Ealing borough. Local landmark = town lens. One canonical Ealing Commons origin.**
