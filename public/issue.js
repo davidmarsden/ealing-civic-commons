@@ -36,7 +36,7 @@ function renderStats(data,historicalCount=null) {
   $('#issueTopics').innerHTML = (data.topics || []).map(topicLink).join('') || '<span class="entity-empty">No reviewed topics found.</span>';
 }
 function renderProviders(items) {
-  $('#issueProviders').innerHTML = (items || []).map(provider => `<div class="entity-provider"><strong>${provider.url ? `<a href="${esc(provider.url)}" target="_blank" rel="noopener noreferrer">${esc(provider.label || provider.name)}</a>` : esc(provider.label || provider.name)}</strong><span>${esc(provider.role || 'Data provider')}</span></div>`).join('');
+  $('#issueProviders').innerHTML = (items || []).map(provider => { const archive = provider.id === 'southall-zettel' || provider.id === 'reviewed-archive'; const label = archive ? 'Reviewed research archive' : (provider.label || provider.name); const url = archive ? null : provider.url; return `<div class="entity-provider"><strong>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)}</a>` : esc(label)}</strong><span>${esc(provider.role || 'Data provider')}</span></div>`; }).join('');
 }
 function renderActors(items) {
   if (!items?.length) return;
