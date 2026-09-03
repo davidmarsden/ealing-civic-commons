@@ -6,6 +6,7 @@
   if (!town || !brand) return;
 
   brandApi.setTown(town);
+  document.documentElement.dataset.commonsPlaceBrand = brand.slug;
 
   const hero = document.querySelector('#entityHero');
   if (!hero) return;
