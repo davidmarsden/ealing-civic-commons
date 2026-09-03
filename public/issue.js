@@ -1,3 +1,5 @@
+import { stableItemKey } from './follow-store.js';
+
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]));
 const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date(iso); return new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'long',year:'numeric'}).format(d); };
@@ -20,15 +22,15 @@ function canonicalUrl(value) { try { const url=new URL(value,location.origin); u
 function mergeReporting(reviewed=[],archived=[]) { const out=[],seen=new Set(); const add=item=>{const key=canonicalUrl(item.url); if(!key||seen.has(key))return; seen.add(key); out.push(item);}; reviewed.forEach(post=>add({...post,source:post.source||'Southall Stories',date:post.date||post.publishedAt||null,reviewedMatch:true})); archived.forEach(record=>{const item=record?.item;if(item?.url)add({title:item.title,url:item.url,summary:item.summary,date:item.publishedAt||record.archivedAt,source:item.source||'Archived publisher',archivedMatch:true});}); return out.sort((a,b)=>(Date.parse(b.date||'')||0)-(Date.parse(a.date||'')||0)); }
 async function archivedReporting(terms=[]) { const endpoint=new URL('/.netlify/functions/historical-reporting',location.origin); [...new Set(terms.filter(term=>String(term||'').trim().length>=3))].slice(0,20).forEach(term=>endpoint.searchParams.append('term',term)); endpoint.searchParams.set('limit','100'); const response=await fetch(endpoint,{cache:'no-store'}); if(!response.ok)throw new Error(`Historical reporting HTTP ${response.status}`); return (await response.json()).records||[]; }
 function renderHero(data) {
-  document.title = `${data.issue.name} — Civic Commons`;
+  document.title = `${data.issue.name} — Ealing Civic Commons`;
   $('#issueStatus').hidden = true;
   const hero = $('#issueHero'); hero.hidden = false;
-  hero.innerHTML = `<div class="issue-status-row"><span class="issue-status-pill">${esc(data.issue.status)}</span></div><h1>${esc(data.issue.name)}</h1><p class="lede">${esc(data.issue.description)}</p><div class="entity-actions"><a href="#actorsSection">Who & what ↓</a><a href="#relationshipsSection">Reviewed connections ↓</a><a href="#sourcesSection">Evidence ↓</a><a href="#currentSection">Current Commons ↓</a><a href="#reportingSection">Historical reporting ↓</a></div>`;
+  hero.innerHTML = `<div class="issue-status-row"><span class="issue-status-pill">${esc(data.issue.status)}</span></div><h1>${esc(data.issue.name)}</h1><p class="lede">${esc(data.issue.description)}</p><div class="entity-actions"><a href="#currentSection">Current Commons ↓</a><a href="#actorsSection">Who & what ↓</a><a href="#relationshipsSection">Reviewed connections ↓</a><a href="#sourcesSection">Evidence ↓</a><a href="#reportingSection">Historical reporting ↓</a></div>`;
 }
 function renderStats(data,historicalCount=null) {
   const c = data.counts || {};
   const reporting = historicalCount == null ? (c.reporting || 0) : historicalCount;
-  const stats = [[c.entities || 0,'key entities'], [c.relationships || 0,'reviewed relationships'], [c.sources || 0,'curated sources'], [reporting,'historical reports']];
+  const stats = [[c.entities || 0,'key entities'], [c.relationships || 0,'reviewed relationships'], [c.sources || 0,'curated evidence sources'], [reporting,'historical reports']];
   $('#issueStats').innerHTML = stats.map(([n,label]) => `<div class="entity-stat"><strong>${n}</strong><span>${label}</span></div>`).join('');
   $('#issueTopics').innerHTML = (data.topics || []).map(topicLink).join('') || '<span class="entity-empty">No reviewed topics found.</span>';
 }
@@ -63,12 +65,12 @@ function currentMatches(feed, issue) {
   return (feed?.items || []).filter(item => {
     const text = `${item.title || ''} ${item.summary || ''}`.toLowerCase();
     return terms.some(term => term.length >= 5 && text.includes(term.toLowerCase()));
-  }).slice(0,16);
+  }).slice(0,24);
 }
 function renderCurrent(items) {
   if (!items?.length) return;
   $('#currentSection').hidden = false;
-  $('#currentItems').innerHTML = items.map(item => `<article class="item"><div class="item-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass)}</span><strong>${esc(item.source)}</strong><span>${esc(fmtDate(item.publishedAt))}</span></div><div><h3><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title)}</a></h3>${item.summary ? `<p class="item-summary">${esc(item.summary)}</p>` : ''}</div></article>`).join('');
+  $('#currentItems').innerHTML = items.map(item => `<article class="item"><div class="item-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass)}</span><strong>${esc(item.source)}</strong><span>${esc(fmtDate(item.publishedAt))}</span></div><div><h3><a href="/items/${esc(stableItemKey(item.id))}">${esc(item.title)}</a></h3>${item.summary ? `<p class="item-summary">${esc(item.summary)}</p>` : ''}<div class="item-actions"><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Read original ↗</a></div></div></article>`).join('');
 }
 async function load() {
   const route = routeInfo();
@@ -81,10 +83,10 @@ async function load() {
     renderHero(data); renderStats(data); renderProviders(data.providers); renderActors(data.entities); renderRelationships(data.relationships); renderSources(data.sources);
     const [archiveResult,feedResponse] = await Promise.all([
       archivedReporting([data.issue.name,...(data.issue.aliases||[])]).catch(()=>[]),
-      fetch('/.netlify/functions/feed',{cache:'no-store'}).catch(()=>null)
+      fetch('/.netlify/functions/combined-feed',{cache:'no-store'}).catch(()=>null)
     ]);
-    const historical=mergeReporting(data.reporting,archiveResult); renderReporting(historical); renderStats(data,historical.length);
     if (feedResponse?.ok) { const feed = await feedResponse.json(); renderCurrent(currentMatches(feed,data.issue)); }
+    const historical=mergeReporting(data.reporting,archiveResult); renderReporting(historical); renderStats(data,historical.length);
   } catch (error) {
     $('#issueStatus').innerHTML = '<h1>Civic issue temporarily unavailable.</h1><p>The issue graph could not be loaded. The rest of Civic Commons is unaffected.</p><p><a href="/explore.html">Explore the civic graph →</a></p>';
     console.error('Civic issue page failed', error);
