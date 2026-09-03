@@ -26,8 +26,7 @@ for (const file of files) {
 
   if (slug !== "ealing") {
     const badgeOutput = path.join(townOutputDir, `${slug}.webp`);
-    await sharp(input, { density: 144 })
-      .resize(1200, 630, { fit: "cover" })
+    await sharp(output)
       .extract({ left: 39, top: 69, width: 352, height: 352 })
       .resize(256, 256)
       .webp({ quality: 90 })
