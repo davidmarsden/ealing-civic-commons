@@ -23,7 +23,7 @@
   if (!document.querySelector('link[data-commons-brand-styles]')) {
     const brandStyles = document.createElement('link');
     brandStyles.rel = 'stylesheet';
-    brandStyles.href = '/brand/brand.css?v=20260903-1';
+    brandStyles.href = '/brand/brand.css?v=20260903-2';
     brandStyles.dataset.commonsBrandStyles = 'true';
     document.head.appendChild(brandStyles);
   }
@@ -42,8 +42,8 @@
   if (!document.querySelector('link[rel="icon"][data-commons-brand]')) {
     const icon = document.createElement('link');
     icon.rel = 'icon';
-    icon.type = 'image/svg+xml';
-    icon.href = '/brand/ealing-oak.svg';
+    icon.type = 'image/webp';
+    icon.href = '/brand/ealing-oak-approved.webp';
     icon.dataset.commonsBrand = 'ealing-oak';
     document.head.appendChild(icon);
   }
@@ -54,7 +54,7 @@
       return `<a href="${item.href}"${active ? ' aria-current="page"' : ''}>${item.label}</a>`;
     }).join('');
 
-    header.innerHTML = `<div class="wrap header-inner"><a class="brand-lockup" href="/" aria-label="${commonsName}"><img class="brand-mark" src="/brand/ealing-oak.svg" alt="" aria-hidden="true"><span class="brand-copy"><strong class="brand">Civic Commons</strong><span class="strap">${strap}</span></span></a><nav aria-label="Primary">${nav}</nav></div>`;
+    header.innerHTML = `<div class="wrap header-inner"><a class="brand-lockup" href="/" aria-label="${commonsName}"><img class="brand-mark" src="/brand/ealing-oak-approved.webp" alt="" aria-hidden="true"><span class="brand-divider" aria-hidden="true"></span><span class="brand-copy"><strong class="brand">CIVIC COMMONS</strong><span class="strap"><span></span>${strap}<span></span></span></span></a><nav aria-label="Primary">${nav}</nav></div>`;
   }
 
   if (footer) {
