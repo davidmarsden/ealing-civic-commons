@@ -20,27 +20,23 @@
 
 [[redirects]]
   from = "/items/*"
-  to = "/.netlify/functions/social-page?kind=item&path=:splat"
+  to = "/item.html"
   status = 200
-  force = true
 
 [[redirects]]
   from = "/people/*"
-  to = "/.netlify/functions/social-page?kind=entity&path=people/:splat"
+  to = "/entity.html"
   status = 200
-  force = true
 
 [[redirects]]
   from = "/organisations/*"
-  to = "/.netlify/functions/social-page?kind=entity&path=organisations/:splat"
+  to = "/entity.html"
   status = 200
-  force = true
 
 [[redirects]]
   from = "/places/*"
-  to = "/.netlify/functions/social-page?kind=entity&path=places/:splat"
+  to = "/entity.html"
   status = 200
-  force = true
 
 [[redirects]]
   from = "/issues/*"
