@@ -17,15 +17,15 @@ function canonicalOrigin(request) {
   const url = new URL(request.url);
   const proto = request.headers.get('x-forwarded-proto') || url.protocol.replace(':', '') || 'https';
   const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || url.host;
+  if (String(host).toLowerCase() === 'commons.southallstories.uk') return 'https://ealing.civiccommons.co.uk';
   return `${proto}://${host}`;
 }
 
-function identityForOrigin(origin) {
-  const host = new URL(origin).hostname.toLowerCase();
-  return host === 'commons.southallstories.uk'
-    ? { siteName: 'Southall Civic Commons', imageAlt: 'Southall Civic Commons', imagePath: '/og-image-southall.svg' }
-    : { siteName: 'Ealing Civic Commons', imageAlt: 'Ealing Civic Commons', imagePath: '/og-image.svg' };
-}
+const identity = {
+  siteName: 'Ealing Civic Commons',
+  imageAlt: 'Ealing Civic Commons',
+  imagePath: '/og-image.svg'
+};
 
 function internalRequest(url, request) {
   return new Request(url.toString(), { method: 'GET', headers: request.headers });
@@ -69,7 +69,7 @@ async function metadata(request, kind, path) {
   return null;
 }
 
-function inject(html, meta, canonical, imageUrl, identity) {
+function inject(html, meta, canonical, imageUrl) {
   if (!meta) return html;
   const fullTitle = `${meta.title} — ${identity.siteName}`;
   const tags = [
@@ -111,13 +111,12 @@ export default async request => {
   const route = kind === 'item' ? `/items/${path}` : `/${path.replace(/^\/+/, '')}`;
   const origin = canonicalOrigin(request);
   const canonical = `${origin}${route}`;
-  const identity = identityForOrigin(origin);
   const imageUrl = `${origin}/.netlify/images?url=${encodeURIComponent(identity.imagePath)}&w=1200&h=630&fit=cover&fm=png`;
   let meta = null;
   try { meta = await metadata(request, kind, path); }
   catch (error) { console.error('Social metadata lookup failed', error); }
 
-  const body = inject(await shellResponse.text(), meta, canonical, imageUrl, identity);
+  const body = inject(await shellResponse.text(), meta, canonical, imageUrl);
   return new Response(body, {
     status: 200,
     headers: {
