@@ -1,14 +1,25 @@
 import { access, stat } from "node:fs/promises";
 import path from "node:path";
 
-const towns = ["ealing", "acton", "ealing-town", "greenford", "hanwell", "northolt", "perivale", "southall"];
+const socialSlugs = ["ealing", "acton", "ealing-town", "greenford", "hanwell", "northolt", "perivale", "southall"];
+const townSlugs = socialSlugs.filter(slug => slug !== "ealing");
 
-for (const town of towns) {
-  const file = path.resolve(`dist/brand/social/${town}.jpg`);
+for (const slug of socialSlugs) {
+  const file = path.resolve(`dist/brand/social/${slug}.jpg`);
   await access(file);
   const info = await stat(file);
   if (info.size < 10_000) {
-    throw new Error(`${town}.jpg looks unexpectedly small (${info.size} bytes)`);
+    throw new Error(`${slug}.jpg looks unexpectedly small (${info.size} bytes)`);
   }
-  console.log(`${town}.jpg ${info.size} bytes`);
+  console.log(`${slug}.jpg ${info.size} bytes`);
+}
+
+for (const slug of townSlugs) {
+  const file = path.resolve(`dist/brand/towns/${slug}.webp`);
+  await access(file);
+  const info = await stat(file);
+  if (info.size < 2_000) {
+    throw new Error(`${slug}.webp looks unexpectedly small (${info.size} bytes)`);
+  }
+  console.log(`${slug}.webp ${info.size} bytes`);
 }
