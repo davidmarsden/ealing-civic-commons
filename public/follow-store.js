@@ -34,10 +34,12 @@ function explicitTownsFromText(item) {
 
 export function itemPlaceScope(item) {
   const assigned = Array.isArray(item?.towns) ? item.towns.filter(town => BOROUGH_TOWNS.includes(town)) : [];
-  const sourceLooksBoroughWide = item?.boroughWide === true || BOROUGH_TOWNS.every(town => assigned.includes(town));
-  if (!sourceLooksBoroughWide) return { boroughWide: false, towns: assigned };
   const explicit = explicitTownsFromText(item);
-  return explicit.length ? { boroughWide: false, towns: explicit } : { boroughWide: true, towns: [] };
+  if (explicit.length) return { boroughWide: false, towns: explicit };
+
+  const sourceLooksBoroughWide = item?.boroughWide === true || BOROUGH_TOWNS.every(town => assigned.includes(town));
+  if (sourceLooksBoroughWide) return { boroughWide: true, towns: [] };
+  return { boroughWide: false, towns: assigned };
 }
 
 export function loadFollows() {
