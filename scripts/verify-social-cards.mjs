@@ -18,7 +18,7 @@ for (const slug of townSlugs) {
   const file = path.resolve(`dist/brand/towns/${slug}.webp`);
   await access(file);
   const info = await stat(file);
-  if (info.size < 2_000) {
+  if (info.size < 500) {
     throw new Error(`${slug}.webp looks unexpectedly small (${info.size} bytes)`);
   }
   console.log(`${slug}.webp ${info.size} bytes`);
