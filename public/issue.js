@@ -5,6 +5,7 @@ const esc = s => String(s ?? '').replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&l
 const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date(iso); return new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'long',year:'numeric'}).format(d); };
 const labelType = value => String(value || '').replaceAll('_',' ');
 const pillClass = type => type === 'Official record' ? 'official' : type === 'Journalism / publishing' ? 'journalism' : type === 'Independent civic data / analysis' ? 'analysis' : 'organisation';
+const commonsName = () => document.documentElement.dataset.commonsScope === 'southall' ? 'Southall Civic Commons' : 'Ealing Civic Commons';
 
 function routeInfo() {
   const parts = location.pathname.split('/').filter(Boolean);
@@ -22,7 +23,7 @@ function canonicalUrl(value) { try { const url=new URL(value,location.origin); u
 function mergeReporting(reviewed=[],archived=[]) { const out=[],seen=new Set(); const add=item=>{const key=canonicalUrl(item.url); if(!key||seen.has(key))return; seen.add(key); out.push(item);}; reviewed.forEach(post=>add({...post,source:post.source||'Southall Stories',date:post.date||post.publishedAt||null,reviewedMatch:true})); archived.forEach(record=>{const item=record?.item;if(item?.url)add({title:item.title,url:item.url,summary:item.summary,date:item.publishedAt||record.archivedAt,source:item.source||'Archived publisher',archivedMatch:true});}); return out.sort((a,b)=>(Date.parse(b.date||'')||0)-(Date.parse(a.date||'')||0)); }
 async function archivedReporting(terms=[]) { const endpoint=new URL('/.netlify/functions/historical-reporting',location.origin); [...new Set(terms.filter(term=>String(term||'').trim().length>=3))].slice(0,20).forEach(term=>endpoint.searchParams.append('term',term)); endpoint.searchParams.set('limit','100'); const response=await fetch(endpoint,{cache:'no-store'}); if(!response.ok)throw new Error(`Historical reporting HTTP ${response.status}`); return (await response.json()).records||[]; }
 function renderHero(data) {
-  document.title = `${data.issue.name} — Ealing Civic Commons`;
+  document.title = `${data.issue.name} — ${commonsName()}`;
   $('#issueStatus').hidden = true;
   const hero = $('#issueHero'); hero.hidden = false;
   hero.innerHTML = `<div class="issue-status-row"><span class="issue-status-pill">${esc(data.issue.status)}</span></div><h1>${esc(data.issue.name)}</h1><p class="lede">${esc(data.issue.description)}</p><div class="entity-actions"><a href="#currentSection">Current Commons ↓</a><a href="#actorsSection">Who & what ↓</a><a href="#relationshipsSection">Reviewed connections ↓</a><a href="#sourcesSection">Evidence ↓</a><a href="#reportingSection">Historical reporting ↓</a></div>`;
