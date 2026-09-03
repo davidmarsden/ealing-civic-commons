@@ -10,6 +10,7 @@ await mkdir(outputDir, { recursive: true });
 await mkdir(townOutputDir, { recursive: true });
 
 const files = (await readdir(sourceDir)).filter((name) => name.endsWith(".svg"));
+const staticTownMarks = new Set(["acton", "greenford", "northolt", "perivale"]);
 
 for (const file of files) {
   const input = path.join(sourceDir, file);
@@ -24,7 +25,7 @@ for (const file of files) {
 
   console.log(`Rendered ${path.basename(output)}`);
 
-  if (slug !== "ealing") {
+  if (slug !== "ealing" && !staticTownMarks.has(slug)) {
     const badgeOutput = path.join(townOutputDir, `${slug}.webp`);
     await sharp(output)
       .extract({ left: 39, top: 69, width: 352, height: 352 })
