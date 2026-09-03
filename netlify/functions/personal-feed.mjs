@@ -4,6 +4,7 @@ import { getArchivedItem } from '../lib/civic-items.mjs';
 const MAX_TARGETS_PER_TYPE = 50;
 const MAX_TARGET_LENGTH = 512;
 const allowedParams = new Set(['item', 'source', 'town', 'topic']);
+const BOROUGH_TOWNS = ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
 
 function xml(value = '') {
   return String(value)
@@ -16,6 +17,28 @@ function xml(value = '') {
 
 function stableItemKey(id) {
   return Buffer.from(String(id ?? ''), 'utf8').toString('base64url');
+}
+
+function explicitTownsFromText(item) {
+  const haystack = `${item?.title || ''} ${item?.summary || ''}`
+    .replace(/\b(?:the\s+)?London Borough of Ealing(?: Council)?\b/gi, ' ')
+    .replace(/\bEaling Council\b/gi, ' ')
+    .replace(/\bEaling LBC\b/gi, ' ')
+    .replace(/\bEaling and Hillingdon\b/gi, ' ')
+    .replace(/\bEaling Citizens\b/gi, ' ');
+
+  const towns = BOROUGH_TOWNS.filter(town => town !== 'Ealing' && new RegExp(`\\b${town}\\b`, 'i').test(haystack));
+  const ealingTown = /\b(?:Ealing town|Ealing Broadway|West Ealing|Ealing Common|Ealing Green|Northfields?)\b/i.test(haystack);
+  if (ealingTown) towns.unshift('Ealing');
+  return towns;
+}
+
+function itemPlaceScope(item) {
+  const assigned = Array.isArray(item?.towns) ? item.towns.filter(town => BOROUGH_TOWNS.includes(town)) : [];
+  const sourceLooksBoroughWide = item?.boroughWide === true || BOROUGH_TOWNS.every(town => assigned.includes(town));
+  if (!sourceLooksBoroughWide) return { boroughWide: false, towns: assigned };
+  const explicit = explicitTownsFromText(item);
+  return explicit.length ? { boroughWide: false, towns: explicit } : { boroughWide: true, towns: [] };
 }
 
 function validTarget(param, value) {
@@ -52,8 +75,8 @@ function targetCount(targets) {
 function matches(item, targets) {
   if (targets.items.includes(stableItemKey(item.id))) return true;
   if (targets.sources.includes(item.sourceId)) return true;
-  if (item.boroughWide === true && targets.towns.length) return true;
-  if ((item.towns || []).some(town => targets.towns.includes(town))) return true;
+  const place = itemPlaceScope(item);
+  if (!place.boroughWide && place.towns.some(town => targets.towns.includes(town))) return true;
   if ((item.topics || []).some(topic => targets.topics.includes(topic))) return true;
   return false;
 }
