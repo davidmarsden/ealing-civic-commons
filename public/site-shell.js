@@ -20,6 +20,14 @@
 
   document.documentElement.dataset.commonsScope = southallDoorway ? 'southall' : 'ealing';
 
+  if (!document.querySelector('link[data-commons-brand-styles]')) {
+    const brandStyles = document.createElement('link');
+    brandStyles.rel = 'stylesheet';
+    brandStyles.href = '/brand/brand.css?v=20260903-1';
+    brandStyles.dataset.commonsBrandStyles = 'true';
+    document.head.appendChild(brandStyles);
+  }
+
   const normaliseCommonsIdentity = value => {
     if (!value) return value;
     let result = String(value).replace(/Southall\s*(?:&|and)\s*Ealing Civic Commons/gi, commonsName);
