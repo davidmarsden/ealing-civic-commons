@@ -15,7 +15,7 @@
     if (!hero.querySelector('h1') || hero.querySelector('.entity-place-mark')) return false;
     const mark = document.createElement('img');
     mark.className = 'entity-place-mark';
-    mark.src = `/brand/towns/${brand.slug}.svg`;
+    mark.src = brandApi.assetForBrand(brand);
     mark.alt = '';
     mark.setAttribute('aria-hidden', 'true');
     mark.width = 132;
