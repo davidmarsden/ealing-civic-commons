@@ -1,5 +1,6 @@
 import { access, stat } from "node:fs/promises";
 import path from "node:path";
+import sharp from "sharp";
 
 const socialSlugs = ["ealing", "acton", "ealing-town", "greenford", "hanwell", "northolt", "perivale", "southall"];
 const townSlugs = socialSlugs.filter(slug => slug !== "ealing");
@@ -15,11 +16,24 @@ for (const slug of socialSlugs) {
 }
 
 for (const slug of townSlugs) {
-  const file = path.resolve(`dist/brand/towns/${slug}.svg`);
-  await access(file);
-  const info = await stat(file);
-  if (info.size < 100) {
-    throw new Error(`${slug}.svg looks unexpectedly small (${info.size} bytes)`);
+  const svg = path.resolve(`dist/brand/towns/${slug}.svg`);
+  await access(svg);
+  const svgInfo = await stat(svg);
+  if (svgInfo.size < 100) {
+    throw new Error(`${slug}.svg looks unexpectedly small (${svgInfo.size} bytes)`);
   }
-  console.log(`${slug}.svg ${info.size} bytes`);
+  console.log(`${slug}.svg ${svgInfo.size} bytes`);
+
+  const webp = path.resolve(`dist/brand/towns/${slug}.webp`);
+  await access(webp);
+  const metadata = await sharp(webp).metadata();
+  if (metadata.width !== 256 || metadata.height !== 256) {
+    throw new Error(`${slug}.webp has unexpected dimensions ${metadata.width}x${metadata.height}`);
+  }
+  const stats = await sharp(webp).stats();
+  const variation = Math.max(...stats.channels.slice(0, 3).map(channel => channel.stdev));
+  if (variation < 8) {
+    throw new Error(`${slug}.webp appears blank or nearly uniform (max channel stdev ${variation.toFixed(2)})`);
+  }
+  console.log(`${slug}.webp 256x256 variation ${variation.toFixed(2)}`);
 }
