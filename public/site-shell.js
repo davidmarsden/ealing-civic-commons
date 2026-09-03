@@ -11,14 +11,12 @@
   ];
 
   const path = window.location.pathname;
-  const host = window.location.hostname.toLowerCase();
-  const southallDoorway = host === 'commons.southallstories.uk';
-  const commonsName = southallDoorway ? 'Southall Civic Commons' : 'Ealing Civic Commons';
-  const strap = southallDoorway ? 'Southall' : 'Ealing';
+  const commonsName = 'Ealing Civic Commons';
+  const strap = 'Ealing';
   const header = document.querySelector('header.site-header');
   const footer = document.querySelector('footer');
 
-  document.documentElement.dataset.commonsScope = southallDoorway ? 'southall' : 'ealing';
+  document.documentElement.dataset.commonsScope = 'ealing';
 
   if (!document.querySelector('link[data-commons-brand-styles]')) {
     const brandStyles = document.createElement('link');
@@ -28,12 +26,10 @@
     document.head.appendChild(brandStyles);
   }
 
-  const normaliseCommonsIdentity = value => {
-    if (!value) return value;
-    let result = String(value).replace(/Southall\s*(?:&|and)\s*Ealing Civic Commons/gi, commonsName);
-    if (southallDoorway) result = result.replace(/Ealing Civic Commons/gi, commonsName);
-    return result;
-  };
+  const normaliseCommonsIdentity = value => value
+    ? String(value).replace(/Southall\s*(?:&|and)\s*Ealing Civic Commons/gi, commonsName)
+      .replace(/Southall Civic Commons/gi, commonsName)
+    : value;
 
   document.title = normaliseCommonsIdentity(document.title);
   const description = document.querySelector('meta[name="description"]');
@@ -84,10 +80,10 @@
   });
 
   if (path === '/') {
-    import('/commons-scope.js?v=20260903-1').catch(error => console.warn('Commons scope module unavailable', error));
+    import('/commons-scope.js?v=20260903-2').catch(error => console.warn('Commons scope module unavailable', error));
   }
   if (/^\/(people|organisations|places|issues|topics)\//.test(path)) {
-    import('/context-reporting.js?v=20260902-1').catch(error => console.warn('Context reporting module unavailable', error));
+    import('/context-reporting.js?v=20260902-1').catch(error => console.warn('Context reporting unavailable', error));
   }
   if (path === '/explore.html') {
     import('/explore-issue-hubs.js?v=20260902-1').catch(error => console.warn('Explore issue hubs unavailable', error));
