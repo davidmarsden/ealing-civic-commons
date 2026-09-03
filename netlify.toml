@@ -7,6 +7,18 @@
   node_bundler = "esbuild"
 
 [[redirects]]
+  from = "https://commons.southallstories.uk/"
+  to = "https://ealing.civiccommons.co.uk/?town=Southall"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://commons.southallstories.uk/*"
+  to = "https://ealing.civiccommons.co.uk/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "/.netlify/functions/feed"
   to = "/.netlify/functions/combined-feed"
   status = 200

@@ -1,8 +1,6 @@
 import civicItem from './civic-item.mjs';
 import civicEntity from './civic-entity.mjs';
 
-const SITE_NAME = 'Southall & Ealing Civic Commons';
-
 function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -19,8 +17,15 @@ function canonicalOrigin(request) {
   const url = new URL(request.url);
   const proto = request.headers.get('x-forwarded-proto') || url.protocol.replace(':', '') || 'https';
   const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || url.host;
+  if (String(host).toLowerCase() === 'commons.southallstories.uk') return 'https://ealing.civiccommons.co.uk';
   return `${proto}://${host}`;
 }
+
+const identity = {
+  siteName: 'Ealing Civic Commons',
+  imageAlt: 'Ealing Civic Commons',
+  imagePath: '/og-image.svg'
+};
 
 function internalRequest(url, request) {
   return new Request(url.toString(), { method: 'GET', headers: request.headers });
@@ -66,10 +71,10 @@ async function metadata(request, kind, path) {
 
 function inject(html, meta, canonical, imageUrl) {
   if (!meta) return html;
-  const fullTitle = `${meta.title} — Civic Commons`;
+  const fullTitle = `${meta.title} — ${identity.siteName}`;
   const tags = [
     `<link rel="canonical" href="${esc(canonical)}" />`,
-    `<meta property="og:site_name" content="${esc(SITE_NAME)}" />`,
+    `<meta property="og:site_name" content="${esc(identity.siteName)}" />`,
     `<meta property="og:type" content="${esc(meta.type)}" />`,
     `<meta property="og:title" content="${esc(meta.title)}" />`,
     `<meta property="og:description" content="${esc(meta.description)}" />`,
@@ -77,12 +82,12 @@ function inject(html, meta, canonical, imageUrl) {
     `<meta property="og:image" content="${esc(imageUrl)}" />`,
     '<meta property="og:image:width" content="1200" />',
     '<meta property="og:image:height" content="630" />',
-    '<meta property="og:image:alt" content="Southall &amp; Ealing Civic Commons" />',
+    `<meta property="og:image:alt" content="${esc(identity.imageAlt)}" />`,
     '<meta name="twitter:card" content="summary_large_image" />',
     `<meta name="twitter:title" content="${esc(meta.title)}" />`,
     `<meta name="twitter:description" content="${esc(meta.description)}" />`,
     `<meta name="twitter:image" content="${esc(imageUrl)}" />`,
-    '<meta name="twitter:image:alt" content="Southall &amp; Ealing Civic Commons" />'
+    `<meta name="twitter:image:alt" content="${esc(identity.imageAlt)}" />`
   ].join('\n  ');
 
   return html
@@ -106,7 +111,7 @@ export default async request => {
   const route = kind === 'item' ? `/items/${path}` : `/${path.replace(/^\/+/, '')}`;
   const origin = canonicalOrigin(request);
   const canonical = `${origin}${route}`;
-  const imageUrl = `${origin}/.netlify/images?url=/og-image.svg&w=1200&h=630&fit=cover&fm=png`;
+  const imageUrl = `${origin}/.netlify/images?url=${encodeURIComponent(identity.imagePath)}&w=1200&h=630&fit=cover&fm=png`;
   let meta = null;
   try { meta = await metadata(request, kind, path); }
   catch (error) { console.error('Social metadata lookup failed', error); }
