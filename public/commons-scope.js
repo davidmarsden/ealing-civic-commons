@@ -2,6 +2,7 @@
   const host = window.location.hostname.toLowerCase();
   const southallDoorway = host === 'commons.southallstories.uk';
   const scope = southallDoorway ? 'southall' : 'ealing';
+  const followingView = window.location.hash === '#following';
 
   const config = {
     ealing: {
@@ -27,7 +28,7 @@
   document.title = config.title;
   const description = document.querySelector('meta[name="description"]');
   if (description) description.content = config.description;
-  updateHero(config.town);
+  updateHero(followingView ? 'All' : config.town);
   const aboutParagraphs = document.querySelectorAll('#about .about-grid > div:last-child p');
   if (aboutParagraphs[1]) aboutParagraphs[1].textContent = config.about;
 
@@ -40,13 +41,22 @@
     control.addEventListener('click', () => updateHero('All'));
   });
 
-  window.addEventListener('load', () => {
-    if (!townFilter) return;
+  function applyDoorwayDefault() {
+    if (!townFilter || window.location.hash === '#following') {
+      updateHero('All');
+      return;
+    }
     if (townFilter.value !== config.town) {
       townFilter.value = config.town;
       townFilter.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
       updateHero(config.town);
     }
-  }, { once: true });
+  }
+
+  if (document.readyState === 'complete') {
+    applyDoorwayDefault();
+  } else {
+    window.addEventListener('load', applyDoorwayDefault, { once: true });
+  }
 })();
