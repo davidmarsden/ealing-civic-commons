@@ -15,7 +15,7 @@
     Ealing: { slug: 'ealing-town', label: 'Ealing town' },
     Greenford: { slug: 'greenford', label: 'Greenford', staticMark: true },
     Hanwell: { slug: 'hanwell', label: 'Hanwell' },
-    Northolt: { slug: 'northolt', label: 'Northolt' },
+    Northolt: { slug: 'northolt', label: 'Northolt', staticMark: true },
     Perivale: { slug: 'perivale', label: 'Perivale', staticMark: true },
     Southall: { slug: 'southall', label: 'Southall' }
   };
