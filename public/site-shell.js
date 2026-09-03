@@ -11,8 +11,14 @@
   ];
 
   const path = window.location.pathname;
+  const host = window.location.hostname.toLowerCase();
+  const southallDoorway = host === 'commons.southallstories.uk';
+  const commonsName = southallDoorway ? 'Southall Civic Commons' : 'Ealing Civic Commons';
+  const strap = southallDoorway ? 'Southall' : 'Ealing';
   const header = document.querySelector('header.site-header');
   const footer = document.querySelector('footer');
+
+  document.documentElement.dataset.commonsScope = southallDoorway ? 'southall' : 'ealing';
 
   if (header) {
     const nav = NAV_ITEMS.map(item => {
@@ -20,11 +26,11 @@
       return `<a href="${item.href}"${active ? ' aria-current="page"' : ''}>${item.label}</a>`;
     }).join('');
 
-    header.innerHTML = `<div class="wrap header-inner"><div><a class="brand" href="/">Civic Commons</a><div class="strap">Southall & Ealing</div></div><nav aria-label="Primary">${nav}</nav></div>`;
+    header.innerHTML = `<div class="wrap header-inner"><div><a class="brand" href="/">Civic Commons</a><div class="strap">${strap}</div></div><nav aria-label="Primary">${nav}</nav></div>`;
   }
 
   if (footer) {
-    footer.innerHTML = '<div class="wrap footer-inner"><span>Southall & Ealing Civic Commons</span><span>Open civic infrastructure. Original sources remain canonical.</span></div>';
+    footer.innerHTML = `<div class="wrap footer-inner"><span>${commonsName}</span><span>Open civic infrastructure. Original sources remain canonical.</span></div>`;
   }
 
   function newStatusToken() {
