@@ -17,6 +17,11 @@
   const updateHero = town => {
     if (hero) hero.textContent = heroForTown(town);
   };
+  const updateBrand = town => {
+    if (!window.CivicCommonsBrand) return;
+    if (town === 'All') window.CivicCommonsBrand.reset();
+    else window.CivicCommonsBrand.setTown(town);
+  };
 
   function updateTownUrl(town) {
     if (followingView) return;
@@ -30,6 +35,7 @@
   const description = document.querySelector('meta[name="description"]');
   if (description) description.content = config.description;
   updateHero(followingView ? 'All' : initialTown);
+  updateBrand(followingView ? 'All' : initialTown);
   const aboutParagraphs = document.querySelectorAll('#about .about-grid > div:last-child p');
   if (aboutParagraphs[1]) aboutParagraphs[1].textContent = config.about;
 
@@ -37,17 +43,22 @@
   if (townFilter) {
     townFilter.addEventListener('change', event => {
       updateHero(event.target.value);
+      updateBrand(event.target.value);
       updateTownUrl(event.target.value);
     });
   }
 
   document.querySelectorAll('#followingViewButton, [data-view-link="following"]').forEach(control => {
-    control.addEventListener('click', () => updateHero('All'));
+    control.addEventListener('click', () => {
+      updateHero('All');
+      updateBrand('All');
+    });
   });
 
   function applyInitialTown() {
     if (!townFilter || window.location.hash === '#following') {
       updateHero('All');
+      updateBrand('All');
       return;
     }
     if (townFilter.value !== initialTown) {
@@ -55,6 +66,7 @@
       townFilter.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
       updateHero(initialTown);
+      updateBrand(initialTown);
     }
   }
 
