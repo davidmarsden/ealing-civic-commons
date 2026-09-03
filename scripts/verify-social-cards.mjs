@@ -3,7 +3,9 @@ import path from "node:path";
 import sharp from "sharp";
 
 const socialSlugs = ["ealing", "acton", "ealing-town", "greenford", "hanwell", "northolt", "perivale", "southall"];
+const staticTownMarks = new Set(["acton", "greenford", "northolt", "perivale"]);
 const townSlugs = socialSlugs.filter(slug => slug !== "ealing");
+const generatedTownSlugs = townSlugs.filter(slug => !staticTownMarks.has(slug));
 
 for (const slug of socialSlugs) {
   const file = path.resolve(`dist/brand/social/${slug}.jpg`);
@@ -23,7 +25,9 @@ for (const slug of townSlugs) {
     throw new Error(`${slug}.svg looks unexpectedly small (${svgInfo.size} bytes)`);
   }
   console.log(`${slug}.svg ${svgInfo.size} bytes`);
+}
 
+for (const slug of generatedTownSlugs) {
   const webp = path.resolve(`dist/brand/towns/${slug}.webp`);
   await access(webp);
   const metadata = await sharp(webp).metadata();
