@@ -87,12 +87,12 @@ export default async request => {
       schemaVersion: data.schema_version,
       issue: { id: issue.id, route: issue.route, name: issue.name, status: issue.status, description: issue.description, aliases: issue.aliases || [] },
       providers: [
-        { id: 'civic-commons', name: 'Civic Commons', label: 'Southall & Ealing Civic Commons', role: 'Canonical public issue and current-source aggregation', url: 'https://commons.southallstories.uk/' },
-        { id: 'southall-zettel', name: 'Southall-Zettel', label: 'Southall Stories research archive', role: 'Reviewed civic memory', url: 'https://github.com/davidmarsden/Southall-Zettel' }
+        { id: 'civic-commons', name: 'Ealing Civic Commons', label: 'Ealing Civic Commons', role: 'Live civic source network and canonical public issue', url: 'https://ealing.civiccommons.co.uk/' },
+        { id: 'southall-zettel', name: 'Southall-Zettel', label: 'Reviewed research archive', role: 'Historical evidence and reviewed civic memory', url: 'https://github.com/davidmarsden/Southall-Zettel' }
       ],
       counts: { entities: entities.length, topics: topics.length, reporting: reporting.length, relationships: relationships.length, sources: sources.length },
       entities, topics, relationships, sources, reporting,
-      provenance: { label: 'Civic issue', source: 'Civic Commons issue registry + Southall-Zettel', method: 'Civic Commons defines the ongoing issue and its stable public route. Reviewed historical relationships, source records and reporting are selected from Southall-Zettel by exact entity/topic IDs; current Commons material is a separately labelled discovery layer.' }
+      provenance: { label: 'Civic issue', source: 'Ealing Civic Commons + reviewed research archive', method: 'Ealing Civic Commons defines the ongoing issue and its stable public route. Reviewed historical relationships, source records and reporting are selected from Southall-Zettel by exact entity/topic IDs; current Commons material is a separately labelled live layer.' }
     }, 200, 300);
   } catch (error) {
     console.error('Civic issue lookup failed', error);
