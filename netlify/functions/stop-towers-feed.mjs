@@ -8,6 +8,14 @@ const SOURCE = {
 
 function decodeEntities(value = '') {
   return String(value)
+    .replace(/&#x([0-9a-f]+);?/gi, (match, hex) => {
+      const code = Number.parseInt(hex, 16);
+      return Number.isInteger(code) && code >= 0 && code <= 0x10FFFF ? String.fromCodePoint(code) : match;
+    })
+    .replace(/&#([0-9]+);?/g, (match, dec) => {
+      const code = Number.parseInt(dec, 10);
+      return Number.isInteger(code) && code >= 0 && code <= 0x10FFFF ? String.fromCodePoint(code) : match;
+    })
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
     .replace(/&quot;/gi, '"')

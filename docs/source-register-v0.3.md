@@ -33,11 +33,14 @@ It distinguishes between:
 | Southall Stories | Southall | Independent journalism | READY | RSS / Micro.blog. Founding participant, not owner. |
 | Southall Residents Alliance | Southall | Residents / campaign | READY | Verified RSS: `https://southallresidentsalliance.co.uk/feed/` |
 | MySouthall | Southall | Newsletter / campaigning | READY | Substack RSS: `https://southall.substack.com/feed` |
+| Southall Speaks | Southall | Independent local publication / community voice | READY | Substack RSS: `https://atterkalsi.substack.com/feed`; culture, history and community material. |
+| Visit Southall — News | Southall | Local news / information publication | READY | `https://www.visitsouthall.co.uk/News/News.php`; dated first-party news listing monitored by a source-specific adapter. Business-directory and general events content are not ingested as news. |
 | Southall Transition | Southall | Community / sustainability | READY | Verified RSS: `https://southalltransition.org/feed/` |
 | Southall Community Alliance | Southall | Community alliance / charity | PARTNER | Current live site: `https://southallcommunityalliance.com/`; fresh 2026 news. |
 | EALING.NEWS — Southall | Southall / borough | Local journalism | LIKELY | Candidate WordPress tag feed: `https://www.ealing.news/tag/southall/feed/` |
 | Asian Standard — Southall | Southall | Regional/local journalism | READY | Verified category RSS. |
 | Ealing Matters | Borough-wide | Civic alliance | READY | Verified RSS; important source-discovery network. |
+| Vicious Ealing Council | Ealing / borough | Independent civic commentary / campaign | READY | WordPress RSS: `https://vicious-ealing-council.co.uk/feed/`. Publisher allegations remain attributable to the source and are not treated as Commons assertions. |
 | The View from W5 | Ealing / borough | Independent newsletter | READY | Verified Substack/XML feed. |
 | West Ealing Neighbours | West Ealing | Community publisher | READY | Verified RSS. |
 | Ealing Civic Society | Borough-wide | Civic / conservation / planning | LIKELY | Active WordPress site; verify main/category feeds. |
@@ -184,6 +187,8 @@ Southall now has at least these potentially ingestible/partner sources:
 - Southall Stories
 - Southall Residents Alliance
 - MySouthall
+- Southall Speaks
+- Visit Southall — News
 - Southall Transition
 - Southall Community Alliance
 - EALING.NEWS — Southall
@@ -191,7 +196,7 @@ Southall now has at least these potentially ingestible/partner sources:
 - Norwood Green Residents' Association
 - plus borough-wide sources relevant to Southall
 
-Southall Transition is especially useful because its RSS endpoint is verified.
+The Southall source set now spans investigative/local publishing, community voice, campaigning, environmental/community organising and a long-running local news/information service rather than depending on any one model of local publishing.
 
 ## C. Open publishing is common, but not universal
 
@@ -199,8 +204,10 @@ Confirmed new RSS feeds from this pass include:
 - Southall Transition
 - Ealing Transition
 - East Acton Golf Links Residents' Association
+- Southall Speaks
+- Vicious Ealing Council
 
-Other groups use Blogger, WordPress, Wix, Google Sites, Ning, PDFs or no website at all. The Stop The Towers Campaign News page and Friends of the Victoria Hall chronology demonstrate that source-specific public-page adapters can also bring useful first-party civic publishing into the Commons without pretending those sites expose RSS.
+Other groups use Blogger, WordPress, Wix, Google Sites, Ning, PDFs or no website at all. The Stop The Towers Campaign News page, Friends of the Victoria Hall chronology and Visit Southall news listing demonstrate that source-specific public-page adapters can also bring useful first-party civic publishing into the Commons without pretending those sites expose RSS.
 
 The Commons should therefore offer an **onboarding bridge service** rather than demanding RSS literacy from partners.
 
@@ -223,18 +230,21 @@ The registry should record not only what it contains, but where coverage is weak
 1. Southall Stories
 2. Southall Residents Alliance
 3. MySouthall
-4. Southall Transition
-5. EALING.NEWS — Southall
-6. Asian Standard — Southall
-7. Ealing Matters
-8. The View from W5
-9. West Ealing Neighbours
-10. Stop The Towers — Campaign News
-11. Friends of the Victoria Hall — Chronology
-12. Bedford Park Society
-13. Ealing Transition
-14. East Acton Golf Links Residents' Association
-15. Ealing Council ModernGov
+4. Southall Speaks
+5. Visit Southall — News
+6. Southall Transition
+7. EALING.NEWS — Southall
+8. Asian Standard — Southall
+9. Ealing Matters
+10. Vicious Ealing Council
+11. The View from W5
+12. West Ealing Neighbours
+13. Stop The Towers — Campaign News
+14. Friends of the Victoria Hall — Chronology
+15. Bedford Park Society
+16. Ealing Transition
+17. East Acton Golf Links Residents' Association
+18. Ealing Council ModernGov
 
 ## Partner/bridge shortlist
 
