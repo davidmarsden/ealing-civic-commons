@@ -63,6 +63,7 @@ function extractChronology(html = '') {
   }
 
   const items = [];
+  const occurrencesByDate = new Map();
   for (let i = 0; i < matches.length; i += 1) {
     const current = matches[i];
     const next = matches[i + 1];
@@ -71,9 +72,11 @@ function extractChronology(html = '') {
     const body = text.slice(current.end, next ? next.index : text.length).replace(/\s+/g, ' ').trim();
     if (body.length < 20) continue;
     const dateKey = publishedAt.slice(0, 10);
+    const occurrence = (occurrencesByDate.get(dateKey) || 0) + 1;
+    occurrencesByDate.set(dateKey, occurrence);
     const titleText = summaryTitle(body);
     const summary = body.length > 420 ? `${body.slice(0, 417).trimEnd()}…` : body;
-    const identity = `${SOURCE.id}:${dateKey}:${titleText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80)}`;
+    const identity = `${SOURCE.id}:${dateKey}:${occurrence}`;
 
     items.push({
       id: identity,
