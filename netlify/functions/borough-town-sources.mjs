@@ -16,6 +16,7 @@ const RSS_SOURCES = [
     id: 'ealing-wildlife-group',
     name: 'Ealing Wildlife Group',
     url: 'https://ealingwildlifegroup.com/feed/',
+    fallbackUrl: 'https://ealingwildlifegroup.com/blog/',
     homepage: 'https://ealingwildlifegroup.com/',
     sourceClass: 'Organisation / campaign',
     towns: BOROUGH_TOWNS,
@@ -76,15 +77,6 @@ function strip(html = '') {
 function normaliseDate(value) {
   const timestamp = Date.parse(String(value || ''));
   return Number.isNaN(timestamp) ? null : new Date(timestamp).toISOString();
-}
-
-function stablePart(value = '') {
-  return String(value)
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 96) || 'entry';
 }
 
 function topicGuess(text = '', defaults = []) {
@@ -178,26 +170,106 @@ function rssItems(source, xml = '') {
   return items.sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
 }
 
+function datedHtmlFallbackItems(source, html = '') {
+  const items = new Map();
+  const anchorRx = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let match;
+  while ((match = anchorRx.exec(html))) {
+    let url;
+    try {
+      url = new URL(decodeEntities(match[1]), source.fallbackUrl || source.homepage);
+    } catch {
+      continue;
+    }
+    if (url.hostname.replace(/^www\./, '') !== new URL(source.homepage).hostname.replace(/^www\./, '')) continue;
+    const dateMatch = url.pathname.match(/^\/(20\d{2})\/(\d{2})\/(\d{2})\//);
+    if (!dateMatch) continue;
+    const title = strip(match[2]);
+    if (title.length < 8 || title.length > 220 || /^(?:read more|older posts|newer posts|next|previous)$/i.test(title)) continue;
+    const publishedAt = normaliseDate(`${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}T12:00:00Z`);
+    if (!publishedAt) continue;
+    url.hash = '';
+    const canonicalUrl = url.toString();
+    const nearby = strip(html.slice(anchorRx.lastIndex, Math.min(html.length, anchorRx.lastIndex + 900)));
+    const summary = nearby.length > 420 ? `${nearby.slice(0, 417).trimEnd()}…` : nearby;
+    items.set(canonicalUrl, {
+      id: `${source.id}:${canonicalUrl}`,
+      sourceId: source.id,
+      source: source.name,
+      sourceClass: source.sourceClass,
+      sourceHomepage: source.homepage,
+      mediaType: null,
+      title,
+      url: canonicalUrl,
+      canonicalUrl,
+      summary,
+      publishedAt,
+      towns: source.towns,
+      boroughWide: source.boroughWide === true,
+      topics: topicGuess(`${title} ${summary}`, source.defaultTopics),
+      derived: true,
+      derivedFrom: 'Dated article link on the publisher’s public blog page',
+      aiGenerated: false
+    });
+  }
+  return [...items.values()].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+}
+
 async function fetchRssSource(source) {
   const started = Date.now();
+  const diagnostics = [];
+  let feedMessage = null;
   try {
     const { response, text } = await fetchText(source.url, 'application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.5');
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const all = rssItems(source, text);
-    return {
-      items: all.slice(0, 12),
-      archiveItems: all.slice(0, 80),
-      health: {
-        id: source.id, name: source.name, homepage: source.homepage,
-        ok: all.length > 0, status: all.length ? 'ok' : 'empty',
-        error: all.length ? null : 'Feed responded but no dated entries were parsed', itemCount: all.length,
-        diagnostics: [{ mode: 'rss', outcome: 'http-response', httpStatus: response.status, elapsedMs: Date.now() - started }]
+    diagnostics.push({ mode: 'rss', outcome: 'http-response', httpStatus: response.status, elapsedMs: Date.now() - started });
+    if (response.ok) {
+      const all = rssItems(source, text);
+      if (all.length) {
+        return {
+          items: all.slice(0, 12),
+          archiveItems: all.slice(0, 80),
+          health: { id: source.id, name: source.name, homepage: source.homepage, ok: true, status: 'ok', error: null, itemCount: all.length, diagnostics }
+        };
       }
-    };
+      feedMessage = 'Feed responded but no dated entries were parsed';
+    } else {
+      feedMessage = `HTTP ${response.status}`;
+    }
   } catch (error) {
-    const message = error?.name === 'AbortError' ? 'Timed out' : String(error?.message || error);
-    return { items: [], archiveItems: [], health: { id: source.id, name: source.name, homepage: source.homepage, ok: false, status: 'error', error: message, itemCount: 0, diagnostics: [{ mode: 'rss', outcome: 'transport-error', error: message, elapsedMs: Date.now() - started }] } };
+    feedMessage = error?.name === 'AbortError' ? 'Timed out' : String(error?.message || error);
+    diagnostics.push({ mode: 'rss', outcome: 'transport-error', error: feedMessage, elapsedMs: Date.now() - started });
   }
+
+  if (source.fallbackUrl) {
+    const fallbackStarted = Date.now();
+    try {
+      const { response, text } = await fetchText(source.fallbackUrl);
+      diagnostics.push({ mode: 'dated-blog-fallback', outcome: 'http-response', httpStatus: response.status, elapsedMs: Date.now() - fallbackStarted });
+      if (response.ok) {
+        const all = datedHtmlFallbackItems(source, text);
+        if (all.length) {
+          return {
+            items: all.slice(0, 12),
+            archiveItems: all.slice(0, 80),
+            health: { id: source.id, name: source.name, homepage: source.homepage, ok: true, status: 'ok', error: null, itemCount: all.length, diagnostics }
+          };
+        }
+        feedMessage = `${feedMessage || 'Feed unavailable'}; fallback page contained no reliably dated article links`;
+      } else {
+        feedMessage = `${feedMessage || 'Feed unavailable'}; fallback HTTP ${response.status}`;
+      }
+    } catch (error) {
+      const fallbackMessage = error?.name === 'AbortError' ? 'Fallback timed out' : String(error?.message || error);
+      diagnostics.push({ mode: 'dated-blog-fallback', outcome: 'transport-error', error: fallbackMessage, elapsedMs: Date.now() - fallbackStarted });
+      feedMessage = `${feedMessage || 'Feed unavailable'}; ${fallbackMessage}`;
+    }
+  }
+
+  return {
+    items: [],
+    archiveItems: [],
+    health: { id: source.id, name: source.name, homepage: source.homepage, ok: false, status: 'error', error: feedMessage || 'Source unavailable', itemCount: 0, diagnostics }
+  };
 }
 
 function visionsDate(text = '') {
@@ -206,6 +278,17 @@ function visionsDate(text = '') {
   if (range) return normaliseDate(`${range[1]} ${range[3]} ${range[4]} 12:00 UTC`);
   const full = value.match(/\b(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)?\s*(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(20\d{2})\b/i);
   return full ? normaliseDate(`${full[1]} ${full[2]} ${full[3]} 12:00 UTC`) : null;
+}
+
+function visionsIdentityPart(title = '') {
+  const slug = String(title)
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 96);
+  return slug || 'entry';
 }
 
 function visionsItems(html = '') {
@@ -218,8 +301,7 @@ function visionsItems(html = '') {
     if (!title || body.length < 30) continue;
     const publishedAt = visionsDate(`${title} ${body}`);
     if (!publishedAt) continue;
-    const dateKey = publishedAt.slice(0, 10);
-    const identity = `${VISIONS.id}:${dateKey}:${stablePart(title)}`;
+    const identity = `${VISIONS.id}:${publishedAt.slice(0, 10)}:${visionsIdentityPart(title)}`;
     const summary = body.length > 420 ? `${body.slice(0, 417).trimEnd()}…` : body;
     items.push({
       id: identity,
