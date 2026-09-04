@@ -207,7 +207,7 @@ function render() {
 }
 
 function diagnosticLabel(diagnostic) { const mode = diagnostic.mode === 'browser-compatible' ? 'Retry' : 'Initial request'; const elapsed = Number.isFinite(diagnostic.elapsedMs) ? ` · ${diagnostic.elapsedMs} ms` : ''; return diagnostic.outcome === 'http-response' ? `${mode}: HTTP ${diagnostic.httpStatus}${elapsed}` : `${mode}: ${diagnostic.error || 'transport error'}${elapsed}`; }
-function renderHealth() { const health = state.data?.health ?? []; healthList.innerHTML = health.map(h => { const healthStatus = h.status || (h.ok ? 'ok' : 'error'); const unavailable = healthStatus === 'blocked' || healthStatus === 'upstream'; const label = h.ok ? h.itemCount : unavailable ? 'currently unavailable' : 'error'; const dotClass = h.ok ? 'ok' : unavailable ? 'blocked' : 'bad'; const sourceName = h.homepage ? `<a class="health-source" href="${esc(h.homepage)}" target="_blank" rel="noopener noreferrer">${esc(h.name)}</a>` : esc(h.name); const diagnostics = showDiagnostics && Array.isArray(h.diagnostics) && h.diagnostics.length ? `<div class="health-diagnostics"><strong>Fetch diagnostics</strong>${h.diagnostics.map(d => `<span>${esc(diagnosticLabel(d))}</span>`).join('')}${h.error ? `<span>Result: ${esc(h.error)}</span>` : ''}</div>` : ''; const title = showDiagnostics ? esc(h.error || 'Feed fetched successfully') : ''; return `<div class="health-entry"><div class="health-row"${title ? ` title="${title}"` : ''}><span class="health-dot ${dotClass}"></span><span>${sourceName}</span><span class="health-count">${esc(label)}</span></div>${diagnostics}</div>`; }).join(''); }
+function renderHealth() { const health = state.data?.health ?? []; healthList.innerHTML = health.map(h => { const healthStatus = h.status || (h.ok ? 'ok' : 'error'); const label = h.ok ? h.itemCount : 'currently unavailable'; const dotClass = h.ok ? 'ok' : (healthStatus === 'blocked' || healthStatus === 'upstream') ? 'blocked' : 'bad'; const sourceName = h.homepage ? `<a class="health-source" href="${esc(h.homepage)}" target="_blank" rel="noopener noreferrer">${esc(h.name)}</a>` : esc(h.name); const diagnostics = showDiagnostics && Array.isArray(h.diagnostics) && h.diagnostics.length ? `<div class="health-diagnostics"><strong>Fetch diagnostics</strong>${h.diagnostics.map(d => `<span>${esc(diagnosticLabel(d))}</span>`).join('')}${h.error ? `<span>Result: ${esc(h.error)}</span>` : ''}</div>` : ''; const title = showDiagnostics ? esc(h.error || 'Feed fetched successfully') : ''; return `<div class="health-entry"><div class="health-row"${title ? ` title="${title}"` : ''}><span class="health-dot ${dotClass}"></span><span>${sourceName}</span><span class="health-count">${esc(label)}</span></div>${diagnostics}</div>`; }).join(''); }
 
 async function loadContributions() {
   try {
@@ -229,7 +229,7 @@ async function load() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     state.data = await res.json();
     const good = state.data.health.filter(h => h.ok).length;
-    const unavailable = state.data.health.filter(h => h.status === 'blocked' || h.status === 'upstream').length;
+    const unavailable = state.data.health.filter(h => !h.ok).length;
     status.textContent = `Updated ${new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date(state.data.generatedAt))} · ${good}/${state.data.health.length} feeds responding${unavailable ? ` · ${unavailable} currently unavailable` : ''}`;
     renderHealth(); render();
   } catch {
