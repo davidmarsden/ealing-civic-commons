@@ -6,6 +6,7 @@ const SOURCE = {
   sourceClass: 'Official record'
 };
 const MODERNGOV_RSS = 'https://ealing.moderngov.co.uk/mgRss.aspx?XXR=0';
+const PUBLIC_EPETITIONS = 'https://ealing.moderngov.co.uk/mgEPetitionListDisplay.aspx?bcr=1';
 // Ealing's Cloudflare policy blocks Netlify/GitHub server IPs from reading the
 // otherwise public ModernGov RSS endpoint. rss2json is used only as a transport
 // bridge: item titles, publication dates and ModernGov click-through links
@@ -46,6 +47,26 @@ function safeModernGovUrl(value) {
   } catch {
     return SOURCE.homepage;
   }
+}
+
+function publicModernGovUrl(value, eventType) {
+  const safe = safeModernGovUrl(value);
+  if (eventType !== 'ePetition') return safe;
+
+  try {
+    const url = new URL(safe);
+    // ModernGov's RSS currently publishes ePetition event links as
+    // mgIssueHistoryHome.aspx?...&EVT=54. In a normal browser those links
+    // redirect to ieLogon.aspx (the council customer-account login), rather
+    // than to the public petition. Preserve genuine public ePetitionDisplay
+    // links if ModernGov supplies one; otherwise send readers to the public
+    // current/completed ePetitions listing instead of a login wall.
+    if (/\/mgIssueHistoryHome\.aspx$/i.test(url.pathname) && url.searchParams.get('EVT') === '54') {
+      return PUBLIC_EPETITIONS;
+    }
+  } catch {}
+
+  return safe;
 }
 
 function topicsFor(text) {
@@ -95,7 +116,7 @@ function normaliseBridgeItem(entry) {
 
   const place = placeFor(detail);
   const identity = cleanText(entry?.guid || `${entry?.pubDate || ''}|${eventType}|${detail}`);
-  const url = safeModernGovUrl(entry?.link || SOURCE.homepage);
+  const url = publicModernGovUrl(entry?.link || SOURCE.homepage, eventType);
 
   return {
     id: `${SOURCE.id}:${identity}`,
