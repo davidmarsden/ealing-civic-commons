@@ -4,11 +4,12 @@ import { fetchRichSourceFeed } from './rich-source-feed.mjs';
 import { fetchStopTowersFeed } from './stop-towers-feed.mjs';
 import { fetchVictoriaHallChronology } from './victoria-hall-chronology.mjs';
 import { fetchSouthallExtraSources } from './southall-extra-sources.mjs';
+import { fetchBoroughTownSources } from './borough-town-sources.mjs';
 import { archiveItems } from '../lib/civic-items.mjs';
 
 export default async request => {
   try {
-    const [response, documents, rich, stopTowers, victoriaHall, southallExtras] = await Promise.all([
+    const [response, documents, rich, stopTowers, victoriaHall, southallExtras, boroughTown] = await Promise.all([
       feedHandler(request),
       fetchEalingCouncilDocuments().catch(error => {
         console.error('Document Watch archive enrichment failed', error);
@@ -29,6 +30,10 @@ export default async request => {
       fetchSouthallExtraSources({ deep: true }).catch(error => {
         console.error('Additional Southall source archive enrichment failed', error);
         return { archiveItems: [] };
+      }),
+      fetchBoroughTownSources().catch(error => {
+        console.error('Borough/town source archive enrichment failed', error);
+        return { archiveItems: [] };
       })
     ]);
 
@@ -38,7 +43,15 @@ export default async request => {
     }
 
     const data = await response.json();
-    const combined = [...(data.items || []), ...(documents.items || []), ...(rich.archiveItems || []), ...(stopTowers.archiveItems || []), ...(victoriaHall.archiveItems || []), ...(southallExtras.archiveItems || [])];
+    const combined = [
+      ...(data.items || []),
+      ...(documents.items || []),
+      ...(rich.archiveItems || []),
+      ...(stopTowers.archiveItems || []),
+      ...(victoriaHall.archiveItems || []),
+      ...(southallExtras.archiveItems || []),
+      ...(boroughTown.archiveItems || [])
+    ];
     const seen = new Set();
     const items = combined.filter(item => {
       if (item?.activityType === 'new-context') return false;
@@ -48,7 +61,7 @@ export default async request => {
     });
     const result = await archiveItems(items);
     const campaignCandidates = (stopTowers.archiveItems?.length || 0) + (victoriaHall.archiveItems?.length || 0);
-    console.log(`Civic item archive complete: ${result.stored} stored; ${result.newCandidates} candidates; ${result.failed} failed; manifest ${result.manifestSize}; rich-source candidates ${rich.archiveItems?.length || 0}; campaign candidates ${campaignCandidates}; additional Southall candidates ${southallExtras.archiveItems?.length || 0}`);
+    console.log(`Civic item archive complete: ${result.stored} stored; ${result.newCandidates} candidates; ${result.failed} failed; manifest ${result.manifestSize}; rich-source candidates ${rich.archiveItems?.length || 0}; campaign candidates ${campaignCandidates}; additional Southall candidates ${southallExtras.archiveItems?.length || 0}; borough/town candidates ${boroughTown.archiveItems?.length || 0}`);
   } catch (error) {
     console.error('Civic item archive failed', error);
   }

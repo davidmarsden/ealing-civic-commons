@@ -6,6 +6,7 @@ import { fetchRichSourceFeed } from './rich-source-feed.mjs';
 import { fetchStopTowersFeed } from './stop-towers-feed.mjs';
 import { fetchVictoriaHallChronology } from './victoria-hall-chronology.mjs';
 import { fetchSouthallExtraSources } from './southall-extra-sources.mjs';
+import { fetchBoroughTownSources } from './borough-town-sources.mjs';
 import { fetchMetEalingFeed } from './met-ealing-feed.mjs';
 import { fetchEalingCitizensFeed } from './ealing-citizens-feed.mjs';
 import { fetchFilteredVideoFeed } from './filtered-video-feed.mjs';
@@ -121,7 +122,7 @@ async function reviewedContextActivity() {
 }
 
 export default async request => {
-  const [localResponse, modernGov, gla, community, living, rich, stopTowers, victoriaHall, southallExtras, met, citizens, videos, faith, contextActivity] = await Promise.all([
+  const [localResponse, modernGov, gla, community, living, rich, stopTowers, victoriaHall, southallExtras, boroughTown, met, citizens, videos, faith, contextActivity] = await Promise.all([
     localFeedHandler(request),
     fetchModernGovWhatsNew().catch(error => ({ items: [], health: [{ id: 'modern-gov', name: 'Ealing Council — ModernGov', homepage: 'https://ealing.moderngov.co.uk/', ok: false, status: 'upstream', error: String(error?.message || error), itemCount: 0 }] })),
     fetchGlaFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'gla-filtered', name: 'London City Hall / Assembly', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
@@ -131,6 +132,7 @@ export default async request => {
     fetchStopTowersFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'stop-the-towers-news', name: 'Stop The Towers — Campaign News', homepage: 'https://stopthetowers.info/', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchVictoriaHallChronology().catch(error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'friends-victoria-hall-chronology', name: 'Friends of the Victoria Hall — Chronology', homepage: 'https://savethevictoriahall.weebly.com/', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchSouthallExtraSources().catch(error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'southall-extra-sources', name: 'Additional Southall sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
+    fetchBoroughTownSources().catch(error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'borough-town-sources', name: 'Additional borough town sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchMetEalingFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'met-ealing', name: 'Metropolitan Police — Ealing', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchEalingCitizensFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'ealing-citizens', name: 'Ealing Citizens / Citizens UK', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchFilteredVideoFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'filtered-video', name: 'Filtered civic video sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
@@ -144,9 +146,9 @@ export default async request => {
     items: (localRaw.items || []).filter(item => item.sourceId !== 'modern-gov'),
     health: (localRaw.health || []).filter(entry => entry.id !== 'modern-gov')
   };
-  const combined = dedupe([...(contextActivity || []), ...(modernGov.items || []), ...(local.items || []), ...(rich.items || []), ...(stopTowers.items || []), ...(victoriaHall.items || []), ...(southallExtras.items || []), ...(gla.items || []), ...(community.items || []), ...(living.items || []), ...(met.items || []), ...(citizens.items || []), ...(videos.items || []), ...(faith.items || [])]);
+  const combined = dedupe([...(contextActivity || []), ...(modernGov.items || []), ...(local.items || []), ...(rich.items || []), ...(stopTowers.items || []), ...(victoriaHall.items || []), ...(southallExtras.items || []), ...(boroughTown.items || []), ...(gla.items || []), ...(community.items || []), ...(living.items || []), ...(met.items || []), ...(citizens.items || []), ...(videos.items || []), ...(faith.items || [])]);
   const items = coveragePreservingSlice(combined);
-  const health = alphabetiseHealth([...(modernGov.health || []), ...(local.health || []), ...(rich.health || []), ...(stopTowers.health || []), ...(victoriaHall.health || []), ...(southallExtras.health || []), ...(gla.health || []), ...(community.health || []), ...(living.health || []), ...(met.health || []), ...(citizens.health || []), ...(videos.health || []), ...(faith.health || [])]);
+  const health = alphabetiseHealth([...(modernGov.health || []), ...(local.health || []), ...(rich.health || []), ...(stopTowers.health || []), ...(victoriaHall.health || []), ...(southallExtras.health || []), ...(boroughTown.health || []), ...(gla.health || []), ...(community.health || []), ...(living.health || []), ...(met.health || []), ...(citizens.health || []), ...(videos.health || []), ...(faith.health || [])]);
 
   return new Response(JSON.stringify({
     generatedAt: new Date().toISOString(),
@@ -160,6 +162,7 @@ export default async request => {
       richSourceSites: { included: rich.items?.length || 0, archiveCandidates: rich.archiveItems?.length || 0, method: 'Dated first-party archive/listing surfaces from evidence-rich civic sites are extracted separately from the live-feed cutoff so their older material can become durable civic memory.' },
       campaignSources: { included: (stopTowers.items?.length || 0) + (victoriaHall.items?.length || 0), archiveCandidates: (stopTowers.archiveItems?.length || 0) + (victoriaHall.archiveItems?.length || 0), method: 'First-party campaign news and dated civic chronologies are parsed with source-specific adapters; chronology entries keep stable event identities even when several events share one source page.' },
       southallAdditionalSources: { included: southallExtras.items?.length || 0, archiveCandidates: southallExtras.archiveItems?.length || 0, method: 'Open first-party RSS feeds and public-page fallbacks are normalised as distinct publishers. Publisher claims remain attributable to their source and do not become Commons assertions.' },
+      boroughTownSources: { included: boroughTown.items?.length || 0, archiveCandidates: boroughTown.archiveItems?.length || 0, method: 'Greenford and wildlife publishers use first-party RSS; Around Ealing uses its publisher-assigned town categories as authoritative place metadata; Visions for Northolt contributes reliably dated official project-page entries while older material is retained for civic memory.' },
       cityHallEalingFilter: { included: gla.items?.length || 0, method: 'Exact locality, constituency and locally significant institution terms in City Hall RSS titles/descriptions.' },
       communityPageWatch: { included: community.items?.length || 0, method: 'Source-specific structured public-page extraction. A watched page returns no items rather than guessing when its expected dated-card structure is not found.' },
       livingPublicationWatch: { included: living.items?.length || 0, method: 'Content-hashed snapshots of configured living publication sections. No publication date is invented when the publisher does not expose one.' },

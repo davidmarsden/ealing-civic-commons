@@ -27,13 +27,13 @@ const sources = [
   {
     id: 'ealing-community-independents-current',
     name: 'Ealing Community Independents — Current publication',
-    url: 'https://ealingindependents.org/',
+    url: 'https://ealingindependents.org/news/',
     homepage: 'https://ealingindependents.org/',
     sourceClass: 'Political organisation / campaign',
     defaultTopics: ['Council & democracy', 'Community'],
-    startMarker: 'EALING COMMUNITY INDEPENDENTS',
+    startMarker: 'Your voice, your choice',
     endMarker: 'Contact',
-    titlePatterns: [/Your Voice/i, /We deserve better/i, /Why You Should Vote Ealing Community Independents/i]
+    titlePatterns: [/Extortionate Uniform Prices at Ealing Public Schools/i, /Your voice, your choice/i, /People-led politics/i]
   }
 ];
 
@@ -136,25 +136,46 @@ function itemFromSection(source, section) {
   };
 }
 
+async function requestSource(source, browserCompatible = false) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), browserCompatible ? 12000 : 7500);
+  try {
+    return await fetch(source.url, {
+      signal: controller.signal,
+      redirect: 'follow',
+      headers: {
+        accept: browserCompatible
+          ? 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+          : 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5',
+        'accept-language': 'en-GB,en;q=0.9',
+        'user-agent': browserCompatible
+          ? 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36'
+          : 'Southall-Ealing-Civic-Commons/0.1 (+public-interest prototype)'
+      }
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function fetchSource(source) {
   const started = Date.now();
+  const diagnostics = [];
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 7500);
     let response;
     try {
-      response = await fetch(source.url, {
-        signal: controller.signal,
-        redirect: 'follow',
-        headers: {
-          accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5',
-          'accept-language': 'en-GB,en;q=0.9',
-          'user-agent': 'Southall-Ealing-Civic-Commons/0.1 (+public-interest prototype)'
-        }
-      });
-    } finally {
-      clearTimeout(timeout);
+      response = await requestSource(source, false);
+      diagnostics.push({ mode: 'living-page-watch', outcome: 'http-response', httpStatus: response.status, elapsedMs: Date.now() - started });
+    } catch (error) {
+      diagnostics.push({ mode: 'living-page-watch', outcome: 'transport-error', error: String(error?.message || error), elapsedMs: Date.now() - started });
     }
+
+    if (!response?.ok) {
+      const retryStarted = Date.now();
+      response = await requestSource(source, true);
+      diagnostics.push({ mode: 'browser-compatible', outcome: 'http-response', httpStatus: response.status, elapsedMs: Date.now() - retryStarted });
+    }
+
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const text = strip(await response.text());
     const section = extractSection(text, source);
@@ -169,7 +190,7 @@ async function fetchSource(source) {
         status: items.length ? 'ok' : 'empty',
         error: items.length ? null : 'Page fetched but the configured living-publication section was not found',
         itemCount: items.length,
-        diagnostics: [{ mode: 'living-page-watch', outcome: 'http-response', httpStatus: response.status, elapsedMs: Date.now() - started }]
+        diagnostics
       }
     };
   } catch (error) {
@@ -183,7 +204,7 @@ async function fetchSource(source) {
         status: 'error',
         error: error?.name === 'AbortError' ? 'Timed out' : String(error?.message || error),
         itemCount: 0,
-        diagnostics: [{ mode: 'living-page-watch', outcome: 'transport-error', error: String(error?.message || error), elapsedMs: Date.now() - started }]
+        diagnostics
       }
     };
   }

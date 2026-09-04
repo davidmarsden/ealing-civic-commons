@@ -236,15 +236,23 @@ function extractVisitSouthallItems(html = '') {
     const title = strip(match[2]);
     if (!title || title.length < 8 || /^image$/i.test(title)) continue;
 
-    const nearbyStart = Math.max(0, match.index - 160);
-    const nearbyEnd = Math.min(html.length, anchorRx.lastIndex + 650);
-    const nearby = strip(html.slice(nearbyStart, nearbyEnd));
-    const publishedAt = visitSouthallDate(nearby);
+    const dateWindow = strip(html.slice(Math.max(0, match.index - 180), Math.min(html.length, anchorRx.lastIndex + 180)));
+    const publishedAt = visitSouthallDate(dateWindow);
     if (!publishedAt) continue;
 
     const id = `${VISIT_SOUTHALL.id}:${url.searchParams.get('recordID')}`;
-    let summary = nearby.replace(title, '').replace(/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)?\s*\d{1,2}\s+[A-Za-z]+\s+20\d{2}\s*/i, '').trim();
-    summary = summary.replace(/\bAdvertisement\b[\s\S]*$/i, '').trim();
+    const afterAnchor = html.slice(anchorRx.lastIndex);
+    const nextBoundaryCandidates = [
+      afterAnchor.search(/<hr\b/i),
+      afterAnchor.search(/<a\b[^>]*href=["'][^"']*NewsDetails\.php\?[^"']*recordID=\d+/i),
+      afterAnchor.search(/\bAdvertisement\b/i)
+    ].filter(index => index >= 0);
+    const boundary = nextBoundaryCandidates.length ? Math.min(...nextBoundaryCandidates) : Math.min(afterAnchor.length, 900);
+    let summary = strip(afterAnchor.slice(0, Math.min(boundary, 900)))
+      .replace(/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)?\s*\d{1,2}\s+[A-Za-z]+\s+20\d{2}\s*/i, '')
+      .replace(/^Image\b\s*/i, '')
+      .trim();
+    if (/^(?:Recent news|For the archived local news|If you have a local news story)/i.test(summary)) summary = '';
     if (summary.length > 420) summary = `${summary.slice(0, 417).trimEnd()}…`;
     if (summary.length < 25) summary = '';
 
