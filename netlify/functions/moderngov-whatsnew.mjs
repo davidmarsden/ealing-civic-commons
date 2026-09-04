@@ -10,7 +10,10 @@ const MODERNGOV_RSS = 'https://ealing.moderngov.co.uk/mgRss.aspx?XXR=0';
 // otherwise public ModernGov RSS endpoint. rss2json is used only as a transport
 // bridge: item titles, publication dates and ModernGov click-through links
 // remain those published by Ealing ModernGov.
-const RSS_BRIDGE = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(MODERNGOV_RSS)}&count=50`;
+// Keep this request to the bridge's basic/free-compatible form. The live probe
+// succeeded without an explicit count parameter; requesting larger counts can
+// return HTTP 422 on the public endpoint.
+const RSS_BRIDGE = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(MODERNGOV_RSS)}`;
 const SUPPORTED_EVENT = /^(Agenda published|Minutes published|Decision sheet published|Issue published|Decision published|ePetition|Publication of plan)\s*:\s*(.+)$/i;
 
 function cleanText(value = '') {
