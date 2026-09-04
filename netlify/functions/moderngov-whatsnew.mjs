@@ -6,6 +6,10 @@ const SOURCE = {
   sourceClass: 'Official record'
 };
 const MODERNGOV_RSS = 'https://ealing.moderngov.co.uk/mgRss.aspx?XXR=0';
+// Ealing's Cloudflare policy blocks Netlify/GitHub server IPs from reading the
+// otherwise public ModernGov RSS endpoint. rss2json is used only as a transport
+// bridge: item titles, publication dates and canonical ModernGov click-through
+// links remain those published by Ealing ModernGov.
 const RSS_BRIDGE = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(MODERNGOV_RSS)}&count=50`;
 const SUPPORTED_EVENT = /^(Agenda published|Minutes published|Decision sheet published|Issue published|Decision published|ePetition|Publication of plan)\s*:\s*(.+)$/i;
 
