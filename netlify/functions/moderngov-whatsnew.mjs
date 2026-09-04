@@ -139,7 +139,7 @@ function normaliseBridgeItem(entry) {
     boroughWide: place.boroughWide,
     topics: topicsFor(detail),
     derived: true,
-    derivedFrom: 'Ealing ModernGov RSS via public RSS reader bridge',
+    derivedFrom: 'Imported from Ealing Council’s ModernGov feed',
     aiGenerated: false
   };
 }
