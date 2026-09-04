@@ -51,9 +51,6 @@ function coveragePreservingSlice(items = [], limit = LIVE_LIMIT) {
   const cutoff = Date.now() - COVERAGE_WINDOW_MS;
   const reservedBySource = new Map();
 
-  // Preserve the newest recent item from each non-official source before the
-  // global cap is applied. This prevents high-volume official/document feeds
-  // from making quieter journalism and community sources disappear entirely.
   for (const item of sorted) {
     if (!item?.sourceId || item.sourceClass === 'Official record') continue;
     if (publishedTime(item) < cutoff) continue;
@@ -132,9 +129,6 @@ export default async request => {
   ]);
 
   const localRaw = localResponse?.ok ? await localResponse.json() : { items: [], health: [], enrichment: {} };
-  // The original feed.mjs source remains useful as a direct-access diagnostic,
-  // but its 403 items/health row are replaced in the public combined feed by
-  // the bridge above so readers see a single ModernGov source.
   const local = {
     ...localRaw,
     items: (localRaw.items || []).filter(item => item.sourceId !== 'modern-gov'),
