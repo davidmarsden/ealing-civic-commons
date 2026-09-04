@@ -17,7 +17,7 @@ async function findLiveItem(request, key) {
     const data = await response.json();
     return (data.items || []).find(item => stableItemKey(item.id) === key) || null;
   } catch (error) {
-    console.error(`Live civic item fallback failed for ${key}`, error);
+    console.error(`Live civic item lookup failed for ${key}`, error);
     return null;
   }
 }
@@ -28,15 +28,24 @@ export default async request => {
   if (!validItemKey(key)) return json({ error: 'Invalid civic item key.' }, 400);
 
   try {
+    // Prefer the current normalised version while an item remains in the live
+    // feed. This lets parser corrections and upstream metadata improvements be
+    // reflected immediately without changing the stable item key or detaching
+    // contributed context. Once an item falls out of the live window, its
+    // persistent archived snapshot remains the fallback civic-memory record.
+    const liveItem = await findLiveItem(request, key);
+    if (liveItem) {
+      const archived = await getArchivedItem(key).catch(() => null);
+      return json({
+        item: liveItem,
+        archivedAt: archived?.archivedAt || null,
+        key,
+        liveCurrent: true
+      });
+    }
+
     const record = await getArchivedItem(key);
     if (record) return json({ item: record.item, archivedAt: record.archivedAt, key: record.key });
-
-    // Fresh live items can exist before the next scheduled archive run. Deploy
-    // previews never run scheduled functions, so resolving from the current
-    // combined feed also keeps preview permalinks usable without pretending the
-    // item has already entered persistent civic memory.
-    const liveItem = await findLiveItem(request, key);
-    if (liveItem) return json({ item: liveItem, archivedAt: null, key, liveFallback: true });
 
     return json({ error: 'Civic item not found.' }, 404);
   } catch (error) {
