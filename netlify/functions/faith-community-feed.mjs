@@ -20,7 +20,7 @@ const sources = [
     sourceClass: 'Community / faith',
     towns: ['Southall'],
     mode: 'dated',
-    include: /community|interfaith|council|housing|refugee|asylum|poverty|food|school|justice|citizens|environment|campaign|public meeting/i,
+    include: /community|interfaith|council|housing|refugee|asylum|poverty|food|school|justice|citizens|environment|campaign|public meeting|sick|housebound|nursing homes|water/i,
     topics: ['Community']
   },
   {
@@ -63,13 +63,28 @@ const entities = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', 
 function decode(value='') { return String(value).replace(/&#x([0-9a-f]+);?/gi,(_,h)=>String.fromCodePoint(parseInt(h,16))).replace(/&#([0-9]+);?/g,(_,d)=>String.fromCodePoint(parseInt(d,10))).replace(/&([a-z][a-z0-9]+);/gi,(m,n)=>entities[n.toLowerCase()]??m); }
 function strip(value='') { return decode(String(value).replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ')).replace(/\s+/g,' ').trim(); }
 
-async function fetchHtml(url) {
-  const controller = new AbortController(); const timeout = setTimeout(()=>controller.abort(),8000);
+async function requestHtml(url, browserCompatible=false) {
+  const controller = new AbortController();
+  const timeout = setTimeout(()=>controller.abort(), browserCompatible ? 18000 : 9000);
   try {
-    const response = await fetch(url,{redirect:'follow',signal:controller.signal,headers:{accept:'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5','accept-language':'en-GB,en;q=0.9','user-agent':'Southall-Ealing-Civic-Commons/0.1 (+public-interest prototype)'}});
-    if(!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.text();
+    return await fetch(url,{
+      redirect:'follow',
+      signal:controller.signal,
+      headers:{
+        accept:browserCompatible ? 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' : 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5',
+        'accept-language':'en-GB,en;q=0.9',
+        'user-agent':browserCompatible ? 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36' : 'Southall-Ealing-Civic-Commons/0.1 (+public-interest prototype)'
+      }
+    });
   } finally { clearTimeout(timeout); }
+}
+
+async function fetchHtml(url) {
+  let response;
+  try { response = await requestHtml(url,false); } catch {}
+  if (!response?.ok) response = await requestHtml(url,true);
+  if(!response.ok) throw new Error(`HTTP ${response.status}`);
+  return await response.text();
 }
 
 function dateIso(raw) {
