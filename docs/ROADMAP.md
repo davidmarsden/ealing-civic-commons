@@ -30,7 +30,9 @@ Explore and the entity APIs should expose missing-description/source audits so i
 
 **Status: complete**
 
-The original read-only Civic Commons foundation is live: server-side RSS/Atom ingestion and normalisation; chronological provenance-rich timelines; video/YouTube ingestion; filtered London-wide sources; monitored structured/public pages; town/topic/source-class filtering; visible source health; source submissions; Ealing Council news feeds; Document Watch; selected City Hall/London Assembly material; filtered Met material; Open Council Network public Ealing summaries; ModernGov publication events; and a growing range of community, education, faith, campaign and local political sources.
+The original read-only Civic Commons foundation is live: server-side RSS/Atom ingestion and normalisation; chronological provenance-rich timelines; video/YouTube ingestion; filtered London-wide sources; monitored structured/public pages; town/topic/source-class filtering; visible source health; source submissions; Ealing Council news feeds; Document Watch; selected City Hall/London Assembly material; filtered Met material; Open Council Network public Ealing summaries; ModernGov publication events; and a growing range of community, education, faith, campaign, commentary and local political sources.
+
+Recent source expansion has added Stop The Towers, Friends of the Victoria Hall, Southall Speaks, Visit Southall and Vicious Ealing Council. That work also confirms that the Commons now has three established ingestion patterns rather than one: native feeds where available, conservative public-page adapters for structured first-party publishing, and carefully bounded fallbacks/bridges where upstream access is awkward.
 
 Further source discovery, registry migration, parser resilience and upstream interoperability are continuing operational/infrastructure work rather than unfinished Phase 1 scope. They now sit primarily in Phase 8 and normal source operations:
 
@@ -216,9 +218,10 @@ Already automated:
 - browsable persistent Civic Archive;
 - research exports and public graph rebuilds after curated changes;
 - entity descriptions exported from curated research notes;
-- source-health collection with public-friendly status language;
+- source-health collection with public-friendly status language and an alphabetised public source list;
 - detailed transport/fetch diagnostics hidden from ordinary readers but available through `?debug=1` for troubleshooting;
-- bridge/adaptor patterns for external sources that block or distort normal server-side access.
+- bridge/adaptor patterns for external sources that block or distort normal server-side access;
+- source-specific HTML parsing and bounded fallback strategies for useful first-party publishers without clean RSS.
 
 Next:
 
@@ -261,7 +264,7 @@ The Commons should preserve its own public URLs, source provenance, stable item/
 5. **Finish the public entity completeness audit** and automate checks for newly incomplete records.
 6. **Harden and extend official-source ingestion** — especially direct ModernGov destinations, meeting/document relationships, parser tests, caching and preservation of high-value primary records.
 7. **Finish town-aware sharing** by restoring metadata rendering for item/entity URLs so the existing town share-card assets are actually emitted to social crawlers.
-8. **Continue deliberate source expansion and explore an OCN partnership/API arrangement in parallel.** The existing OCN and ModernGov bridges are sufficient for current coverage; neither is a blocker.
+8. **Continue deliberate source expansion by geographic and thematic gap, while hardening current adapters.** Positive Greenford is a promising active Greenford source to bring into the live set; Northolt and especially Perivale still need stronger first-party civic publishing coverage. Explore an OCN partnership/API arrangement in parallel, but neither OCN nor ModernGov is a blocker.
 
 ## Non-negotiable design boundaries
 
