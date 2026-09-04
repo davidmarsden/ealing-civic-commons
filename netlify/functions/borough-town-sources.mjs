@@ -78,6 +78,15 @@ function normaliseDate(value) {
   return Number.isNaN(timestamp) ? null : new Date(timestamp).toISOString();
 }
 
+function stablePart(value = '') {
+  return String(value)
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 96) || 'entry';
+}
+
 function topicGuess(text = '', defaults = []) {
   const value = String(text).toLowerCase();
   const rules = [
@@ -193,27 +202,27 @@ async function fetchRssSource(source) {
 
 function visionsDate(text = '') {
   const value = String(text);
-  const full = value.match(/\b(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)?\s*(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(20\d{2})\b/i);
-  if (full) return normaliseDate(`${full[1]} ${full[2]} ${full[3]} 12:00 UTC`);
   const range = value.match(/\b(\d{1,2})\s*[-–]\s*(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(20\d{2})\b/i);
-  return range ? normaliseDate(`${range[1]} ${range[3]} ${range[4]} 12:00 UTC`) : null;
+  if (range) return normaliseDate(`${range[1]} ${range[3]} ${range[4]} 12:00 UTC`);
+  const full = value.match(/\b(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)?\s*(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(20\d{2})\b/i);
+  return full ? normaliseDate(`${full[1]} ${full[2]} ${full[3]} 12:00 UTC`) : null;
 }
 
 function visionsItems(html = '') {
   const items = [];
   const rx = /<h3\b[^>]*>([\s\S]*?)<\/h3>([\s\S]*?)(?=<h3\b|<h2\b|$)/gi;
   let match;
-  let index = 0;
   while ((match = rx.exec(html))) {
     const title = strip(match[1]);
     const body = strip(match[2]);
     if (!title || body.length < 30) continue;
     const publishedAt = visionsDate(`${title} ${body}`);
     if (!publishedAt) continue;
-    index += 1;
+    const dateKey = publishedAt.slice(0, 10);
+    const identity = `${VISIONS.id}:${dateKey}:${stablePart(title)}`;
     const summary = body.length > 420 ? `${body.slice(0, 417).trimEnd()}…` : body;
     items.push({
-      id: `${VISIONS.id}:${publishedAt.slice(0, 10)}:${index}`,
+      id: identity,
       sourceId: VISIONS.id,
       source: VISIONS.name,
       sourceClass: VISIONS.sourceClass,
@@ -222,7 +231,7 @@ function visionsItems(html = '') {
       title,
       url: VISIONS.url,
       canonicalUrl: null,
-      dedupeKey: `${VISIONS.id}:${publishedAt.slice(0, 10)}:${title}`,
+      dedupeKey: identity,
       summary,
       publishedAt,
       towns: VISIONS.towns,
