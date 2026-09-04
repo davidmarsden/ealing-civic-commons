@@ -77,6 +77,10 @@ function coveragePreservingSlice(items = [], limit = LIVE_LIMIT) {
     .slice(0, limit);
 }
 
+function alphabetiseHealth(entries = []) {
+  return [...entries].sort((a, b) => String(a?.name || '').localeCompare(String(b?.name || ''), 'en-GB', { sensitivity: 'base' }));
+}
+
 async function reviewedContextActivity() {
   try {
     const published = await listPublishedContributions({ limit: 24 });
@@ -142,11 +146,12 @@ export default async request => {
   };
   const combined = dedupe([...(contextActivity || []), ...(modernGov.items || []), ...(local.items || []), ...(rich.items || []), ...(stopTowers.items || []), ...(victoriaHall.items || []), ...(southallExtras.items || []), ...(gla.items || []), ...(community.items || []), ...(living.items || []), ...(met.items || []), ...(citizens.items || []), ...(videos.items || []), ...(faith.items || [])]);
   const items = coveragePreservingSlice(combined);
+  const health = alphabetiseHealth([...(modernGov.health || []), ...(local.health || []), ...(rich.health || []), ...(stopTowers.health || []), ...(victoriaHall.health || []), ...(southallExtras.health || []), ...(gla.health || []), ...(community.health || []), ...(living.health || []), ...(met.health || []), ...(citizens.health || []), ...(videos.health || []), ...(faith.health || [])]);
 
   return new Response(JSON.stringify({
     generatedAt: new Date().toISOString(),
     items,
-    health: [...(modernGov.health || []), ...(local.health || []), ...(rich.health || []), ...(stopTowers.health || []), ...(victoriaHall.health || []), ...(southallExtras.health || []), ...(gla.health || []), ...(community.health || []), ...(living.health || []), ...(met.health || []), ...(citizens.health || []), ...(videos.health || []), ...(faith.health || [])],
+    health,
     enrichment: {
       ...(local.enrichment || {}),
       modernGovPublishing: { included: modernGov.items?.length || 0, method: 'Official Ealing ModernGov RSS publication events transported through a public RSS reader because direct server-to-server access is blocked upstream; original ModernGov publisher links are retained and event GUIDs/dedupe keys preserve separate agenda, minutes and decision publications even when they share a destination.' },
@@ -154,7 +159,7 @@ export default async request => {
       liveSourceCoverage: { method: 'Chronological live feed capped at 220 items while reserving the newest item from each non-official source published in the last 90 days, preventing high-volume official feeds from crowding quieter civic sources out entirely.' },
       richSourceSites: { included: rich.items?.length || 0, archiveCandidates: rich.archiveItems?.length || 0, method: 'Dated first-party archive/listing surfaces from evidence-rich civic sites are extracted separately from the live-feed cutoff so their older material can become durable civic memory.' },
       campaignSources: { included: (stopTowers.items?.length || 0) + (victoriaHall.items?.length || 0), archiveCandidates: (stopTowers.archiveItems?.length || 0) + (victoriaHall.archiveItems?.length || 0), method: 'First-party campaign news and dated civic chronologies are parsed with source-specific adapters; chronology entries keep stable event identities even when several events share one source page.' },
-      southallAdditionalSources: { included: southallExtras.items?.length || 0, archiveCandidates: southallExtras.archiveItems?.length || 0, method: 'Open first-party RSS feeds and Visit Southall’s dated news listing are normalised as distinct publishers. Publisher claims remain attributable to their source and do not become Commons assertions.' },
+      southallAdditionalSources: { included: southallExtras.items?.length || 0, archiveCandidates: southallExtras.archiveItems?.length || 0, method: 'Open first-party RSS feeds and public-page fallbacks are normalised as distinct publishers. Publisher claims remain attributable to their source and do not become Commons assertions.' },
       cityHallEalingFilter: { included: gla.items?.length || 0, method: 'Exact locality, constituency and locally significant institution terms in City Hall RSS titles/descriptions.' },
       communityPageWatch: { included: community.items?.length || 0, method: 'Source-specific structured public-page extraction. A watched page returns no items rather than guessing when its expected dated-card structure is not found.' },
       livingPublicationWatch: { included: living.items?.length || 0, method: 'Content-hashed snapshots of configured living publication sections. No publication date is invented when the publisher does not expose one.' },
