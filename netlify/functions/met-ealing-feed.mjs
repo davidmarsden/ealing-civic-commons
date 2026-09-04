@@ -62,12 +62,12 @@ async function fetchHtml(url) {
   const diagnostics = [];
   const started = Date.now();
   let result = await requestHtml(url, false);
-  diagnostics.push({ mode: 'initial', outcome: 'http-response', httpStatus: result.response.status, elapsedMs: Date.now() - started });
+  diagnostics.push({ mode: 'initial', outcome: 'http-response', httpStatus: result.response.status, elapsedMs: Date.now() - started, url });
 
   if ([401, 403, 406, 429].includes(result.response.status)) {
     const retryStarted = Date.now();
     result = await requestHtml(url, true);
-    diagnostics.push({ mode: 'browser-compatible', outcome: 'http-response', httpStatus: result.response.status, elapsedMs: Date.now() - retryStarted });
+    diagnostics.push({ mode: 'browser-compatible', outcome: 'http-response', httpStatus: result.response.status, elapsedMs: Date.now() - retryStarted, url });
   }
 
   if (!result.response.ok) {
@@ -158,34 +158,46 @@ export async function fetchMetEalingFeed() {
     fetchHtml(NEWS_URL),
     ...wards.map(([slug]) => fetchHtml(priorityUrl(slug)))
   ]);
-  const health = [];
   const items = [];
+  const diagnostics = [];
+  const errors = [];
+  let successfulEndpoints = 0;
+
   if (results[0].status === 'fulfilled') {
-    const news = parseNews(results[0].value.html); items.push(...news);
-    health.push({ id: 'met-ealing-news', name: 'Metropolitan Police — Ealing-relevant news', homepage: NEWS_URL, ok: true, status: news.length ? 'ok' : 'empty', itemCount: news.length, error: news.length ? null : 'Newsroom fetched but no current items matched the Ealing-area filter', diagnostics: results[0].value.diagnostics });
-  } else health.push({ id: 'met-ealing-news', name: 'Metropolitan Police — Ealing-relevant news', homepage: NEWS_URL, ok: false, status: 'error', itemCount: 0, error: String(results[0].reason?.message || results[0].reason), diagnostics: results[0].reason?.diagnostics || [] });
+    successfulEndpoints += 1;
+    diagnostics.push(...(results[0].value.diagnostics || []));
+    items.push(...parseNews(results[0].value.html));
+  } else {
+    diagnostics.push(...(results[0].reason?.diagnostics || []));
+    errors.push(`newsroom: ${String(results[0].reason?.message || results[0].reason)}`);
+  }
 
   wards.forEach(([slug, name], index) => {
     const result = results[index + 1];
     const url = priorityUrl(slug);
     if (result.status === 'fulfilled') {
-      const item = prioritySnapshot(result.value.html, slug, name, url); if (item) items.push(item);
-      health.push({ id: `met-ealing-${slug}`, name: `Metropolitan Police — ${name}`, homepage: url, ok: true, status: item ? 'ok' : 'empty', itemCount: item ? 1 : 0, error: item ? null : 'Page fetched but no priorities section matched', diagnostics: result.value.diagnostics });
+      successfulEndpoints += 1;
+      diagnostics.push(...(result.value.diagnostics || []));
+      const item = prioritySnapshot(result.value.html, slug, name, url);
+      if (item) items.push(item);
     } else {
-      const httpStatus = Number(result.reason?.httpStatus || 0);
-      const upstreamBlocked = [401,403,406,429].includes(httpStatus);
-      health.push({
-        id: `met-ealing-${slug}`,
-        name: `Metropolitan Police — ${name}`,
-        homepage: url,
-        ok: false,
-        status: upstreamBlocked ? 'blocked' : 'error',
-        itemCount: 0,
-        error: upstreamBlocked ? `Upstream blocked automated fetch (HTTP ${httpStatus})` : String(result.reason?.message || result.reason),
-        diagnostics: result.reason?.diagnostics || []
-      });
+      diagnostics.push(...(result.reason?.diagnostics || []));
+      errors.push(`${name}: ${String(result.reason?.message || result.reason)}`);
     }
   });
+
+  const ok = successfulEndpoints > 0;
+  const status = ok ? 'ok' : 'upstream';
+  const health = [{
+    id: 'met-ealing',
+    name: 'Metropolitan Police — Ealing',
+    homepage: NEWS_URL,
+    ok,
+    status,
+    itemCount: items.length,
+    error: ok ? null : (errors.join('; ') || 'Metropolitan Police public endpoints unavailable'),
+    diagnostics
+  }];
 
   return { generatedAt: new Date().toISOString(), items, health, elapsedMs: Date.now() - started };
 }
