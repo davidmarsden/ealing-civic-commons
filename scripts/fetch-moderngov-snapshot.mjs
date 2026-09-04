@@ -13,6 +13,19 @@ const browserHeaders = {
   'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'
 };
 
+function decode(value = '') {
+  return String(value)
+    .replace(/<!\[CDATA\[|\]\]>/g, '')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 async function parseResponse(response, mode, sourceUrl, bridgeUrl = null) {
   if (!response.ok) return { result: null, diagnostic: `${mode}: HTTP ${response.status}` };
   const body = await response.text();
@@ -51,21 +64,56 @@ async function tryJina() {
     redirect: 'follow',
     headers: { accept: 'text/plain,text/markdown;q=0.9,*/*;q=0.5', 'user-agent': 'Ealing-Civic-Commons/1.0' }
   });
-  if (!response.ok) return { result: null, diagnostic: `jina-reader: HTTP ${response.status}` };
-  const body = await response.text();
-  // Jina often returns the original HTML structure as readable text; convert
-  // Markdown bullet leaders to plain spacing so the same event regex can run.
-  const items = parseItems(body.replace(/^\s*[*-]\s+/gm, ' '), directUrl);
-  if (!items.length) {
-    const excerpt = body.slice(0, 500).replace(/\s+/g, ' ').trim();
-    return { result: null, diagnostic: `jina-reader: no supported updates (${excerpt})` };
+  return parseResponse(response, 'jina-reader', directUrl, bridgeUrl);
+}
+
+async function tryBingIndex() {
+  const phrases = [
+    'Agenda published',
+    'Minutes published',
+    'Decision sheet published',
+    'Issue published',
+    'Decision published',
+    'ePetition',
+    'Publication of plan'
+  ];
+  const fragments = [];
+  const bridgeUrls = [];
+
+  for (const phrase of phrases) {
+    const q = `site:ealing.moderngov.co.uk/mgWhatsNew.aspx "${phrase}" 2026`;
+    const url = `https://www.bing.com/search?format=rss&q=${encodeURIComponent(q)}`;
+    bridgeUrls.push(url);
+    const response = await fetch(url, {
+      redirect: 'follow',
+      headers: { accept: 'application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.5', 'user-agent': browserHeaders['user-agent'] }
+    });
+    if (!response.ok) continue;
+    const xml = await response.text();
+    for (const item of xml.match(/<item\b[\s\S]*?<\/item>/gi) || []) {
+      const title = decode(item.match(/<title>([\s\S]*?)<\/title>/i)?.[1] || '');
+      const description = decode(item.match(/<description>([\s\S]*?)<\/description>/i)?.[1] || '');
+      const link = decode(item.match(/<link>([\s\S]*?)<\/link>/i)?.[1] || '');
+      if (!/ealing\.moderngov\.co\.uk\/mgWhatsNew\.aspx/i.test(link)) continue;
+      fragments.push(`${title} ${description}`);
+    }
   }
-  return { result: { items, sourceUrl: directUrl, bridgeUrl, mode: 'jina-reader' }, diagnostic: `jina-reader: ${items.length} updates` };
+
+  const indexedText = fragments.join('\n');
+  const items = parseItems(indexedText, directUrl);
+  if (!items.length) {
+    const excerpt = indexedText.slice(0, 500).replace(/\s+/g, ' ').trim();
+    return { result: null, diagnostic: `bing-index: no supported updates (${excerpt || 'no matching indexed snippets'})` };
+  }
+  return {
+    result: { items, sourceUrl: directUrl, bridgeUrl: bridgeUrls[0], mode: 'bing-index' },
+    diagnostic: `bing-index: ${items.length} updates from ${fragments.length} indexed snippets`
+  };
 }
 
 const diagnostics = [];
 let result = null;
-for (const attempt of [tryDirect, tryTranslate, tryJina]) {
+for (const attempt of [tryDirect, tryTranslate, tryJina, tryBingIndex]) {
   try {
     const outcome = await attempt();
     diagnostics.push(outcome.diagnostic);
