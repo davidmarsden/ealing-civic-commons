@@ -7,6 +7,7 @@ import { fetchMetEalingFeed } from './met-ealing-feed.mjs';
 import { fetchEalingCitizensFeed } from './ealing-citizens-feed.mjs';
 import { fetchFilteredVideoFeed } from './filtered-video-feed.mjs';
 import { fetchFaithCommunityFeed } from './faith-community-feed.mjs';
+import { fetchModernGovWhatsNew } from './moderngov-whatsnew.mjs';
 import { listPublishedContributions } from '../lib/public-contributions.mjs';
 import { getArchivedItem, stableItemKey } from '../lib/civic-items.mjs';
 
@@ -27,7 +28,7 @@ function canonical(value) {
 }
 
 function itemKey(item) {
-  return canonical(item?.canonicalUrl) || item?.id || null;
+  return canonical(item?.canonicalUrl) || item?.dedupeKey || item?.id || null;
 }
 
 function publishedTime(item) {
@@ -50,9 +51,6 @@ function coveragePreservingSlice(items = [], limit = LIVE_LIMIT) {
   const cutoff = Date.now() - COVERAGE_WINDOW_MS;
   const reservedBySource = new Map();
 
-  // Preserve the newest recent item from each non-official source before the
-  // global cap is applied. This prevents high-volume official/document feeds
-  // from making quieter journalism and community sources disappear entirely.
   for (const item of sorted) {
     if (!item?.sourceId || item.sourceClass === 'Official record') continue;
     if (publishedTime(item) < cutoff) continue;
@@ -116,8 +114,9 @@ async function reviewedContextActivity() {
 }
 
 export default async request => {
-  const [localResponse, gla, community, living, rich, met, citizens, videos, faith, contextActivity] = await Promise.all([
+  const [localResponse, modernGov, gla, community, living, rich, met, citizens, videos, faith, contextActivity] = await Promise.all([
     localFeedHandler(request),
+    fetchModernGovWhatsNew().catch(error => ({ items: [], health: [{ id: 'modern-gov', name: 'Ealing Council — ModernGov', homepage: 'https://ealing.moderngov.co.uk/', ok: false, status: 'upstream', error: String(error?.message || error), itemCount: 0 }] })),
     fetchGlaFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'gla-filtered', name: 'London City Hall / Assembly', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchCommunityPageFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'community-page-watch', name: 'Community page watch', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchLivingPageFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'living-page-watch', name: 'Living publication pages', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
@@ -129,16 +128,22 @@ export default async request => {
     reviewedContextActivity()
   ]);
 
-  const local = localResponse?.ok ? await localResponse.json() : { items: [], health: [], enrichment: {} };
-  const combined = dedupe([...(contextActivity || []), ...(local.items || []), ...(rich.items || []), ...(gla.items || []), ...(community.items || []), ...(living.items || []), ...(met.items || []), ...(citizens.items || []), ...(videos.items || []), ...(faith.items || [])]);
+  const localRaw = localResponse?.ok ? await localResponse.json() : { items: [], health: [], enrichment: {} };
+  const local = {
+    ...localRaw,
+    items: (localRaw.items || []).filter(item => item.sourceId !== 'modern-gov'),
+    health: (localRaw.health || []).filter(entry => entry.id !== 'modern-gov')
+  };
+  const combined = dedupe([...(contextActivity || []), ...(modernGov.items || []), ...(local.items || []), ...(rich.items || []), ...(gla.items || []), ...(community.items || []), ...(living.items || []), ...(met.items || []), ...(citizens.items || []), ...(videos.items || []), ...(faith.items || [])]);
   const items = coveragePreservingSlice(combined);
 
   return new Response(JSON.stringify({
     generatedAt: new Date().toISOString(),
     items,
-    health: [...(local.health || []), ...(rich.health || []), ...(gla.health || []), ...(community.health || []), ...(living.health || []), ...(met.health || []), ...(citizens.health || []), ...(videos.health || []), ...(faith.health || [])],
+    health: [...(modernGov.health || []), ...(local.health || []), ...(rich.health || []), ...(gla.health || []), ...(community.health || []), ...(living.health || []), ...(met.health || []), ...(citizens.health || []), ...(videos.health || []), ...(faith.health || [])],
     enrichment: {
       ...(local.enrichment || {}),
+      modernGovPublishing: { included: modernGov.items?.length || 0, method: 'Official Ealing ModernGov RSS publication events transported through a public RSS reader because direct server-to-server access is blocked upstream; original ModernGov publisher links are retained and event GUIDs/dedupe keys preserve separate agenda, minutes and decision publications even when they share a destination.' },
       reviewedCivicContext: { included: contextActivity.length, method: 'Human-approved contributions resurface their stable archived civic item as new Commons activity without changing the original publisher or publication date.' },
       liveSourceCoverage: { method: 'Chronological live feed capped at 220 items while reserving the newest item from each non-official source published in the last 90 days, preventing high-volume official feeds from crowding quieter civic sources out entirely.' },
       richSourceSites: { included: rich.items?.length || 0, archiveCandidates: rich.archiveItems?.length || 0, method: 'Dated first-party archive/listing surfaces from evidence-rich civic sites are extracted separately from the live-feed cutoff so their older material can become durable civic memory.' },
