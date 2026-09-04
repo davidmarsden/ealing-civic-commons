@@ -70,7 +70,7 @@ function destinationNear(markdown, index, fallback) {
 function parseReaderItems(markdown, fallbackUrl) {
   const items = [];
   const seen = new Set();
-  const pattern = /(\d{1,2}\/\d{1,2}\/20\d{2})\s*-\s*(Agenda published|Minutes published|Decision sheet published|Issue published|Decision published|ePetition|Publication of plan)\s*:\s*([^\n\r]+)/gi;
+  const pattern = /(\d{1,2}\/\d{1,2}\/20\d{2})\s*(?:-|–|—)\s*(Agenda published|Minutes published|Decision sheet published|Issue published|Decision published|ePetition|Publication of plan)\s*:\s*([^\n\r]+)/gi;
   let match;
   while ((match = pattern.exec(markdown))) {
     const date = publishedAt(match[1]);
@@ -129,7 +129,10 @@ async function fetchReaderBridge() {
   if (!response.ok) throw new Error(`Reader bridge failed: HTTP ${response.status}`);
   const markdown = await response.text();
   const items = parseReaderItems(markdown, directUrl);
-  if (!items.length) throw new Error('Reader bridge returned no supported ModernGov publication updates');
+  if (!items.length) {
+    const excerpt = markdown.slice(0, 1200).replace(/\s+/g, ' ').trim();
+    throw new Error(`Reader bridge returned no supported ModernGov publication updates. Response excerpt: ${excerpt}`);
+  }
   return { items, sourceUrl: directUrl, bridgeUrl: readerUrl, mode: 'reader-bridge' };
 }
 
