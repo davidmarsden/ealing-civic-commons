@@ -1,7 +1,7 @@
 # Southall & Ealing Civic Commons
 ## Source Register — v0.3
 
-**Date:** 26 August 2026  
+**Date:** 4 September 2026  
 **Status:** Expanded borough civic-organisations census  
 **Coverage:** Ealing's seven distinct towns/areas — **Acton, Ealing, Greenford, Hanwell, Northolt, Perivale and Southall**.
 
@@ -93,7 +93,7 @@ It distinguishes between:
 | Ealing Transition | Sustainability / community | READY | Verified RSS: `https://ealingtransition.org.uk/feed/` |
 | Ealing Transport for All | Transport / accessibility | REFERENCE / SOCIAL-ONLY | No website supplied. |
 | Five Roads Forum | Residents | SOCIAL-ONLY | Facebook highlighted by Ealing Matters. |
-| Friends of the Victoria Hall | Civic / heritage campaign | PARTNER | Weebly: `https://savethevictoriahall.weebly.com/` |
+| Friends of the Victoria Hall | Civic / heritage campaign | READY | `https://savethevictoriahall.weebly.com/`; dated chronology monitored by a source-specific adapter so new civic events can enter the Commons while older entries are archived as civic memory. |
 | Gordon Road and Surrounding Streets Residents' Association (GRASS) | Residents | REFERENCE | No website supplied. |
 | Hanger Hill (East) Residents' Association (HHERA) | Residents / planning | PARTNER | `http://hhera.com/`; active site, native feed unclear. |
 | Hanger Hill Garden Estate Residents' Association | Residents / conservation | PARTNER | `http://hhgera.com/`; site/news present, RSS not yet verified. |
@@ -108,7 +108,7 @@ It distinguishes between:
 | Save Gurnell | Planning / leisure / development | PARTNER | `http://savegurnell.org.uk/index.html` |
 | Shaa Road Residents' Association | Residents | REFERENCE | No website supplied. |
 | Sherwood Close Residents' Association | Residents | REFERENCE | No website supplied. |
-| Stop the Towers | Planning / high-rise development | PARTNER | Current Ealing Matters URL: `https://stopthetowers.info/` |
+| Stop the Towers | Planning / high-rise development | READY | `https://stopthetowers.info/blog`; dated Campaign News monitored with a source-specific adapter and older posts retained for archive ingestion. |
 | Walpole Residents' Association | Residents / planning / transport | CHECK | `http://walpoleresidents.org/` |
 | West Ealing Neighbours | Community / business / residents | READY | Verified RSS. |
 | The Neighbours' Paper | Local publication | CHECK | `http://www.neighbourspaper.com/`; investigate current status/feed. |
@@ -200,7 +200,7 @@ Confirmed new RSS feeds from this pass include:
 - Ealing Transition
 - East Acton Golf Links Residents' Association
 
-Other groups use Blogger, WordPress, Wix, Google Sites, Ning, PDFs or no website at all.
+Other groups use Blogger, WordPress, Wix, Google Sites, Ning, PDFs or no website at all. The Stop The Towers Campaign News page and Friends of the Victoria Hall chronology demonstrate that source-specific public-page adapters can also bring useful first-party civic publishing into the Commons without pretending those sites expose RSS.
 
 The Commons should therefore offer an **onboarding bridge service** rather than demanding RSS literacy from partners.
 
@@ -229,10 +229,12 @@ The registry should record not only what it contains, but where coverage is weak
 7. Ealing Matters
 8. The View from W5
 9. West Ealing Neighbours
-10. Bedford Park Society
-11. Ealing Transition
-12. East Acton Golf Links Residents' Association
-13. Ealing Council ModernGov
+10. Stop The Towers — Campaign News
+11. Friends of the Victoria Hall — Chronology
+12. Bedford Park Society
+13. Ealing Transition
+14. East Acton Golf Links Residents' Association
+15. Ealing Council ModernGov
 
 ## Partner/bridge shortlist
 
