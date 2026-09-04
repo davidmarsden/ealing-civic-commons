@@ -1,25 +1,27 @@
 import { XMLParser } from 'fast-xml-parser';
 
-const RSS_SOURCES = [
-  {
-    id: 'southall-speaks',
-    name: 'Southall Speaks',
-    url: 'https://atterkalsi.substack.com/feed',
-    homepage: 'https://atterkalsi.substack.com/',
-    sourceClass: 'Journalism / publishing',
-    towns: ['Southall'],
-    defaultTopics: ['Community', 'Culture & history']
-  },
-  {
-    id: 'vicious-ealing-council',
-    name: 'Vicious Ealing Council',
-    url: 'https://vicious-ealing-council.co.uk/feed/',
-    homepage: 'https://vicious-ealing-council.co.uk/',
-    sourceClass: 'Independent civic commentary',
-    towns: ['Ealing'],
-    defaultTopics: ['Council & democracy']
-  }
-];
+const BOROUGH_TOWNS = ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
+
+const SOUTHALL_SPEAKS = {
+  id: 'southall-speaks',
+  name: 'Southall Speaks',
+  url: 'https://atterkalsi.substack.com/feed',
+  homepage: 'https://atterkalsi.substack.com/',
+  sourceClass: 'Journalism / publishing',
+  towns: ['Southall'],
+  defaultTopics: ['Community', 'Culture & history']
+};
+
+const VICIOUS_EALING = {
+  id: 'vicious-ealing-council',
+  name: 'Vicious Ealing Council',
+  feedUrl: 'https://vicious-ealing-council.co.uk/feed/',
+  homepage: 'https://vicious-ealing-council.co.uk/',
+  sourceClass: 'Independent civic commentary',
+  towns: BOROUGH_TOWNS,
+  boroughWide: true,
+  defaultTopics: ['Council & democracy']
+};
 
 const VISIT_SOUTHALL = {
   id: 'visit-southall-news',
@@ -142,6 +144,7 @@ function rssItems(source, xml = '') {
       summary,
       publishedAt,
       towns: source.towns,
+      boroughWide: source.boroughWide === true,
       topics: topicGuess(`${title} ${summary}`, source.defaultTopics),
       derived: false,
       aiGenerated: false
@@ -149,6 +152,58 @@ function rssItems(source, xml = '') {
   }
 
   return items.sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+}
+
+function viciousHomepageItems(html = '') {
+  const items = new Map();
+  const headingRx = /<h[1-3]\b[^>]*>[\s\S]*?<a\b[^>]*href=["'](https?:\/\/vicious-ealing-council\.co\.uk\/[^"'#?]+\/?(?:\?p=\d+)?)["'][^>]*>([\s\S]*?)<\/a>[\s\S]*?<\/h[1-3]>/gi;
+  let match;
+
+  while ((match = headingRx.exec(html))) {
+    const title = strip(match[2]);
+    if (!title || /^home$/i.test(title)) continue;
+
+    let canonicalUrl;
+    try {
+      const url = new URL(decodeEntities(match[1]), VICIOUS_EALING.homepage);
+      if (!/^(?:www\.)?vicious-ealing-council\.co\.uk$/i.test(url.hostname)) continue;
+      url.hash = '';
+      canonicalUrl = url.toString();
+    } catch {
+      continue;
+    }
+
+    const nearby = html.slice(headingRx.lastIndex, Math.min(html.length, headingRx.lastIndex + 1500));
+    const dateMatch = nearby.match(/Posted\s+on[\s\S]{0,240}?(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),\s+(20\d{2})/i);
+    const publishedAt = dateMatch ? normaliseDate(`${dateMatch[1]} ${dateMatch[2]}, ${dateMatch[3]} 12:00 UTC`) : null;
+    if (!publishedAt) continue;
+
+    const paragraphMatch = nearby.match(/<p\b[^>]*>([\s\S]*?)<\/p>/i);
+    const summaryText = paragraphMatch ? strip(paragraphMatch[1]) : '';
+    const summary = summaryText.length > 420 ? `${summaryText.slice(0, 417).trimEnd()}…` : summaryText;
+
+    items.set(canonicalUrl, {
+      id: `${VICIOUS_EALING.id}:${canonicalUrl}`,
+      sourceId: VICIOUS_EALING.id,
+      source: VICIOUS_EALING.name,
+      sourceClass: VICIOUS_EALING.sourceClass,
+      sourceHomepage: VICIOUS_EALING.homepage,
+      mediaType: null,
+      title,
+      url: canonicalUrl,
+      canonicalUrl,
+      summary,
+      publishedAt,
+      towns: VICIOUS_EALING.towns,
+      boroughWide: true,
+      topics: topicGuess(`${title} ${summary}`, VICIOUS_EALING.defaultTopics),
+      derived: true,
+      derivedFrom: 'Dated post on the publisher’s public homepage',
+      aiGenerated: false
+    });
+  }
+
+  return [...items.values()].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
 }
 
 function absoluteVisitSouthallUrl(href) {
@@ -170,7 +225,7 @@ function visitSouthallDate(text = '') {
   return match ? normaliseDate(`${match[1]} ${match[2]} ${match[3]} 12:00 UTC`) : null;
 }
 
-function extractVisitSouthallItems(html = '', baseUrl = VISIT_SOUTHALL.currentUrl) {
+function extractVisitSouthallItems(html = '') {
   const items = new Map();
   const anchorRx = /<a\b[^>]*href=["']([^"']*NewsDetails\.php\?[^"']*recordID=\d+[^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi;
   let match;
@@ -245,6 +300,60 @@ async function fetchRssSource(source) {
   }
 }
 
+async function fetchViciousEaling() {
+  const started = Date.now();
+  const diagnostics = [];
+  let feedError = null;
+
+  try {
+    const { response, text } = await fetchText(VICIOUS_EALING.feedUrl, 'application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.5');
+    diagnostics.push({ mode: 'rss', outcome: 'http-response', httpStatus: response.status, elapsedMs: Date.now() - started });
+    if (response.ok) {
+      const all = rssItems({ ...VICIOUS_EALING, url: VICIOUS_EALING.feedUrl }, text);
+      if (all.length) {
+        return {
+          items: all.slice(0, 8), archiveItems: all.slice(0, 50),
+          health: { id: VICIOUS_EALING.id, name: VICIOUS_EALING.name, homepage: VICIOUS_EALING.homepage, ok: true, status: 'ok', error: null, itemCount: all.length, diagnostics }
+        };
+      }
+      feedError = 'Feed responded but no dated entries were parsed';
+    } else {
+      feedError = `HTTP ${response.status}`;
+    }
+  } catch (error) {
+    feedError = error?.name === 'AbortError' ? 'Timed out' : String(error?.message || error);
+    diagnostics.push({ mode: 'rss', outcome: 'transport-error', error: feedError, elapsedMs: Date.now() - started });
+  }
+
+  try {
+    const fallbackStarted = Date.now();
+    const { response, text } = await fetchText(VICIOUS_EALING.homepage);
+    diagnostics.push({ mode: 'public-page-fallback', outcome: 'http-response', httpStatus: response.status, elapsedMs: Date.now() - fallbackStarted });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const all = viciousHomepageItems(text);
+    if (!all.length) throw new Error('Homepage responded but no dated posts matched the expected structure');
+    return {
+      items: all.slice(0, 8), archiveItems: all.slice(0, 50),
+      health: { id: VICIOUS_EALING.id, name: VICIOUS_EALING.name, homepage: VICIOUS_EALING.homepage, ok: true, status: 'ok', error: null, itemCount: all.length, diagnostics }
+    };
+  } catch (error) {
+    const fallbackError = error?.name === 'AbortError' ? 'Timed out' : String(error?.message || error);
+    return {
+      items: [], archiveItems: [],
+      health: {
+        id: VICIOUS_EALING.id,
+        name: VICIOUS_EALING.name,
+        homepage: VICIOUS_EALING.homepage,
+        ok: false,
+        status: 'error',
+        error: `RSS unavailable (${feedError || 'unknown error'}); public-page fallback unavailable (${fallbackError})`,
+        itemCount: 0,
+        diagnostics
+      }
+    };
+  }
+}
+
 async function fetchVisitSouthall({ deep = false } = {}) {
   const started = Date.now();
   let lastStatus = null;
@@ -261,7 +370,7 @@ async function fetchVisitSouthall({ deep = false } = {}) {
           throw new Error(`HTTP ${response.status}`);
         }
         pagesFetched += 1;
-        for (const item of extractVisitSouthallItems(text, url)) all.set(item.id, item);
+        for (const item of extractVisitSouthallItems(text)) all.set(item.id, item);
       } catch (error) {
         if (url === VISIT_SOUTHALL.archiveUrl) continue;
         throw error;
@@ -294,8 +403,8 @@ async function fetchVisitSouthall({ deep = false } = {}) {
 
 export async function fetchSouthallExtraSources(options = {}) {
   const [southallSpeaks, vicious, visitSouthall] = await Promise.all([
-    fetchRssSource(RSS_SOURCES[0]),
-    fetchRssSource(RSS_SOURCES[1]),
+    fetchRssSource(SOUTHALL_SPEAKS),
+    fetchViciousEaling(),
     fetchVisitSouthall(options)
   ]);
 
