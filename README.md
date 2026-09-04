@@ -12,9 +12,10 @@ Southall is the starting point, but the Commons is designed for the borough's se
 
 - Fetches multiple RSS/Atom feeds server-side through Netlify Functions.
 - Normalises items into one chronological civic timeline.
-- Labels source class clearly: official record, journalism/publishing, independent civic data/analysis, organisation/campaign.
+- Uses source-specific public-page adapters where useful publishers do not expose a clean native feed.
+- Labels source class clearly: official record, journalism/publishing, independent civic data/analysis, organisation/campaign and independent civic commentary.
 - Filters the main timeline by town, topic and source type.
-- Displays source health so silent feed failures are visible.
+- Displays alphabetised public source health so silent feed failures are visible without exposing technical diagnostics by default.
 - Links every item back to the original publisher.
 - Accepts public source suggestions for human review.
 
@@ -48,6 +49,7 @@ Southall is the starting point, but the Commons is designed for the borough's se
 - Runs a dedicated **Document Watch** section with collection/topic filtering and freshness diagnostics.
 - Keeps routine council documents out of the main attention timeline while retaining the complete Document Watch stream in persistent civic memory.
 - Enriches generic council download entries with the council's own human-readable document descriptions where available.
+- Imports ModernGov publication events through a public feed-reader bridge because direct server-to-server access is blocked upstream.
 
 ## Public roadmap
 
@@ -58,10 +60,10 @@ The plain-language public version is published at `/roadmap.html`.
 The project is currently at:
 
 - **Phases 1–3:** complete v1 — aggregation, moderated civic items, follows/RSS/email;
-- **Phase 4:** core live — persistent civic memory;
-- **Phases 5–6:** active with major v1s live — official publishing/Document Watch and reviewed civic graph;
-- **Phase 7:** next major product phase — structured review/community knowledge workflow;
-- **Phase 8:** partly live — automation, search and resilience.
+- **Phase 4:** major v1 live — persistent civic memory and Archive;
+- **Phases 5–6:** active with major/core v1s live — official publishing/Document Watch and reviewed civic graph;
+- **Phase 7:** active — 7A durable review queue and 7B contribution publication/feedback are complete; 7C structured promotion is next;
+- **Phase 8:** partly live — automation, search, source operations and resilience.
 
 ## Founding pack and working documentation
 
@@ -86,15 +88,17 @@ These are public so that assumptions, omissions and design decisions can be scru
 
 Open Council Network, Ealing Council/ModernGov, RSS.chat and other open systems can substantially enrich the Commons. None is allowed to become a prerequisite for the Commons remaining useful.
 
-ModernGov RSS currently works in ordinary browsers/feed readers but server-side Civic Commons requests receive HTTP 403, so that access issue is kept separate from the working council news and Document Watch layers.
+ModernGov remains the publisher of its official RSS events. Because direct server-side requests are blocked, Civic Commons currently transports those events through a public feed reader and keeps the official ModernGov destination/provenance visible.
 
-The OCN Ealing feed currently uses Reddit's public subreddit search RSS as an experimental public signal rather than the paid OCN API. Canonical links remain the original posts and the source is labelled as independent civic data/analysis rather than an official council record.
+Open Council Network public Ealing summaries are integrated through a conservative public-page bridge. A richer API/partnership could add more structured meeting and document relationships later, but it is not a dependency.
 
 ## Source model
 
-The live set now includes local journalism, community organisations, civic groups and official publishing, including Southall Stories, Community Powered Reporting, Ealing Matters, Ealing Civic Society, Ealing Council news and the experimental OCN Ealing stream.
+The live source universe now spans local journalism, community organisations, campaign publishing, independent commentary and official records. Recent additions include Stop The Towers, Friends of the Victoria Hall, Southall Speaks, Visit Southall and Vicious Ealing Council alongside Southall Stories, Community Powered Reporting, Ealing Matters, Ealing Civic Society, Ealing Council publishing and OCN/ModernGov bridges.
 
-Further candidates from the source census are added incrementally once preferred public endpoints and provenance are verified. Some useful local sources without a feed remain transparent reference sources rather than being falsely presented as live aggregation.
+Native RSS remains the preferred path when available, but it is no longer the only path: source-specific public-page adapters and cautious fallbacks are an established ingestion pattern where they preserve first-party provenance and stable identities.
+
+Further candidates are added deliberately to fill geographic and thematic gaps rather than simply maximise source count. Greenford has a promising active hyperlocal publication in **Positive Greenford** (`https://positivegreenford.com/`), while Northolt and especially Perivale still need stronger first-party civic publishing coverage.
 
 ## Source submissions
 
@@ -128,13 +132,13 @@ npm run build
 
 ## Immediate development priorities
 
-1. Build a structured moderation/review queue with explicit pending, accepted and rejected states plus an audit trail.
-2. Add archive indexes/search over persistent civic items by topic, source, date and issue.
-3. Connect selected Document Watch evidence to issues, entities and earlier reporting.
-4. Move more source configuration into registry-driven data rather than hard-coded feed logic.
-5. Strengthen feed caching, conditional requests, parser regression tests and source-health tooling.
-6. Improve place/topic classification where source defaults are too coarse or where Ealing borough/town ambiguity matters.
-7. Continue ModernGov and OCN discussions/integration experiments in parallel, without blocking the rest of the roadmap.
-8. Explore federation/bridges such as RSS.chat, ActivityPub or AT Protocol only after the native review/memory model is solid.
+1. Build Phase 7C promotion rules for accepted source submissions and evidence suggestions first, then relationship suggestions.
+2. Connect accepted evidence to archived stories, Document Watch records, issues, entities and earlier reporting without duplicating canonical source material.
+3. Improve Archive indexing/search and grouped source filtering so growth from dozens of publishers to hundreds remains usable.
+4. Finish the public entity completeness audit and automate checks for newly incomplete records.
+5. Harden official-source ingestion, especially ModernGov direct destinations, meeting/document relationships, parser tests, caching and preservation of high-value primary records.
+6. Finish town-aware social metadata routing so existing share-card assets are actually emitted for public item/entity URLs.
+7. Continue deliberate source expansion, prioritising genuine geographic/thematic gaps — particularly Greenford, Northolt and Perivale — while hardening existing adapters.
+8. Explore OCN partnership/API and later federation bridges in parallel without making either a dependency.
 
 The Commons should remain useful if any one external service is unavailable.
