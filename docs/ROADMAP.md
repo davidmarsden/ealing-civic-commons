@@ -233,12 +233,15 @@ Next:
 
 ## Public presentation and town views
 
-**Status: major v1 live**
+**Status: major v1 partly live**
 
-The Commons now has a coherent borough identity plus town-specific presentation for Ealing, Acton, Greenford, Hanwell, Northolt, Perivale and Southall. Town marks and share cards are treated as presentation assets, while the civic data remains one Commons rather than seven duplicated sites. Southall can be entered through its dedicated Commons subdomain and town-scoped links can preserve a local view without severing navigation back to the wider borough Commons.
+The Commons now has a coherent borough identity plus town-specific presentation for Ealing, Acton, Greenford, Hanwell, Northolt, Perivale and Southall. Town marks and town-aware views are live, while the civic data remains one Commons rather than seven duplicated sites. Southall can be entered through its dedicated Commons subdomain and town-scoped links can preserve a local view without severing navigation back to the wider borough Commons.
+
+Town share-card assets also exist, but that part is not yet complete: public item and entity routes currently resolve to static HTML shells without the town-aware Open Graph/Twitter metadata renderer, so social crawlers will not reliably receive those cards.
 
 Still open:
 
+- restore social-metadata rendering for shared item/entity URLs so the existing town share cards are actually emitted;
 - continue polishing town-specific landing/share behaviour where useful;
 - keep town branding consistent without allowing presentation concerns to fork the underlying civic data model;
 - review whether additional civic/local subdomains add genuine utility before creating them.
@@ -257,7 +260,8 @@ The Commons should preserve its own public URLs, source provenance, stable item/
 4. **Make source filtering scale** with searchable/grouped publisher families as dozens of source identities become hundreds.
 5. **Finish the public entity completeness audit** and automate checks for newly incomplete records.
 6. **Harden and extend official-source ingestion** — especially direct ModernGov destinations, meeting/document relationships, parser tests, caching and preservation of high-value primary records.
-7. **Continue deliberate source expansion and explore an OCN partnership/API arrangement in parallel.** The existing OCN and ModernGov bridges are sufficient for current coverage; neither is a blocker.
+7. **Finish town-aware sharing** by restoring metadata rendering for item/entity URLs so the existing town share-card assets are actually emitted to social crawlers.
+8. **Continue deliberate source expansion and explore an OCN partnership/API arrangement in parallel.** The existing OCN and ModernGov bridges are sufficient for current coverage; neither is a blocker.
 
 ## Non-negotiable design boundaries
 
