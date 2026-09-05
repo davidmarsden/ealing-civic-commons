@@ -1,9 +1,9 @@
 # Southall & Ealing Civic Commons — roadmap
 
-**Updated:** 4 September 2026  
+**Updated:** 5 September 2026  
 **Status:** Public working roadmap
 
-This is the canonical implementation-level roadmap for the Civic Commons. The public version lives at `/roadmap.html`.
+This is the canonical implementation-level roadmap for the Ealing Civic Commons implementation. The public version lives at `/roadmap.html`. The wider Civic Commons network front door is **[civiccommons.co.uk](https://civiccommons.co.uk/)**; local and borough subdomains should always retain a visible route back to it.
 
 The project has moved well beyond the original read-only RSS prototype. It now has five working layers:
 
@@ -234,11 +234,19 @@ Next:
 - safer refresh/version handling across research and live civic items;
 - operational monitoring as the source set grows.
 
-## Public presentation and town views
+## Public presentation, subdomains and town views
 
 **Status: major v1 partly live**
 
-The Commons now has a coherent borough identity plus town-specific presentation for Ealing, Acton, Greenford, Hanwell, Northolt, Perivale and Southall. Town marks and town-aware views are live, while the civic data remains one Commons rather than seven duplicated sites. Southall can be entered through its dedicated Commons subdomain and town-scoped links can preserve a local view without severing navigation back to the wider borough Commons.
+The Commons now has a coherent borough identity plus town-specific presentation for Ealing, Acton, Greenford, Hanwell, Northolt, Perivale and Southall. Town marks and town-aware views are live, while the civic data remains one Commons rather than seven duplicated sites.
+
+The navigation hierarchy is explicit:
+
+- **Network front door:** [civiccommons.co.uk](https://civiccommons.co.uk/)
+- **Canonical Ealing Commons:** [ealing.civiccommons.co.uk](https://ealing.civiccommons.co.uk/)
+- **Southall doorway:** `commons.southallstories.uk` redirects into the Southall-filtered Ealing view.
+
+Southall can therefore be entered through its dedicated Commons doorway, and town-scoped links can preserve a local view without severing navigation back to the wider borough Commons **or** to the Civic Commons network. The same rule applies to any future civic/local subdomain: local entry points must never become navigational dead ends, and should always provide a visible route to `https://civiccommons.co.uk/`.
 
 Town share-card assets also exist, but that part is not yet complete: public item and entity routes currently resolve to static HTML shells without the town-aware Open Graph/Twitter metadata renderer, so social crawlers will not reliably receive those cards.
 
@@ -247,6 +255,7 @@ Still open:
 - restore social-metadata rendering for shared item/entity URLs so the existing town share cards are actually emitted;
 - continue polishing town-specific landing/share behaviour where useful;
 - keep town branding consistent without allowing presentation concerns to fork the underlying civic data model;
+- make network-front-door navigation a standard requirement for any local or borough subdomain;
 - review whether additional civic/local subdomains add genuine utility before creating them.
 
 ## Later / parallel — federation and external bridges
@@ -278,5 +287,6 @@ The Commons should preserve its own public URLs, source provenance, stable item/
 - No behavioural advertising.
 - No compulsory closed-platform identity.
 - The Commons must remain useful when any one external service is unavailable.
+- Every local or borough subdomain must retain a visible route back to **[civiccommons.co.uk](https://civiccommons.co.uk/)**.
 
 **Publish anywhere. Connect locally. Participate openly. Remember civically.**
