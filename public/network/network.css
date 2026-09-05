@@ -47,8 +47,8 @@ footer {
 }
 .brand-mark {
   display: block;
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
 }
 
@@ -193,9 +193,8 @@ h1 em { color: var(--green); font-weight: 500; }
   border-radius: 6px;
 }
 .roots-mark img {
-  width: min(58%, 190px);
-  filter: brightness(0) invert(1);
-  opacity: .96;
+  width: min(68%, 220px);
+  opacity: .98;
 }
 .roots h2 { max-width: 740px; }
 .roots > div:last-child > p:last-child {
@@ -227,12 +226,12 @@ footer {
   color: var(--ink);
   font-weight: 800;
 }
-.footer-brand img { width: 24px; height: 24px; }
+.footer-brand img { width: 28px; height: 28px; }
 
 @media (max-width: 760px) {
   .site-header, main, footer { width: min(100% - 28px, 1180px); }
   .site-header { min-height: 72px; }
-  .brand-mark { width: 30px; height: 30px; }
+  .brand-mark { width: 34px; height: 34px; }
   .header-link { font-size: .8rem; }
   .hero { padding-top: 64px; }
   .live,
