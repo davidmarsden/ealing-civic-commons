@@ -1,7 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Civic Commons open gate">
   <rect width="64" height="64" rx="12" fill="#163c29"/>
-  <path fill="#f4f0e4" d="M12 56V27C12 14.5 20.8 7 32 7s20 7.5 20 20v29H42V27c0-6.9-4.4-11-10-11s-10 4.1-10 11v29H12Z"/>
-  <path fill="#f4f0e4" d="M31 56c-1-6-6-9-12-11 5-2 10-2 15-1 5 1 9 4 12 7-7-1-12 0-15 5Z"/>
-  <circle cx="27" cy="33" r="5" fill="#f4f0e4"/>
-  <rect x="25" y="37" width="4" height="7" fill="#f4f0e4"/>
+  <path fill="#f4f0e4" d="M8 25 18 21v28L8 53V25Zm48 0-10-4v28l10 4V25Z"/>
+  <path fill="#f4f0e4" d="M17 54V29c0-12 6.7-19 15-19s15 7 15 19v25h-8V29c0-7-3-11-7-11s-7 4-7 11v25h-8Z"/>
+  <path fill="#163c29" d="M26 36c-3 0-5-2.2-5-5s2-5 5-5 5 2.2 5 5-2 5-5 5Zm-1.5 0h3v8h-3v-8Z"/>
+  <path fill="#163c29" d="M34 36h7v8h-7z"/>
+  <path fill="#163c29" d="m35.5 32 2-4 2 4h-4Z"/>
+  <path fill="#f4f0e4" d="M31 54c-.5-5-4-8-10-10 5-2 10-2 15-.5 4 1 7 3 9 6-6-1-10 .5-12 4.5h-2Z"/>
 </svg>
