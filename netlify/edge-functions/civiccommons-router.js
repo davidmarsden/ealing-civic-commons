@@ -10,8 +10,14 @@ export default async (request, context) => {
     return Response.redirect(url, 301);
   }
 
-  if (hostname === NETWORK_HOST && url.pathname === '/') {
-    return new URL('/network/index.html', request.url);
+  if (hostname === NETWORK_HOST) {
+    if (url.pathname === '/') {
+      return new URL('/network/index.html', request.url);
+    }
+
+    if (url.pathname === '/charter' || url.pathname === '/charter/') {
+      return new URL('/network/charter/index.html', request.url);
+    }
   }
 
   return context.next();
