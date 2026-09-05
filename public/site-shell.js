@@ -7,7 +7,8 @@
     { label: 'Sources', href: '/#sources' },
     { label: 'Roadmap', href: '/roadmap.html', match: path => path === '/roadmap.html' },
     { label: 'Documents', href: '/documents/', match: path => path.startsWith('/documents/') },
-    { label: 'About', href: '/#about' }
+    { label: 'About', href: '/#about' },
+    { label: 'Civic Commons ↗', href: 'https://civiccommons.co.uk/', external: true }
   ];
 
   const TOWN_BRANDS = {
@@ -113,7 +114,8 @@
   if (header) {
     const nav = NAV_ITEMS.map(item => {
       const active = item.match ? item.match(path) : item.href === '/' && path === '/';
-      return `<a href="${item.href}"${active ? ' aria-current="page"' : ''}>${item.label}</a>`;
+      const external = item.external ? ' rel="home"' : '';
+      return `<a href="${item.href}"${external}${active ? ' aria-current="page"' : ''}>${item.label}</a>`;
     }).join('');
 
     header.innerHTML = `<div class="wrap header-inner"><a class="brand-lockup" href="/" aria-label="${commonsName}"><img class="brand-mark" src="/brand/ealing-oak-approved.webp" alt="" aria-hidden="true"><span class="brand-divider" aria-hidden="true"></span><span class="brand-copy"><strong class="brand">CIVIC COMMONS</strong><span class="strap"><span></span><span class="strap-label">Ealing</span><span></span></span></span></a><nav aria-label="Primary">${nav}</nav></div>`;
@@ -121,7 +123,7 @@
   }
 
   if (footer) {
-    footer.innerHTML = `<div class="wrap footer-inner"><span>${commonsName}</span><span>Open civic infrastructure. Original sources remain canonical.</span></div>`;
+    footer.innerHTML = `<div class="wrap footer-inner"><span>${commonsName}</span><span>Part of the <a href="https://civiccommons.co.uk/" rel="home">Civic Commons network</a>. Original sources remain canonical.</span></div>`;
   }
 
   function newStatusToken() {
