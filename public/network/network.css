@@ -58,6 +58,12 @@ footer {
   text-underline-offset: 4px;
 }
 
+.text-link {
+  color: var(--green-dark);
+  font-weight: 800;
+  text-underline-offset: 4px;
+}
+
 .hero {
   padding: clamp(72px, 10vw, 136px) 0 clamp(72px, 9vw, 112px);
   border-bottom: 1px solid var(--line);
@@ -133,8 +139,7 @@ h1 em { color: var(--green); font-weight: 500; }
   letter-spacing: -.035em;
   font-weight: 500;
 }
-.live > div > p:last-child,
-.network-note > p:last-child { max-width: 600px; color: #415047; }
+.live > div > p:last-child { max-width: 600px; color: #415047; }
 
 .town-card {
   position: relative;
@@ -206,7 +211,8 @@ h1 em { color: var(--green); font-weight: 500; }
 
 .network-note { padding: 84px 0 96px; }
 .network-note h2 { max-width: 680px; }
-.network-note > p:last-child { font-size: 1.12rem; }
+.network-note > p:not(:last-child) { max-width: 600px; color: #415047; font-size: 1.12rem; }
+.network-note > p:last-child { margin-bottom: 0; }
 
 footer {
   min-height: 110px;
