@@ -8,6 +8,7 @@
     { label: 'Roadmap', href: '/roadmap.html', match: path => path === '/roadmap.html' },
     { label: 'Documents', href: '/documents/', match: path => path.startsWith('/documents/') },
     { label: 'About', href: '/#about' },
+    { label: 'Start a Commons ↗', href: 'https://civiccommons.co.uk/start/', external: true },
     { label: 'Civic Commons ↗', href: 'https://civiccommons.co.uk/', external: true }
   ];
 
@@ -123,7 +124,7 @@
   }
 
   if (footer) {
-    footer.innerHTML = `<div class="wrap footer-inner"><span>${commonsName}</span><span>Part of the <a href="https://civiccommons.co.uk/" rel="home">Civic Commons network</a>. Original sources remain canonical.</span></div>`;
+    footer.innerHTML = `<div class="wrap footer-inner"><span>${commonsName}</span><span><a href="https://civiccommons.co.uk/start/">Start a Civic Commons</a> · <a href="https://civiccommons.co.uk/" rel="home">Civic Commons network</a> · Original sources remain canonical.</span></div>`;
   }
 
   function newStatusToken() {
