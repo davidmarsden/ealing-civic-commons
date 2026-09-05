@@ -6,21 +6,9 @@
 [functions]
   node_bundler = "esbuild"
 
-# civiccommons.co.uk is the network front door. Keep the Ealing application on
-# ealing.civiccommons.co.uk while serving a distinct root page from the same deploy.
-[[redirects]]
-  from = "/"
-  to = "/network/index.html"
-  status = 200
-  force = true
-  conditions = {Host = ["civiccommons.co.uk"]}
-
-[[redirects]]
-  from = "/*"
-  to = "https://civiccommons.co.uk/:splat"
-  status = 301
-  force = true
-  conditions = {Host = ["www.civiccommons.co.uk"]}
+# civiccommons.co.uk / www.civiccommons.co.uk hostname routing is handled by
+# netlify/edge-functions/civiccommons-router.js. This avoids unsupported Host
+# redirect conditions while keeping ealing.civiccommons.co.uk on the Ealing app.
 
 # Keep the retired Southall hostname as a doorway into the canonical Commons.
 # Use temporary redirects until the new destination has been verified across browsers,
