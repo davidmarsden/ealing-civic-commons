@@ -71,7 +71,8 @@ The source census, architecture, prospectus and implementation notes are version
 
 - [Roadmap](./docs/ROADMAP.md)
 - [Founding Pack index](./docs/FOUNDING-PACK.md)
-- [Source Register — v0.3](./docs/source-register-v0.3.md)
+- [Source Register — v0.4](./docs/source-register-v0.4.md)
+- [Source Register — v0.3 historical census](./docs/source-register-v0.3.md)
 - [Technical Architecture & Prototype Specification — v0.1](./docs/technical-architecture-spec-v0.1.md)
 - [Partner Prospectus](./docs/partner-prospectus.md)
 - [Open Social Phase — development direction](./docs/open-social-phase.md)
@@ -95,6 +96,8 @@ Open Council Network public Ealing summaries are integrated through a conservati
 ## Source model
 
 The live source universe now spans local journalism, community organisations, campaign publishing, independent commentary and official records. Recent additions include Stop The Towers, Friends of the Victoria Hall, Southall Speaks, Visit Southall and Vicious Ealing Council alongside Southall Stories, Community Powered Reporting, Ealing Matters, Ealing Civic Society, Ealing Council publishing and OCN/ModernGov bridges.
+
+The human-readable [Source Register v0.4](./docs/source-register-v0.4.md) now distinguishes sources that are actually **INGESTING** from those that are merely **VERIFIED**, **CANDIDATE**, **PARTNER** or **REFERENCE**. Production source definitions and public source-health output remain authoritative for live operational state.
 
 Native RSS remains the preferred path when available, but it is no longer the only path: source-specific public-page adapters and cautious fallbacks are an established ingestion pattern where they preserve first-party provenance and stable identities.
 
