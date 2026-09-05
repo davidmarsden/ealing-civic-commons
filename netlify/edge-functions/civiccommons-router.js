@@ -18,6 +18,10 @@ export default async (request, context) => {
     if (url.pathname === '/charter' || url.pathname === '/charter/') {
       return new URL('/network/charter/index.html', request.url);
     }
+
+    if (url.pathname === '/start' || url.pathname === '/start/') {
+      return new URL('/network/start/index.html', request.url);
+    }
   }
 
   return context.next();
