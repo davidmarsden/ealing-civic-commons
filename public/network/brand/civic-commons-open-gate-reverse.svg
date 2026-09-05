@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Civic Commons Open Gate reversed</title>
+  <desc id="desc">A light open gate beneath a civic arch, with a winding path, shared tree and local civic buildings for use on dark green.</desc>
+  <!-- arch -->
+  <path fill="#f4f0e4" d="M38 55C46 28 61 16 80 16s34 12 42 39l-10 5C105 37 95 27 80 27S55 37 48 60l-10-5Z"/>
+  <!-- open gate leaves -->
+  <path fill="#f4f0e4" d="M10 58 35 44v86L10 144V58Z"/>
+  <path fill="#f4f0e4" d="m150 58-25-14v86l25 14V58Z"/>
+  <path fill="#163c29" d="m17 76 11-5v9l-11 4v-8Zm126 0-11-5v9l11 4v-8Z"/>
+  <!-- shared ground -->
+  <path fill="#7fa18d" d="M36 108c12-10 27-15 45-15 17 0 31 5 43 14v23H36v-22Z"/>
+  <path fill="#4e7f68" d="M36 119c17-7 33-10 49-9 15 0 28 4 39 10v10H36v-11Z"/>
+  <!-- tree trunk -->
+  <path fill="#f4f0e4" d="M57 74h6v30h-6z"/>
+  <path fill="#f4f0e4" d="m60 86-8-9 4-3 6 7 6-8 4 3-9 11-3-1Z"/>
+  <!-- tree canopy -->
+  <g fill="#f4f0e4">
+    <circle cx="60" cy="67" r="12"/><circle cx="50" cy="72" r="9"/><circle cx="70" cy="72" r="9"/>
+    <circle cx="53" cy="61" r="8"/><circle cx="67" cy="60" r="8"/><circle cx="60" cy="56" r="8"/>
+  </g>
+  <!-- civic skyline -->
+  <path fill="#f4f0e4" d="M87 82h13v21H87zM84 82l9-8 10 8H84Zm18-12h15v33h-15zM108 58h4v12h-4zM105 70l5-12 5 12h-10Zm11 19h8v14h-8z"/>
+  <path fill="#7fa18d" d="M77 88h10v15H77zM75 88l7-6 7 6H75Z"/>
+  <!-- winding path -->
+  <path fill="#f4f0e4" d="M87 160H52c18-14 31-25 31-34 0-7-10-11-30-14 11-8 24-11 39-9 11 1 20 5 27 11-17-2-27 2-27 9 0 9 18 18 32 37H87Z"/>
+</svg>

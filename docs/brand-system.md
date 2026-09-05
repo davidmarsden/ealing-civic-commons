@@ -1,17 +1,21 @@
 # Civic Commons brand hierarchy
 
-The brand system separates the network from each local Commons.
+The brand system separates the Civic Commons network from each local Commons while keeping the relationship visible.
 
-## Network mark
+## Network mark and front door
 
-**Civic Commons** uses the concentric **CC** monogram.
+**Civic Commons** uses the **Open Gate** mark: two gate leaves held open around a civic arch, tree, public building and path into shared ground.
 
-Use it for:
+The network front door is **[civiccommons.co.uk](https://civiccommons.co.uk/)**.
+
+Use the Open Gate for:
 - `civiccommons.co.uk`;
 - network-wide documentation and social cards;
 - future multi-borough material.
 
-It must not imply ownership by any one borough or publisher.
+Every local Commons, borough subdomain, town doorway or shortcut should provide a visible route back to `https://civiccommons.co.uk/`. A local view may be the reader's entry point, but it should never obscure the wider network it belongs to.
+
+The network identity must not imply ownership by any one borough or publisher.
 
 ## Ealing borough mark
 
@@ -30,8 +34,10 @@ The oak is the place identity for the London Borough of Ealing. It is not the gl
 The repository asset `public/brand/ealing-oak-approved.webp` is derived directly from the approved brand board supplied for the project. Do not substitute or redraw the oak without explicit approval.
 
 Use it for:
-- `ealing.civiccommons.co.uk` borough-wide views;
+- [`ealing.civiccommons.co.uk`](https://ealing.civiccommons.co.uk/) borough-wide views;
 - borough-wide Ealing Civic Commons favicons and social sharing cards.
+
+Ealing Civic Commons should always expose a clear link back to the network front door at [`civiccommons.co.uk`](https://civiccommons.co.uk/).
 
 ## Approved town identity family
 
@@ -54,16 +60,16 @@ The approved town concept boards establish the production direction:
 - Publish / Discuss / Connect / Remember footer on social cards;
 - no oak or borough emblem on town cards or town header lockups.
 
-These marks identify a **town lens onto Ealing Civic Commons**, not a separate data silo or independent platform.
+These marks identify a **town lens onto Ealing Civic Commons**, not a separate data silo or independent platform. Town views should retain routes both to the wider Ealing Commons and to the Civic Commons network front door.
 
 ## Southall doorway
 
-`ealing.civiccommons.co.uk` is the single canonical Ealing Civic Commons origin.
+[`ealing.civiccommons.co.uk`](https://ealing.civiccommons.co.uk/) is the single canonical Ealing Civic Commons origin.
 
 `commons.southallstories.uk` remains as a permanent Southall shortcut rather than a second live Commons. Its homepage redirects to `https://ealing.civiccommons.co.uk/?town=Southall`; deep links preserve their path on the canonical Ealing hostname.
 
-The Southall town view uses the approved Southall Town Hall identity, but follows, civic memory, stable item URLs and application state belong to the same Ealing Civic Commons.
+The Southall town view uses the approved Southall Town Hall identity, but follows, civic memory, stable item URLs and application state belong to the same Ealing Civic Commons. Navigation from the Southall doorway should also make the wider network visible through [`civiccommons.co.uk`](https://civiccommons.co.uk/).
 
 ## Principle
 
-**CC = Civic Commons network. Rooted oak = Ealing borough. Local landmark = town lens. One canonical Ealing Commons origin.**
+**Open Gate = Civic Commons network. Rooted oak = Ealing borough. Local landmark = town lens. One canonical Ealing Commons origin. One visible network front door: civiccommons.co.uk.**
