@@ -26,7 +26,7 @@ The implementation code and public source-health output are authoritative for **
 
 # 1. Audited live source set
 
-The following sources are confirmed in the current live aggregation path or a dedicated adapter invoked by it.
+The following named source surfaces are configured in the current live aggregation path or in a dedicated adapter invoked by it. Some filtered or living-page sources may legitimately return zero current items; they are still operationally configured and therefore count as `INGESTING`.
 
 | Source | Geography | Type | Integration | Status |
 |---|---|---|---|---|
@@ -60,8 +60,28 @@ The following sources are confirmed in the current live aggregation path or a de
 | Friends of the Victoria Hall — Chronology | Ealing | Civic / heritage campaign | Source-specific chronology adapter | **INGESTING** |
 | Metropolitan Police — Ealing | Borough-wide | Official public-safety publishing | Official newsroom / neighbourhood material filtered for Ealing relevance | **INGESTING** |
 | Ealing Citizens / Citizens UK | Borough-wide | Community organising | West London archive filtered for explicit Ealing relevance | **INGESTING** |
+| London Assembly — Press releases | London-wide, filtered for Ealing relevance | Official record | London Assembly RSS filtered for named Ealing places, representatives and locally significant institutions | **INGESTING** |
+| London Assembly — Current investigations | London-wide, filtered for Ealing relevance | Official record | London Assembly RSS filtered for explicit Ealing relevance | **INGESTING** |
+| London Assembly — Publications | London-wide, filtered for Ealing relevance | Official record | London Assembly RSS filtered for explicit Ealing relevance | **INGESTING** |
+| City Hall — Housing and land publications | London-wide, filtered for Ealing relevance | Official record | City Hall RSS filtered for explicit Ealing relevance | **INGESTING** |
+| City Hall — Planning publications | London-wide, filtered for Ealing relevance | Official record | City Hall RSS filtered for explicit Ealing relevance | **INGESTING** |
+| City Hall — Environment and climate publications | London-wide, filtered for Ealing relevance | Official record | City Hall RSS filtered for explicit Ealing relevance | **INGESTING** |
+| Warren Farm Nature Reserve — Blog | Southall / Hanwell | Organisation / campaign | Dated first-party blog adapter | **INGESTING** |
+| Southall Black Sisters — News | Southall | Organisation / campaign | First-party news-page adapter with archive support | **INGESTING** |
+| Southall Black Sisters — Submissions & campaigns | Southall | Organisation / campaign | First-party campaigns/submissions adapter with archive support | **INGESTING** |
+| Ealing and Hounslow CVS — Ealing news | Borough-wide | Organisation / voluntary sector | Dated first-party community-page adapter | **INGESTING** |
+| Ealing Friends of the Earth — Current news | Borough-wide | Organisation / campaign | Content-hashed living-publication section | **INGESTING** |
+| The Monitoring Group — The Drum | Borough / west London relevance | Organisation / campaign | Content-hashed living-publication section | **INGESTING** |
+| Ealing Community Independents — Current publication | Borough-wide | Political organisation / campaign | Content-hashed living-publication section | **INGESTING** |
+| Sri Guru Singh Sabha Southall — civic/community video | Southall | Community / faith / video | YouTube Atom filtered for civic/community material and excluding routine worship livestreams | **INGESTING** |
+| Metropolitan Police — Ealing-relevant video | Borough-wide | Official record / video | Metropolitan Police YouTube Atom filtered for explicit Ealing-area terms | **INGESTING** |
+| Ealing Synagogue — civic/community updates | Ealing | Community / faith | First-party page filtered for civic/community material | **INGESTING** |
+| St Anselm’s Catholic Church Southall — civic/community updates | Southall | Community / faith | First-party page filtered for civic/community material | **INGESTING** |
+| St John’s Southall Green — community outreach | Southall | Community / faith | Living first-party events/outreach section | **INGESTING** |
+| West London College — Ealing/Southall civic news | Ealing / Southall | Community / education | College news filtered for explicit civic/local relevance | **INGESTING** |
+| Villiers High School — civic/community bulletin | Southall | Community / education | School bulletin filtered for explicit civic/community relevance | **INGESTING** |
 
-The combined feed also invokes dedicated adapters for selected rich civic-source sites, community pages, living publications, filtered civic video and faith/community publishing. Those modules deliberately return no item rather than inventing dates or relevance when a source cannot be parsed safely.
+This table is intended to enumerate the named configured source surfaces, not merely the modules that contain them. The public source-health panel remains the quickest way to see whether each source is healthy, empty, blocked or failing at a particular moment.
 
 ---
 
@@ -110,7 +130,7 @@ This table is intentionally conservative. A source is not promoted to `INGESTING
 
 The detailed borough census assembled in v0.3 remains useful for discovery and coverage analysis. It includes residents' associations, neighbourhood forums, conservation panels, tenant/resident bodies, environmental and allotment groups, arts/cultural campaigns, development campaigns, accessibility groups and community alliances.
 
-See the historical census in [Source Register v0.3](./source-register-v0.3.md). Its organisation list remains useful; **its old READY/LIKELY/PARTNER status column should no longer be read as operational ingestion state**.
+See the historical census in [Source Register v0.3](/documents/source-register-v0.3.html). Its organisation list remains useful; **its old READY/LIKELY/PARTNER status column should no longer be read as operational ingestion state**.
 
 Future additions from that census should pass through four separate decisions:
 
