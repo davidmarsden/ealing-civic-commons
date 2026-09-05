@@ -40,6 +40,7 @@ The following sources are confirmed in the current live aggregation path or a de
 | West Ealing Neighbours | Ealing | Community publisher | Native RSS | **INGESTING** |
 | Ealing Transition | Ealing | Sustainability / community | Native RSS | **INGESTING** |
 | East Acton Golf Links Residents’ Association | Acton | Residents / planning | WordPress RSS | **INGESTING** |
+| EALING.NEWS | Borough-wide | Local journalism | Main WordPress RSS filtered conservatively for civic/public-interest material; routine sport, food/drink, reviews, event listings and commercial promotion excluded; Opinion retained with an explicit content label | **INGESTING** |
 | Ealing Council — ModernGov | Borough-wide | Official democratic record | Official RSS transported through a public feed-reader bridge because direct server-to-server access is blocked | **INGESTING** |
 | Ealing Council — News | Borough-wide | Official publishing | Official council RSS, with category feeds used for topic enrichment | **INGESTING** |
 | Ealing Council — YouTube | Borough-wide | Official publishing / video | YouTube Atom | **INGESTING** |
@@ -70,8 +71,8 @@ This is the part of the register most affected by the v0.3 status ambiguity.
 
 | Source | v0.3 wording | Audited v0.4 status | Note |
 |---|---|---|---|
-| **EALING.NEWS — Southall** | `LIKELY` with candidate tag feed | **CANDIDATE** | `https://www.ealing.news/tag/southall/feed/` is not in the current live source configuration. Do not describe EALING.NEWS as ingested unless it is actually added. |
-| **Ealing Council — News** | Not clearly distinguished from EALING.NEWS in the census narrative | **INGESTING** | This is the source we have definitely implemented: `https://www.ealing.gov.uk/rss/news`, plus council category RSS enrichment. |
+| **EALING.NEWS — Southall** | `LIKELY` with candidate tag feed | **INGESTING** | The original Southall tag-feed idea was superseded by a borough-wide filtered integration using `https://www.ealing.news/feed/`. Civic-interest filtering and town tagging happen inside Civic Commons rather than trusting a single publisher tag. |
+| **Ealing Council — News** | Not clearly distinguished from EALING.NEWS in the census narrative | **INGESTING** | Separate official source: `https://www.ealing.gov.uk/rss/news`, plus council category RSS enrichment. |
 | **Ealing Civic Society** | `LIKELY` | **INGESTING** | Current code uses `https://ealingcivicsociety.org/feed/`. |
 | **The Neighbours’ Paper** | `CHECK` | **INGESTING** | Current code uses `https://neighbourspaper.org/feed/`. |
 | **Open Council Network — Ealing** | `PARTNER` | **INGESTING** | Public-page bridge is live now; an API/public-interest partnership would be an enhancement rather than the first integration. |
@@ -89,7 +90,6 @@ The key rule from now on is simple: **READY/VERIFIED must never be used as a syn
 
 | Source | Geography | Type | Status | Integration / notes |
 |---|---|---|---|---|
-| EALING.NEWS — Southall | Southall / borough | Local journalism | **CANDIDATE** | Candidate WordPress tag feed: `https://www.ealing.news/tag/southall/feed/`; needs fresh verification and an explicit ingestion decision. |
 | Asian Standard — Southall | Southall | Regional/local journalism | **VERIFIED** | Category RSS was previously verified, but it is not present in the current audited live source configuration. Re-test before enabling. |
 | Bedford Park Society | Acton | Conservation / residents | **VERIFIED** | RSS previously verified; not present in the current audited live source configuration. |
 | Southall Community Alliance | Southall | Community alliance / charity | **PARTNER** | Current live site with fresh 2026 material; direct publishing bridge/partnership remains preferable. |
@@ -140,6 +140,7 @@ A thin register must not be interpreted as thin civic life. Gaps should trigger 
 - Native RSS/Atom is preferred where available, but safe source-specific adapters are legitimate when they preserve first-party provenance and stable identities.
 - Closed social networks should not become foundational dependencies.
 - High-volume official feeds must not crowd quieter civic publishers out of the live view.
+- High-volume general-news feeds should be filtered for civic relevance so they do not crowd quieter civic publishers out of the live view.
 - Routine document publishing belongs in Document Watch/civic memory rather than automatically dominating the attention timeline.
 - Source failures should be visible through health diagnostics rather than silently disappearing.
 - The register should be updated in the same PR whenever a source is added, removed, materially reworked or reclassified.
