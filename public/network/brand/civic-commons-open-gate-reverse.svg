@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Civic Commons open gate reversed</title>
+  <desc id="desc">A light open civic gateway framing a tree, public buildings and a path on a dark background.</desc>
+  <path fill="#f4f0e4" d="M8 45 31 36v70L8 116V45Z"/>
+  <path fill="#f4f0e4" d="m120 45-23-9v70l23 10V45Z"/>
+  <path fill="#163c29" d="M15 56 25 52v9l-10 3v-8Zm98 0-10-4v9l10 3v-8Z"/>
+  <path fill="#f4f0e4" d="M28 111V54C28 27.5 44.2 11 64 11s36 16.5 36 43v57H83V54c0-14.5-8.3-25-19-25S45 39.5 45 54v57H28Z"/>
+  <path fill="#163c29" d="M48 111V55c0-11.7 6.8-20 16-20s16 8.3 16 20v56H48Z"/>
+  <path fill="#7fa18d" d="M45 83c7-6 14-9 23-9 7 0 13 2 18 5v12c-6-4-12-6-19-6-8 0-15 3-22 8V83Z"/>
+  <path fill="#f4f0e4" d="M54 72c-6.2 0-11-4.7-11-10.4S47.8 51 54 51s11 4.8 11 10.6S60.2 72 54 72Zm-3.2-.5h6.4V85h-6.4V71.5Z"/>
+  <path fill="#f4f0e4" d="M70 73h15v12H70V73Zm3-7h9l3 7H70l3-7Zm3-8h3v9h-3v-9Z"/>
+  <path fill="#f4f0e4" d="M84 69h5v16h-5z"/>
+  <path fill="#163c29" d="M62 112c0-8.8-5.8-14.5-17-19 8.7-3.4 17.3-3.8 26-1.2 6.5 2 11.2 5.1 15.2 9.2-10-2-17.2 1.7-20.2 11H62Z"/>
+</svg>
