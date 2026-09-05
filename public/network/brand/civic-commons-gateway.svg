@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Civic Commons gateway</title>
+  <desc id="desc">An open civic arch framing a tree, a public building and a path into shared ground.</desc>
+  <path fill="#163c29" d="M18 118V55C18 26.3 38.9 8 64 8s46 18.3 46 47v63H88V55c0-15.3-10.8-25-24-25s-24 9.7-24 25v63H18Z"/>
+  <path fill="#f4f0e4" d="M44 118V56c0-12.5 8.5-21 20-21s20 8.5 20 21v62H44Z"/>
+  <path fill="#24553a" d="M41 84c7-6 16-10 26-10 8 0 15 2 21 6v10c-6-4-13-6-21-6-10 0-18 3-26 9V84Z"/>
+  <path fill="#163c29" d="M53 69c-5 0-9-3.8-9-8.5S48 52 53 52s9 3.8 9 8.5S58 69 53 69Zm-3 0h6v13h-6V69Z"/>
+  <path fill="#163c29" d="M71 71h11v9H71z"/>
+  <path fill="#163c29" d="M74 64h5l3 7h-11l3-7Z"/>
+  <path fill="#163c29" d="M76 57h2v8h-2z"/>
+  <path fill="#f4f0e4" d="M70 118c-2-12-10-18-23-23 8-3 17-4 27-2 8 2 13 5 18 10-11-2-18 1-22 15Z"/>
+</svg>
