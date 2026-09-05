@@ -1,9 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Civic Commons open gate">
-  <rect width="64" height="64" rx="12" fill="#163c29"/>
-  <path fill="#f4f0e4" d="M8 25 18 21v28L8 53V25Zm48 0-10-4v28l10 4V25Z"/>
-  <path fill="#f4f0e4" d="M17 54V29c0-12 6.7-19 15-19s15 7 15 19v25h-8V29c0-7-3-11-7-11s-7 4-7 11v25h-8Z"/>
-  <path fill="#163c29" d="M26 36c-3 0-5-2.2-5-5s2-5 5-5 5 2.2 5 5-2 5-5 5Zm-1.5 0h3v8h-3v-8Z"/>
-  <path fill="#163c29" d="M34 36h7v8h-7z"/>
-  <path fill="#163c29" d="m35.5 32 2-4 2 4h-4Z"/>
-  <path fill="#f4f0e4" d="M31 54c-.5-5-4-8-10-10 5-2 10-2 15-.5 4 1 7 3 9 6-6-1-10 .5-12 4.5h-2Z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Civic Commons Open Gate">
+  <rect width="64" height="64" rx="12" fill="#f4f0e4"/>
+  <path fill="#163c29" d="M15 22C19 11 25 7 32 7s13 4 17 15l-5 2c-3-8-7-11-12-11s-9 3-12 11l-5-2Z"/>
+  <path fill="#163c29" d="M5 25 15 20v34L5 59V25Zm54 0-10-5v34l10 5V25Z"/>
+  <path fill="#f4f0e4" d="m8 32 4-2v4l-4 1v-3Zm48 0-4-2v4l4 1v-3Z"/>
+  <circle cx="26" cy="31" r="6" fill="#163c29"/>
+  <path fill="#163c29" d="M24.5 35h3v9h-3zM35 34h7v10h-7zM36 31l2.5-5 2.5 5h-5Z"/>
+  <path fill="#7fa18d" d="M16 43c6-4 12-6 19-5 6 0 11 2 14 5v8H16v-8Z"/>
+  <path fill="#f4f0e4" d="M34 64H22c6-5 10-9 10-12 0-3-4-5-11-6 5-3 10-4 15-3 5 1 9 2 12 5-7-1-11 0-11 3 0 4 7 7 12 13H34Z"/>
 </svg>
