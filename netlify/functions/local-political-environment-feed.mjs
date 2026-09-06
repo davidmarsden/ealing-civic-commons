@@ -246,7 +246,7 @@ function inferTopics(text = '', defaults = []) {
     ['Council & democracy', /council|councillor|cabinet|committee|election|manifesto|budget|scrutiny|consultation|ward|mayor/],
     ['Planning & development', /planning|development|regeneration|tower|housing scheme|co-living|hmo|land|golf club|conservation/],
     ['Housing', /housing|rent|tenant|landlord|homeless|affordable|social rent|hmo/],
-    ['Environment', /environment|climate|litter|fly.?tip|waste|recycling|river|park|green space|nature|biodiversity|pollution|air quality|tree/],
+    ['Environment', /environment|climate|litter|fly.?tip|waste|recycling|river|park|green space|nature|biodiversity|pollution|air quality|\btree\b/],
     ['Transport', /transport|traffic|bus|rail|road|parking|cycle|tfl|heathrow/],
     ['Schools & young people', /school|education|children|young people|youth|ofsted|safeguard/],
     ['Policing & safety', /police|crime|antisocial|anti-social|safety|cctv|violence/],
@@ -266,7 +266,7 @@ function listingScope(source, html) {
   if (!source.startMarker) return html;
   const lower = String(html).toLowerCase();
   const start = lower.indexOf(source.startMarker.toLowerCase());
-  if (start < 0) return html;
+  if (start < 0) return '';
   const end = source.endMarker ? lower.indexOf(source.endMarker.toLowerCase(), start + source.startMarker.length) : -1;
   return html.slice(start, end > start ? end : undefined);
 }
