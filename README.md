@@ -95,13 +95,13 @@ Open Council Network public Ealing summaries are integrated through a conservati
 
 ## Source model
 
-The live source universe now spans local journalism, community organisations, campaign publishing, independent commentary and official records. Recent additions include Stop The Towers, Friends of the Victoria Hall, Southall Speaks, Visit Southall and Vicious Ealing Council alongside Southall Stories, Community Powered Reporting, Ealing Matters, Ealing Civic Society, Ealing Council publishing and OCN/ModernGov bridges.
+The live source universe now spans local journalism, community organisations, campaign publishing, independent commentary, party-political publishing and official records. Recent additions include Stop The Towers, Friends of the Victoria Hall, Southall Speaks, Visit Southall, Vicious Ealing Council, EALING.NEWS, LAGER Can, Ealing Labour, Ealing Conservatives, Ealing Green Party, Ealing Liberal Democrats, Hanwell Community Forum, Southall Community Alliance, Norwood Green Residents’ Association and Bedford Park Society, alongside the established journalism, community and official sources.
 
 The human-readable [Source Register v0.4](./docs/source-register-v0.4.md) now distinguishes sources that are actually **INGESTING** from those that are merely **VERIFIED**, **CANDIDATE**, **PARTNER** or **REFERENCE**. Production source definitions and public source-health output remain authoritative for live operational state.
 
 Native RSS remains the preferred path when available, but it is no longer the only path: source-specific public-page adapters and cautious fallbacks are an established ingestion pattern where they preserve first-party provenance and stable identities.
 
-Further candidates are added deliberately to fill geographic and thematic gaps rather than simply maximise source count. Greenford has a promising active hyperlocal publication in **Positive Greenford** (`https://positivegreenford.com/`), while Northolt and especially Perivale still need stronger first-party civic publishing coverage.
+Further candidates are added deliberately to fill geographic and thematic gaps rather than simply maximise source count. Positive Greenford and Visions for Northolt are already live; Hanwell coverage has improved with Hanwell Community Forum; Southall/Norwood Green community coverage has deepened. **Perivale remains the clearest geographic publishing gap.**
 
 ## Source submissions
 
@@ -141,7 +141,7 @@ npm run build
 4. Finish the public entity completeness audit and automate checks for newly incomplete records.
 5. Harden official-source ingestion, especially ModernGov direct destinations, meeting/document relationships, parser tests, caching and preservation of high-value primary records.
 6. Finish town-aware social metadata routing so existing share-card assets are actually emitted for public item/entity URLs.
-7. Continue deliberate source expansion, prioritising genuine geographic/thematic gaps — particularly Greenford, Northolt and Perivale — while hardening existing adapters.
+7. Continue deliberate source expansion by genuine geographic/thematic gap — especially Perivale — while hardening existing adapters and keeping fragile upstreams visible through source health.
 8. Explore OCN partnership/API and later federation bridges in parallel without making either a dependency.
 
 The Commons should remain useful if any one external service is unavailable.
