@@ -57,6 +57,58 @@ const sources = [
     type: 'political',
     articlePattern: /^\/news\/article\/[a-z0-9-]+\/?$/i,
     defaultTopics: ['Council & democracy']
+  },
+  {
+    id: 'hanwell-community-forum',
+    name: 'Hanwell Community Forum',
+    url: 'https://hanwellcommunityforum.org.uk/',
+    homepage: 'https://hanwellcommunityforum.org.uk/',
+    sourceClass: 'Organisation / campaign',
+    contentLabel: 'Community forum',
+    type: 'community',
+    towns: ['Hanwell'],
+    articlePattern: /^\/[a-z0-9][a-z0-9-]+\/?$/i,
+    defaultTopics: ['Community', 'Council & democracy']
+  },
+  {
+    id: 'southall-community-alliance',
+    name: 'Southall Community Alliance',
+    url: 'https://southallcommunityalliance.com/',
+    homepage: 'https://southallcommunityalliance.com/',
+    sourceClass: 'Organisation / campaign',
+    contentLabel: 'Community alliance',
+    type: 'community',
+    towns: ['Southall'],
+    articlePattern: /^\/[a-z0-9][a-z0-9-]+\/?$/i,
+    startMarker: 'Our News Page',
+    endMarker: 'SCA Resource Centre',
+    defaultTopics: ['Community']
+  },
+  {
+    id: 'norwood-green-residents',
+    name: 'Norwood Green Residents’ Association',
+    url: 'https://norwoodgreenresidents.org/',
+    homepage: 'https://norwoodgreenresidents.org/',
+    sourceClass: 'Organisation / campaign',
+    contentLabel: 'Residents’ association',
+    type: 'community',
+    towns: ['Southall'],
+    articlePattern: /^\/[a-z0-9][a-z0-9-]+\/?$/i,
+    defaultTopics: ['Community', 'Planning & development']
+  },
+  {
+    id: 'bedford-park-society',
+    name: 'Bedford Park Society',
+    url: 'https://www.bedfordpark.org.uk/',
+    homepage: 'https://www.bedfordpark.org.uk/',
+    sourceClass: 'Organisation / campaign',
+    contentLabel: 'Conservation and residents’ society',
+    type: 'community',
+    towns: ['Acton'],
+    articlePattern: /^\/[a-z0-9][a-z0-9-]+\/?$/i,
+    startMarker: 'News',
+    endMarker: 'Society Publications',
+    defaultTopics: ['Planning & development', 'Culture & history']
   }
 ];
 
@@ -192,38 +244,49 @@ function inferTopics(text = '', defaults = []) {
   const value = String(text).toLowerCase();
   const rules = [
     ['Council & democracy', /council|councillor|cabinet|committee|election|manifesto|budget|scrutiny|consultation|ward|mayor/],
-    ['Planning & development', /planning|development|regeneration|tower|housing scheme|co-living|hmo|land|golf club/],
+    ['Planning & development', /planning|development|regeneration|tower|housing scheme|co-living|hmo|land|golf club|conservation/],
     ['Housing', /housing|rent|tenant|landlord|homeless|affordable|social rent|hmo/],
-    ['Environment', /environment|climate|litter|fly.?tip|waste|recycling|river|park|green space|nature|biodiversity|pollution|air quality/],
+    ['Environment', /environment|climate|litter|fly.?tip|waste|recycling|river|park|green space|nature|biodiversity|pollution|air quality|\btree\b/],
     ['Transport', /transport|traffic|bus|rail|road|parking|cycle|tfl|heathrow/],
     ['Schools & young people', /school|education|children|young people|youth|ofsted|safeguard/],
     ['Policing & safety', /police|crime|antisocial|anti-social|safety|cctv|violence/],
     ['Public health', /health|nhs|hospital|social care|wellbeing/],
-    ['Community', /community|volunteer|residents|neighbourhood|festival|interfaith/]
+    ['Community', /community|volunteer|residents|neighbourhood|festival|interfaith/],
+    ['Culture & history', /heritage|history|architecture|conservation/]
   ];
   const inferred = rules.filter(([, rx]) => rx.test(value)).map(([topic]) => topic);
   return [...new Set([...inferred, ...defaults])].slice(0, 4);
 }
 
 function isNavigationalTitle(title = '') {
-  return /^(?:read more|view|news|latest|blog|campaigns|our plan|our team|join|donate|events?)$/i.test(title.trim());
+  return /^(?:read more|view|news|latest|blog|campaigns|our plan|our team|join|donate|events?|about|contact)$/i.test(title.trim());
+}
+
+function listingScope(source, html) {
+  if (!source.startMarker) return html;
+  const lower = String(html).toLowerCase();
+  const start = lower.indexOf(source.startMarker.toLowerCase());
+  if (start < 0) return '';
+  const end = source.endMarker ? lower.indexOf(source.endMarker.toLowerCase(), start + source.startMarker.length) : -1;
+  return html.slice(start, end > start ? end : undefined);
 }
 
 function extractListing(source, html) {
   const links = [];
+  const scopedHtml = listingScope(source, html);
   const rx = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
   let match;
-  while ((match = rx.exec(html))) {
+  while ((match = rx.exec(scopedHtml))) {
     const url = absoluteUrl(match[1], source.url);
     if (!url || !sameHost(url.hostname, new URL(source.url).hostname) || !source.articlePattern.test(url.pathname)) continue;
     const title = strip(match[2]);
     if (title.length < 10 || title.length > 220 || isNavigationalTitle(title)) continue;
     const start = Math.max(0, match.index - 350);
-    const end = Math.min(html.length, rx.lastIndex + 500);
-    const nearby = strip(html.slice(start, end));
+    const end = Math.min(scopedHtml.length, rx.lastIndex + 500);
+    const nearby = strip(scopedHtml.slice(start, end));
     links.push({ url: url.href, title, nearby, publishedAt: pathDate(url.pathname) });
   }
-  return [...new Map(links.map(item => [item.url, item])).values()].slice(0, 20);
+  return [...new Map(links.map(item => [item.url, item])).values()].slice(0, 24);
 }
 
 async function enrich(source, entry) {
@@ -238,7 +301,6 @@ async function enrich(source, entry) {
     summary = scoped.summary;
     publishedAt = structuredPublishedDate(html) || parseDate(articleText) || publishedAt;
   } catch {
-    // Fall back only to the listing excerpt and a date encoded in the article URL.
     articleText = entry.nearby;
     summary = entry.nearby;
   }
@@ -246,7 +308,7 @@ async function enrich(source, entry) {
   if (!publishedAt) return null;
 
   const contentText = `${entry.title} ${articleText || summary}`.trim();
-  const placeScope = inferPlaceScope(contentText);
+  const placeScope = source.towns?.length ? { towns: source.towns, boroughWide: false } : inferPlaceScope(contentText);
   const hash = createHash('sha256').update(entry.url).digest('hex').slice(0, 16);
   const cleanSummary = String(summary || articleText || '')
     .replace(entry.title, ' ')
@@ -273,7 +335,9 @@ async function enrich(source, entry) {
     derived: true,
     derivedFrom: source.type === 'political'
       ? 'First-party local party news/publication page; political claims remain attributable to the publisher'
-      : 'First-party organisation blog page; article links and publisher dates extracted conservatively'
+      : source.type === 'community'
+        ? 'First-party community/residents publication page; article metadata and scoped content extracted conservatively'
+        : 'First-party organisation blog page; article links and publisher dates extracted conservatively'
   };
 }
 

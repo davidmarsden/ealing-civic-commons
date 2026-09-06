@@ -78,6 +78,10 @@ The following named source surfaces are configured in the current live aggregati
 | Ealing Conservatives — News | Borough-wide | Political organisation / campaign | First-party local news/publication page; same political-source treatment as other parties | **INGESTING** |
 | Ealing Green Party — News | Borough-wide | Political organisation / campaign | First-party news page; same political-source treatment as other parties | **INGESTING** |
 | Ealing Liberal Democrats — News | Borough-wide | Political organisation / campaign | First-party local news page; same political-source treatment as other parties | **INGESTING** |
+| Hanwell Community Forum | Hanwell | Community forum | First-party site monitored for safely dated community/civic publications; health remains visible if the upstream site is unavailable or exposes no current dated items | **INGESTING** |
+| Southall Community Alliance | Southall | Community alliance / charity | First-party news section; article metadata and scoped article content extracted conservatively | **INGESTING** |
+| Norwood Green Residents’ Association | Southall / Norwood Green | Residents / community | Current first-party residents’ site monitored for safely dated civic/community publications | **INGESTING** |
+| Bedford Park Society | Acton | Conservation / residents | First-party Society news/publication section; article metadata used for dates and scoped content | **INGESTING** |
 | Sri Guru Singh Sabha Southall — civic/community video | Southall | Community / faith / video | YouTube Atom filtered for civic/community material and excluding routine worship livestreams | **INGESTING** |
 | Metropolitan Police — Ealing-relevant video | Borough-wide | Official record / video | Metropolitan Police YouTube Atom filtered for explicit Ealing-area terms | **INGESTING** |
 | Ealing Synagogue — civic/community updates | Ealing | Community / faith | First-party page filtered for civic/community material | **INGESTING** |
@@ -106,6 +110,10 @@ This is the part of the register most affected by the v0.3 status ambiguity.
 | **Vicious Ealing Council** | `READY` | **INGESTING** | Live through RSS/fallback handling. |
 | **Stop The Towers** | `READY` | **INGESTING** | Live through a dedicated campaign-news adapter. |
 | **Friends of the Victoria Hall** | `READY` | **INGESTING** | Live through a dedicated chronology adapter. |
+| **Bedford Park Society** | `READY` / later `VERIFIED` | **INGESTING** | Current first-party Society publishing surface is now wired into live source health and aggregation. |
+| **Southall Community Alliance** | `PARTNER` | **INGESTING** | Current 2026 first-party news is now extracted directly; a partnership could still improve the publishing bridge. |
+| **Norwood Green Residents’ Association** | `PARTNER` | **INGESTING** | Current first-party residents’ site is now operationally configured. |
+| **Hanwell Community Forum** | `PARTNER` | **INGESTING** | High-priority Hanwell source is now operationally configured; upstream health is reported independently. |
 
 The key rule from now on is simple: **READY/VERIFIED must never be used as a synonym for INGESTING.**
 
@@ -116,15 +124,11 @@ The key rule from now on is simple: **READY/VERIFIED must never be used as a syn
 | Source | Geography | Type | Status | Integration / notes |
 |---|---|---|---|---|
 | Asian Standard — Southall | Southall | Regional/local journalism | **VERIFIED** | Category RSS was previously verified, but it is not present in the current audited live source configuration. Re-test before enabling. |
-| Bedford Park Society | Acton | Conservation / residents | **VERIFIED** | RSS previously verified; not present in the current audited live source configuration. |
-| Southall Community Alliance | Southall | Community alliance / charity | **PARTNER** | Current live site with fresh 2026 material; direct publishing bridge/partnership remains preferable. |
 | Central Acton Neighbourhood Forum | Acton | Neighbourhood planning | **PARTNER** | Active news pages; feed/integration still needs a deliberate choice. |
 | Churchfield Community Association | Acton | Community / planning | **PARTNER** | Active source; feed requires technical/manual check. |
 | Church Avenue Residents’ Association | Ealing | Residents | **CANDIDATE** | Blogger site; Atom/RSS likely, endpoint still to verify. |
 | Hanger Hill (East) Residents’ Association | Ealing | Residents / planning | **PARTNER** | Active site; native feed unclear. |
 | Hanger Hill Garden Estate Residents’ Association | Ealing | Residents / conservation | **PARTNER** | Site/news present; RSS not yet verified. |
-| Norwood Green Residents’ Association | Southall / Norwood Green | Residents / community | **PARTNER** | Site has downloadable newsletters; feed not yet verified. |
-| Hanwell Community Forum | Hanwell | Broad community forum | **PARTNER** | High-priority Hanwell source/partner candidate. |
 | Grand Union Alliance | Multi-area canal corridor | Environment / planning / community | **PARTNER** | Potentially relevant across Greenford, Southall and Old Oak. |
 
 This table is intentionally conservative. A source is not promoted to `INGESTING` merely because a feed exists.
@@ -150,9 +154,9 @@ Only step 4 earns `INGESTING`.
 
 # 5. Geographic coverage
 
-Coverage remains uneven. Acton and Ealing have dense civic-source networks. Southall now has a much healthier mixed source set spanning independent reporting, community publishing, residents/campaign groups and official records. Greenford has improved with Positive Greenford; Northolt has an implemented project source through Visions for Northolt.
+Coverage remains uneven. Acton and Ealing have dense civic-source networks. Southall now has a much healthier mixed source set spanning independent reporting, community publishing, residents/campaign groups and official records. Greenford has improved with Positive Greenford; Northolt has an implemented project source through Visions for Northolt. Hanwell now has a dedicated Community Forum source as well as Warren Farm coverage.
 
-**Perivale remains the clearest geographic publishing gap**, and Hanwell still needs stronger routine first-party publishing coverage despite useful civic organisations being known there.
+**Perivale remains the clearest geographic publishing gap.** Hanwell is improved but still deserves further routine first-party source discovery, particularly if the Community Forum's upstream publishing becomes intermittent.
 
 A thin register must not be interpreted as thin civic life. Gaps should trigger deliberate discovery and partnership work.
 
