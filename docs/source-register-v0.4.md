@@ -73,6 +73,11 @@ The following named source surfaces are configured in the current live aggregati
 | Ealing Friends of the Earth — Current news | Borough-wide | Organisation / campaign | Content-hashed living-publication section | **INGESTING** |
 | The Monitoring Group — The Drum | Borough / west London relevance | Organisation / campaign | Content-hashed living-publication section | **INGESTING** |
 | Ealing Community Independents — Current publication | Borough-wide | Political organisation / campaign | Content-hashed living-publication section | **INGESTING** |
+| LAGER Can — Blog | Borough-wide | Environmental community organisation | Dated first-party blog adapter; only the blog is ingested because the current homepage contains unrelated spam text | **INGESTING** |
+| Ealing Labour — News | Borough-wide | Political organisation / campaign | First-party publication page; political claims remain attributable to Ealing Labour | **INGESTING** |
+| Ealing Conservatives — News | Borough-wide | Political organisation / campaign | First-party local news/publication page; same political-source treatment as other parties | **INGESTING** |
+| Ealing Green Party — News | Borough-wide | Political organisation / campaign | First-party news page; same political-source treatment as other parties | **INGESTING** |
+| Ealing Liberal Democrats — News | Borough-wide | Political organisation / campaign | First-party local news page; same political-source treatment as other parties | **INGESTING** |
 | Sri Guru Singh Sabha Southall — civic/community video | Southall | Community / faith / video | YouTube Atom filtered for civic/community material and excluding routine worship livestreams | **INGESTING** |
 | Metropolitan Police — Ealing-relevant video | Borough-wide | Official record / video | Metropolitan Police YouTube Atom filtered for explicit Ealing-area terms | **INGESTING** |
 | Ealing Synagogue — civic/community updates | Ealing | Community / faith | First-party page filtered for civic/community material | **INGESTING** |
@@ -161,6 +166,8 @@ A thin register must not be interpreted as thin civic life. Gaps should trigger 
 - Closed social networks should not become foundational dependencies.
 - High-volume official feeds must not crowd quieter civic publishers out of the live view.
 - High-volume general-news feeds should be filtered for civic relevance so they do not crowd quieter civic publishers out of the live view.
+- Local party-political publishing is a legitimate civic source class, but all significant local parties should be integrated on equivalent terms and clearly distinguished from official council records.
+- Political claims and campaign language remain attributable to the publishing party; ingestion is not endorsement or verification by Civic Commons.
 - Routine document publishing belongs in Document Watch/civic memory rather than automatically dominating the attention timeline.
 - Source failures should be visible through health diagnostics rather than silently disappearing.
 - The register should be updated in the same PR whenever a source is added, removed, materially reworked or reclassified.
