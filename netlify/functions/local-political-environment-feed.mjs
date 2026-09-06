@@ -113,6 +113,11 @@ function sameHost(a, b) {
   return a.replace(/^www\./i, '').toLowerCase() === b.replace(/^www\./i, '').toLowerCase();
 }
 
+function normaliseDate(raw) {
+  const stamp = Date.parse(String(raw || '').replace(/(\d)(st|nd|rd|th)/i, '$1'));
+  return Number.isFinite(stamp) ? new Date(stamp).toISOString() : null;
+}
+
 function parseDate(text = '') {
   const patterns = [
     /\b([0-3]?\d(?:st|nd|rd|th)?\s+[A-Za-z]+\s+20\d{2})\b/i,
@@ -122,16 +127,65 @@ function parseDate(text = '') {
   for (const pattern of patterns) {
     const match = String(text).match(pattern);
     if (!match) continue;
-    const stamp = Date.parse(match[1].replace(/(\d)(st|nd|rd|th)/i, '$1'));
-    if (Number.isFinite(stamp)) return new Date(stamp).toISOString();
+    const date = normaliseDate(match[1]);
+    if (date) return date;
   }
   return null;
 }
 
-function inferTowns(text = '') {
+function pathDate(pathname = '') {
+  const match = String(pathname).match(/^\/(20\d{2})\/(\d{2})\/(\d{2})\//);
+  return match ? normaliseDate(`${match[1]}-${match[2]}-${match[3]}`) : null;
+}
+
+function metaContent(html = '', key) {
+  const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const patterns = [
+    new RegExp(`<meta\\b[^>]*(?:property|name)=["']${escaped}["'][^>]*content=["']([^"']+)["'][^>]*>`, 'i'),
+    new RegExp(`<meta\\b[^>]*content=["']([^"']+)["'][^>]*(?:property|name)=["']${escaped}["'][^>]*>`, 'i')
+  ];
+  for (const pattern of patterns) {
+    const match = String(html).match(pattern);
+    if (match) return decode(match[1]).trim();
+  }
+  return '';
+}
+
+function structuredPublishedDate(html = '') {
+  const candidates = [
+    metaContent(html, 'article:published_time'),
+    metaContent(html, 'date'),
+    metaContent(html, 'datePublished')
+  ].filter(Boolean);
+
+  const time = String(html).match(/<time\b[^>]*datetime=["']([^"']+)["'][^>]*>/i)?.[1];
+  if (time) candidates.push(time);
+
+  for (const match of String(html).matchAll(/["']datePublished["']\s*:\s*["']([^"']+)["']/gi)) candidates.push(match[1]);
+
+  for (const candidate of candidates) {
+    const date = normaliseDate(candidate);
+    if (date) return date;
+  }
+  return null;
+}
+
+function articleContent(html = '') {
+  const description = metaContent(html, 'description') || metaContent(html, 'og:description');
+  const article = String(html).match(/<article\b[^>]*>([\s\S]*?)<\/article>/i)?.[1];
+  const main = String(html).match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)?.[1];
+  const body = strip(article || main || '');
+  const summary = strip(description);
+  return {
+    text: body || summary,
+    summary: summary || body.slice(0, 700)
+  };
+}
+
+function inferPlaceScope(text = '') {
   const value = String(text);
-  const found = TOWNS.filter(town => new RegExp(`(^|[^A-Za-z])${town}([^A-Za-z]|$)`, 'i').test(value));
-  return found.length ? found : ['Ealing'];
+  const towns = TOWNS.filter(town => new RegExp(`(^|[^A-Za-z])${town}([^A-Za-z]|$)`, 'i').test(value));
+  return { towns, boroughWide: towns.length === 0 };
 }
 
 function inferTopics(text = '', defaults = []) {
@@ -164,30 +218,37 @@ function extractListing(source, html) {
     if (!url || !sameHost(url.hostname, new URL(source.url).hostname) || !source.articlePattern.test(url.pathname)) continue;
     const title = strip(match[2]);
     if (title.length < 10 || title.length > 220 || isNavigationalTitle(title)) continue;
-    const start = Math.max(0, match.index - 500);
-    const end = Math.min(html.length, rx.lastIndex + 900);
+    const start = Math.max(0, match.index - 350);
+    const end = Math.min(html.length, rx.lastIndex + 500);
     const nearby = strip(html.slice(start, end));
-    const publishedAt = parseDate(nearby) || parseDate(url.pathname.replace(/\//g, '-'));
-    links.push({ url: url.href, title, nearby, publishedAt });
+    links.push({ url: url.href, title, nearby, publishedAt: pathDate(url.pathname) });
   }
   return [...new Map(links.map(item => [item.url, item])).values()].slice(0, 20);
 }
 
 async function enrich(source, entry) {
-  let articleText = entry.nearby;
+  let articleText = '';
+  let summary = '';
   let publishedAt = entry.publishedAt;
+
   try {
     const html = await fetchHtml(entry.url);
-    const text = strip(html);
-    if (text.length > articleText.length) articleText = text;
-    publishedAt = publishedAt || parseDate(text);
+    const scoped = articleContent(html);
+    articleText = scoped.text;
+    summary = scoped.summary;
+    publishedAt = structuredPublishedDate(html) || parseDate(articleText) || publishedAt;
   } catch {
-    // Listing metadata is enough to keep a current item when an article page blocks automation.
+    // Fall back only to the listing excerpt and a date encoded in the article URL.
+    articleText = entry.nearby;
+    summary = entry.nearby;
   }
+
   if (!publishedAt) return null;
 
+  const contentText = `${entry.title} ${articleText || summary}`.trim();
+  const placeScope = inferPlaceScope(contentText);
   const hash = createHash('sha256').update(entry.url).digest('hex').slice(0, 16);
-  const summary = articleText
+  const cleanSummary = String(summary || articleText || '')
     .replace(entry.title, ' ')
     .replace(/\s+/g, ' ')
     .trim()
@@ -204,10 +265,11 @@ async function enrich(source, entry) {
     title: entry.title,
     url: entry.url,
     canonicalUrl: entry.url,
-    summary,
+    summary: cleanSummary,
     publishedAt,
-    towns: inferTowns(`${entry.title} ${articleText}`),
-    topics: inferTopics(`${entry.title} ${articleText}`, source.defaultTopics),
+    towns: placeScope.towns,
+    boroughWide: placeScope.boroughWide,
+    topics: inferTopics(contentText, source.defaultTopics),
     derived: true,
     derivedFrom: source.type === 'political'
       ? 'First-party local party news/publication page; political claims remain attributable to the publisher'
