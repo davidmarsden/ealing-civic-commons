@@ -76,22 +76,33 @@ function historicalSignature(value) {
   const tokens = nameTokens(value);
   if (tokens.length < 2) return null;
 
-  // electionresults.uk historical rows use forms such as "Donnelly S." and
-  // "van de Geer M.". A short final token is therefore the given-name initial,
-  // not a surname. Using the token immediately before it as the surname core
-  // keeps particles safe while avoiding assumptions about full given names.
+  // electionresults.uk historical rows use surname-first abbreviated forms such
+  // as "Donnelly S." and "van de Geer M.". The final token is the given-name
+  // initial; the token immediately before it is the surname core.
   const final = tokens[tokens.length - 1];
-  if (final.length <= 3) {
-    return {
-      surnameCore: tokens[tokens.length - 2],
-      firstInitial: final[0]
-    };
-  }
+  return {
+    surnameCore: tokens[tokens.length - 2],
+    firstInitial: final[0]
+  };
+}
 
+function currentSourceSignature(value) {
+  const tokens = nameTokens(value);
+  if (tokens.length < 2) return null;
+
+  // The direct Ealing Council importer has already converted source rows into
+  // normal given-name-first display order. Never infer name order from token
+  // length here: short surnames such as Roy are perfectly valid surnames.
   return {
     surnameCore: tokens[tokens.length - 1],
     firstInitial: tokens[0][0]
   };
+}
+
+function recordSignature(record) {
+  return record.electionYear === 2026
+    ? currentSourceSignature(record.candidateNameSource)
+    : historicalSignature(record.candidateNameSource);
 }
 
 function personSignatures(person) {
@@ -103,17 +114,34 @@ function personSignatures(person) {
     .filter(Boolean);
 }
 
+function unmatched(method = null) {
+  return { status: 'unmatched', route: null, method, confidence: null };
+}
+
 function resolveCurrentCouncillor(record) {
-  const signature = historicalSignature(record.candidateNameSource);
-  if (!signature?.surnameCore || !signature.firstInitial) return { status: 'unmatched', route: null, method: null, confidence: null };
+  const signature = recordSignature(record);
+  if (!signature?.surnameCore || !signature.firstInitial) return unmatched();
 
   let candidates = EALING_COUNCILLORS.filter(person => personSignatures(person).some(sig =>
     sig.surnameCore === signature.surnameCore && sig.firstInitial === signature.firstInitial
   ));
 
-  // Post-2022 ward names are from the same boundary era as the current roster,
-  // so ward agreement is useful corroboration. It is never required for 2018.
-  if (record.electionYear >= 2022 && record.ward?.name) {
+  // 2026 is the current council term. A 2026 candidacy must therefore agree
+  // with the current councillor's ward; a unique surname/initial match in a
+  // different ward is not enough and must never be published as high confidence.
+  if (record.electionYear === 2026) {
+    if (!record.ward?.name) return unmatched('missing-current-term-ward');
+    const wardMatches = candidates.filter(person => String(person.ward).toLowerCase() === String(record.ward.name).toLowerCase());
+    if (wardMatches.length !== 1) {
+      return wardMatches.length > 1
+        ? { status: 'ambiguous', route: null, method: 'current-term-name-and-ward-collision', confidence: null }
+        : unmatched('current-term-ward-mismatch');
+    }
+    candidates = wardMatches;
+  } else if (record.electionYear === 2022 && record.ward?.name) {
+    // 2022 uses the current boundary era, so matching ward is useful evidence,
+    // but councillors can change wards between elections. Keep it corroborative,
+    // not mandatory, for historical identity linkage.
     const wardMatches = candidates.filter(person => String(person.ward).toLowerCase() === String(record.ward.name).toLowerCase());
     if (wardMatches.length === 1) candidates = wardMatches;
   }
@@ -128,10 +156,12 @@ function resolveCurrentCouncillor(record) {
   return {
     status: 'matched',
     route: candidates[0].route,
-    method: record.electionYear >= 2022
-      ? 'unique-surname-core-first-initial-with-boundary-era-ward-corroboration'
-      : 'unique-surname-core-first-initial',
-    confidence: record.electionYear >= 2022 ? 'high' : 'medium',
+    method: record.electionYear === 2026
+      ? 'current-source-given-name-first-plus-required-current-ward'
+      : record.electionYear === 2022
+        ? 'historical-surname-initial-with-optional-current-boundary-ward-corroboration'
+        : 'historical-surname-initial',
+    confidence: record.electionYear === 2026 ? 'high' : record.electionYear === 2022 ? 'high' : 'medium',
     reviewState: 'algorithmic'
   };
 }
