@@ -7,6 +7,7 @@ const PAM_WEEKLY = 'https://pam.ealing.gov.uk/online-applications/search.do?acti
 const PLANNING_DATA = 'https://www.planning.data.gov.uk/entity.json';
 const PLANWIRE = 'https://api.planwire.io/v1/applications?council_id=ealing';
 const USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
+const EALING_TZ = 'Europe/London';
 
 const args = new Set(process.argv.slice(2));
 const outputArg = process.argv.find((value) => value.startsWith('--output='));
@@ -126,10 +127,18 @@ function parsePamWeek(label) {
   return new Date(Date.UTC(Number(match[3]), month, Number(match[1])));
 }
 
-function currentMondayUtc(now = new Date()) {
-  const day = now.getUTCDay();
-  const offset = day === 0 ? -6 : 1 - day;
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset));
+function currentMondayEaling(now = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: EALING_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'short',
+  }).formatToParts(now);
+  const values = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
+  const weekday = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 }[values.weekday];
+  if (!weekday) throw new Error(`Could not determine Ealing weekday for ${now.toISOString()}`);
+  return new Date(Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day) - (weekday - 1)));
 }
 
 function setSelect(form, name, predicate) {
@@ -141,7 +150,7 @@ function setSelect(form, name, predicate) {
 }
 
 function chooseLatestCompletedWeek(form) {
-  const monday = currentMondayUtc();
+  const monday = currentMondayEaling();
   const options = (form.selects.get('week') ?? [])
     .map((option) => ({ ...option, date: parsePamWeek(option.label) }))
     .filter((option) => option.date && option.date < monday)
