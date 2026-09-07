@@ -24,6 +24,28 @@ function normal(value) {
     .trim();
 }
 
+function tokens(value) {
+  return normal(value).split(/\s+/).filter(Boolean);
+}
+
+function fullNameSignature(value) {
+  const parts = tokens(value);
+  if (parts.length < 2) return null;
+  return { surnameCore: parts[parts.length - 1], firstInitial: parts[0][0] };
+}
+
+function historicalNameSignature(value) {
+  const parts = tokens(value);
+  if (parts.length < 2) return null;
+  const final = parts[parts.length - 1];
+  if (final.length !== 1) return null;
+  return { surnameCore: parts[parts.length - 2], firstInitial: final };
+}
+
+function sameSignature(a, b) {
+  return Boolean(a && b && a.surnameCore === b.surnameCore && a.firstInitial === b.firstInitial);
+}
+
 const PROFILES = [...PUBLIC_PEOPLE, ...EALING_COUNCILLORS];
 const PROFILE_BY_ROUTE = new Map(PROFILES.map(person => [person.route, person]));
 const PROFILE_NAMES = new Set(
@@ -45,8 +67,19 @@ function recordMatchesQuery(record, query) {
   if (!q) return false;
   if (normal(record.candidateNameSource).includes(q)) return true;
   if (record.identity?.status === 'matched' && record.identity.route) {
-    return profileMatchesQuery(record.identity.route, query);
+    if (profileMatchesQuery(record.identity.route, query)) return true;
   }
+
+  // 2018/2022 source rows use abbreviated surname-first forms such as
+  // "Marsden D.". Allow a full-name query such as "David Marsden" to match
+  // that public election record without pretending the match is a profile link.
+  if (record.electionYear < 2026) {
+    return sameSignature(
+      historicalNameSignature(record.candidateNameSource),
+      fullNameSignature(query)
+    );
+  }
+
   return false;
 }
 
@@ -105,7 +138,8 @@ function matchingReferences(query) {
     }
 
     if (PROFILE_NAMES.has(normal(record.candidateNameSource))) continue;
-    const key = normal(record.candidateNameSource);
+    const signature = record.electionYear < 2026 ? historicalNameSignature(record.candidateNameSource) : null;
+    const key = signature ? `${signature.surnameCore}:${signature.firstInitial}` : normal(record.candidateNameSource);
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key).push(record);
   }
