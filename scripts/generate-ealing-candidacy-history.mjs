@@ -105,6 +105,12 @@ function recordSignature(record) {
   return givenNameFirstSignature(record.candidateNameSource);
 }
 
+function signatureKey(signature) {
+  return signature?.surnameCore && signature?.firstInitial
+    ? `${signature.surnameCore}:${signature.firstInitial}`
+    : null;
+}
+
 function personSignatures(person) {
   return [person.name, ...(person.aliases || [])]
     .map(value => {
@@ -161,9 +167,53 @@ function resolveCurrentCouncillor(record) {
       : record.electionYear === 2022
         ? 'historical-2022-surname-initial-with-optional-current-boundary-ward-corroboration'
         : 'historical-2018-full-given-name-first',
-    confidence: record.electionYear === 2018 ? 'high' : 'high',
+    confidence: 'high',
     reviewState: 'algorithmic'
   };
+}
+
+function resolveHistoricalCohortCollisions(records) {
+  const bySignature = new Map();
+
+  for (const record of records) {
+    if (record.electionYear !== 2022) continue;
+    const key = signatureKey(recordSignature(record));
+    if (!key) continue;
+    if (!bySignature.has(key)) bySignature.set(key, []);
+    bySignature.get(key).push(record);
+  }
+
+  for (const cohort of bySignature.values()) {
+    const signature = recordSignature(cohort[0]);
+    const possiblePeople = EALING_COUNCILLORS.filter(person => personSignatures(person).some(sig =>
+      sig.surnameCore === signature.surnameCore && sig.firstInitial === signature.firstInitial
+    ));
+    if (possiblePeople.length < 2) continue;
+
+    const alreadyAssigned = new Set(
+      cohort
+        .filter(record => record.identity?.status === 'matched' && record.identity.route)
+        .map(record => record.identity.route)
+    );
+    const unresolved = cohort.filter(record =>
+      record.identity?.status === 'ambiguous' && record.identity.method === 'surname-core-first-initial-collision'
+    );
+    const remainingPeople = possiblePeople.filter(person => !alreadyAssigned.has(person.route));
+
+    // Only resolve by elimination when the election cohort itself leaves one
+    // unresolved record and one unused public identity. This handles same-
+    // surname/same-initial collisions without turning a loose name match into
+    // a general-purpose identity guess.
+    if (unresolved.length === 1 && remainingPeople.length === 1) {
+      unresolved[0].identity = {
+        status: 'matched',
+        route: remainingPeople[0].route,
+        method: 'historical-2022-surname-initial-cohort-elimination',
+        confidence: 'medium',
+        reviewState: 'algorithmic'
+      };
+    }
+  }
 }
 
 function upstreamForYear(year) {
@@ -273,6 +323,8 @@ for (const item of EALING_2026_CANDIDACIES) {
   record.identity = resolveCurrentCouncillor(record);
   history.push(record);
 }
+
+resolveHistoricalCohortCollisions(history);
 
 history.sort((a, b) => b.electionDate.localeCompare(a.electionDate) || a.ward.name.localeCompare(b.ward.name) || a.candidateNameSource.localeCompare(b.candidateNameSource));
 const meta = {
