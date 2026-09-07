@@ -3,6 +3,7 @@ import { findInstitutionalEntityByRoute } from '../lib/institutional-entities.mj
 import { findCommunityEntityByRoute } from '../lib/community-entities.mjs';
 import { findPublicPersonByRoute, findPublicPersonByProviderId } from '../lib/public-people.mjs';
 import { findEalingCouncillorByRoute, mergeEalingCouncillor } from '../lib/ealing-councillors.mjs';
+import { findCivicInstitutionByRoute } from '../lib/civic-institutions.mjs';
 
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
 const EXPECTED_SCHEMA = 1;
@@ -15,9 +16,7 @@ function byId(items = []) { return new Map(items.map(item => [item.id, item])); 
 function dateValue(value) { const n = Date.parse(value || ''); return Number.isFinite(n) ? n : 0; }
 function mergeAliases(...lists) { return [...new Set(lists.flatMap(list => Array.isArray(list) ? list : []).filter(Boolean))]; }
 
-function registryView(entity) {
-  return { id: entity.id, route: entity.route, name: entity.name, type: entity.type };
-}
+function registryView(entity) { return { id: entity.id, route: entity.route, name: entity.name, type: entity.type }; }
 
 function mergeKnownCouncillor(entity) {
   if (!entity) return null;
@@ -26,7 +25,7 @@ function mergeKnownCouncillor(entity) {
 }
 
 function registryEntityForRoute(route) {
-  const existing = findEntityByRoute(route) || findInstitutionalEntityByRoute(route) || findCommunityEntityByRoute(route) || findPublicPersonByRoute(route) || findEalingCouncillorByRoute(route);
+  const existing = findEntityByRoute(route) || findInstitutionalEntityByRoute(route) || findCommunityEntityByRoute(route) || findPublicPersonByRoute(route) || findEalingCouncillorByRoute(route) || findCivicInstitutionByRoute(route);
   return mergeKnownCouncillor(existing);
 }
 
@@ -40,12 +39,12 @@ function publicRegistryEntity(providerEntity) {
 
 function publicRoleFields(registryEntity) {
   if (registryEntity?.type !== 'person') return {};
-  return {
-    publicRole: registryEntity.publicRole || null,
-    roleStatus: registryEntity.roleStatus || null,
-    ward: registryEntity.ward || null,
-    party: registryEntity.party || null
-  };
+  return { publicRole: registryEntity.publicRole || null, roleStatus: registryEntity.roleStatus || null, ward: registryEntity.ward || null, party: registryEntity.party || null };
+}
+
+function institutionFields(registryEntity) {
+  if (!registryEntity || registryEntity.type === 'person') return {};
+  return { town: registryEntity.town || null, institutionType: registryEntity.institutionType || null };
 }
 
 function nativeEntityResponse(registryEntity) {
@@ -53,16 +52,7 @@ function nativeEntityResponse(registryEntity) {
     matched: true,
     schemaVersion: 1,
     civicEntity: registryView(registryEntity),
-    entity: {
-      id: registryEntity.id,
-      name: registryEntity.name,
-      type: registryEntity.type,
-      aliases: registryEntity.aliases || [],
-      description: registryEntity.description || null,
-      website: registryEntity.website || null,
-      ...publicRoleFields(registryEntity),
-      provenance: 'commons-entity-registry'
-    },
+    entity: { id: registryEntity.id, name: registryEntity.name, type: registryEntity.type, aliases: registryEntity.aliases || [], description: registryEntity.description || null, website: registryEntity.website || null, ...publicRoleFields(registryEntity), ...institutionFields(registryEntity), provenance: 'commons-entity-registry' },
     providers: providerViews(registryEntity),
     counts: { reporting: 0, relationships: 0, sources: 0 },
     relationships: [], sources: [], reporting: [], topics: [],
@@ -77,9 +67,7 @@ export default async request => {
   const legacyEntity = legacyId ? (findEntityByProviderId('southall-zettel', legacyId) || findPublicPersonByProviderId('southall-zettel', legacyId)) : null;
   let registryEntity = route ? registryEntityForRoute(route) : mergeKnownCouncillor(legacyEntity);
 
-  if (registryEntity && !registryEntity.providers.some(provider => provider.provider === 'southall-zettel' && provider.entityId)) {
-    return nativeEntityResponse(registryEntity);
-  }
+  if (registryEntity && !registryEntity.providers.some(provider => provider.provider === 'southall-zettel' && provider.entityId)) return nativeEntityResponse(registryEntity);
 
   try {
     const response = await fetch(EXPORT_URL, { headers: { accept: 'application/json' } });
@@ -140,26 +128,7 @@ export default async request => {
     }
     const topics = [...topicCounts.entries()].map(([topicId, count]) => ({ ...(topicsById.get(topicId) || { id: topicId, name: topicId }), count, provider: 'southall-zettel' })).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)).slice(0, 10);
 
-    return json({
-      matched: true,
-      schemaVersion: data.schema_version,
-      civicEntity: registryView(registryEntity),
-      entity: {
-        id: entity.id,
-        name: registryEntity.name || entity.name,
-        type: registryEntity.type || entity.type,
-        aliases: mergeAliases(registryEntity.aliases, entity.aliases),
-        description: registryEntity.description || entity.description || null,
-        website: registryEntity.website || entity.website || null,
-        ...publicRoleFields(registryEntity),
-        reviewStatus: entity.review_status,
-        provenance: entity.provenance
-      },
-      providers,
-      counts: { reporting: reporting.length, relationships: relationships.length, sources: sources.length },
-      relationships, sources, reporting, topics,
-      provenance: { label: 'Civic memory', source: 'Southall Stories research archive via the Civic Commons entity registry', method: 'Civic Commons owns the public civic identity and route. The Southall Stories research archive supplies reviewed identity metadata, relationships, source records and deterministic historical-reporting matches as one provider. Research-only people are not assigned public Commons routes unless explicitly registered; all current Ealing councillors are explicitly registered public office-holders.' }
-    }, 200, 300);
+    return json({ matched: true, schemaVersion: data.schema_version, civicEntity: registryView(registryEntity), entity: { id: entity.id, name: registryEntity.name || entity.name, type: registryEntity.type || entity.type, aliases: mergeAliases(registryEntity.aliases, entity.aliases), description: registryEntity.description || entity.description || null, website: registryEntity.website || entity.website || null, ...publicRoleFields(registryEntity), ...institutionFields(registryEntity), reviewStatus: entity.review_status, provenance: entity.provenance }, providers, counts: { reporting: reporting.length, relationships: relationships.length, sources: sources.length }, relationships, sources, reporting, topics, provenance: { label: 'Civic memory', source: 'Southall Stories research archive via the Civic Commons entity registry', method: 'Civic Commons owns the public civic identity and route. The Southall Stories research archive supplies reviewed identity metadata, relationships, source records and deterministic historical-reporting matches as one provider. Research-only people are not assigned public Commons routes unless explicitly registered; all current Ealing councillors are explicitly registered public office-holders.' } }, 200, 300);
   } catch (error) {
     console.error('Civic entity lookup failed', error);
     return json({ matched: false, reason: 'entity-service-unavailable' }, 200, 60);
