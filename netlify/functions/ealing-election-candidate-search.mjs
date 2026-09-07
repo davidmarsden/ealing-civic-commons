@@ -34,12 +34,18 @@ function fullNameSignature(value) {
   return { surnameCore: parts[parts.length - 1], firstInitial: parts[0][0] };
 }
 
-function historicalNameSignature(value) {
+function abbreviatedSurnameFirstSignature(value) {
   const parts = tokens(value);
   if (parts.length < 2) return null;
   const final = parts[parts.length - 1];
   if (final.length !== 1) return null;
   return { surnameCore: parts[parts.length - 2], firstInitial: final };
+}
+
+function recordSignature(record) {
+  return record.electionYear === 2022
+    ? abbreviatedSurnameFirstSignature(record.candidateNameSource)
+    : fullNameSignature(record.candidateNameSource);
 }
 
 function sameSignature(a, b) {
@@ -70,12 +76,13 @@ function recordMatchesQuery(record, query) {
     if (profileMatchesQuery(record.identity.route, query)) return true;
   }
 
-  // 2018/2022 source rows use abbreviated surname-first forms such as
-  // "Marsden D.". Allow a full-name query such as "David Marsden" to match
-  // that public election record without pretending the match is a profile link.
-  if (record.electionYear < 2026) {
+  // 2022 uses abbreviated surname-first source names such as "Marsden D.".
+  // Permit a full-name query to find that public election record by surname +
+  // first initial. 2018 already uses full given-name-first names, so it should
+  // be searched as recorded rather than forced through the abbreviation parser.
+  if (record.electionYear === 2022) {
     return sameSignature(
-      historicalNameSignature(record.candidateNameSource),
+      abbreviatedSurnameFirstSignature(record.candidateNameSource),
       fullNameSignature(query)
     );
   }
@@ -138,7 +145,7 @@ function matchingReferences(query) {
     }
 
     if (PROFILE_NAMES.has(normal(record.candidateNameSource))) continue;
-    const signature = record.electionYear < 2026 ? historicalNameSignature(record.candidateNameSource) : null;
+    const signature = recordSignature(record);
     const key = signature ? `${signature.surnameCore}:${signature.firstInitial}` : normal(record.candidateNameSource);
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key).push(record);
@@ -147,19 +154,19 @@ function matchingReferences(query) {
   const references = [...grouped.values()]
     .map(records => {
       records.sort((a, b) => b.electionDate.localeCompare(a.electionDate) || String(a.ward?.name || '').localeCompare(String(b.ward?.name || '')));
-      const first = records[0];
+      const fullNameRecord = records.find(item => item.electionYear === 2018) || records.find(item => item.electionYear === 2026) || records[0];
       const years = [...new Set(records.map(item => item.electionYear))].sort();
       return {
-        id: `election-reference:${normal(first.candidateNameSource).replace(/[^a-z0-9]+/g, '-')}`,
+        id: `election-reference:${normal(fullNameRecord.candidateNameSource).replace(/[^a-z0-9]+/g, '-')}`,
         route: null,
-        name: first.candidateNameSource,
+        name: fullNameRecord.candidateNameSource,
         type: 'person',
         kind: 'reference',
         referenceKind: 'election-candidate',
-        aliases: [],
+        aliases: [...new Set(records.map(item => item.candidateNameSource).filter(name => normal(name) !== normal(fullNameRecord.candidateNameSource)))],
         description: null,
         publicRole: records.length === 1
-          ? `Candidate for ${first.ward?.name || 'Ealing'} ward — ${first.ballot?.description || 'party/ballot description unavailable'}`
+          ? `Candidate for ${fullNameRecord.ward?.name || 'Ealing'} ward — ${fullNameRecord.ballot?.description || 'party/ballot description unavailable'}`
           : `${records.length} recorded Ealing Council candidacies across ${years.join(', ')}`,
         roleStatus: 'historical',
         referenceCount: records.length,
