@@ -4,6 +4,7 @@ import { findCommunityEntityByRoute } from '../lib/community-entities.mjs';
 import { findPublicPersonByRoute, findPublicPersonByProviderId } from '../lib/public-people.mjs';
 import { findEalingCouncillorByRoute, mergeEalingCouncillor } from '../lib/ealing-councillors.mjs';
 import { findCivicInstitutionByRoute } from '../lib/civic-institutions.mjs';
+import { findEalingSchoolByRoute } from '../lib/ealing-schools.mjs';
 
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
 const EXPECTED_SCHEMA = 1;
@@ -25,7 +26,7 @@ function mergeKnownCouncillor(entity) {
 }
 
 function registryEntityForRoute(route) {
-  const existing = findEntityByRoute(route) || findInstitutionalEntityByRoute(route) || findCommunityEntityByRoute(route) || findPublicPersonByRoute(route) || findEalingCouncillorByRoute(route) || findCivicInstitutionByRoute(route);
+  const existing = findEntityByRoute(route) || findInstitutionalEntityByRoute(route) || findCommunityEntityByRoute(route) || findPublicPersonByRoute(route) || findEalingCouncillorByRoute(route) || findCivicInstitutionByRoute(route) || findEalingSchoolByRoute(route);
   return mergeKnownCouncillor(existing);
 }
 
@@ -44,7 +45,15 @@ function publicRoleFields(registryEntity) {
 
 function institutionFields(registryEntity) {
   if (!registryEntity || registryEntity.type === 'person') return {};
-  return { town: registryEntity.town || null, institutionType: registryEntity.institutionType || null };
+  return {
+    town: registryEntity.town || null,
+    ward: registryEntity.ward || null,
+    institutionType: registryEntity.institutionType || null,
+    urn: registryEntity.urn || null,
+    phase: registryEntity.phase || null,
+    establishmentType: registryEntity.establishmentType || null,
+    postcode: registryEntity.postcode || null
+  };
 }
 
 function nativeEntityResponse(registryEntity) {
@@ -56,7 +65,7 @@ function nativeEntityResponse(registryEntity) {
     providers: providerViews(registryEntity),
     counts: { reporting: 0, relationships: 0, sources: 0 },
     relationships: [], sources: [], reporting: [], topics: [],
-    provenance: { label: 'Civic entity', source: 'Civic Commons entity registry', method: 'Canonical Commons identity with no historical research-archive record attached.' }
+    provenance: { label: registryEntity.urn ? 'Educational establishment' : 'Civic entity', source: registryEntity.urn ? 'Department for Education Get Information about Schools' : 'Civic Commons entity registry', method: registryEntity.urn ? 'Current Ealing establishment imported from the GIAS public bulk register using its URN as the stable identifier.' : 'Canonical Commons identity with no historical research-archive record attached.' }
   }, 200, 300);
 }
 
