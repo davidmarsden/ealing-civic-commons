@@ -62,12 +62,10 @@ function historyMarkup(records = []) {
 async function fetchHistory() {
   const route = routeFromLocation();
   if (!route) return [];
-  const endpoint = new URL('/.netlify/functions/ealing-candidacy-history', location.origin);
-  endpoint.searchParams.set('route', route);
-  const response = await fetch(endpoint, { cache: 'no-store' });
+  const response = await fetch('/ealing-candidacy-history.json', { cache: 'no-store' });
   if (!response.ok) throw new Error(`Candidacy history HTTP ${response.status}`);
   const data = await response.json();
-  return data.records || [];
+  return (data.records || []).filter(record => record.identity?.status === 'matched' && record.identity?.route === route);
 }
 
 async function renderElectionPanel() {
