@@ -19,12 +19,39 @@ function normal(value) {
   return String(value || '').trim().toLowerCase();
 }
 
+function nameTokens(value) {
+  return normal(value)
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
 const PROFILE_NAMES = new Set(
   [...PUBLIC_PEOPLE, ...EALING_COUNCILLORS]
     .flatMap(person => [person.name, ...(person.aliases || [])])
     .map(normal)
     .filter(Boolean)
 );
+
+function isCurrentCouncillorCandidacy(candidacy) {
+  if (!candidacy?.elected) return false;
+  const candidateTokens = nameTokens(candidacy.name);
+  if (candidateTokens.length < 2) return false;
+  const candidateFirst = candidateTokens[0];
+  const candidateSurname = candidateTokens[candidateTokens.length - 1];
+
+  return EALING_COUNCILLORS.some(councillor => {
+    if (normal(councillor.ward) !== normal(candidacy.ward)) return false;
+    return [councillor.name, ...(councillor.aliases || [])].some(value => {
+      const tokens = nameTokens(value);
+      if (tokens.length < 2) return false;
+      return tokens[0] === candidateFirst && tokens[tokens.length - 1] === candidateSurname;
+    });
+  });
+}
 
 function matchingReferences(query) {
   const q = normal(query);
@@ -34,6 +61,7 @@ function matchingReferences(query) {
   for (const candidacy of EALING_2026_CANDIDACIES) {
     if (!normal(candidacy.name).includes(q)) continue;
     if (PROFILE_NAMES.has(normal(candidacy.name))) continue;
+    if (isCurrentCouncillorCandidacy(candidacy)) continue;
     const key = normal(candidacy.name);
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key).push(candidacy);
