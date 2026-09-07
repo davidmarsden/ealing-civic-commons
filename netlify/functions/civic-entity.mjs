@@ -1,6 +1,7 @@
 import { findEntityByProviderId, findEntityByRoute, makeZettelRegistryEntity, parseEntityRoute, providerViews } from '../lib/entity-registry.mjs';
 import { findInstitutionalEntityByRoute } from '../lib/institutional-entities.mjs';
 import { findCommunityEntityByRoute } from '../lib/community-entities.mjs';
+import { findPublicPersonByRoute, findPublicPersonByProviderId } from '../lib/public-people.mjs';
 import { findEalingCouncillorByRoute, mergeEalingCouncillor } from '../lib/ealing-councillors.mjs';
 
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
@@ -25,13 +26,13 @@ function mergeKnownCouncillor(entity) {
 }
 
 function registryEntityForRoute(route) {
-  const existing = findEntityByRoute(route) || findInstitutionalEntityByRoute(route) || findCommunityEntityByRoute(route);
-  return mergeKnownCouncillor(existing || findEalingCouncillorByRoute(route));
+  const existing = findEntityByRoute(route) || findInstitutionalEntityByRoute(route) || findCommunityEntityByRoute(route) || findPublicPersonByRoute(route) || findEalingCouncillorByRoute(route);
+  return mergeKnownCouncillor(existing);
 }
 
 function publicRegistryEntity(providerEntity) {
   if (!providerEntity) return null;
-  const existing = findEntityByProviderId('southall-zettel', providerEntity.id);
+  const existing = findEntityByProviderId('southall-zettel', providerEntity.id) || findPublicPersonByProviderId('southall-zettel', providerEntity.id);
   if (existing) return mergeKnownCouncillor(existing);
   if (providerEntity.type === 'person') return null;
   return makeZettelRegistryEntity(providerEntity);
@@ -73,7 +74,8 @@ export default async request => {
   const requestUrl = new URL(request.url);
   const route = requestUrl.searchParams.get('route');
   const legacyId = requestUrl.searchParams.get('id');
-  let registryEntity = route ? registryEntityForRoute(route) : legacyId ? mergeKnownCouncillor(findEntityByProviderId('southall-zettel', legacyId)) : null;
+  const legacyEntity = legacyId ? (findEntityByProviderId('southall-zettel', legacyId) || findPublicPersonByProviderId('southall-zettel', legacyId)) : null;
+  let registryEntity = route ? registryEntityForRoute(route) : mergeKnownCouncillor(legacyEntity);
 
   if (registryEntity && !registryEntity.providers.some(provider => provider.provider === 'southall-zettel' && provider.entityId)) {
     return nativeEntityResponse(registryEntity);
@@ -147,7 +149,7 @@ export default async request => {
         name: registryEntity.name || entity.name,
         type: registryEntity.type || entity.type,
         aliases: mergeAliases(registryEntity.aliases, entity.aliases),
-        description: entity.description || registryEntity.description || null,
+        description: registryEntity.description || entity.description || null,
         website: registryEntity.website || entity.website || null,
         ...publicRoleFields(registryEntity),
         reviewStatus: entity.review_status,
@@ -156,7 +158,7 @@ export default async request => {
       providers,
       counts: { reporting: reporting.length, relationships: relationships.length, sources: sources.length },
       relationships, sources, reporting, topics,
-      provenance: { label: 'Civic memory', source: 'Southall Stories research archive via the Civic Commons entity registry', method: 'Civic Commons owns the public civic identity and route. The Southall Stories research archive supplies reviewed identity metadata, relationships, source records and deterministic historical-reporting matches as one provider. Research-only people are not assigned public Commons routes unless explicitly registered.' }
+      provenance: { label: 'Civic memory', source: 'Southall Stories research archive via the Civic Commons entity registry', method: 'Civic Commons owns the public civic identity and route. The Southall Stories research archive supplies reviewed identity metadata, relationships, source records and deterministic historical-reporting matches as one provider. Research-only people are not assigned public Commons routes unless explicitly registered; all current Ealing councillors are explicitly registered public office-holders.' }
     }, 200, 300);
   } catch (error) {
     console.error('Civic entity lookup failed', error);
