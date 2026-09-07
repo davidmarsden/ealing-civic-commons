@@ -1,0 +1,38 @@
+name: Planning source probe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run Ealing planning probe
+        run: node scripts/planning-probe.mjs --verbose --output=planning-probe.json
+        env:
+          PLANWIRE_API_KEY: ${{ secrets.PLANWIRE_API_KEY }}
+
+      - name: Show probe result
+        if: always()
+        run: cat planning-probe.json || true
+
+      - name: Upload probe result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ealing-planning-probe
+          path: planning-probe.json
+          if-no-files-found: warn
+          retention-days: 7
