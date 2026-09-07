@@ -3,6 +3,8 @@ import { writeFile } from 'node:fs/promises';
 const OUTPUT = new URL('../netlify/lib/ealing-election-candidates.mjs', import.meta.url);
 const MAIN_BASE = 'https://www.ealing.gov.uk/info/201276/council_elections/3595/council_elections_results_7_may_2026';
 const BY_ELECTION_URL = 'https://www.ealing.gov.uk/info/201279/by-elections/3611/north_acton_ward_by-election_result_25_june_2026';
+const FETCH_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 750;
 
 function decodeHtml(value) {
   return String(value || '')
@@ -74,43 +76,69 @@ function parseResultTable(html, { sourceUrl, electionDate, wardOverride = null, 
   return records;
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function fetchPage(url) {
-  const response = await fetch(url, { headers: { accept: 'text/html,*/*;q=0.8', 'user-agent': 'Ealing-Civic-Commons/1.0 election-record-refresh' } });
-  if (!response.ok) throw new Error(`Ealing election page HTTP ${response.status}: ${url}`);
-  return response.text();
+  let lastError;
+  for (let attempt = 1; attempt <= FETCH_ATTEMPTS; attempt += 1) {
+    try {
+      const response = await fetch(url, { headers: { accept: 'text/html,*/*;q=0.8', 'user-agent': 'Ealing-Civic-Commons/1.0 election-record-refresh' } });
+      if (response.ok) return response.text();
+      lastError = new Error(`Ealing election page HTTP ${response.status}: ${url}`);
+      if (response.status < 500 || attempt === FETCH_ATTEMPTS) throw lastError;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (attempt === FETCH_ATTEMPTS) throw lastError;
+    }
+    console.warn(`Election source fetch failed (attempt ${attempt}/${FETCH_ATTEMPTS}) for ${url}; retrying.`);
+    await sleep(RETRY_DELAY_MS * attempt);
+  }
+  throw lastError ?? new Error(`Unable to fetch ${url}`);
 }
 
-const candidacies = [];
-const wardSet = new Set();
-for (let page = 2; page <= 25; page += 1) {
-  const sourceUrl = `${MAIN_BASE}/${page}`;
-  const html = await fetchPage(sourceUrl);
-  const rows = parseResultTable(html, { sourceUrl, electionDate: '2026-05-07', electionLabel: 'Ealing Council election, 7 May 2026' });
-  rows.forEach(record => { candidacies.push(record); wardSet.add(record.ward); });
+async function generate() {
+  const candidacies = [];
+  const wardSet = new Set();
+  for (let page = 2; page <= 25; page += 1) {
+    const sourceUrl = `${MAIN_BASE}/${page}`;
+    const html = await fetchPage(sourceUrl);
+    const rows = parseResultTable(html, { sourceUrl, electionDate: '2026-05-07', electionLabel: 'Ealing Council election, 7 May 2026' });
+    rows.forEach(record => { candidacies.push(record); wardSet.add(record.ward); });
+  }
+
+  const byElectionHtml = await fetchPage(BY_ELECTION_URL);
+  candidacies.push(...parseResultTable(byElectionHtml, {
+    sourceUrl: BY_ELECTION_URL,
+    electionDate: '2026-06-25',
+    electionLabel: 'North Acton ward by-election, 25 June 2026',
+    wardOverride: 'North Acton'
+  }));
+
+  if (wardSet.size !== 24) throw new Error(`Expected 24 wards in 7 May 2026 election results; parsed ${wardSet.size}`);
+  if (candidacies.length < 200) throw new Error(`Election candidate import unexpectedly returned only ${candidacies.length} candidacies`);
+
+  candidacies.sort((a, b) => a.name.localeCompare(b.name) || a.electionDate.localeCompare(b.electionDate) || a.ward.localeCompare(b.ward));
+  const meta = {
+    source: 'Ealing Council official election results',
+    electionYear: 2026,
+    mainElectionDate: '2026-05-07',
+    byElectionDate: '2026-06-25',
+    wardCount: wardSet.size,
+    candidacyCount: candidacies.length,
+    generatedAt: new Date().toISOString(),
+    generated: true
+  };
+  const moduleText = `// Generated from official Ealing Council 2026 election-result pages. No home addresses or nomination-form personal data are imported.\nexport const EALING_2026_CANDIDACIES = ${JSON.stringify(candidacies, null, 2)};\nexport const EALING_2026_CANDIDACIES_META = ${JSON.stringify(meta, null, 2)};\n`;
+  await writeFile(OUTPUT, moduleText, 'utf8');
+  console.log(`Generated ${candidacies.length} Ealing 2026 candidacy records across ${wardSet.size} wards plus the North Acton by-election.`);
 }
 
-const byElectionHtml = await fetchPage(BY_ELECTION_URL);
-candidacies.push(...parseResultTable(byElectionHtml, {
-  sourceUrl: BY_ELECTION_URL,
-  electionDate: '2026-06-25',
-  electionLabel: 'North Acton ward by-election, 25 June 2026',
-  wardOverride: 'North Acton'
-}));
-
-if (wardSet.size !== 24) throw new Error(`Expected 24 wards in 7 May 2026 election results; parsed ${wardSet.size}`);
-if (candidacies.length < 200) throw new Error(`Election candidate import unexpectedly returned only ${candidacies.length} candidacies`);
-
-candidacies.sort((a, b) => a.name.localeCompare(b.name) || a.electionDate.localeCompare(b.electionDate) || a.ward.localeCompare(b.ward));
-const meta = {
-  source: 'Ealing Council official election results',
-  electionYear: 2026,
-  mainElectionDate: '2026-05-07',
-  byElectionDate: '2026-06-25',
-  wardCount: wardSet.size,
-  candidacyCount: candidacies.length,
-  generatedAt: new Date().toISOString(),
-  generated: true
-};
-const moduleText = `// Generated from official Ealing Council 2026 election-result pages. No home addresses or nomination-form personal data are imported.\nexport const EALING_2026_CANDIDACIES = ${JSON.stringify(candidacies, null, 2)};\nexport const EALING_2026_CANDIDACIES_META = ${JSON.stringify(meta, null, 2)};\n`;
-await writeFile(OUTPUT, moduleText, 'utf8');
-console.log(`Generated ${candidacies.length} Ealing 2026 candidacy records across ${wardSet.size} wards plus the North Acton by-election.`);
+try {
+  await generate();
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.warn(`Election candidate refresh skipped: ${message}`);
+  console.warn('Keeping the committed election-candidate module unchanged so a temporary Ealing Council outage does not fail the site build.');
+}
