@@ -15,7 +15,8 @@
     "generate:ealing-schools": "node scripts/generate-ealing-schools.mjs",
     "generate:ealing-election-candidates": "node scripts/generate-ealing-election-candidates.mjs",
     "generate:ealing-candidacy-history": "node scripts/generate-ealing-candidacy-history.mjs",
-    "build": "npm run validate:contributions && npm run validate:evidence && npm run generate:ealing-schools && npm run generate:ealing-election-candidates && npm run generate:ealing-candidacy-history && npm run validate:ealing-candidacy-history && mkdir -p dist/documents/content && cp -R public/. dist/ && cp docs/*.md dist/documents/content/ && npm run render:social-cards && npm run verify:social-cards"
+    "publish:ealing-candidacy-history": "node scripts/publish-ealing-candidacy-history.mjs",
+    "build": "npm run validate:contributions && npm run validate:evidence && npm run generate:ealing-schools && npm run generate:ealing-election-candidates && npm run generate:ealing-candidacy-history && npm run validate:ealing-candidacy-history && npm run publish:ealing-candidacy-history && mkdir -p dist/documents/content && cp -R public/. dist/ && cp docs/*.md dist/documents/content/ && npm run render:social-cards && npm run verify:social-cards"
   },
   "dependencies": {
     "@netlify/blobs": "^11.0.1",
