@@ -39,7 +39,9 @@ Southall is the starting point, but the Commons is designed for the borough's se
 - Archives normalised items every 15 minutes using Netlify Blobs.
 - Keeps stable item pages useful after upstream RSS items age out.
 - Preserves directly followed stories for personal RSS.
-- Connects live items to reviewed organisations, places, topics, issues and evidence, plus deliberately registered public people with a documented civic-role rationale.
+- Connects live items to reviewed organisations, places, topics, issues and evidence.
+- Gives deliberately registered public people full profiles where a documented civic role justifies one.
+- Keeps other materially recurring people discoverable as search-only civic references without creating a standalone biography or profile.
 - Keeps Explore search-first as the entity universe grows rather than rendering every known entity as one giant directory.
 
 ### Official publishing and Document Watch
@@ -107,9 +109,15 @@ Further candidates are added deliberately to fill geographic and thematic gaps r
 
 ## Public entity model
 
-The public civic graph deliberately does **not** mirror every named person in the research archive. Organisations and places may be extended from reviewed research data, but people require explicit registration in the public entity registry. The [public people entities policy](./docs/public-people-entities.md) sets the threshold: public office-holders, official institutional representatives, sustained public civic actors and clearly framed historical civic actors may be included when their civic standing is properly sourced. Ordinary residents, one-off meeting attendees, volunteers and generic contact names are not promoted into standalone profiles merely because they appear in public material.
+The public civic graph deliberately does **not** turn every named person in research material into a profile. The [public people entities policy](./docs/public-people-entities.md) separates three levels of discovery:
 
-Explore therefore defaults to search rather than dumping the whole entity universe onto one page. Entity-type browse views are bounded, and searches cover names, aliases, roles and descriptions.
+- **public profiles** for people with a documented public civic role that justifies a standalone page;
+- **civic references** for materially recurring names that are useful to find in reviewed public records but do not warrant a biography;
+- **incidental mentions**, which remain in their canonical source but are not indexed as people.
+
+Searchability is therefore different from prominence. People browse contains profiles only and stays bounded; typed name searches may also return limited civic references with links back to reviewed public records. Search-only references do not receive a `/people/...` route, aggregate biography or inferred personal affiliations.
+
+Explore defaults to search rather than dumping the whole entity universe onto one page. Entity-type browse views remain bounded, while searches cover profiles by names, aliases, roles and descriptions and civic references by name/alias only.
 
 ## Source submissions
 
