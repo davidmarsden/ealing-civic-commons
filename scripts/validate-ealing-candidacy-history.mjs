@@ -1,4 +1,5 @@
 import { EALING_CANDIDACY_HISTORY, EALING_CANDIDACY_HISTORY_META } from '../netlify/lib/ealing-candidacy-history.mjs';
+import { EALING_COUNCILLORS } from '../netlify/lib/ealing-councillors.mjs';
 
 const ids = new Set();
 const years = new Set();
@@ -23,6 +24,16 @@ for (const record of EALING_CANDIDACY_HISTORY) {
   if (record.identity?.status === 'matched' && (!record.identity.route || !record.identity.method || !record.identity.confidence)) {
     console.error('Incomplete identity assertion', record.id); errors += 1;
   }
+
+  if (record.electionYear === 2026 && record.identity?.status === 'matched') {
+    const councillor = EALING_COUNCILLORS.find(person => person.route === record.identity.route);
+    if (!councillor || String(councillor.ward).toLowerCase() !== String(record.ward?.name || '').toLowerCase()) {
+      console.error('2026 matched identity does not agree with current councillor ward', record.id, record.identity, record.ward?.name); errors += 1;
+    }
+    if (record.identity.method !== 'current-source-given-name-first-plus-required-current-ward') {
+      console.error('2026 matched identity did not use the current-source ward-safe matcher', record.id, record.identity.method); errors += 1;
+    }
+  }
 }
 
 for (const year of [2018, 2022, 2026]) {
@@ -33,13 +44,13 @@ if (!EALING_CANDIDACY_HISTORY_META.generated || EALING_CANDIDACY_HISTORY_META.re
   console.error('Candidacy history metadata does not match generated records'); errors += 1;
 }
 
-// Regression anchors for abbreviated historical names. These are public election
-// records whose current-profile identity is unambiguous and should never silently
-// drop out of profile history again.
+// Regression anchors for source-specific name formats. Historical source rows are
+// surname-first initials; the direct 2026 Ealing Council import is given-name-first.
 const anchors = [
   { year: 2022, sourceName: 'Donnelly S.', route: 'people/steve-donnelly', ward: 'East Acton' },
   { year: 2022, sourceName: 'Ball J.', route: 'people/jon-ball', ward: 'Ealing Common' },
-  { year: 2022, sourceName: 'Driscoll P.', route: 'people/paul-driscoll', ward: 'Northfield' }
+  { year: 2022, sourceName: 'Driscoll P.', route: 'people/paul-driscoll', ward: 'Northfield' },
+  { year: 2026, sourceName: 'Ajay Roy', route: 'people/ajay-roy', ward: 'North Greenford' }
 ];
 
 for (const anchor of anchors) {
@@ -49,10 +60,10 @@ for (const anchor of anchors) {
     item.ward?.name === anchor.ward
   );
   if (!record) {
-    console.error('Missing historical regression anchor', anchor); errors += 1; continue;
+    console.error('Missing identity regression anchor', anchor); errors += 1; continue;
   }
   if (record.identity?.status !== 'matched' || record.identity?.route !== anchor.route) {
-    console.error('Historical identity regression anchor failed', anchor, record.identity); errors += 1;
+    console.error('Identity regression anchor failed', anchor, record.identity); errors += 1;
   }
 }
 
