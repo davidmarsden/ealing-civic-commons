@@ -32,6 +32,8 @@ function view(entity, sourceByEntity = new Map()) {
     name: entity.name,
     type: entity.type,
     description: entity.description || null,
+    publicRole: entity.type === 'person' ? (entity.publicRole || null) : null,
+    roleStatus: entity.type === 'person' ? (entity.roleStatus || null) : null,
     aliases: entity.aliases || [],
     source: sourceFor(entity, sourceByEntity),
     providers: providerViews(entity).map(provider => ({ id: provider.id, label: provider.label, role: provider.role || provider.bindingRole }))
@@ -53,6 +55,24 @@ function curatedSourceLookup(sources = []) {
   return lookup;
 }
 
+function qualityFor(entities, suppressedResearchPeopleCount = 0) {
+  const missingDescriptions = entities.filter(entity => !entity.description).map(entity => entity.route);
+  const missingSources = entities.filter(entity => !entity.source).map(entity => entity.route);
+  const peopleMissingPublicStanding = entities
+    .filter(entity => entity.type === 'person' && !entity.publicRole && !entity.description)
+    .map(entity => entity.route);
+
+  return {
+    missingDescriptions,
+    missingDescriptionCount: missingDescriptions.length,
+    missingSources,
+    missingSourceCount: missingSources.length,
+    peopleMissingPublicStanding,
+    peopleMissingPublicStandingCount: peopleMissingPublicStanding.length,
+    suppressedResearchPeopleCount
+  };
+}
+
 export default async () => {
   try {
     const response = await fetch(EXPORT_URL, { headers: { accept: 'application/json' } });
@@ -62,6 +82,7 @@ export default async () => {
 
     const providerById = new Map((data.entities || []).map(entity => [entity.id, entity]));
     const byRoute = new Map();
+    let suppressedResearchPeopleCount = 0;
 
     for (const entity of baseRegistry()) {
       const providerId = zettelId(entity);
@@ -76,6 +97,15 @@ export default async () => {
 
     for (const providerEntity of data.entities || []) {
       const existing = findEntityByProviderId('southall-zettel', providerEntity.id);
+
+      // A named person in the research archive is not automatically a public Commons profile.
+      // People must be deliberately registered in the public entity registry so that their
+      // civic standing and publication rationale are an explicit editorial choice.
+      if (providerEntity.type === 'person' && !existing) {
+        suppressedResearchPeopleCount += 1;
+        continue;
+      }
+
       const entity = existing || makeZettelRegistryEntity(providerEntity);
       if (!entity) continue;
       const merged = {
@@ -90,31 +120,41 @@ export default async () => {
     const sourceByEntity = curatedSourceLookup(data.sources || []);
     const entities = [...byRoute.values()].map(entity => view(entity, sourceByEntity)).sort((a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name));
     const counts = entities.reduce((acc, entity) => { acc[entity.type] = (acc[entity.type] || 0) + 1; return acc; }, {});
-    const missingDescriptions = entities.filter(entity => !entity.description).map(entity => entity.route);
-    const missingSources = entities.filter(entity => !entity.source).map(entity => entity.route);
 
     return json({
       matched: true,
       schemaVersion: 1,
       counts,
       entities,
-      quality: {
-        missingDescriptions,
-        missingDescriptionCount: missingDescriptions.length,
-        missingSources,
-        missingSourceCount: missingSources.length
+      quality: qualityFor(entities, suppressedResearchPeopleCount),
+      peoplePolicy: {
+        mode: 'explicit-public-registry',
+        method: 'People from the reviewed research archive are not promoted into the public directory automatically. A public person profile requires deliberate Civic Commons registration and a documented civic-role rationale.'
       },
       provenance: {
         source: 'Civic Commons entity registry + Southall Stories research archive',
-        method: 'Canonical Commons identities are merged with exact reviewed research-archive entity IDs. Entity note prose supplies descriptions; first-party or authoritative entity websites are preferred for external links, with reviewed source records used as fallback evidence.'
+        method: 'Canonical Commons identities are merged with exact reviewed research-archive entity IDs. Organisation/place identities may be extended from reviewed research data; people require explicit public registration. Entity note prose supplies descriptions; first-party or authoritative entity websites are preferred for external links, with reviewed source records used as fallback evidence.'
       }
     });
   } catch (error) {
     console.error('Civic entity index failed', error);
     const entities = baseRegistry().map(entity => view(entity)).sort((a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name));
     const counts = entities.reduce((acc, entity) => { acc[entity.type] = (acc[entity.type] || 0) + 1; return acc; }, {});
-    const missingDescriptions = entities.filter(entity => !entity.description).map(entity => entity.route);
-    const missingSources = entities.filter(entity => !entity.source).map(entity => entity.route);
-    return json({ matched: true, degraded: true, schemaVersion: 1, counts, entities, quality: { missingDescriptions, missingDescriptionCount: missingDescriptions.length, missingSources, missingSourceCount: missingSources.length }, provenance: { source: 'Civic Commons entity registry', method: 'The historical research export was unavailable; Commons-native and explicitly registered identities remain available.' } }, 200, 60);
+    return json({
+      matched: true,
+      degraded: true,
+      schemaVersion: 1,
+      counts,
+      entities,
+      quality: qualityFor(entities),
+      peoplePolicy: {
+        mode: 'explicit-public-registry',
+        method: 'Only explicitly registered public people are exposed while the research export is unavailable.'
+      },
+      provenance: {
+        source: 'Civic Commons entity registry',
+        method: 'The historical research export was unavailable; Commons-native and explicitly registered identities remain available.'
+      }
+    }, 200, 60);
   }
 };
