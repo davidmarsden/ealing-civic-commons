@@ -134,37 +134,53 @@ function summarizePage(response, html) {
   };
 }
 
-const first = await fetchText(PAM_WEEKLY);
-const cookie = cookiesFrom(first.response);
-const form = parseWeeklyForm(first.text);
-const action = new URL(form.action, first.response.url);
-const headers = { referer: first.response.url, ...(cookie ? { cookie } : {}) };
-
-let second;
-if (form.method === 'POST') {
-  second = await fetchText(action, {
-    method: 'POST',
-    headers: { ...headers, 'content-type': 'application/x-www-form-urlencoded' },
-    body: form.params,
-  });
-} else {
-  for (const [key, value] of form.params) action.searchParams.set(key, value);
-  second = await fetchText(action, { headers });
-}
-
 const result = {
   generated_at: new Date().toISOString(),
   purpose: 'Safe PAM page-identification diagnostic. Full HTML is not stored.',
-  session_cookie_received: Boolean(cookie),
-  submitted: {
+};
+
+try {
+  const first = await fetchText(PAM_WEEKLY);
+  const cookie = cookiesFrom(first.response);
+  result.session_cookie_received = Boolean(cookie);
+  result.initial_page = summarizePage(first.response, first.text);
+
+  let form;
+  try {
+    form = parseWeeklyForm(first.text);
+  } catch (error) {
+    result.error_stage = 'initial-form-parse';
+    result.error = error instanceof Error ? error.message : String(error);
+    throw error;
+  }
+
+  const action = new URL(form.action, first.response.url);
+  result.submitted = {
     method: form.method,
     action: action.toString(),
     selected: form.selected,
-  },
-  initial_page: summarizePage(first.response, first.text),
-  returned_page: summarizePage(second.response, second.text),
-};
+  };
 
-await writeFile(outputPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
-console.log(`PAM page diagnostic written to ${outputPath}`);
-console.log(JSON.stringify(result.returned_page, null, 2));
+  const headers = { referer: first.response.url, ...(cookie ? { cookie } : {}) };
+  let second;
+  if (form.method === 'POST') {
+    second = await fetchText(action, {
+      method: 'POST',
+      headers: { ...headers, 'content-type': 'application/x-www-form-urlencoded' },
+      body: form.params,
+    });
+  } else {
+    for (const [key, value] of form.params) action.searchParams.set(key, value);
+    second = await fetchText(action, { headers });
+  }
+
+  result.returned_page = summarizePage(second.response, second.text);
+} catch (error) {
+  if (!result.error) result.error = error instanceof Error ? error.message : String(error);
+  if (!result.error_stage) result.error_stage = 'request-or-submission';
+  process.exitCode = 2;
+} finally {
+  await writeFile(outputPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
+  console.log(`PAM page diagnostic written to ${outputPath}`);
+  console.log(JSON.stringify(result, null, 2));
+}
