@@ -72,13 +72,13 @@ function nameTokens(value) {
     .filter(Boolean);
 }
 
-function historicalSignature(value) {
+function abbreviatedSurnameFirstSignature(value) {
   const tokens = nameTokens(value);
   if (tokens.length < 2) return null;
 
-  // electionresults.uk historical rows use surname-first abbreviated forms such
-  // as "Donnelly S." and "van de Geer M.". The final token is the given-name
-  // initial; the token immediately before it is the surname core.
+  // electionresults.uk's 2022 Ealing rows use surname-first abbreviated forms
+  // such as "Donnelly S." and "van de Geer M.". The final token is the given-
+  // name initial; the token immediately before it is the surname core.
   const final = tokens[tokens.length - 1];
   return {
     surnameCore: tokens[tokens.length - 2],
@@ -86,13 +86,14 @@ function historicalSignature(value) {
   };
 }
 
-function currentSourceSignature(value) {
+function givenNameFirstSignature(value) {
   const tokens = nameTokens(value);
   if (tokens.length < 2) return null;
 
-  // The direct Ealing Council importer has already converted source rows into
-  // normal given-name-first display order. Never infer name order from token
-  // length here: short surnames such as Roy are perfectly valid surnames.
+  // 2018 electionresults.uk Ealing rows preserve full given-name-first names
+  // (for example "Jon Ball" and "Paul Driscoll"). The direct 2026 Ealing
+  // Council importer is also given-name-first. Never infer order from token
+  // length: short surnames such as Roy are perfectly valid surnames.
   return {
     surnameCore: tokens[tokens.length - 1],
     firstInitial: tokens[0][0]
@@ -100,9 +101,8 @@ function currentSourceSignature(value) {
 }
 
 function recordSignature(record) {
-  return record.electionYear === 2026
-    ? currentSourceSignature(record.candidateNameSource)
-    : historicalSignature(record.candidateNameSource);
+  if (record.electionYear === 2022) return abbreviatedSurnameFirstSignature(record.candidateNameSource);
+  return givenNameFirstSignature(record.candidateNameSource);
 }
 
 function personSignatures(person) {
@@ -159,9 +159,9 @@ function resolveCurrentCouncillor(record) {
     method: record.electionYear === 2026
       ? 'current-source-given-name-first-plus-required-current-ward'
       : record.electionYear === 2022
-        ? 'historical-surname-initial-with-optional-current-boundary-ward-corroboration'
-        : 'historical-surname-initial',
-    confidence: record.electionYear === 2026 ? 'high' : record.electionYear === 2022 ? 'high' : 'medium',
+        ? 'historical-2022-surname-initial-with-optional-current-boundary-ward-corroboration'
+        : 'historical-2018-full-given-name-first',
+    confidence: record.electionYear === 2018 ? 'high' : 'high',
     reviewState: 'algorithmic'
   };
 }
