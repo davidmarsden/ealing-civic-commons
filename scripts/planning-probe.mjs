@@ -120,6 +120,25 @@ function extractPamApplications(html) {
   return applications;
 }
 
+function classifyPamResultsPage(html, applications) {
+  if (applications.length > 0) return 'applications';
+
+  const text = stripTags(html);
+  const explicitNoResults = [
+    /no matching applications/i,
+    /no applications (?:were )?found/i,
+    /your search (?:has )?returned no results/i,
+    /your search did not return any results/i,
+    /0\s+(?:applications|results)(?:\s+found)?/i,
+  ].some((pattern) => pattern.test(text));
+
+  if (explicitNoResults) return 'no-results';
+
+  throw new Error(
+    'PAM returned HTTP 200 but the results page was not recognized: no application detail links and no explicit no-results message',
+  );
+}
+
 async function fetchText(url, options = {}) {
   const response = await fetch(url, {
     redirect: 'follow',
@@ -149,6 +168,7 @@ async function probePam() {
     second = await fetchText(action);
   }
   const applications = extractPamApplications(second.text);
+  const resultPage = classifyPamResultsPage(second.text, applications);
   return {
     ok: true,
     authoritative: true,
@@ -156,6 +176,7 @@ async function probePam() {
     url: second.response.url,
     form_method: form.method,
     selected,
+    result_page: resultPage,
     applications_found: applications.length,
     sample: applications.slice(0, 10),
     elapsed_ms: Date.now() - started,
