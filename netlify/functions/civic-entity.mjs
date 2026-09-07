@@ -1,6 +1,7 @@
 import { findEntityByProviderId, findEntityByRoute, makeZettelRegistryEntity, parseEntityRoute, providerViews } from '../lib/entity-registry.mjs';
 import { findInstitutionalEntityByRoute } from '../lib/institutional-entities.mjs';
 import { findCommunityEntityByRoute } from '../lib/community-entities.mjs';
+import { findEalingCouncillorByRoute, mergeEalingCouncillor } from '../lib/ealing-councillors.mjs';
 
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
 const EXPECTED_SCHEMA = 1;
@@ -16,6 +17,22 @@ function registryView(entity) {
   return { id: entity.id, route: entity.route, name: entity.name, type: entity.type };
 }
 
+function registryEntityForRoute(route) {
+  const existing = findEntityByRoute(route) || findInstitutionalEntityByRoute(route) || findCommunityEntityByRoute(route);
+  const councillor = findEalingCouncillorByRoute(route);
+  return councillor ? mergeEalingCouncillor(existing, councillor) : existing;
+}
+
+function publicRoleFields(registryEntity) {
+  if (registryEntity?.type !== 'person') return {};
+  return {
+    publicRole: registryEntity.publicRole || null,
+    roleStatus: registryEntity.roleStatus || null,
+    ward: registryEntity.ward || null,
+    party: registryEntity.party || null
+  };
+}
+
 function nativeEntityResponse(registryEntity) {
   return json({
     matched: true,
@@ -28,6 +45,7 @@ function nativeEntityResponse(registryEntity) {
       aliases: registryEntity.aliases || [],
       description: registryEntity.description || null,
       website: registryEntity.website || null,
+      ...publicRoleFields(registryEntity),
       provenance: 'commons-entity-registry'
     },
     providers: providerViews(registryEntity),
@@ -41,7 +59,7 @@ export default async request => {
   const requestUrl = new URL(request.url);
   const route = requestUrl.searchParams.get('route');
   const legacyId = requestUrl.searchParams.get('id');
-  let registryEntity = route ? (findEntityByRoute(route) || findInstitutionalEntityByRoute(route) || findCommunityEntityByRoute(route)) : legacyId ? findEntityByProviderId('southall-zettel', legacyId) : null;
+  let registryEntity = route ? registryEntityForRoute(route) : legacyId ? findEntityByProviderId('southall-zettel', legacyId) : null;
 
   if (registryEntity && !registryEntity.providers.some(provider => provider.provider === 'southall-zettel' && provider.entityId)) {
     return nativeEntityResponse(registryEntity);
@@ -108,7 +126,17 @@ export default async request => {
       matched: true,
       schemaVersion: data.schema_version,
       civicEntity: registryView(registryEntity),
-      entity: { id: entity.id, name: registryEntity.name || entity.name, type: registryEntity.type || entity.type, aliases: entity.aliases || registryEntity.aliases || [], description: entity.description || registryEntity.description || null, website: registryEntity.website || entity.website || null, reviewStatus: entity.review_status, provenance: entity.provenance },
+      entity: {
+        id: entity.id,
+        name: registryEntity.name || entity.name,
+        type: registryEntity.type || entity.type,
+        aliases: entity.aliases || registryEntity.aliases || [],
+        description: entity.description || registryEntity.description || null,
+        website: registryEntity.website || entity.website || null,
+        ...publicRoleFields(registryEntity),
+        reviewStatus: entity.review_status,
+        provenance: entity.provenance
+      },
       providers,
       counts: { reporting: reporting.length, relationships: relationships.length, sources: sources.length },
       relationships, sources, reporting, topics,
