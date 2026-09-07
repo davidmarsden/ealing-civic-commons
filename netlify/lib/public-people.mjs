@@ -1,20 +1,5 @@
 export const PUBLIC_PEOPLE = [
   {
-    route: 'people/david-marsden',
-    id: 'civic:person:david-marsden',
-    name: 'David Marsden',
-    type: 'person',
-    description: 'Southall-based investigative journalist, publisher of Southall Stories and community campaigner whose work focuses on local democracy, planning, air pollution, public services and civic accountability in Ealing.',
-    publicRole: 'Investigative journalist and publisher of Southall Stories',
-    roleStatus: 'current',
-    aliases: [],
-    website: { label: 'Southall Stories — About', url: 'https://southallstories.uk/about/' },
-    providers: [
-      { provider: 'civic-commons', role: 'canonical-public-identity' },
-      { provider: 'southall-zettel', entityId: 'entity:david-marsden', role: 'reviewed-civic-memory' }
-    ]
-  },
-  {
     route: 'people/jags-sanghera',
     id: 'civic:person:jags-sanghera',
     name: 'Jags Sanghera',
