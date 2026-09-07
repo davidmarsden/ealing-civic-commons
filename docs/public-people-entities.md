@@ -20,6 +20,8 @@ A profile may be appropriate for:
 
 Election candidates may be recorded as dated public civic roles where candidacy is drawn from an official nomination/election record. Unsuccessful candidacy on its own need not make someone permanently prominent in the People browse view.
 
+The same threshold applies to people who build, publish, research or contribute to Civic Commons. Being a project founder, publisher or contributor is not by itself a reason for a standalone profile, and the Commons should avoid giving its own participants greater prominence than comparable local civic actors.
+
 ## 2. Civic reference — searchable, not a profile
 
 Some people matter to the public record without meeting the threshold for a standalone Civic Commons biography.
