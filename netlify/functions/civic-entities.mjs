@@ -4,6 +4,7 @@ import { COMMUNITY_ENTITIES } from '../lib/community-entities.mjs';
 import { PUBLIC_PEOPLE, findPublicPersonByProviderId } from '../lib/public-people.mjs';
 import { EALING_COUNCILLORS, findEalingCouncillorByRoute, mergeEalingCouncillor } from '../lib/ealing-councillors.mjs';
 import { CIVIC_INSTITUTIONS } from '../lib/civic-institutions.mjs';
+import { EALING_SCHOOLS, EALING_SCHOOLS_META } from '../lib/ealing-schools.mjs';
 
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
 const EXPECTED_SCHEMA = 1;
@@ -35,10 +36,14 @@ function view(entity, sourceByEntity = new Map()) {
     description: entity.description || null,
     publicRole: entity.type === 'person' ? (entity.publicRole || null) : null,
     roleStatus: entity.type === 'person' ? (entity.roleStatus || null) : null,
-    ward: entity.type === 'person' ? (entity.ward || null) : null,
+    ward: entity.ward || null,
     party: entity.type === 'person' ? (entity.party || null) : null,
     town: entity.type === 'person' ? null : (entity.town || null),
     institutionType: entity.type === 'person' ? null : (entity.institutionType || null),
+    urn: entity.urn || null,
+    phase: entity.phase || null,
+    establishmentType: entity.establishmentType || null,
+    postcode: entity.postcode || null,
     aliases: entity.aliases || [],
     source: sourceFor(entity, sourceByEntity),
     providers: providerViews(entity).map(provider => ({ id: provider.id, label: provider.label, role: provider.role || provider.bindingRole }))
@@ -46,7 +51,7 @@ function view(entity, sourceByEntity = new Map()) {
 }
 
 function baseRegistry() {
-  const byRoute = new Map([...ENTITY_REGISTRY, ...INSTITUTIONAL_ENTITIES, ...COMMUNITY_ENTITIES, ...PUBLIC_PEOPLE, ...CIVIC_INSTITUTIONS].map(entity => [entity.route, entity]));
+  const byRoute = new Map([...ENTITY_REGISTRY, ...INSTITUTIONAL_ENTITIES, ...COMMUNITY_ENTITIES, ...PUBLIC_PEOPLE, ...CIVIC_INSTITUTIONS, ...EALING_SCHOOLS].map(entity => [entity.route, entity]));
   for (const councillor of EALING_COUNCILLORS) byRoute.set(councillor.route, mergeEalingCouncillor(byRoute.get(councillor.route), councillor));
   return [...byRoute.values()];
 }
@@ -146,13 +151,14 @@ export default async request => {
       quality: qualityFor(entities, suppressedResearchPeopleCount),
       democraticRepresentation: { currentEalingCouncillors: EALING_COUNCILLORS.length, source: 'Ealing Council ModernGov current councillor directory' },
       civicInstitutionCoverage: { explicitInstitutions: CIVIC_INSTITUTIONS.length, method: 'Curated first-party or official-directory identities for libraries, major community bodies and selected faith/community institutions.' },
+      educationEstablishments: EALING_SCHOOLS_META,
       peoplePolicy: { mode: 'profiles-plus-search-references', method: 'People with a documented public civic role may have standalone profiles. Other materially recurring people may be returned only as name-search references to reviewed public records; one-off/incidental mentions are not indexed as people.' },
-      provenance: { source: 'Civic Commons entity registry + official/current civic institution sources + Ealing Council current councillor directory + Southall Stories research archive', method: 'Canonical Commons identities combine the complete current councillor roster and explicit civic-institution records with reviewed research-archive identities. Public person profiles require deliberate registration; search-only references remain limited and route-less. Councillor and archive aliases are merged so existing search forms are preserved.' }
+      provenance: { source: 'Civic Commons entity registry + Department for Education GIAS + official/current civic institution sources + Ealing Council current councillor directory + Southall Stories research archive', method: 'Canonical Commons identities combine the complete current councillor roster, current Ealing educational establishments imported from the GIAS bulk register, explicit civic-institution records and reviewed research-archive identities. Public person profiles require deliberate registration; headteachers and other named establishment staff are not imported as person entities.' }
     });
   } catch (error) {
     console.error('Civic entity index failed', error);
     const entities = baseRegistry().map(entity => view(entity)).sort((a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name));
     const counts = entities.reduce((acc, entity) => { acc[entity.type] = (acc[entity.type] || 0) + 1; return acc; }, {});
-    return json({ matched: true, degraded: true, schemaVersion: 1, counts, entities, references: [], quality: qualityFor(entities), democraticRepresentation: { currentEalingCouncillors: EALING_COUNCILLORS.length, source: 'Ealing Council ModernGov current councillor directory' }, civicInstitutionCoverage: { explicitInstitutions: CIVIC_INSTITUTIONS.length }, peoplePolicy: { mode: 'profiles-plus-search-references', method: 'Only explicitly registered public profiles are exposed while the reviewed research export is unavailable; search-only references are temporarily unavailable.' }, provenance: { source: 'Civic Commons entity registry + official/current civic institution sources + Ealing Council current councillor directory', method: 'The historical research export was unavailable; Commons-native and explicitly registered identities, including current councillors and civic institutions, remain available.' } }, 200, 60);
+    return json({ matched: true, degraded: true, schemaVersion: 1, counts, entities, references: [], quality: qualityFor(entities), democraticRepresentation: { currentEalingCouncillors: EALING_COUNCILLORS.length, source: 'Ealing Council ModernGov current councillor directory' }, civicInstitutionCoverage: { explicitInstitutions: CIVIC_INSTITUTIONS.length }, educationEstablishments: EALING_SCHOOLS_META, peoplePolicy: { mode: 'profiles-plus-search-references', method: 'Only explicitly registered public profiles are exposed while the reviewed research export is unavailable; search-only references are temporarily unavailable.' }, provenance: { source: 'Civic Commons entity registry + Department for Education GIAS + official/current civic institution sources + Ealing Council current councillor directory', method: 'The historical research export was unavailable; Commons-native identities, current councillors, current education establishments and civic institutions remain available.' } }, 200, 60);
   }
 };
