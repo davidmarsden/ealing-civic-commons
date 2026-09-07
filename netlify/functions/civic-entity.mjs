@@ -12,24 +12,27 @@ function json(body, status = 200, maxAge = 300) {
 
 function byId(items = []) { return new Map(items.map(item => [item.id, item])); }
 function dateValue(value) { const n = Date.parse(value || ''); return Number.isFinite(n) ? n : 0; }
+function mergeAliases(...lists) { return [...new Set(lists.flatMap(list => Array.isArray(list) ? list : []).filter(Boolean))]; }
 
 function registryView(entity) {
   return { id: entity.id, route: entity.route, name: entity.name, type: entity.type };
 }
 
+function mergeKnownCouncillor(entity) {
+  if (!entity) return null;
+  const councillor = findEalingCouncillorByRoute(entity.route);
+  return councillor ? mergeEalingCouncillor(entity, councillor) : entity;
+}
+
 function registryEntityForRoute(route) {
   const existing = findEntityByRoute(route) || findInstitutionalEntityByRoute(route) || findCommunityEntityByRoute(route);
-  const councillor = findEalingCouncillorByRoute(route);
-  return councillor ? mergeEalingCouncillor(existing, councillor) : existing;
+  return mergeKnownCouncillor(existing || findEalingCouncillorByRoute(route));
 }
 
 function publicRegistryEntity(providerEntity) {
   if (!providerEntity) return null;
   const existing = findEntityByProviderId('southall-zettel', providerEntity.id);
-  if (existing) {
-    const councillor = findEalingCouncillorByRoute(existing.route);
-    return councillor ? mergeEalingCouncillor(existing, councillor) : existing;
-  }
+  if (existing) return mergeKnownCouncillor(existing);
   if (providerEntity.type === 'person') return null;
   return makeZettelRegistryEntity(providerEntity);
 }
@@ -70,7 +73,7 @@ export default async request => {
   const requestUrl = new URL(request.url);
   const route = requestUrl.searchParams.get('route');
   const legacyId = requestUrl.searchParams.get('id');
-  let registryEntity = route ? registryEntityForRoute(route) : legacyId ? findEntityByProviderId('southall-zettel', legacyId) : null;
+  let registryEntity = route ? registryEntityForRoute(route) : legacyId ? mergeKnownCouncillor(findEntityByProviderId('southall-zettel', legacyId)) : null;
 
   if (registryEntity && !registryEntity.providers.some(provider => provider.provider === 'southall-zettel' && provider.entityId)) {
     return nativeEntityResponse(registryEntity);
@@ -143,7 +146,7 @@ export default async request => {
         id: entity.id,
         name: registryEntity.name || entity.name,
         type: registryEntity.type || entity.type,
-        aliases: entity.aliases || registryEntity.aliases || [],
+        aliases: mergeAliases(registryEntity.aliases, entity.aliases),
         description: entity.description || registryEntity.description || null,
         website: registryEntity.website || entity.website || null,
         ...publicRoleFields(registryEntity),
