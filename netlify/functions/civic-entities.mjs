@@ -1,6 +1,7 @@
 import { ENTITY_REGISTRY, findEntityByProviderId, makeZettelRegistryEntity, providerViews } from '../lib/entity-registry.mjs';
 import { INSTITUTIONAL_ENTITIES } from '../lib/institutional-entities.mjs';
 import { COMMUNITY_ENTITIES } from '../lib/community-entities.mjs';
+import { PUBLIC_PEOPLE, findPublicPersonByProviderId } from '../lib/public-people.mjs';
 
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
 const EXPECTED_SCHEMA = 1;
@@ -41,7 +42,8 @@ function view(entity, sourceByEntity = new Map()) {
 }
 
 function baseRegistry() {
-  return [...ENTITY_REGISTRY, ...INSTITUTIONAL_ENTITIES, ...COMMUNITY_ENTITIES];
+  const byRoute = new Map([...ENTITY_REGISTRY, ...INSTITUTIONAL_ENTITIES, ...COMMUNITY_ENTITIES, ...PUBLIC_PEOPLE].map(entity => [entity.route, entity]));
+  return [...byRoute.values()];
 }
 
 function curatedSourceLookup(sources = []) {
@@ -96,11 +98,8 @@ export default async () => {
     }
 
     for (const providerEntity of data.entities || []) {
-      const existing = findEntityByProviderId('southall-zettel', providerEntity.id);
+      const existing = findEntityByProviderId('southall-zettel', providerEntity.id) || findPublicPersonByProviderId('southall-zettel', providerEntity.id);
 
-      // A named person in the research archive is not automatically a public Commons profile.
-      // People must be deliberately registered in the public entity registry so that their
-      // civic standing and publication rationale are an explicit editorial choice.
       if (providerEntity.type === 'person' && !existing) {
         suppressedResearchPeopleCount += 1;
         continue;
@@ -111,7 +110,7 @@ export default async () => {
       const merged = {
         ...entity,
         description: entity.description || providerEntity.description || null,
-        aliases: entity.aliases?.length ? entity.aliases : (providerEntity.aliases || []),
+        aliases: [...new Set([...(entity.aliases || []), ...(providerEntity.aliases || [])])],
         website: entity.website || providerEntity.website || null
       };
       if (!byRoute.has(merged.route)) byRoute.set(merged.route, merged);
