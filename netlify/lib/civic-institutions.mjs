@@ -1,4 +1,4 @@
-const councilLibraries = { label: 'Ealing Council — find your library', url: 'https://www.ealing.gov.uk/info/201241/find_', type: 'Official council directory' };
+const councilLibraries = { label: 'Ealing Council — find your library', url: 'https://www.ealing.gov.uk/info/201241/find_your_library', type: 'Official council directory' };
 const councilCommunityDirectory = { label: 'Ealing Council — Do Something Good', url: 'https://dosomethinggood.ealing.gov.uk/directory/', type: 'Official council community directory' };
 
 function commonsProvider() {
