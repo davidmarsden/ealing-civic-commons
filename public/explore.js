@@ -5,6 +5,7 @@ const BROWSE_LIMIT = 18;
 const SEARCH_LIMIT = 60;
 let allEntities = [];
 let searchReferences = [];
+let profileElectionRecords = new Map();
 let activeType = 'all';
 let referenceTimer = null;
 let referenceRequest = 0;
@@ -16,13 +17,26 @@ function renderCounts(counts = {}) {
   $('#allCount').textContent = Object.values(counts).reduce((sum, value) => sum + Number(value || 0), 0);
 }
 
+function electionRecordMarkup(records = []) {
+  if (!records.length) return '';
+  const items = records.map(item => {
+    const date = item.electionDate ? new Date(`${item.electionDate}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '';
+    const votes = Number.isFinite(Number(item.votes)) ? ` · ${Number(item.votes).toLocaleString('en-GB')} votes` : '';
+    const result = item.elected ? ' · elected' : '';
+    const label = `<strong>${esc(item.ward)} ward</strong> · ${esc(item.party)} · ${esc(date)}${votes}${result}`;
+    return `<li>${item.url ? `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${label}</a>` : label}</li>`;
+  }).join('');
+  return `<div class="entity-election-record"><p class="entity-public-role">Official election record</p><ul>${items}</ul></div>`;
+}
+
 function profileCard(entity) {
   const providers = (entity.providers || []).map(provider => `<span class="entity-provider-pill">${esc(provider.label || provider.id)}</span>`).join('');
   const source = entity.source?.url ? `<a class="entity-source-link" href="${esc(entity.source.url)}" target="_blank" rel="noopener noreferrer">${esc(entity.source.label || 'Website / source')} ↗</a>` : '';
   const description = entity.description || 'Description pending editorial review.';
   const role = entity.type === 'person' && entity.publicRole ? `<p class="entity-public-role">${esc(entity.publicRole)}</p>` : '';
   const institution = entity.type !== 'person' && (entity.institutionType || entity.town) ? `<p class="entity-public-role">${esc([entity.institutionType, entity.town, entity.urn ? `URN ${entity.urn}` : null].filter(Boolean).join(' · '))}</p>` : '';
-  return `<article class="entity-card"><a class="entity-card-main" href="/${esc(entity.route)}"><h3>${esc(entity.name)}</h3>${role}${institution}<p>${esc(description)}</p></a><div class="entity-card-footer"><div class="entity-card-meta">${providers}</div>${source}</div></article>`;
+  const electionRecord = entity.type === 'person' ? electionRecordMarkup(entity.electionRecords || []) : '';
+  return `<article class="entity-card"><a class="entity-card-main" href="/${esc(entity.route)}"><h3>${esc(entity.name)}</h3>${role}${institution}<p>${esc(description)}</p></a>${electionRecord}<div class="entity-card-footer"><div class="entity-card-meta">${providers}</div>${source}</div></article>`;
 }
 
 function electionReferenceCard(entity) {
@@ -66,6 +80,9 @@ function render() {
   const profiles = allEntities.filter(entity => {
     if (activeType !== 'all' && entity.type !== activeType) return false;
     return !query || searchableText(entity).includes(query);
+  }).map(entity => {
+    const electionRecords = profileElectionRecords.get(entity.route) || [];
+    return electionRecords.length ? { ...entity, electionRecords } : entity;
   });
   const references = query && (activeType === 'all' || activeType === 'person') ? searchReferences.filter(entity => searchableText(entity).includes(query)) : [];
   const matches = [...profiles, ...references];
@@ -98,7 +115,7 @@ function mergeReferences(...sets) {
 
 async function fetchReferences(query) {
   const q = query.trim();
-  if (q.length < 3) { searchReferences = []; render(); return; }
+  if (q.length < 3) { searchReferences = []; profileElectionRecords = new Map(); render(); return; }
   const requestId = ++referenceRequest;
   try {
     const [archiveResult, electionResult] = await Promise.allSettled([
@@ -114,11 +131,14 @@ async function fetchReferences(query) {
     if (requestId !== referenceRequest) return;
     const archiveReferences = archiveResult.status === 'fulfilled' ? (archiveResult.value.references || []) : [];
     const electionReferences = electionResult.status === 'fulfilled' ? (electionResult.value.references || []) : [];
+    const electionProfiles = electionResult.status === 'fulfilled' ? (electionResult.value.profileElectionRecords || []) : [];
     searchReferences = mergeReferences(archiveReferences, electionReferences);
+    profileElectionRecords = new Map(electionProfiles.map(item => [item.route, item.candidacies || []]));
     render();
   } catch (error) {
     if (requestId !== referenceRequest) return;
     searchReferences = [];
+    profileElectionRecords = new Map();
     console.error('Explore reference search failed', error);
     render();
   }
@@ -143,6 +163,7 @@ async function load() {
 $('#entitySearch').addEventListener('input', () => {
   const query = $('#entitySearch').value;
   searchReferences = [];
+  profileElectionRecords = new Map();
   render();
   clearTimeout(referenceTimer);
   referenceTimer = setTimeout(() => fetchReferences(query), 180);
