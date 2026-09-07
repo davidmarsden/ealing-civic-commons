@@ -11,7 +11,8 @@
     "inspect:planning": "node scripts/planning-probe.mjs --verbose",
     "render:social-cards": "node scripts/render-social-cards.mjs",
     "verify:social-cards": "node scripts/verify-social-cards.mjs",
-    "build": "npm run validate:contributions && npm run validate:evidence && mkdir -p dist/documents/content && cp -R public/. dist/ && cp docs/*.md dist/documents/content/ && npm run render:social-cards && npm run verify:social-cards"
+    "generate:ealing-schools": "node scripts/generate-ealing-schools.mjs",
+    "build": "npm run validate:contributions && npm run validate:evidence && npm run generate:ealing-schools && mkdir -p dist/documents/content && cp -R public/. dist/ && cp docs/*.md dist/documents/content/ && npm run render:social-cards && npm run verify:social-cards"
   },
   "dependencies": {
     "@netlify/blobs": "^11.0.1",
