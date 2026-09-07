@@ -1,6 +1,7 @@
 import { ENTITY_REGISTRY, findEntityByProviderId, makeZettelRegistryEntity, providerViews } from '../lib/entity-registry.mjs';
 import { INSTITUTIONAL_ENTITIES } from '../lib/institutional-entities.mjs';
 import { COMMUNITY_ENTITIES } from '../lib/community-entities.mjs';
+import { EALING_COUNCILLORS, mergeEalingCouncillor } from '../lib/ealing-councillors.mjs';
 
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
 const EXPECTED_SCHEMA = 1;
@@ -34,6 +35,8 @@ function view(entity, sourceByEntity = new Map()) {
     description: entity.description || null,
     publicRole: entity.type === 'person' ? (entity.publicRole || null) : null,
     roleStatus: entity.type === 'person' ? (entity.roleStatus || null) : null,
+    ward: entity.type === 'person' ? (entity.ward || null) : null,
+    party: entity.type === 'person' ? (entity.party || null) : null,
     aliases: entity.aliases || [],
     source: sourceFor(entity, sourceByEntity),
     providers: providerViews(entity).map(provider => ({ id: provider.id, label: provider.label, role: provider.role || provider.bindingRole }))
@@ -41,7 +44,11 @@ function view(entity, sourceByEntity = new Map()) {
 }
 
 function baseRegistry() {
-  return [...ENTITY_REGISTRY, ...INSTITUTIONAL_ENTITIES, ...COMMUNITY_ENTITIES];
+  const byRoute = new Map([...ENTITY_REGISTRY, ...INSTITUTIONAL_ENTITIES, ...COMMUNITY_ENTITIES].map(entity => [entity.route, entity]));
+  for (const councillor of EALING_COUNCILLORS) {
+    byRoute.set(councillor.route, mergeEalingCouncillor(byRoute.get(councillor.route), councillor));
+  }
+  return [...byRoute.values()];
 }
 
 function curatedSourceLookup(sources = []) {
@@ -127,13 +134,17 @@ export default async () => {
       counts,
       entities,
       quality: qualityFor(entities, suppressedResearchPeopleCount),
+      democraticRepresentation: {
+        currentEalingCouncillors: EALING_COUNCILLORS.length,
+        source: 'Ealing Council ModernGov current councillor directory'
+      },
       peoplePolicy: {
         mode: 'explicit-public-registry',
         method: 'People from the reviewed research archive are not promoted into the public directory automatically. A public person profile requires deliberate Civic Commons registration and a documented civic-role rationale.'
       },
       provenance: {
-        source: 'Civic Commons entity registry + Southall Stories research archive',
-        method: 'Canonical Commons identities are merged with exact reviewed research-archive entity IDs. Organisation/place identities may be extended from reviewed research data; people require explicit public registration. Entity note prose supplies descriptions; first-party or authoritative entity websites are preferred for external links, with reviewed source records used as fallback evidence.'
+        source: 'Civic Commons entity registry + Ealing Council current councillor directory + Southall Stories research archive',
+        method: 'Canonical Commons identities are merged with exact reviewed research-archive entity IDs. All 70 current Ealing councillors are explicitly registered as public office-holders from the official council directory. Organisation/place identities may be extended from reviewed research data; other people require explicit public registration. Entity note prose supplies descriptions; first-party or authoritative entity websites are preferred for external links, with reviewed source records used as fallback evidence.'
       }
     });
   } catch (error) {
@@ -147,13 +158,17 @@ export default async () => {
       counts,
       entities,
       quality: qualityFor(entities),
+      democraticRepresentation: {
+        currentEalingCouncillors: EALING_COUNCILLORS.length,
+        source: 'Ealing Council ModernGov current councillor directory'
+      },
       peoplePolicy: {
         mode: 'explicit-public-registry',
         method: 'Only explicitly registered public people are exposed while the research export is unavailable.'
       },
       provenance: {
-        source: 'Civic Commons entity registry',
-        method: 'The historical research export was unavailable; Commons-native and explicitly registered identities remain available.'
+        source: 'Civic Commons entity registry + Ealing Council current councillor directory',
+        method: 'The historical research export was unavailable; Commons-native and explicitly registered identities, including the complete current councillor roster, remain available.'
       }
     }, 200, 60);
   }
