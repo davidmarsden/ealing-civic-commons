@@ -13,9 +13,16 @@ const ELECTION_SOURCES = [
   }
 ];
 
+function isCouncillorPage() {
+  const bodyRoute = document.body?.dataset?.entityId || '';
+  if (bodyRoute.startsWith('civic:person:')) return true;
+  const path = location.pathname.split('/').filter(Boolean);
+  return path[0] === 'people' && Boolean(path[1]);
+}
+
 function renderElectionPanel() {
   const hero = document.querySelector('#entityHero');
-  if (!hero || hero.hidden || document.querySelector('#electionHistoryPanel')) return false;
+  if (!hero || hero.hidden || document.querySelector('#electionHistoryPanel') || !isCouncillorPage()) return false;
 
   const councillorLink = [...hero.querySelectorAll('a')].find(link => {
     try {
@@ -25,7 +32,10 @@ function renderElectionPanel() {
       return false;
     }
   });
-  if (!councillorLink) return false;
+
+  const roleText = hero.textContent || '';
+  const appearsToBeCouncillor = /\bcouncillor\b/i.test(roleText) || Boolean(councillorLink);
+  if (!appearsToBeCouncillor) return false;
 
   const sidebar = document.querySelector('.entity-sidebar');
   if (!sidebar) return false;
@@ -36,7 +46,7 @@ function renderElectionPanel() {
   panel.innerHTML = `
     <p class="eyebrow">Election record</p>
     <h3>Ealing electoral history</h3>
-    <p class="entity-provenance">Use these public electoral sources to trace election results and candidacy history. They are reference layers: original source pages remain canonical.</p>
+    <p class="entity-provenance">This profile is the canonical current-person record. Search results can attach the councillor's dated official election result to the same profile; these wider electoral sources provide the longer historical context.</p>
     <div class="entity-provider-list">
       ${ELECTION_SOURCES.map(source => `<div class="entity-provider"><strong><a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.label)} ↗</a></strong><span>${esc(source.note)}</span></div>`).join('')}
     </div>`;
