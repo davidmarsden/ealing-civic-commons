@@ -1,10 +1,12 @@
 import { ENTITY_REGISTRY, findEntityByProviderId, makeZettelRegistryEntity, providerViews } from '../lib/entity-registry.mjs';
 import { INSTITUTIONAL_ENTITIES } from '../lib/institutional-entities.mjs';
 import { COMMUNITY_ENTITIES } from '../lib/community-entities.mjs';
-import { EALING_COUNCILLORS, mergeEalingCouncillor } from '../lib/ealing-councillors.mjs';
+import { PUBLIC_PEOPLE, findPublicPersonByProviderId } from '../lib/public-people.mjs';
+import { EALING_COUNCILLORS, findEalingCouncillorByRoute, mergeEalingCouncillor } from '../lib/ealing-councillors.mjs';
 
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
 const EXPECTED_SCHEMA = 1;
+const REFERENCE_LIMIT = 20;
 
 function json(body, status = 200, maxAge = 300) {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': `public, max-age=${maxAge}, stale-while-revalidate=1800`, 'access-control-allow-origin': '*' } });
@@ -32,6 +34,7 @@ function view(entity, sourceByEntity = new Map()) {
     route: entity.route,
     name: entity.name,
     type: entity.type,
+    kind: 'profile',
     description: entity.description || null,
     publicRole: entity.type === 'person' ? (entity.publicRole || null) : null,
     roleStatus: entity.type === 'person' ? (entity.roleStatus || null) : null,
@@ -44,7 +47,7 @@ function view(entity, sourceByEntity = new Map()) {
 }
 
 function baseRegistry() {
-  const byRoute = new Map([...ENTITY_REGISTRY, ...INSTITUTIONAL_ENTITIES, ...COMMUNITY_ENTITIES].map(entity => [entity.route, entity]));
+  const byRoute = new Map([...ENTITY_REGISTRY, ...INSTITUTIONAL_ENTITIES, ...COMMUNITY_ENTITIES, ...PUBLIC_PEOPLE].map(entity => [entity.route, entity]));
   for (const councillor of EALING_COUNCILLORS) {
     byRoute.set(councillor.route, mergeEalingCouncillor(byRoute.get(councillor.route), councillor));
   }
@@ -80,8 +83,70 @@ function qualityFor(entities, suppressedResearchPeopleCount = 0) {
   };
 }
 
-export default async () => {
+function personReference(providerEntity, data) {
+  const id = providerEntity.id;
+  const postsById = new Map((data.posts || []).map(post => [post.id, post]));
+  const mentionedPostIds = [...new Set((data.links || [])
+    .filter(link => link.type === 'mentioned-in' && link.source === id && String(link.target || '').startsWith('post:'))
+    .map(link => link.target))];
+  const reviewedSources = (data.sources || []).filter(source => source.review_status === 'reviewed' && (source.related_entities || []).includes(id));
+  const reviewedRelationships = (data.relationships || []).filter(rel => rel.review_status === 'reviewed' && (rel.from === id || rel.to === id));
+  const recordCount = mentionedPostIds.length + reviewedSources.length + reviewedRelationships.length;
+  if (recordCount < 2) return null;
+
+  const evidence = [];
+  for (const postId of mentionedPostIds) {
+    const post = postsById.get(postId);
+    if (!post?.url) continue;
+    evidence.push({ type: 'reporting', title: post.title || 'Related reporting', url: post.url, date: post.date || null });
+    if (evidence.length >= 3) break;
+  }
+  if (evidence.length < 3) {
+    for (const source of reviewedSources) {
+      if (!source?.canonical_url) continue;
+      evidence.push({ type: 'source', title: source.title || source.publisher || 'Public source', url: source.canonical_url, date: source.publication_date || source.meeting_date || null });
+      if (evidence.length >= 3) break;
+    }
+  }
+
+  return {
+    id: `reference:${id}`,
+    route: null,
+    name: providerEntity.name,
+    type: 'person',
+    kind: 'reference',
+    aliases: providerEntity.aliases || [],
+    description: null,
+    publicRole: null,
+    roleStatus: null,
+    referenceCount: recordCount,
+    evidence
+  };
+}
+
+function matchingPersonReferences(query, data) {
+  const q = String(query || '').trim().toLowerCase();
+  if (q.length < 3) return [];
+
+  const references = [];
+  for (const providerEntity of data.entities || []) {
+    if (providerEntity.type !== 'person') continue;
+    const registryEntity = findEntityByProviderId('southall-zettel', providerEntity.id) || findPublicPersonByProviderId('southall-zettel', providerEntity.id);
+    const existing = registryEntity ? mergeEalingCouncillor(registryEntity, findEalingCouncillorByRoute(registryEntity.route)) : null;
+    if (existing) continue;
+    const names = [providerEntity.name, ...(providerEntity.aliases || [])].filter(Boolean).map(value => String(value).toLowerCase());
+    if (!names.some(value => value.includes(q))) continue;
+    const reference = personReference(providerEntity, data);
+    if (reference) references.push(reference);
+    if (references.length >= REFERENCE_LIMIT) break;
+  }
+  return references.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export default async request => {
   try {
+    const requestUrl = new URL(request.url);
+    const query = requestUrl.searchParams.get('q') || '';
     const response = await fetch(EXPORT_URL, { headers: { accept: 'application/json' } });
     if (!response.ok) throw new Error(`Research archive export HTTP ${response.status}`);
     const data = await response.json();
@@ -97,17 +162,15 @@ export default async () => {
       byRoute.set(entity.route, {
         ...entity,
         description: entity.description || providerEntity?.description || null,
-        aliases: entity.aliases?.length ? entity.aliases : (providerEntity?.aliases || []),
+        aliases: [...new Set([...(entity.aliases || []), ...(providerEntity?.aliases || [])])],
         website: entity.website || providerEntity?.website || null
       });
     }
 
     for (const providerEntity of data.entities || []) {
-      const existing = findEntityByProviderId('southall-zettel', providerEntity.id);
+      const registryEntity = findEntityByProviderId('southall-zettel', providerEntity.id) || findPublicPersonByProviderId('southall-zettel', providerEntity.id);
+      const existing = registryEntity ? mergeEalingCouncillor(registryEntity, findEalingCouncillorByRoute(registryEntity.route)) : null;
 
-      // A named person in the research archive is not automatically a public Commons profile.
-      // People must be deliberately registered in the public entity registry so that their
-      // civic standing and publication rationale are an explicit editorial choice.
       if (providerEntity.type === 'person' && !existing) {
         suppressedResearchPeopleCount += 1;
         continue;
@@ -118,7 +181,7 @@ export default async () => {
       const merged = {
         ...entity,
         description: entity.description || providerEntity.description || null,
-        aliases: entity.aliases?.length ? entity.aliases : (providerEntity.aliases || []),
+        aliases: [...new Set([...(entity.aliases || []), ...(providerEntity.aliases || [])])],
         website: entity.website || providerEntity.website || null
       };
       if (!byRoute.has(merged.route)) byRoute.set(merged.route, merged);
@@ -127,24 +190,26 @@ export default async () => {
     const sourceByEntity = curatedSourceLookup(data.sources || []);
     const entities = [...byRoute.values()].map(entity => view(entity, sourceByEntity)).sort((a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name));
     const counts = entities.reduce((acc, entity) => { acc[entity.type] = (acc[entity.type] || 0) + 1; return acc; }, {});
+    const references = matchingPersonReferences(query, data);
 
     return json({
       matched: true,
       schemaVersion: 1,
       counts,
       entities,
+      references,
       quality: qualityFor(entities, suppressedResearchPeopleCount),
       democraticRepresentation: {
         currentEalingCouncillors: EALING_COUNCILLORS.length,
         source: 'Ealing Council ModernGov current councillor directory'
       },
       peoplePolicy: {
-        mode: 'explicit-public-registry',
-        method: 'People from the reviewed research archive are not promoted into the public directory automatically. A public person profile requires deliberate Civic Commons registration and a documented civic-role rationale.'
+        mode: 'profiles-plus-search-references',
+        method: 'People with a documented public civic role may have standalone profiles. Other materially recurring people may be returned only as name-search references to reviewed public records; one-off/incidental mentions are not indexed as people.'
       },
       provenance: {
         source: 'Civic Commons entity registry + Ealing Council current councillor directory + Southall Stories research archive',
-        method: 'Canonical Commons identities are merged with exact reviewed research-archive entity IDs. All 70 current Ealing councillors are explicitly registered as public office-holders from the official council directory. Organisation/place identities may be extended from reviewed research data; other people require explicit public registration. Entity note prose supplies descriptions; first-party or authoritative entity websites are preferred for external links, with reviewed source records used as fallback evidence.'
+        method: 'Canonical Commons identities are merged with exact reviewed research-archive entity IDs. All 70 current Ealing councillors are explicitly registered as public office-holders from the official council directory. Public person profiles require deliberate registration; search-only references remain limited and route-less. Councillor and archive aliases are merged so existing search forms are preserved.'
       }
     });
   } catch (error) {
@@ -157,14 +222,15 @@ export default async () => {
       schemaVersion: 1,
       counts,
       entities,
+      references: [],
       quality: qualityFor(entities),
       democraticRepresentation: {
         currentEalingCouncillors: EALING_COUNCILLORS.length,
         source: 'Ealing Council ModernGov current councillor directory'
       },
       peoplePolicy: {
-        mode: 'explicit-public-registry',
-        method: 'Only explicitly registered public people are exposed while the research export is unavailable.'
+        mode: 'profiles-plus-search-references',
+        method: 'Only explicitly registered public profiles are exposed while the reviewed research export is unavailable; search-only references are temporarily unavailable.'
       },
       provenance: {
         source: 'Civic Commons entity registry + Ealing Council current councillor directory',
