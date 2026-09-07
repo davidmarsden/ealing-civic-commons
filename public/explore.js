@@ -25,7 +25,19 @@ function profileCard(entity) {
   return `<article class="entity-card"><a class="entity-card-main" href="/${esc(entity.route)}"><h3>${esc(entity.name)}</h3>${role}${institution}<p>${esc(description)}</p></a><div class="entity-card-footer"><div class="entity-card-meta">${providers}</div>${source}</div></article>`;
 }
 
+function electionReferenceCard(entity) {
+  const roles = (entity.candidacies || []).map(item => {
+    const date = item.electionDate ? new Date(`${item.electionDate}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '';
+    const votes = Number.isFinite(Number(item.votes)) ? ` · ${Number(item.votes).toLocaleString('en-GB')} votes` : '';
+    const result = item.elected ? ' · elected' : '';
+    return `<li><strong>${esc(item.ward)} ward</strong> · ${esc(item.party)} · ${esc(date)}${votes}${result}</li>`;
+  }).join('');
+  const evidence = (entity.evidence || []).map(item => `<a class="entity-source-link" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title || 'Official election record')} ↗</a>`).join('');
+  return `<article class="entity-card entity-reference-card"><div class="entity-card-main"><h3>${esc(entity.name)}</h3><p class="entity-public-role">Official election candidate record</p><p>This is a dated civic role from Ealing Council election results, not a standalone Civic Commons profile.</p>${roles ? `<ul>${roles}</ul>` : ''}</div><div class="entity-card-footer"><div class="entity-card-meta"><span class="entity-provider-pill">Search-only civic reference</span></div><div>${evidence}</div></div></article>`;
+}
+
 function referenceCard(entity) {
+  if (entity.referenceKind === 'election-candidate') return electionReferenceCard(entity);
   const evidence = (entity.evidence || []).map(item => `<a class="entity-source-link" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title || 'Public record')} ↗</a>`).join('');
   const count = Number(entity.referenceCount || 0);
   return `<article class="entity-card entity-reference-card"><div class="entity-card-main"><h3>${esc(entity.name)}</h3><p class="entity-public-role">Civic reference</p><p>This name appears in ${count} reviewed civic ${count === 1 ? 'record' : 'records'}. It does not have a standalone Civic Commons profile.</p></div><div class="entity-card-footer"><div class="entity-card-meta"><span class="entity-provider-pill">Reference, not profile</span></div><div>${evidence}</div></div></article>`;
@@ -62,7 +74,7 @@ function render() {
   root.innerHTML = groupedMarkup(visible);
   root.hidden = false;
   if (!matches.length) {
-    $('#exploreStatus').textContent = query.length < 3 ? 'Keep typing to search people referenced in reviewed civic material.' : 'No civic profiles or references match this search.';
+    $('#exploreStatus').textContent = query.length < 3 ? 'Keep typing to search people referenced in reviewed civic material and official election records.' : 'No civic profiles or references match this search.';
     return;
   }
   if (matches.length > visible.length) {
@@ -73,16 +85,36 @@ function render() {
   $('#exploreStatus').textContent = referenceCount ? `${matches.length} matches, including ${referenceCount} ${referenceCount === 1 ? 'civic reference' : 'civic references'}` : `${matches.length} civic ${matches.length === 1 ? 'profile' : 'profiles'}`;
 }
 
+function mergeReferences(...sets) {
+  const byName = new Map();
+  for (const entity of sets.flat()) {
+    if (!entity?.name) continue;
+    const key = entity.name.trim().toLowerCase();
+    const existing = byName.get(key);
+    if (!existing || entity.referenceKind === 'election-candidate') byName.set(key, entity);
+  }
+  return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
 async function fetchReferences(query) {
   const q = query.trim();
   if (q.length < 3) { searchReferences = []; render(); return; }
   const requestId = ++referenceRequest;
   try {
-    const response = await fetch(`/.netlify/functions/civic-entities?q=${encodeURIComponent(q)}`, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
+    const [archiveResult, electionResult] = await Promise.allSettled([
+      fetch(`/.netlify/functions/civic-entities?q=${encodeURIComponent(q)}`, { cache: 'no-store' }).then(async response => {
+        if (!response.ok) throw new Error(`archive HTTP ${response.status}`);
+        return response.json();
+      }),
+      fetch(`/.netlify/functions/ealing-election-candidate-search?q=${encodeURIComponent(q)}`, { cache: 'no-store' }).then(async response => {
+        if (!response.ok) throw new Error(`election HTTP ${response.status}`);
+        return response.json();
+      })
+    ]);
     if (requestId !== referenceRequest) return;
-    searchReferences = data.references || [];
+    const archiveReferences = archiveResult.status === 'fulfilled' ? (archiveResult.value.references || []) : [];
+    const electionReferences = electionResult.status === 'fulfilled' ? (electionResult.value.references || []) : [];
+    searchReferences = mergeReferences(archiveReferences, electionReferences);
     render();
   } catch (error) {
     if (requestId !== referenceRequest) return;

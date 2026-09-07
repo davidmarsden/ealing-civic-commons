@@ -95,16 +95,42 @@ function personReference(providerEntity, data) {
   return { id: `reference:${id}`, route: null, name: providerEntity.name, type: 'person', kind: 'reference', aliases: providerEntity.aliases || [], description: null, publicRole: null, roleStatus: null, referenceCount: recordCount, evidence };
 }
 
+function personNameKey(value) {
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\b(?:councillor|cllr|reverend|revd|rev|canon|dr|mr|mrs|ms|sir|dame)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function publicPersonNameKeys() {
+  const keys = new Set();
+  for (const entity of baseRegistry()) {
+    if (entity.type !== 'person') continue;
+    for (const value of [entity.name, ...(entity.aliases || [])]) {
+      const key = personNameKey(value);
+      if (key) keys.add(key);
+    }
+  }
+  return keys;
+}
+
 function matchingPersonReferences(query, data) {
   const q = String(query || '').trim().toLowerCase();
   if (q.length < 3) return [];
+  const profileNameKeys = publicPersonNameKeys();
   const references = [];
   for (const providerEntity of data.entities || []) {
     if (providerEntity.type !== 'person') continue;
     const registryEntity = findEntityByProviderId('southall-zettel', providerEntity.id) || findPublicPersonByProviderId('southall-zettel', providerEntity.id);
     const existing = registryEntity ? mergeEalingCouncillor(registryEntity, findEalingCouncillorByRoute(registryEntity.route)) : null;
     if (existing) continue;
-    const names = [providerEntity.name, ...(providerEntity.aliases || [])].filter(Boolean).map(value => String(value).toLowerCase());
+    const rawNames = [providerEntity.name, ...(providerEntity.aliases || [])].filter(Boolean);
+    if (rawNames.some(value => profileNameKeys.has(personNameKey(value)))) continue;
+    const names = rawNames.map(value => String(value).toLowerCase());
     if (!names.some(value => value.includes(q))) continue;
     const reference = personReference(providerEntity, data);
     if (reference) references.push(reference);
