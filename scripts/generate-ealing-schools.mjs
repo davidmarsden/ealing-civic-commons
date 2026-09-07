@@ -15,6 +15,13 @@ const TOWN_BY_WARD = new Map([
   ['Dormers Wells','Southall'], ['Lady Margaret','Southall'], ['Norwood Green','Southall'], ['Southall Broadway','Southall'], ['Southall Green','Southall'], ['Southall West','Southall']
 ]);
 
+// GIAS supplies the canonical current identity. Some establishments already have a
+// reviewed Southall-Zettel civic-memory entity containing historical reporting and
+// relationships. Bind those explicitly by immutable URN: do not fuzzy-match names.
+const SOUTHALL_ZETTEL_BINDINGS_BY_URN = new Map([
+  ['101892', 'entity:blair-peach-primary-school']
+]);
+
 function yyyymmdd(date) {
   return date.toISOString().slice(0, 10).replaceAll('-', '');
 }
@@ -94,6 +101,15 @@ for (const values of iterator) {
   const phase = record['PhaseOfEducation (name)'] || null;
   const establishmentType = record['TypeOfEstablishment (name)'] || null;
   const postcode = record.Postcode || null;
+  const historicalEntityId = SOUTHALL_ZETTEL_BINDINGS_BY_URN.get(urn);
+  const providers = [{ provider: 'civic-commons', role: 'canonical-public-identity' }];
+  if (historicalEntityId) {
+    providers.push({
+      provider: 'southall-zettel',
+      entityId: historicalEntityId,
+      role: 'reviewed-civic-memory'
+    });
+  }
   entities.push({
     route: `organisations/school-${urn}`,
     id: `civic:organisation:gias:${urn}`,
@@ -110,7 +126,7 @@ for (const values of iterator) {
     urn,
     status: record['EstablishmentStatus (name)'],
     website: { label: `Get Information about Schools — URN ${urn}`, url: `https://get-information-schools.service.gov.uk/Establishments/Establishment/Details/${urn}`, type: 'Department for Education establishment register' },
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
+    providers
   });
 }
 entities.sort((a, b) => a.name.localeCompare(b.name));
