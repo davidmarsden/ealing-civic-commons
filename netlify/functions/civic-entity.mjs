@@ -2,6 +2,7 @@ import { findEntityByProviderId, findEntityByRoute, makeZettelRegistryEntity, pa
 import { findInstitutionalEntityByRoute } from '../lib/institutional-entities.mjs';
 import { findCommunityEntityByRoute } from '../lib/community-entities.mjs';
 import { findEalingCouncillorByRoute, mergeEalingCouncillor } from '../lib/ealing-councillors.mjs';
+import { findCivicInstitutionByRoute } from '../lib/civic-institutions.mjs';
 
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
 const EXPECTED_SCHEMA = 1;
@@ -18,7 +19,7 @@ function registryView(entity) {
 }
 
 function registryEntityForRoute(route) {
-  const existing = findEntityByRoute(route) || findInstitutionalEntityByRoute(route) || findCommunityEntityByRoute(route);
+  const existing = findEntityByRoute(route) || findInstitutionalEntityByRoute(route) || findCommunityEntityByRoute(route) || findCivicInstitutionByRoute(route);
   const councillor = findEalingCouncillorByRoute(route);
   return councillor ? mergeEalingCouncillor(existing, councillor) : existing;
 }
@@ -44,6 +45,14 @@ function publicRoleFields(registryEntity) {
   };
 }
 
+function institutionFields(registryEntity) {
+  if (!registryEntity || registryEntity.type === 'person') return {};
+  return {
+    town: registryEntity.town || null,
+    institutionType: registryEntity.institutionType || null
+  };
+}
+
 function nativeEntityResponse(registryEntity) {
   return json({
     matched: true,
@@ -57,6 +66,7 @@ function nativeEntityResponse(registryEntity) {
       description: registryEntity.description || null,
       website: registryEntity.website || null,
       ...publicRoleFields(registryEntity),
+      ...institutionFields(registryEntity),
       provenance: 'commons-entity-registry'
     },
     providers: providerViews(registryEntity),
@@ -147,6 +157,7 @@ export default async request => {
         description: entity.description || registryEntity.description || null,
         website: registryEntity.website || entity.website || null,
         ...publicRoleFields(registryEntity),
+        ...institutionFields(registryEntity),
         reviewStatus: entity.review_status,
         provenance: entity.provenance
       },
