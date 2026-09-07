@@ -23,6 +23,17 @@ function registryEntityForRoute(route) {
   return councillor ? mergeEalingCouncillor(existing, councillor) : existing;
 }
 
+function publicRegistryEntity(providerEntity) {
+  if (!providerEntity) return null;
+  const existing = findEntityByProviderId('southall-zettel', providerEntity.id);
+  if (existing) {
+    const councillor = findEalingCouncillorByRoute(existing.route);
+    return councillor ? mergeEalingCouncillor(existing, councillor) : existing;
+  }
+  if (providerEntity.type === 'person') return null;
+  return makeZettelRegistryEntity(providerEntity);
+}
+
 function publicRoleFields(registryEntity) {
   if (registryEntity?.type !== 'person') return {};
   return {
@@ -80,12 +91,14 @@ export default async request => {
       if (!parsed) return json({ matched: false, reason: 'invalid-entity-route' }, 400, 300);
       const providerEntity = entitiesById.get(`entity:${parsed.slug}`);
       if (!providerEntity || providerEntity.type !== parsed.type) return json({ matched: false, reason: 'entity-not-in-commons-registry' }, 404, 300);
-      registryEntity = makeZettelRegistryEntity(providerEntity);
+      registryEntity = publicRegistryEntity(providerEntity);
+      if (!registryEntity) return json({ matched: false, reason: 'person-not-publicly-registered' }, 404, 300);
     }
 
     if (!registryEntity && legacyId) {
       const providerEntity = entitiesById.get(legacyId);
-      registryEntity = makeZettelRegistryEntity(providerEntity);
+      registryEntity = publicRegistryEntity(providerEntity);
+      if (providerEntity?.type === 'person' && !registryEntity) return json({ matched: false, reason: 'person-not-publicly-registered' }, 404, 300);
     }
 
     if (!registryEntity) return json({ matched: false, reason: 'entity-not-in-commons-registry' }, 404, 300);
@@ -104,7 +117,7 @@ export default async request => {
     const relationships = (data.relationships || []).filter(rel => rel.review_status === 'reviewed' && (rel.from === id || rel.to === id)).map(rel => {
       const otherId = rel.from === id ? rel.to : rel.from;
       const other = entitiesById.get(otherId);
-      const otherRegistry = findEntityByProviderId('southall-zettel', otherId) || makeZettelRegistryEntity(other);
+      const otherRegistry = publicRegistryEntity(other);
       const evidence = (rel.evidence || []).map(ref => {
         if (ref.id.startsWith('post:')) { const post = postsById.get(ref.id); return post ? { id: post.id, type: 'post', title: post.title, url: post.url, provider: 'southall-zettel' } : null; }
         const source = (data.sources || []).find(item => item.id === ref.id);
@@ -140,7 +153,7 @@ export default async request => {
       providers,
       counts: { reporting: reporting.length, relationships: relationships.length, sources: sources.length },
       relationships, sources, reporting, topics,
-      provenance: { label: 'Civic memory', source: 'Southall Stories research archive via the Civic Commons entity registry', method: 'Civic Commons owns the public civic identity and route. The Southall Stories research archive supplies reviewed identity metadata, relationships, source records and deterministic historical-reporting matches as one provider.' }
+      provenance: { label: 'Civic memory', source: 'Southall Stories research archive via the Civic Commons entity registry', method: 'Civic Commons owns the public civic identity and route. The Southall Stories research archive supplies reviewed identity metadata, relationships, source records and deterministic historical-reporting matches as one provider. Research-only people are not assigned public Commons routes unless explicitly registered.' }
     }, 200, 300);
   } catch (error) {
     console.error('Civic entity lookup failed', error);
