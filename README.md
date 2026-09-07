@@ -39,7 +39,8 @@ Southall is the starting point, but the Commons is designed for the borough's se
 - Archives normalised items every 15 minutes using Netlify Blobs.
 - Keeps stable item pages useful after upstream RSS items age out.
 - Preserves directly followed stories for personal RSS.
-- Connects live items to reviewed people, organisations, places, topics, issues and evidence from the research layer.
+- Connects live items to reviewed organisations, places, topics, issues and evidence, plus deliberately registered public people with a documented civic-role rationale.
+- Keeps Explore search-first as the entity universe grows rather than rendering every known entity as one giant directory.
 
 ### Official publishing and Document Watch
 
@@ -73,6 +74,7 @@ The source census, architecture, prospectus and implementation notes are version
 - [Founding Pack index](./docs/FOUNDING-PACK.md)
 - [Source Register — v0.4](./docs/source-register-v0.4.md)
 - [Source Register — v0.3 historical census](./docs/source-register-v0.3.md)
+- [Public people entities — publication and minimisation policy](./docs/public-people-entities.md)
 - [Technical Architecture & Prototype Specification — v0.1](./docs/technical-architecture-spec-v0.1.md)
 - [Partner Prospectus](./docs/partner-prospectus.md)
 - [Open Social Phase — development direction](./docs/open-social-phase.md)
@@ -102,6 +104,12 @@ The human-readable [Source Register v0.4](./docs/source-register-v0.4.md) now di
 Native RSS remains the preferred path when available, but it is no longer the only path: source-specific public-page adapters and cautious fallbacks are an established ingestion pattern where they preserve first-party provenance and stable identities.
 
 Further candidates are added deliberately to fill geographic and thematic gaps rather than simply maximise source count. Positive Greenford and Visions for Northolt are already live; Hanwell coverage has improved with Hanwell Community Forum; Southall/Norwood Green community coverage has deepened. **Perivale remains the clearest geographic publishing gap.**
+
+## Public entity model
+
+The public civic graph deliberately does **not** mirror every named person in the research archive. Organisations and places may be extended from reviewed research data, but people require explicit registration in the public entity registry. The [public people entities policy](./docs/public-people-entities.md) sets the threshold: public office-holders, official institutional representatives, sustained public civic actors and clearly framed historical civic actors may be included when their civic standing is properly sourced. Ordinary residents, one-off meeting attendees, volunteers and generic contact names are not promoted into standalone profiles merely because they appear in public material.
+
+Explore therefore defaults to search rather than dumping the whole entity universe onto one page. Entity-type browse views are bounded, and searches cover names, aliases, roles and descriptions.
 
 ## Source submissions
 
@@ -138,10 +146,11 @@ npm run build
 1. Build Phase 7C promotion rules for accepted source submissions and evidence suggestions first, then relationship suggestions.
 2. Connect accepted evidence to archived stories, Document Watch records, issues, entities and earlier reporting without duplicating canonical source material.
 3. Improve Archive indexing/search and grouped source filtering so growth from dozens of publishers to hundreds remains usable.
-4. Finish the public entity completeness audit and automate checks for newly incomplete records.
-5. Harden official-source ingestion, especially ModernGov direct destinations, meeting/document relationships, parser tests, caching and preservation of high-value primary records.
-6. Finish town-aware social metadata routing so existing share-card assets are actually emitted for public item/entity URLs.
-7. Continue deliberate source expansion by genuine geographic/thematic gap — especially Perivale — while hardening existing adapters and keeping fragile upstreams visible through source health.
-8. Explore OCN partnership/API and later federation bridges in parallel without making either a dependency.
+4. Complete public civic representation deliberately: add all current Ealing councillors, then expand institutions such as libraries, schools, colleges, faith institutions and major community bodies while applying the public-people threshold to named representatives.
+5. Finish the wider public entity completeness audit and automate checks for newly incomplete records.
+6. Harden official-source ingestion, especially ModernGov direct destinations, meeting/document relationships, parser tests, caching and preservation of high-value primary records.
+7. Finish town-aware social metadata routing so existing share-card assets are actually emitted for public item/entity URLs.
+8. Continue deliberate source expansion by genuine geographic/thematic gap — especially Perivale — while hardening existing adapters and keeping fragile upstreams visible through source health.
+9. Explore OCN partnership/API and later federation bridges in parallel without making either a dependency.
 
 The Commons should remain useful if any one external service is unavailable.
