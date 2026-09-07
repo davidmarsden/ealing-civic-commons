@@ -63,6 +63,7 @@ const anchors = [
   { year: 2022, sourceName: 'Donnelly S.', route: 'people/steve-donnelly', ward: 'East Acton' },
   { year: 2022, sourceName: 'Ball J.', route: 'people/jon-ball', ward: 'Ealing Common' },
   { year: 2022, sourceName: 'Driscoll P.', route: 'people/paul-driscoll', ward: 'Northfield' },
+  { year: 2022, sourceName: 'Nagpal K.', route: 'people/kim-kaur-nagpal', ward: 'Northfield' },
   { year: 2026, sourceName: 'Ajay Roy', route: 'people/ajay-roy', ward: 'North Greenford' }
 ];
 
