@@ -1,35 +1,57 @@
-# Public people entities — publication and minimisation policy
+# Public people entities — publication, discovery and minimisation policy
 
 **Status:** working governance rule for the Ealing Civic Commons reference implementation  
-**Applies to:** public person entities, Explore results, issue/entity relationships and future imports into the civic graph
+**Applies to:** public person profiles, search references, Explore results, issue/entity relationships and future imports into the civic graph
 
 Civic Commons is not a people-search database. A person being named in a public article, meeting paper, campaign page or research note does **not** by itself justify creating or publishing a standalone Civic Commons profile.
 
-The purpose of a public person entity is narrower: to explain a person's **documented civic role** where identifying that role materially helps readers understand local government, public institutions, civic organisations, campaigns or an ongoing civic issue.
+At the same time, useful civic discovery should not require every significant person to have a permanent profile. The Commons therefore distinguishes three levels of visibility.
 
-## Publication threshold
+## 1. Public profile
 
-A person may appear as a browsable public entity when at least one of these applies and the role is supported by a first-party or authoritative source:
+A person may have a browsable standalone profile where identifying their **documented public civic role** materially helps readers understand local government, public institutions, civic organisations, campaigns or an ongoing civic issue.
 
-1. **Public office-holder** — for example a councillor, MP, London Assembly Member, mayor or other elected/appointed public office-holder.
-2. **Official institutional representative** — for example a council officer acting publicly in a named role, headteacher, chief executive, chair, trustee, spokesperson or faith/community leader whose public-facing role is relevant to the Commons.
-3. **Sustained public civic actor** — a campaigner, organiser or activist with a documented, continuing public role that is independently relevant to a civic issue, rather than someone merely quoted or present at an event.
-4. **Historical civic actor** — where the person's past public role is necessary to understand civic history and is clearly dated and described as historical.
+A profile may be appropriate for:
 
-## Do not create a standalone public profile merely because someone is
+1. **Public office-holders** — for example councillors, MPs, London Assembly Members, mayors or other elected/appointed public office-holders.
+2. **Official institutional representatives** — for example a council officer acting publicly in a named role, headteacher, chief executive, chair, spokesperson or faith/community leader whose public-facing role is relevant to the Commons.
+3. **Sustained public civic actors** — campaigners, organisers or activists with a documented, continuing public role independently relevant to a civic issue.
+4. **Historical civic actors** — where a past public role is necessary to understand civic history and is clearly dated and described as historical.
 
-- named in an article, submission, petition, minutes or public document;
+Election candidates may be recorded as dated public civic roles where candidacy is drawn from an official nomination/election record. Unsuccessful candidacy on its own need not make someone permanently prominent in the People browse view.
+
+## 2. Civic reference — searchable, not a profile
+
+Some people matter to the public record without meeting the threshold for a standalone Civic Commons biography.
+
+A **civic reference** may therefore appear when a reader searches for a person's name if that person recurs materially across reviewed civic reporting, source records or reviewed relationships. A civic reference:
+
+- is returned only in an active name search, not in the default People browse view;
+- does not create a `/people/...` profile route;
+- does not aggregate a biography, personal details or inferred affiliations;
+- is clearly labelled **Reference, not profile**;
+- points readers back to a small number of public records showing why the name is relevant.
+
+The reference implementation requires at least **two reviewed civic records or relationships** before a research-only person can appear this way. This is a minimum discovery threshold, not a claim that the person holds office or has any particular status.
+
+This layer is intended for cases such as recurring election candidates, voluntary-sector figures, campaign organisers or other named civic participants whose presence in the public record is useful to find but does not yet justify a full profile.
+
+## 3. Incidental mention — not indexed as a person
+
+Do not create a profile or search reference merely because someone is:
+
+- named once in an article, submission, petition, minutes or public document;
 - a resident who gave a quote or objection;
 - a one-off meeting attendee;
-- a volunteer or member of a community organisation;
+- an ordinary volunteer or member of a community organisation;
 - listed as a generic contact person;
-- present in the private/research graph without an independently justified public civic role.
+- present in the research graph without enough reviewed civic context to justify discovery.
 
-The canonical source may still contain that person's name. Civic Commons does not need to amplify every public mention into an aggregated profile.
+The canonical source may still contain that person's name. Civic Commons does not need to amplify every public mention into either an aggregated profile or a searchable person record.
 
-## Required fields for public people
+## Required fields for public profiles
 
-Every deliberately published person entity should be able to answer, in plain English, **“Why is this person in a civic directory?”**
+Every deliberately published person profile should be able to answer, in plain English, **“Why does this person have a Civic Commons profile?”**
 
 At minimum it should have:
 
@@ -41,12 +63,24 @@ At minimum it should have:
 
 Political party, faith, ethnicity, health, sexuality and other sensitive or identity-related attributes must not be inferred from context. Record affiliations only when they are explicitly public, relevant to the civic role and supported by an appropriate source.
 
+## Searchability is not prominence
+
+Being discoverable by name is different from being promoted in a directory. Explore therefore keeps broad person discovery **search-first**:
+
+- People browse contains public profiles only and is bounded rather than an ever-growing tag cloud;
+- typed name search can additionally return civic references;
+- incidental names remain outside the person index.
+
+This preserves the useful connections of the civic graph without turning it into a list of everyone who has ever appeared in local reporting.
+
 ## Current versus historical roles
 
-Roles should be time-bounded where possible. Former councillors, former chairs or previous organisational representatives should not be rendered as if they remain current. Historical entities can remain part of civic memory when their past role continues to matter.
+Roles should be time-bounded where possible. Former councillors, former chairs or previous organisational representatives should not be rendered as if they remain current. Historical profiles can remain part of civic memory when their past role continues to matter.
 
 ## Removal, correction and review
 
-A public person entity is a reviewed editorial choice, not an automatic consequence of ingestion. If the public-role justification becomes unclear, the entity should be removed from public discovery or returned for editorial review without erasing the underlying canonical source material.
+A public profile is a reviewed editorial choice. A civic reference is a deliberately limited discovery aid. Neither is an automatic consequence of ingestion.
 
-The data-minimisation principle is simple: **publish the civic role that readers need, not every personal detail the system happens to know.**
+If the justification becomes unclear, a profile can be downgraded to a reference or removed from public discovery; a reference can be removed without erasing the underlying canonical source material.
+
+The data-minimisation principle is simple: **make civic roles and public records discoverable without publishing more about a person than readers need.**
