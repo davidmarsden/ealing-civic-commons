@@ -1,4 +1,4 @@
-import { EALING_2026_CANDIDACIES, EALING_2026_CANDIDACIES_META } from '../lib/ealing-election-candidates.mjs';
+import { EALING_CANDIDACY_HISTORY, EALING_CANDIDACY_HISTORY_META } from '../lib/ealing-candidacy-history.mjs';
 import { PUBLIC_PEOPLE } from '../lib/public-people.mjs';
 import { EALING_COUNCILLORS } from '../lib/ealing-councillors.mjs';
 
@@ -16,117 +16,132 @@ function json(body, status = 200) {
 }
 
 function normal(value) {
-  return String(value || '').trim().toLowerCase();
-}
-
-function nameTokens(value) {
-  return normal(value)
+  return String(value || '')
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+    .trim();
 }
 
+const PROFILES = [...PUBLIC_PEOPLE, ...EALING_COUNCILLORS];
+const PROFILE_BY_ROUTE = new Map(PROFILES.map(person => [person.route, person]));
 const PROFILE_NAMES = new Set(
-  [...PUBLIC_PEOPLE, ...EALING_COUNCILLORS]
+  PROFILES
     .flatMap(person => [person.name, ...(person.aliases || [])])
     .map(normal)
     .filter(Boolean)
 );
 
-function matchingCurrentCouncillor(candidacy) {
-  if (!candidacy?.elected) return null;
-  const candidateTokens = nameTokens(candidacy.name);
-  if (candidateTokens.length < 2) return null;
-  const candidateFirst = candidateTokens[0];
-  const candidateSurname = candidateTokens[candidateTokens.length - 1];
-
-  return EALING_COUNCILLORS.find(councillor => {
-    if (normal(councillor.ward) !== normal(candidacy.ward)) return false;
-    return [councillor.name, ...(councillor.aliases || [])].some(value => {
-      const tokens = nameTokens(value);
-      if (tokens.length < 2) return false;
-      return tokens[0] === candidateFirst && tokens[tokens.length - 1] === candidateSurname;
-    });
-  }) || null;
+function profileMatchesQuery(route, query) {
+  const person = PROFILE_BY_ROUTE.get(route);
+  if (!person) return false;
+  const q = normal(query);
+  return [person.name, ...(person.aliases || [])].some(value => normal(value).includes(q));
 }
 
-function candidateRecord(item) {
+function recordMatchesQuery(record, query) {
+  const q = normal(query);
+  if (!q) return false;
+  if (normal(record.candidateNameSource).includes(q)) return true;
+  if (record.identity?.status === 'matched' && record.identity.route) {
+    return profileMatchesQuery(record.identity.route, query);
+  }
+  return false;
+}
+
+function candidateRecord(record) {
   return {
-    ward: item.ward,
-    party: item.party,
-    electionDate: item.electionDate,
-    electionLabel: item.electionLabel,
-    elected: item.elected,
-    votes: item.votes,
-    url: item.sourceUrl
+    ward: record.ward?.name || null,
+    wardSlug: record.ward?.slug || null,
+    boundaryEra: record.ward?.boundaryEra || null,
+    party: record.ballot?.description || null,
+    ballotFidelity: record.ballot?.fidelity || null,
+    electionDate: record.electionDate,
+    electionYear: record.electionYear,
+    electionLabel: record.electionLabel,
+    elected: Boolean(record.result?.elected),
+    votes: record.votes,
+    url: record.provenance?.providerUrl || null,
+    provenance: record.provenance || null,
+    candidateNameSource: record.candidateNameSource
+  };
+}
+
+function evidenceRecord(record) {
+  return {
+    type: 'election-record',
+    title: `${record.electionLabel} — ${record.ward?.name || 'ward unavailable'}`,
+    url: record.provenance?.providerUrl || null,
+    date: record.electionDate,
+    provider: record.provenance?.provider || null,
+    upstream: record.provenance?.upstream || null
   };
 }
 
 function matchingReferences(query) {
   const q = normal(query);
   if (q.length < 3) return { references: [], profileElectionRecords: [] };
+
   const grouped = new Map();
   const profileGrouped = new Map();
 
-  for (const candidacy of EALING_2026_CANDIDACIES) {
-    if (!normal(candidacy.name).includes(q)) continue;
+  for (const record of EALING_CANDIDACY_HISTORY) {
+    if (!recordMatchesQuery(record, query)) continue;
 
-    const councillor = matchingCurrentCouncillor(candidacy);
-    if (councillor) {
-      if (!profileGrouped.has(councillor.route)) {
-        profileGrouped.set(councillor.route, {
-          route: councillor.route,
-          name: councillor.name,
-          candidacies: []
-        });
+    if (record.identity?.status === 'matched' && record.identity.route) {
+      const person = PROFILE_BY_ROUTE.get(record.identity.route);
+      if (person) {
+        if (!profileGrouped.has(record.identity.route)) {
+          profileGrouped.set(record.identity.route, {
+            route: record.identity.route,
+            name: person.name,
+            candidacies: []
+          });
+        }
+        profileGrouped.get(record.identity.route).candidacies.push(candidateRecord(record));
+        continue;
       }
-      profileGrouped.get(councillor.route).candidacies.push(candidateRecord(candidacy));
-      continue;
     }
 
-    if (PROFILE_NAMES.has(normal(candidacy.name))) continue;
-    const key = normal(candidacy.name);
+    if (PROFILE_NAMES.has(normal(record.candidateNameSource))) continue;
+    const key = normal(record.candidateNameSource);
     if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key).push(candidacy);
+    grouped.get(key).push(record);
   }
 
   const references = [...grouped.values()]
-    .map(candidacies => {
-      candidacies.sort((a, b) => a.electionDate.localeCompare(b.electionDate) || a.ward.localeCompare(b.ward));
-      const first = candidacies[0];
+    .map(records => {
+      records.sort((a, b) => b.electionDate.localeCompare(a.electionDate) || String(a.ward?.name || '').localeCompare(String(b.ward?.name || '')));
+      const first = records[0];
+      const years = [...new Set(records.map(item => item.electionYear))].sort();
       return {
-        id: `election-reference:${normal(first.name).replace(/[^a-z0-9]+/g, '-')}`,
+        id: `election-reference:${normal(first.candidateNameSource).replace(/[^a-z0-9]+/g, '-')}`,
         route: null,
-        name: first.name,
+        name: first.candidateNameSource,
         type: 'person',
         kind: 'reference',
         referenceKind: 'election-candidate',
         aliases: [],
         description: null,
-        publicRole: candidacies.length === 1
-          ? `Candidate for ${first.ward} ward — ${first.party}`
-          : `${candidacies.length} official Ealing Council candidacies in 2026`,
+        publicRole: records.length === 1
+          ? `Candidate for ${first.ward?.name || 'Ealing'} ward — ${first.ballot?.description || 'party/ballot description unavailable'}`
+          : `${records.length} recorded Ealing Council candidacies across ${years.join(', ')}`,
         roleStatus: 'historical',
-        referenceCount: candidacies.length,
-        candidacies: candidacies.map(candidateRecord),
-        evidence: candidacies.slice(0, 3).map(item => ({
-          type: 'official-election-record',
-          title: `${item.electionLabel} — ${item.ward} ward`,
-          url: item.sourceUrl,
-          date: item.electionDate
-        }))
+        referenceCount: records.length,
+        candidacies: records.map(candidateRecord),
+        evidence: records.slice(0, 5).map(evidenceRecord)
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name))
     .slice(0, LIMIT);
 
-  const profileElectionRecords = [...profileGrouped.values()].map(item => ({
-    ...item,
-    candidacies: item.candidacies.sort((a, b) => a.electionDate.localeCompare(b.electionDate) || a.ward.localeCompare(b.ward))
-  }));
+  const profileElectionRecords = [...profileGrouped.values()]
+    .map(item => ({
+      ...item,
+      candidacies: item.candidacies.sort((a, b) => b.electionDate.localeCompare(a.electionDate) || String(a.ward || '').localeCompare(String(b.ward || '')))
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return { references, profileElectionRecords };
 }
@@ -139,7 +154,7 @@ export default async request => {
     matched: true,
     references: matches.references,
     profileElectionRecords: matches.profileElectionRecords,
-    coverage: EALING_2026_CANDIDACIES_META,
-    policy: 'Official election candidacy is a dated civic role. Elected candidate records are attached to the existing councillor profile; unsuccessful candidates remain search-only references unless another public role independently justifies a profile.'
+    coverage: EALING_CANDIDACY_HISTORY_META,
+    policy: 'Election candidacy is a dated civic role. Structured records preserve election/date, ward and boundary era, party/ballot description, votes/result and provenance. Records linked to an existing public profile are attached to that identity; other candidates remain search-only civic references unless another public role independently justifies a profile.'
   });
 };
