@@ -18,7 +18,7 @@ A profile may be appropriate for:
 3. **Sustained public civic actors** — campaigners, organisers or activists with a documented, continuing public role independently relevant to a civic issue.
 4. **Historical civic actors** — where a past public role is necessary to understand civic history and is clearly dated and described as historical.
 
-Election candidates may be recorded as dated public civic roles where candidacy is drawn from an official nomination/election record. Unsuccessful candidacy on its own need not make someone permanently prominent in the People browse view.
+Election candidates may be recorded as dated public civic roles where candidacy is drawn from an official nomination/election record **or a reputable public electoral archive with explicit source provenance**. Unsuccessful candidacy on its own need not make someone permanently prominent in the People browse view. Current elected office-holders qualify for a public profile; one-off unsuccessful candidates will normally remain searchable civic references unless a wider sustained civic role independently justifies a profile.
 
 The same threshold applies to people who build, publish, research or contribute to Civic Commons. Being a project founder, publisher or contributor is not by itself a reason for a standalone profile, and the Commons should avoid giving its own participants greater prominence than comparable local civic actors.
 
@@ -35,6 +35,8 @@ A **civic reference** may therefore appear when a reader searches for a person's
 - points readers back to a small number of public records showing why the name is relevant.
 
 The reference implementation requires at least **two reviewed civic records or relationships** before a research-only person can appear this way. This is a minimum discovery threshold, not a claim that the person holds office or has any particular status.
+
+Election records are a narrow exception to the two-record discovery threshold: a single verified candidacy record may be searchable because candidacy itself is a defined public civic act. That exception permits discovery of the dated electoral fact only; it does not justify a biography, inferred affiliations beyond the ballot description, or automatic promotion into the People browse view.
 
 This layer is intended for cases such as recurring election candidates, voluntary-sector figures, campaign organisers or other named civic participants whose presence in the public record is useful to find but does not yet justify a full profile.
 
@@ -63,7 +65,7 @@ At minimum it should have:
 - current/historical status where relevant;
 - a first-party or authoritative source/website where one exists.
 
-Political party, faith, ethnicity, health, sexuality and other sensitive or identity-related attributes must not be inferred from context. Record affiliations only when they are explicitly public, relevant to the civic role and supported by an appropriate source.
+Political party, faith, ethnicity, health, sexuality and other sensitive or identity-related attributes must not be inferred from context. Record affiliations only when they are explicitly public, relevant to the civic role and supported by an appropriate source. For election records, party or ballot description should be reproduced from the electoral source rather than inferred from later activity.
 
 ## Searchability is not prominence
 
@@ -78,6 +80,8 @@ This preserves the useful connections of the civic graph without turning it into
 ## Current versus historical roles
 
 Roles should be time-bounded where possible. Former councillors, former chairs or previous organisational representatives should not be rendered as if they remain current. Historical profiles can remain part of civic memory when their past role continues to matter.
+
+Election candidacy should be modelled as a dated event/assertion — election, electoral area, ballot description, result and source — rather than rewritten as an undated personal attribute. Boundary changes and similarly named wards must be preserved rather than silently collapsed.
 
 ## Removal, correction and review
 
