@@ -28,8 +28,9 @@ function profileCard(entity) {
 function electionReferenceCard(entity) {
   const roles = (entity.candidacies || []).map(item => {
     const date = item.electionDate ? new Date(`${item.electionDate}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '';
+    const votes = Number.isFinite(Number(item.votes)) ? ` · ${Number(item.votes).toLocaleString('en-GB')} votes` : '';
     const result = item.elected ? ' · elected' : '';
-    return `<li><strong>${esc(item.ward)} ward</strong> · ${esc(item.party)} · ${esc(date)}${result}</li>`;
+    return `<li><strong>${esc(item.ward)} ward</strong> · ${esc(item.party)} · ${esc(date)}${votes}${result}</li>`;
   }).join('');
   const evidence = (entity.evidence || []).map(item => `<a class="entity-source-link" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title || 'Official election record')} ↗</a>`).join('');
   return `<article class="entity-card entity-reference-card"><div class="entity-card-main"><h3>${esc(entity.name)}</h3><p class="entity-public-role">Official election candidate record</p><p>This is a dated civic role from Ealing Council election results, not a standalone Civic Commons profile.</p>${roles ? `<ul>${roles}</ul>` : ''}</div><div class="entity-card-footer"><div class="entity-card-meta"><span class="entity-provider-pill">Search-only civic reference</span></div><div>${evidence}</div></div></article>`;
