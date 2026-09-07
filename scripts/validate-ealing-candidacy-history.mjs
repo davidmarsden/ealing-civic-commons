@@ -5,6 +5,15 @@ const ids = new Set();
 const years = new Set();
 let errors = 0;
 
+function normal(value) {
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
 for (const record of EALING_CANDIDACY_HISTORY) {
   if (!record.id || ids.has(record.id)) { console.error('Duplicate or missing candidacy id', record.id); errors += 1; }
   ids.add(record.id);
@@ -27,7 +36,7 @@ for (const record of EALING_CANDIDACY_HISTORY) {
 
   if (record.electionYear === 2026 && record.identity?.status === 'matched') {
     const councillor = EALING_COUNCILLORS.find(person => person.route === record.identity.route);
-    if (!councillor || String(councillor.ward).toLowerCase() !== String(record.ward?.name || '').toLowerCase()) {
+    if (!councillor || normal(councillor.ward) !== normal(record.ward?.name)) {
       console.error('2026 matched identity does not agree with current councillor ward', record.id, record.identity, record.ward?.name); errors += 1;
     }
     if (record.identity.method !== 'current-source-given-name-first-plus-required-current-ward') {
@@ -46,6 +55,8 @@ if (!EALING_CANDIDACY_HISTORY_META.generated || EALING_CANDIDACY_HISTORY_META.re
 
 // Regression anchors for source-specific name formats. Historical source rows are
 // surname-first initials; the direct 2026 Ealing Council import is given-name-first.
+// Match source names and wards canonically so official capitalisation/punctuation
+// changes do not create false build failures; route/year remain exact assertions.
 const anchors = [
   { year: 2022, sourceName: 'Donnelly S.', route: 'people/steve-donnelly', ward: 'East Acton' },
   { year: 2022, sourceName: 'Ball J.', route: 'people/jon-ball', ward: 'Ealing Common' },
@@ -56,8 +67,8 @@ const anchors = [
 for (const anchor of anchors) {
   const record = EALING_CANDIDACY_HISTORY.find(item =>
     item.electionYear === anchor.year &&
-    item.candidateNameSource === anchor.sourceName &&
-    item.ward?.name === anchor.ward
+    normal(item.candidateNameSource) === normal(anchor.sourceName) &&
+    normal(item.ward?.name) === normal(anchor.ward)
   );
   if (!record) {
     console.error('Missing identity regression anchor', anchor); errors += 1; continue;
