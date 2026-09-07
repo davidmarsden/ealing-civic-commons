@@ -51,10 +51,6 @@ function* csvRows(csv) {
   if (field || row.length) { row.push(field.replace(/\r$/, '')); yield row; }
 }
 
-function slugify(value) {
-  return String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
-
 function townFor(record) {
   const ward = record['AdministrativeWard (name)'];
   if (TOWN_BY_WARD.has(ward)) return TOWN_BY_WARD.get(ward);
@@ -99,7 +95,7 @@ for (const values of iterator) {
   const establishmentType = record['TypeOfEstablishment (name)'] || null;
   const postcode = record.Postcode || null;
   entities.push({
-    route: `organisations/${slugify(name)}-${urn}`,
+    route: `organisations/school-${urn}`,
     id: `civic:organisation:gias:${urn}`,
     name,
     type: 'organisation',
