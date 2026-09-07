@@ -107,9 +107,11 @@ Further candidates are added deliberately to fill geographic and thematic gaps r
 
 ## Public entity model
 
-The public civic graph deliberately does **not** mirror every named person in the research archive. Organisations and places may be extended from reviewed research data, but people require explicit registration in the public entity registry. The [public people entities policy](./docs/public-people-entities.md) sets the threshold: public office-holders, official institutional representatives, sustained public civic actors and clearly framed historical civic actors may be included when their civic standing is properly sourced. Ordinary residents, one-off meeting attendees, volunteers and generic contact names are not promoted into standalone profiles merely because they appear in public material.
+The public civic graph distinguishes between **public profiles**, **searchable civic references** and **incidental mentions**. Public profiles are reserved for people with a documented civic role; typed search may also surface materially recurring names as limited references without creating a standalone biography or route. Incidental one-off names remain only in their canonical sources.
 
-Explore therefore defaults to search rather than dumping the whole entity universe onto one page. Entity-type browse views are bounded, and searches cover names, aliases, roles and descriptions.
+The same threshold applies to people involved in building or publishing Civic Commons. Founders, publishers and contributors do not receive extra prominence simply because they are close to the project.
+
+Explore therefore defaults to search rather than dumping the whole entity universe onto one page. Entity-type browse views are bounded, and search can recover useful civic references without turning the site into an ever-growing people directory.
 
 ## Source submissions
 
