@@ -18,7 +18,9 @@ A profile may be appropriate for:
 3. **Sustained public civic actors** — campaigners, organisers or activists with a documented, continuing public role independently relevant to a civic issue.
 4. **Historical civic actors** — where a past public role is necessary to understand civic history and is clearly dated and described as historical.
 
-Election candidates may be recorded as dated public civic roles where candidacy is drawn from an official nomination/election record. Unsuccessful candidacy on its own need not make someone permanently prominent in the People browse view.
+For non-office-holders, the profile threshold should be role-based and reproducible rather than based on familiarity or notoriety. A first-party or authoritative source should identify the person in a current formal leadership, representative or sustained campaign-organising role. Ordinary trustees, members, volunteers, generic contacts and one-off speakers do not qualify automatically.
+
+Election candidates are handled differently. **Every officially recorded Ealing Council candidacy in the same election is treated consistently as a dated civic role.** Unsuccessful candidacy on its own does not create a permanent public profile or make someone prominent in People browse. Instead, an official candidate record may be returned in an active name search, with the ward, party description, election date and official result source. Candidates who are elected are already represented by their public-office profile.
 
 The same threshold applies to people who build, publish, research or contribute to Civic Commons. Being a project founder, publisher or contributor is not by itself a reason for a standalone profile, and the Commons should avoid giving its own participants greater prominence than comparable local civic actors.
 
@@ -35,6 +37,8 @@ A **civic reference** may therefore appear when a reader searches for a person's
 - points readers back to a small number of public records showing why the name is relevant.
 
 The reference implementation requires at least **two reviewed civic records or relationships** before a research-only person can appear this way. This is a minimum discovery threshold, not a claim that the person holds office or has any particular status.
+
+Official election-candidate records are a separate reference subtype. They do not need the two-record research threshold because the candidacy itself is an explicit public civic role in an authoritative election record. They remain search-only unless another documented role independently justifies a profile.
 
 This layer is intended for cases such as recurring election candidates, voluntary-sector figures, campaign organisers or other named civic participants whose presence in the public record is useful to find but does not yet justify a full profile.
 
@@ -63,14 +67,14 @@ At minimum it should have:
 - current/historical status where relevant;
 - a first-party or authoritative source/website where one exists.
 
-Political party, faith, ethnicity, health, sexuality and other sensitive or identity-related attributes must not be inferred from context. Record affiliations only when they are explicitly public, relevant to the civic role and supported by an appropriate source.
+Political party, faith, ethnicity, health, sexuality and other sensitive or identity-related attributes must not be inferred from context. Record affiliations only when they are explicitly public, relevant to the civic role and supported by an appropriate source. Election-party descriptions are copied only from the official election record because they are part of the candidacy being indexed.
 
 ## Searchability is not prominence
 
 Being discoverable by name is different from being promoted in a directory. Explore therefore keeps broad person discovery **search-first**:
 
 - People browse contains public profiles only and is bounded rather than an ever-growing tag cloud;
-- typed name search can additionally return civic references;
+- typed name search can additionally return civic references and dated official candidate records;
 - incidental names remain outside the person index.
 
 This preserves the useful connections of the civic graph without turning it into a list of everyone who has ever appeared in local reporting.
@@ -78,6 +82,8 @@ This preserves the useful connections of the civic graph without turning it into
 ## Current versus historical roles
 
 Roles should be time-bounded where possible. Former councillors, former chairs or previous organisational representatives should not be rendered as if they remain current. Historical profiles can remain part of civic memory when their past role continues to matter.
+
+Election candidacies are always time-bounded to the election in which the person stood. A later election creates another dated candidacy record rather than silently turning the old role into a current affiliation.
 
 ## Removal, correction and review
 
