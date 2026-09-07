@@ -21,7 +21,7 @@ function profileCard(entity) {
   const source = entity.source?.url ? `<a class="entity-source-link" href="${esc(entity.source.url)}" target="_blank" rel="noopener noreferrer">${esc(entity.source.label || 'Website / source')} ↗</a>` : '';
   const description = entity.description || 'Description pending editorial review.';
   const role = entity.type === 'person' && entity.publicRole ? `<p class="entity-public-role">${esc(entity.publicRole)}</p>` : '';
-  const institution = entity.type !== 'person' && (entity.institutionType || entity.town) ? `<p class="entity-public-role">${esc([entity.institutionType, entity.town].filter(Boolean).join(' · '))}</p>` : '';
+  const institution = entity.type !== 'person' && (entity.institutionType || entity.town) ? `<p class="entity-public-role">${esc([entity.institutionType, entity.town, entity.urn ? `URN ${entity.urn}` : null].filter(Boolean).join(' · '))}</p>` : '';
   return `<article class="entity-card"><a class="entity-card-main" href="/${esc(entity.route)}"><h3>${esc(entity.name)}</h3>${role}${institution}<p>${esc(description)}</p></a><div class="entity-card-footer"><div class="entity-card-meta">${providers}</div>${source}</div></article>`;
 }
 
@@ -34,7 +34,7 @@ function referenceCard(entity) {
 function card(entity) { return entity.kind === 'reference' ? referenceCard(entity) : profileCard(entity); }
 
 function searchableText(entity) {
-  return `${entity.name} ${(entity.aliases || []).join(' ')} ${entity.publicRole || ''} ${entity.ward || ''} ${entity.party || ''} ${entity.town || ''} ${entity.institutionType || ''} ${entity.description || ''}`.toLowerCase();
+  return `${entity.name} ${(entity.aliases || []).join(' ')} ${entity.publicRole || ''} ${entity.ward || ''} ${entity.party || ''} ${entity.town || ''} ${entity.institutionType || ''} ${entity.phase || ''} ${entity.establishmentType || ''} ${entity.postcode || ''} ${entity.urn || ''} ${entity.description || ''}`.toLowerCase();
 }
 
 function groupedMarkup(items) {
