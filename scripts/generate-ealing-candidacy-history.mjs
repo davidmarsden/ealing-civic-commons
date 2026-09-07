@@ -61,8 +61,8 @@ function boundaryEra(year) {
   };
 }
 
-function candidateSignature(value) {
-  const tokens = String(value || '')
+function tokensFor(value) {
+  return String(value || '')
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
@@ -70,41 +70,45 @@ function candidateSignature(value) {
     .trim()
     .split(/\s+/)
     .filter(Boolean);
+}
+
+function candidateSignature(value) {
+  const tokens = tokensFor(value);
   if (tokens.length < 2) return null;
-  const sourceLooksSurnameFirst = tokens.slice(1).every(token => token.length <= 3);
-  const surname = sourceLooksSurnameFirst ? tokens[0] : tokens[tokens.length - 1];
-  const given = sourceLooksSurnameFirst ? tokens.slice(1) : tokens.slice(0, -1);
-  return { surname, firstInitial: given[0]?.[0] || null };
+  const finalLooksLikeInitials = tokens[tokens.length - 1].length <= 3;
+  if (finalLooksLikeInitials) {
+    return {
+      surnameCore: tokens[tokens.length - 2],
+      firstInitial: tokens[tokens.length - 1][0]
+    };
+  }
+  return {
+    surnameCore: tokens[tokens.length - 1],
+    firstInitial: tokens[0][0]
+  };
 }
 
 function currentSignature(person) {
-  const tokens = String(person.name || '')
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  return tokens.length >= 2 ? { surname: tokens[tokens.length - 1], firstInitial: tokens[0][0] } : null;
+  const tokens = tokensFor(person.name);
+  return tokens.length >= 2 ? { surnameCore: tokens[tokens.length - 1], firstInitial: tokens[0][0] } : null;
 }
 
 function resolveCurrentCouncillor(record) {
   const signature = candidateSignature(record.candidateNameSource);
-  if (!signature?.surname || !signature.firstInitial) return { status: 'unmatched', route: null, method: null, confidence: null };
+  if (!signature?.surnameCore || !signature.firstInitial) return { status: 'unmatched', route: null, method: null, confidence: null };
   let candidates = EALING_COUNCILLORS.filter(person => {
     const sig = currentSignature(person);
-    return sig && sig.surname === signature.surname && sig.firstInitial === signature.firstInitial;
+    return sig && sig.surnameCore === signature.surnameCore && sig.firstInitial === signature.firstInitial;
   });
   if (record.electionYear === 2026 && record.ward?.name) {
     const wardMatches = candidates.filter(person => String(person.ward).toLowerCase() === String(record.ward.name).toLowerCase());
     if (wardMatches.length === 1) candidates = wardMatches;
   }
-  if (candidates.length !== 1) return { status: candidates.length > 1 ? 'ambiguous' : 'unmatched', route: null, method: candidates.length > 1 ? 'surname-first-initial-collision' : null, confidence: null };
+  if (candidates.length !== 1) return { status: candidates.length > 1 ? 'ambiguous' : 'unmatched', route: null, method: candidates.length > 1 ? 'surname-core-first-initial-collision' : null, confidence: null };
   return {
     status: 'matched',
     route: candidates[0].route,
-    method: record.electionYear === 2026 ? 'unique-surname-first-initial-plus-current-ward' : 'unique-surname-first-initial',
+    method: record.electionYear === 2026 ? 'unique-surname-core-first-initial-plus-current-ward' : 'unique-surname-core-first-initial',
     confidence: 'high',
     reviewState: 'algorithmic'
   };
