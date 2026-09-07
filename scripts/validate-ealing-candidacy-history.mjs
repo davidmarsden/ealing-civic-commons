@@ -53,11 +53,13 @@ if (!EALING_CANDIDACY_HISTORY_META.generated || EALING_CANDIDACY_HISTORY_META.re
   console.error('Candidacy history metadata does not match generated records'); errors += 1;
 }
 
-// Regression anchors for source-specific name formats. Historical source rows are
-// surname-first initials; the direct 2026 Ealing Council import is given-name-first.
+// Regression anchors for the three actual source-name formats:
+// 2018 electionresults.uk = full given-name-first; 2022 = surname-first initial;
+// direct 2026 Ealing Council import = full given-name-first.
 // Match source names and wards canonically so official capitalisation/punctuation
 // changes do not create false build failures; route/year remain exact assertions.
 const anchors = [
+  { year: 2018, sourceName: 'Jon Ball', route: 'people/jon-ball', ward: 'Ealing Common' },
   { year: 2022, sourceName: 'Donnelly S.', route: 'people/steve-donnelly', ward: 'East Acton' },
   { year: 2022, sourceName: 'Ball J.', route: 'people/jon-ball', ward: 'Ealing Common' },
   { year: 2022, sourceName: 'Driscoll P.', route: 'people/paul-driscoll', ward: 'Northfield' },
