@@ -33,6 +33,29 @@ if (!EALING_CANDIDACY_HISTORY_META.generated || EALING_CANDIDACY_HISTORY_META.re
   console.error('Candidacy history metadata does not match generated records'); errors += 1;
 }
 
+// Regression anchors for abbreviated historical names. These are public election
+// records whose current-profile identity is unambiguous and should never silently
+// drop out of profile history again.
+const anchors = [
+  { year: 2022, sourceName: 'Donnelly S.', route: 'people/steve-donnelly', ward: 'East Acton' },
+  { year: 2022, sourceName: 'Ball J.', route: 'people/jon-ball', ward: 'Ealing Common' },
+  { year: 2022, sourceName: 'Driscoll P.', route: 'people/paul-driscoll', ward: 'Northfield' }
+];
+
+for (const anchor of anchors) {
+  const record = EALING_CANDIDACY_HISTORY.find(item =>
+    item.electionYear === anchor.year &&
+    item.candidateNameSource === anchor.sourceName &&
+    item.ward?.name === anchor.ward
+  );
+  if (!record) {
+    console.error('Missing historical regression anchor', anchor); errors += 1; continue;
+  }
+  if (record.identity?.status !== 'matched' || record.identity?.route !== anchor.route) {
+    console.error('Historical identity regression anchor failed', anchor, record.identity); errors += 1;
+  }
+}
+
 if (errors) {
   console.error(`Structured candidacy history validation failed with ${errors} error(s).`);
   process.exit(1);
