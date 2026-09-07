@@ -61,7 +61,7 @@ function boundaryEra(year) {
   };
 }
 
-function tokensFor(value) {
+function nameTokens(value) {
   return String(value || '')
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -72,44 +72,66 @@ function tokensFor(value) {
     .filter(Boolean);
 }
 
-function candidateSignature(value) {
-  const tokens = tokensFor(value);
+function historicalSignature(value) {
+  const tokens = nameTokens(value);
   if (tokens.length < 2) return null;
-  const finalLooksLikeInitials = tokens[tokens.length - 1].length <= 3;
-  if (finalLooksLikeInitials) {
+
+  // electionresults.uk historical rows use forms such as "Donnelly S." and
+  // "van de Geer M.". A short final token is therefore the given-name initial,
+  // not a surname. Using the token immediately before it as the surname core
+  // keeps particles safe while avoiding assumptions about full given names.
+  const final = tokens[tokens.length - 1];
+  if (final.length <= 3) {
     return {
       surnameCore: tokens[tokens.length - 2],
-      firstInitial: tokens[tokens.length - 1][0]
+      firstInitial: final[0]
     };
   }
+
   return {
     surnameCore: tokens[tokens.length - 1],
     firstInitial: tokens[0][0]
   };
 }
 
-function currentSignature(person) {
-  const tokens = tokensFor(person.name);
-  return tokens.length >= 2 ? { surnameCore: tokens[tokens.length - 1], firstInitial: tokens[0][0] } : null;
+function personSignatures(person) {
+  return [person.name, ...(person.aliases || [])]
+    .map(value => {
+      const tokens = nameTokens(value.replace(/^(?:councillor|cllr)\s+/i, ''));
+      return tokens.length >= 2 ? { surnameCore: tokens[tokens.length - 1], firstInitial: tokens[0][0] } : null;
+    })
+    .filter(Boolean);
 }
 
 function resolveCurrentCouncillor(record) {
-  const signature = candidateSignature(record.candidateNameSource);
+  const signature = historicalSignature(record.candidateNameSource);
   if (!signature?.surnameCore || !signature.firstInitial) return { status: 'unmatched', route: null, method: null, confidence: null };
-  let candidates = EALING_COUNCILLORS.filter(person => {
-    const sig = currentSignature(person);
-    return sig && sig.surnameCore === signature.surnameCore && sig.firstInitial === signature.firstInitial;
-  });
-  if (record.electionYear === 2026 && record.ward?.name) {
+
+  let candidates = EALING_COUNCILLORS.filter(person => personSignatures(person).some(sig =>
+    sig.surnameCore === signature.surnameCore && sig.firstInitial === signature.firstInitial
+  ));
+
+  // Post-2022 ward names are from the same boundary era as the current roster,
+  // so ward agreement is useful corroboration. It is never required for 2018.
+  if (record.electionYear >= 2022 && record.ward?.name) {
     const wardMatches = candidates.filter(person => String(person.ward).toLowerCase() === String(record.ward.name).toLowerCase());
     if (wardMatches.length === 1) candidates = wardMatches;
   }
-  if (candidates.length !== 1) return { status: candidates.length > 1 ? 'ambiguous' : 'unmatched', route: null, method: candidates.length > 1 ? 'surname-core-first-initial-collision' : null, confidence: null };
+
+  if (candidates.length !== 1) return {
+    status: candidates.length > 1 ? 'ambiguous' : 'unmatched',
+    route: null,
+    method: candidates.length > 1 ? 'surname-core-first-initial-collision' : null,
+    confidence: null
+  };
+
   return {
     status: 'matched',
     route: candidates[0].route,
-    method: record.electionYear === 2026 ? 'unique-surname-core-first-initial-plus-current-ward' : 'unique-surname-core-first-initial',
-    confidence: 'high',
+    method: record.electionYear >= 2022
+      ? 'unique-surname-core-first-initial-with-boundary-era-ward-corroboration'
+      : 'unique-surname-core-first-initial',
+    confidence: record.electionYear >= 2022 ? 'high' : 'medium',
     reviewState: 'algorithmic'
   };
 }
