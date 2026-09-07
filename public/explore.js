@@ -18,11 +18,12 @@ function card(entity) {
   const source = entity.source?.url ? `<a class="entity-source-link" href="${esc(entity.source.url)}" target="_blank" rel="noopener noreferrer">${esc(entity.source.label || 'Website / source')} ↗</a>` : '';
   const description = entity.description || 'Description pending editorial review.';
   const role = entity.type === 'person' && entity.publicRole ? `<p class="entity-public-role">${esc(entity.publicRole)}</p>` : '';
-  return `<article class="entity-card"><a class="entity-card-main" href="/${esc(entity.route)}"><h3>${esc(entity.name)}</h3>${role}<p>${esc(description)}</p></a><div class="entity-card-footer"><div class="entity-card-meta">${providers}</div>${source}</div></article>`;
+  const institution = entity.type !== 'person' && (entity.institutionType || entity.town) ? `<p class="entity-public-role">${esc([entity.institutionType, entity.town].filter(Boolean).join(' · '))}</p>` : '';
+  return `<article class="entity-card"><a class="entity-card-main" href="/${esc(entity.route)}"><h3>${esc(entity.name)}</h3>${role}${institution}<p>${esc(description)}</p></a><div class="entity-card-footer"><div class="entity-card-meta">${providers}</div>${source}</div></article>`;
 }
 
 function searchableText(entity) {
-  return `${entity.name} ${(entity.aliases || []).join(' ')} ${entity.publicRole || ''} ${entity.ward || ''} ${entity.party || ''} ${entity.description || ''}`.toLowerCase();
+  return `${entity.name} ${(entity.aliases || []).join(' ')} ${entity.publicRole || ''} ${entity.ward || ''} ${entity.party || ''} ${entity.town || ''} ${entity.institutionType || ''} ${entity.description || ''}`.toLowerCase();
 }
 
 function groupedMarkup(items) {
