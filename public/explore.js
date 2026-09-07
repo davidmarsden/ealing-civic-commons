@@ -35,7 +35,7 @@ function card(entity) {
 }
 
 function searchableText(entity) {
-  return `${entity.name} ${(entity.aliases || []).join(' ')} ${entity.publicRole || ''} ${entity.description || ''}`.toLowerCase();
+  return `${entity.name} ${(entity.aliases || []).join(' ')} ${entity.publicRole || ''} ${entity.ward || ''} ${entity.party || ''} ${entity.description || ''}`.toLowerCase();
 }
 
 function groupedMarkup(items) {
