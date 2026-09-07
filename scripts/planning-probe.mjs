@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 const PAM_WEEKLY = 'https://pam.ealing.gov.uk/online-applications/search.do?action=weeklyList&searchType=Application';
 const PLANNING_DATA = 'https://www.planning.data.gov.uk/entity.json';
 const PLANWIRE = 'https://api.planwire.io/v1/applications?council_id=ealing';
-const USER_AGENT = 'EalingCivicCommonsPlanningProbe/0.1 (+https://civiccommons.co.uk/)';
+const USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
 
 const args = new Set(process.argv.slice(2));
 const outputArg = process.argv.find((value) => value.startsWith('--output='));
@@ -139,33 +139,70 @@ function classifyPamResultsPage(html, applications) {
   );
 }
 
+function cookiesFrom(response) {
+  const values = typeof response.headers.getSetCookie === 'function'
+    ? response.headers.getSetCookie()
+    : [response.headers.get('set-cookie')].filter(Boolean);
+  return values
+    .map((value) => value.split(';', 1)[0])
+    .filter(Boolean)
+    .join('; ');
+}
+
+function responseDiagnostics(response) {
+  return {
+    status: response.status,
+    status_text: response.statusText,
+    url: response.url,
+    server: response.headers.get('server'),
+    via: response.headers.get('via'),
+    request_id: response.headers.get('x-request-id') ?? response.headers.get('x-correlation-id'),
+  };
+}
+
 async function fetchText(url, options = {}) {
   const response = await fetch(url, {
     redirect: 'follow',
     ...options,
-    headers: { 'user-agent': USER_AGENT, accept: 'text/html,application/xhtml+xml', ...(options.headers || {}) },
+    headers: {
+      'user-agent': USER_AGENT,
+      accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'accept-language': 'en-GB,en;q=0.9',
+      'cache-control': 'no-cache',
+      pragma: 'no-cache',
+      ...(options.headers || {}),
+    },
   });
   const text = await response.text();
-  if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+  if (!response.ok) {
+    const error = new Error(`${response.status} ${response.statusText}`);
+    error.diagnostics = responseDiagnostics(response);
+    throw error;
+  }
   return { response, text };
 }
 
 async function probePam() {
   const started = Date.now();
   const first = await fetchText(PAM_WEEKLY);
+  const cookie = cookiesFrom(first.response);
   const form = parseForm(first.text);
   const { params, selected } = choosePamPayload(form);
   const action = new URL(form.action, first.response.url);
+  const sessionHeaders = {
+    referer: first.response.url,
+    ...(cookie ? { cookie } : {}),
+  };
   let second;
   if (form.method === 'POST') {
     second = await fetchText(action, {
       method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      headers: { ...sessionHeaders, 'content-type': 'application/x-www-form-urlencoded' },
       body: params,
     });
   } else {
     for (const [key, value] of params) action.searchParams.set(key, value);
-    second = await fetchText(action);
+    second = await fetchText(action, { headers: sessionHeaders });
   }
   const applications = extractPamApplications(second.text);
   const resultPage = classifyPamResultsPage(second.text, applications);
@@ -175,6 +212,7 @@ async function probePam() {
     source: 'Ealing PAM / Civica Public Access',
     url: second.response.url,
     form_method: form.method,
+    session_cookie_received: Boolean(cookie),
     selected,
     result_page: resultPage,
     applications_found: applications.length,
@@ -241,7 +279,12 @@ async function safe(name, fn) {
   try {
     return await fn();
   } catch (error) {
-    return { ok: false, source: name, error: error instanceof Error ? error.message : String(error) };
+    return {
+      ok: false,
+      source: name,
+      error: error instanceof Error ? error.message : String(error),
+      ...(error?.diagnostics ? { diagnostics: error.diagnostics } : {}),
+    };
   }
 }
 
@@ -263,6 +306,7 @@ for (const [key, value] of Object.entries(results)) {
   const count = value.applications_found ?? value.count;
   console.log(`${state.padEnd(4)} ${key.padEnd(15)}${count == null ? '' : ` ${count} records`}${value.error ? ` — ${value.error}` : ''}${value.reason ? ` — ${value.reason}` : ''}`);
   if (verbose && value.selected) console.log('     selection:', value.selected);
+  if (verbose && value.diagnostics) console.log('     diagnostics:', value.diagnostics);
 }
 
 if (results.pam.ok === false) process.exitCode = 2;
