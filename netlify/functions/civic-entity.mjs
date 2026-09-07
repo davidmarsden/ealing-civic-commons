@@ -1,6 +1,7 @@
 import { findEntityByProviderId, findEntityByRoute, makeZettelRegistryEntity, parseEntityRoute, providerViews } from '../lib/entity-registry.mjs';
 import { findInstitutionalEntityByRoute } from '../lib/institutional-entities.mjs';
 import { findCommunityEntityByRoute } from '../lib/community-entities.mjs';
+import { findPublicPersonByRoute, findPublicPersonByProviderId } from '../lib/public-people.mjs';
 
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
 const EXPECTED_SCHEMA = 1;
@@ -18,7 +19,7 @@ function registryView(entity) {
 
 function publicRegistryEntity(providerEntity) {
   if (!providerEntity) return null;
-  const existing = findEntityByProviderId('southall-zettel', providerEntity.id);
+  const existing = findEntityByProviderId('southall-zettel', providerEntity.id) || findPublicPersonByProviderId('southall-zettel', providerEntity.id);
   if (existing) return existing;
   if (providerEntity.type === 'person') return null;
   return makeZettelRegistryEntity(providerEntity);
@@ -36,6 +37,8 @@ function nativeEntityResponse(registryEntity) {
       aliases: registryEntity.aliases || [],
       description: registryEntity.description || null,
       website: registryEntity.website || null,
+      publicRole: registryEntity.type === 'person' ? (registryEntity.publicRole || null) : null,
+      roleStatus: registryEntity.type === 'person' ? (registryEntity.roleStatus || null) : null,
       provenance: 'commons-entity-registry'
     },
     providers: providerViews(registryEntity),
@@ -49,7 +52,7 @@ export default async request => {
   const requestUrl = new URL(request.url);
   const route = requestUrl.searchParams.get('route');
   const legacyId = requestUrl.searchParams.get('id');
-  let registryEntity = route ? (findEntityByRoute(route) || findInstitutionalEntityByRoute(route) || findCommunityEntityByRoute(route)) : legacyId ? findEntityByProviderId('southall-zettel', legacyId) : null;
+  let registryEntity = route ? (findEntityByRoute(route) || findInstitutionalEntityByRoute(route) || findCommunityEntityByRoute(route) || findPublicPersonByRoute(route)) : legacyId ? (findEntityByProviderId('southall-zettel', legacyId) || findPublicPersonByProviderId('southall-zettel', legacyId)) : null;
 
   if (registryEntity && !registryEntity.providers.some(provider => provider.provider === 'southall-zettel' && provider.entityId)) {
     return nativeEntityResponse(registryEntity);
@@ -118,7 +121,18 @@ export default async request => {
       matched: true,
       schemaVersion: data.schema_version,
       civicEntity: registryView(registryEntity),
-      entity: { id: entity.id, name: registryEntity.name || entity.name, type: registryEntity.type || entity.type, aliases: entity.aliases || registryEntity.aliases || [], description: entity.description || registryEntity.description || null, website: registryEntity.website || entity.website || null, reviewStatus: entity.review_status, provenance: entity.provenance },
+      entity: {
+        id: entity.id,
+        name: registryEntity.name || entity.name,
+        type: registryEntity.type || entity.type,
+        aliases: [...new Set([...(registryEntity.aliases || []), ...(entity.aliases || [])])],
+        description: registryEntity.description || entity.description || null,
+        website: registryEntity.website || entity.website || null,
+        publicRole: registryEntity.type === 'person' ? (registryEntity.publicRole || null) : null,
+        roleStatus: registryEntity.type === 'person' ? (registryEntity.roleStatus || null) : null,
+        reviewStatus: entity.review_status,
+        provenance: entity.provenance
+      },
       providers,
       counts: { reporting: reporting.length, relationships: relationships.length, sources: sources.length },
       relationships, sources, reporting, topics,
