@@ -35,8 +35,7 @@ async function fetchLatest() {
   throw new Error('No recent GIAS public bulk CSV was available');
 }
 
-function rows(csv) {
-  const result = [];
+function* csvRows(csv) {
   let row = [], field = '', quoted = false;
   for (let i = 0; i < csv.length; i += 1) {
     const ch = csv[i];
@@ -46,11 +45,10 @@ function rows(csv) {
       else field += ch;
     } else if (ch === '"') quoted = true;
     else if (ch === ',') { row.push(field); field = ''; }
-    else if (ch === '\n') { row.push(field.replace(/\r$/, '')); result.push(row); row = []; field = ''; }
+    else if (ch === '\n') { row.push(field.replace(/\r$/, '')); yield row; row = []; field = ''; }
     else field += ch;
   }
-  if (field || row.length) { row.push(field.replace(/\r$/, '')); result.push(row); }
-  return result;
+  if (field || row.length) { row.push(field.replace(/\r$/, '')); yield row; }
 }
 
 function slugify(value) {
@@ -68,8 +66,8 @@ function townFor(record) {
 function institutionTypeFor(record) {
   const phase = record['PhaseOfEducation (name)'];
   const fe = record['FurtherEducationType (name)'];
-  if (fe && fe !== 'Not applicable' && fe !== 'Not Applicable') return 'College / further education';
-  if (phase && phase !== 'Not applicable' && phase !== 'Not Applicable') return `${phase} school`;
+  if (fe && !/^Not applicable$/i.test(fe)) return 'College / further education';
+  if (phase && !/^Not applicable$/i.test(phase)) return `${phase} school`;
   return record['TypeOfEstablishment (name)'] || 'Educational establishment';
 }
 
@@ -83,10 +81,12 @@ function descriptionFor(record, town) {
 }
 
 const { sourceDate, url, text } = await fetchLatest();
-const table = rows(text);
-const headers = table.shift().map(value => value.replace(/^\uFEFF/, ''));
+const iterator = csvRows(text);
+const first = iterator.next();
+if (first.done) throw new Error('GIAS public bulk CSV was empty');
+const headers = first.value.map(value => value.replace(/^\uFEFF/, ''));
 const entities = [];
-for (const values of table) {
+for (const values of iterator) {
   const record = Object.fromEntries(headers.map((header, index) => [header, values[index] ?? '']));
   if (record['LA (code)'] !== LA_CODE) continue;
   if (!OPEN_STATUSES.has(record['EstablishmentStatus (name)'])) continue;
@@ -98,7 +98,6 @@ for (const values of table) {
   const phase = record['PhaseOfEducation (name)'] || null;
   const establishmentType = record['TypeOfEstablishment (name)'] || null;
   const postcode = record.Postcode || null;
-  const institutionType = institutionTypeFor(record);
   entities.push({
     route: `organisations/${slugify(name)}-${urn}`,
     id: `civic:organisation:gias:${urn}`,
@@ -108,7 +107,7 @@ for (const values of table) {
     aliases: [],
     town,
     ward,
-    institutionType,
+    institutionType: institutionTypeFor(record),
     phase,
     establishmentType,
     postcode,
