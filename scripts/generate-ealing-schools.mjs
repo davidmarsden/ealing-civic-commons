@@ -15,11 +15,15 @@ const TOWN_BY_WARD = new Map([
   ['Dormers Wells','Southall'], ['Lady Margaret','Southall'], ['Norwood Green','Southall'], ['Southall Broadway','Southall'], ['Southall Green','Southall'], ['Southall West','Southall']
 ]);
 
-// GIAS supplies the canonical current identity. Some establishments already have a
-// reviewed Southall-Zettel civic-memory entity containing historical reporting and
-// relationships. Bind those explicitly by immutable URN: do not fuzzy-match names.
-const SOUTHALL_ZETTEL_BINDINGS_BY_URN = new Map([
-  ['101892', 'entity:blair-peach-primary-school']
+// Some GIAS establishments already have a reviewed Civic Commons identity with
+// historical reporting and relationships. Keep one public profile and join the
+// authoritative current register facts to it by immutable URN, never by name.
+const EXISTING_CIVIC_IDENTITIES_BY_URN = new Map([
+  ['101892', {
+    route: 'organisations/blair-peach-primary-school',
+    id: 'civic:organisation:blair-peach-primary-school',
+    providerEntityId: 'entity:blair-peach-primary-school'
+  }]
 ]);
 
 function yyyymmdd(date) {
@@ -101,18 +105,17 @@ for (const values of iterator) {
   const phase = record['PhaseOfEducation (name)'] || null;
   const establishmentType = record['TypeOfEstablishment (name)'] || null;
   const postcode = record.Postcode || null;
-  const historicalEntityId = SOUTHALL_ZETTEL_BINDINGS_BY_URN.get(urn);
+  const existingIdentity = EXISTING_CIVIC_IDENTITIES_BY_URN.get(urn) || null;
+  const route = existingIdentity?.route || `organisations/school-${urn}`;
+  const id = existingIdentity?.id || `civic:organisation:gias:${urn}`;
   const providers = [{ provider: 'civic-commons', role: 'canonical-public-identity' }];
-  if (historicalEntityId) {
-    providers.push({
-      provider: 'southall-zettel',
-      entityId: historicalEntityId,
-      role: 'reviewed-civic-memory'
-    });
+  if (existingIdentity?.providerEntityId) {
+    providers.push({ provider: 'southall-zettel', entityId: existingIdentity.providerEntityId, role: 'reviewed-civic-memory' });
   }
   entities.push({
-    route: `organisations/school-${urn}`,
-    id: `civic:organisation:gias:${urn}`,
+    route,
+    legacyRoutes: existingIdentity ? [`organisations/school-${urn}`] : [],
+    id,
     name,
     type: 'organisation',
     description: descriptionFor(record, town),
@@ -131,6 +134,6 @@ for (const values of iterator) {
 }
 entities.sort((a, b) => a.name.localeCompare(b.name));
 if (entities.length < 80) throw new Error(`GIAS Ealing import unexpectedly returned only ${entities.length} open establishments`);
-const moduleText = `// Generated from the Department for Education Get Information about Schools public bulk download.\nexport const EALING_SCHOOLS = ${JSON.stringify(entities, null, 2)};\nexport const EALING_SCHOOLS_META = ${JSON.stringify({ source: 'Get Information about Schools (GIAS)', sourceUrl: url, localAuthorityCode: LA_CODE, generatedAt: new Date().toISOString(), sourceDate, count: entities.length, degraded: false }, null, 2)};\nexport function findEalingSchoolByRoute(value) { const route = String(value || '').trim().replace(/^\\/+|\\/+$/g, '').replace(/\\.html$/i, ''); return EALING_SCHOOLS.find(entity => entity.route === route) || null; }\n`;
+const moduleText = `// Generated from the Department for Education Get Information about Schools public bulk download.\nexport const EALING_SCHOOLS = ${JSON.stringify(entities, null, 2)};\nexport const EALING_SCHOOLS_META = ${JSON.stringify({ source: 'Get Information about Schools (GIAS)', sourceUrl: url, localAuthorityCode: LA_CODE, generatedAt: new Date().toISOString(), sourceDate, count: entities.length, degraded: false }, null, 2)};\nexport function findEalingSchoolByRoute(value) { const route = String(value || '').trim().replace(/^\\/+|\\/+$/g, '').replace(/\\.html$/i, ''); return EALING_SCHOOLS.find(entity => entity.route === route || (entity.legacyRoutes || []).includes(route)) || null; }\n`;
 await writeFile(OUTPUT, moduleText, 'utf8');
 console.log(`Generated ${entities.length} current Ealing GIAS establishments from ${sourceDate}.`);
