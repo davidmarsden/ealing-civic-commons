@@ -1,4 +1,4 @@
-const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char]));
+const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt', "'":'&#39;', '"':'&quot;' }[char]));
 const fmtDate = iso => {
   if (!iso) return 'Date unavailable';
   const date = new Date(iso);
@@ -28,6 +28,7 @@ const FOLDED = new Map([
   ['reportingSection', 'Historical reporting'],
   ['relationshipsSection', 'Reviewed connections']
 ]);
+let planningReady = false;
 
 function currentPlaceRoute() {
   const match = location.pathname.match(/^\/(places\/[^/]+)/i);
@@ -38,20 +39,20 @@ function reorderSections() {
   if (!stack) return;
   SECTION_ORDER.forEach(id => { const section = document.getElementById(id); if (section) stack.append(section); });
 }
+function actionRoot() { return document.querySelector('#entityHero .entity-actions, .entity-actions'); }
 function reorderActions() {
-  const actions = document.querySelector('.entity-actions');
+  const actions = actionRoot();
   if (!actions) return false;
-  const links = [...actions.querySelectorAll('a')];
-  const byHref = new Map(links.map(link => [link.getAttribute('href'), link]));
+  const byHref = new Map([...actions.querySelectorAll('a')].map(link => [link.getAttribute('href'), link]));
   ACTION_ORDER.forEach(href => { const link = byHref.get(href); if (link) actions.append(link); });
   return true;
 }
-function removePrematurePlanningAction() {
-  document.querySelector('.entity-actions a[href="#planningSection"]')?.remove();
+function removePlanningAction() {
+  actionRoot()?.querySelector('a[href="#planningSection"]')?.remove();
 }
 function ensurePlanningAction() {
-  const actions = document.querySelector('.entity-actions');
-  if (!actions) return false;
+  const actions = actionRoot();
+  if (!actions || !planningReady) return false;
   let link = actions.querySelector('a[href="#planningSection"]');
   if (!link) {
     link = document.createElement('a');
@@ -118,14 +119,19 @@ async function renderPlacePlanning() {
     const response = await fetch(`/data/planning-latest.json?dossier=${Date.now()}`, { cache: 'no-store' });
     if (!response.ok) throw new Error(`Planning snapshot HTTP ${response.status}`);
     const snapshot = await response.json();
-    const matches = (snapshot.records || []).filter(record => !record.out_of_borough && matchingPlanningLink(record, route)).sort((a,b) => (Date.parse(b.validated_date || '') || 0) - (Date.parse(a.validated_date || '') || 0));
+    const matches = (snapshot.records || [])
+      .filter(record => !record.out_of_borough && matchingPlanningLink(record, route))
+      .sort((a,b) => (Date.parse(b.validated_date || '') || 0) - (Date.parse(a.validated_date || '') || 0));
     if (!matches.length) return false;
     root.innerHTML = `<ul class="entity-list">${matches.map(record => {
       const link = matchingPlanningLink(record, route);
-      const provenance = link?.provenance === 'reviewed-rule' ? `Reviewed site link${link.note ? ` · ${link.note}` : ''}` : 'Linked from conservative town classification';
+      const provenance = link?.provenance === 'reviewed-rule'
+        ? `Reviewed site link${link.note ? ` · ${link.note}` : ''}`
+        : 'Linked from conservative town classification';
       return `<li><span class="relationship-type">${esc(record.category || 'Planning application')}</span><h3><a href="${esc(record.commons_path)}">${esc(record.reference)} · ${esc(record.address)}</a></h3><p>${esc(record.proposal)}</p><span class="entity-meta">Validated ${esc(fmtDate(record.validated_date))} · ${esc(record.status || 'Status unavailable')}</span><span class="entity-meta">${esc(provenance)} · <a href="${esc(record.authoritative_url)}" target="_blank" rel="noopener noreferrer">Ealing Council planning record ↗</a></span></li>`;
     }).join('')}</ul>`;
     section.hidden = false;
+    planningReady = true;
     ensurePlanningAction();
     if (location.hash === '#planningSection') requestAnimationFrame(() => section.scrollIntoView({ block: 'start' }));
     return true;
@@ -135,22 +141,28 @@ async function renderPlacePlanning() {
   }
 }
 async function renderPlanningWithRetry() {
-  for (let attempt = 0; attempt < 4; attempt += 1) {
-    if (await renderPlacePlanning()) return;
-    await new Promise(resolve => setTimeout(resolve, 250 * (attempt + 1)));
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    if (await renderPlacePlanning()) return true;
+    await new Promise(resolve => setTimeout(resolve, 200 * (attempt + 1)));
   }
+  return false;
 }
-function initialise() {
+function watchHero() {
+  const hero = document.getElementById('entityHero');
+  if (!hero) return;
+  const sync = () => {
+    if (planningReady) ensurePlanningAction(); else removePlanningAction();
+    reorderActions();
+  };
+  new MutationObserver(sync).observe(hero, { childList: true, subtree: true });
+  sync();
+}
+async function initialise() {
+  document.documentElement.classList.add('entity-dossier-ready');
   reorderSections();
   FOLDED.forEach((label, id) => foldSection(id, label));
-  let attempts = 0;
-  const timer = setInterval(() => {
-    attempts += 1;
-    removePrematurePlanningAction();
-    reorderActions();
-    if (window.__civicEntityRoute || attempts > 40) clearInterval(timer);
-  }, 50);
-  setTimeout(renderPlanningWithRetry, 150);
+  watchHero();
+  await renderPlanningWithRetry();
   window.addEventListener('hashchange', () => {
     expandHashTarget();
     const target = document.getElementById(location.hash.replace(/^#/, ''));
