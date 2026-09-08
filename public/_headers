@@ -1,0 +1,38 @@
+/site-shell.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/entity.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/issue.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/entity.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/civic-entity.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/issue.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/entity-dossier-ui.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/issue-planning-ui.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/section-nav-sync.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/dossier-cards.css
+  Cache-Control: public, max-age=0, must-revalidate
+
+/places/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/issues/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/data/planning-latest.json
+  Cache-Control: public, max-age=0, must-revalidate

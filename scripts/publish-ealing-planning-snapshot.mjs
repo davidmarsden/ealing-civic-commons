@@ -4,6 +4,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 
 const input = process.argv[2] || 'ealing-planning-ingest.json';
 const output = process.argv[3] || 'public/data/planning-latest.json';
+const placeRulesPath = process.argv[4] || 'scripts/data/planning-place-rules.json';
 const towns = ['Southall', 'Perivale', 'Acton', 'Greenford', 'Hanwell', 'Northolt'];
 
 function isoDate(value) {
@@ -21,6 +22,10 @@ function townFromAddress(address) {
   return null;
 }
 
+function townRoute(town) {
+  return town ? `places/${String(town).toLowerCase()}` : null;
+}
+
 function isOutOfBorough(record) {
   const ref = String(record.reference || '');
   const proposal = String(record.proposal || '');
@@ -35,6 +40,44 @@ function category(record) {
   if (/prior approval/.test(proposal) || /PALHE$/i.test(ref)) return 'Prior approval';
   if (/discharge of condition/.test(proposal) || /CND$/i.test(ref)) return 'Conditions';
   return 'Planning application';
+}
+
+function matchesRule(record, rule) {
+  const match = rule?.match || {};
+  const reference = String(record.reference || '').trim();
+  const address = String(record.address || '');
+  const proposal = String(record.proposal || '');
+  if (Array.isArray(match.references) && match.references.some(value => reference.toLowerCase() === String(value).trim().toLowerCase())) return true;
+  if (Array.isArray(match.address_contains) && match.address_contains.some(value => address.toLowerCase().includes(String(value).trim().toLowerCase()))) return true;
+  if (Array.isArray(match.proposal_contains) && match.proposal_contains.some(value => proposal.toLowerCase().includes(String(value).trim().toLowerCase()))) return true;
+  return false;
+}
+
+function placeLinks(record, town, rules) {
+  const links = [];
+  const townPlaceRoute = townRoute(town);
+  if (townPlaceRoute) {
+    links.push({
+      route: townPlaceRoute,
+      label: town,
+      relationship: 'located_in',
+      provenance: 'town-classification',
+    });
+  }
+
+  for (const rule of rules) {
+    if (!rule?.place_route || !matchesRule(record, rule)) continue;
+    if (links.some(link => link.route === rule.place_route)) continue;
+    links.push({
+      route: rule.place_route,
+      label: rule.label || rule.place_route.split('/').pop(),
+      relationship: 'planning_at',
+      provenance: 'reviewed-rule',
+      rule_id: rule.id || null,
+      note: rule.note || null,
+    });
+  }
+  return links;
 }
 
 const ingest = JSON.parse(await readFile(input, 'utf8'));
@@ -56,13 +99,18 @@ for (const [index, record] of ingest.records.entries()) {
   }
 }
 
+const placeRulesDocument = JSON.parse(await readFile(placeRulesPath, 'utf8'));
+const placeRules = Array.isArray(placeRulesDocument?.rules) ? placeRulesDocument.rules : [];
+
 const snapshot = {
   generated_at: ingest.generated_at,
   week: ingest.week,
   source: ingest.source,
   canonical_source: 'Ealing Council Planning Register',
+  place_link_rules_version: placeRulesDocument?.version ?? null,
   records: ingest.records.map((record) => {
     const reference = String(record.reference).trim();
+    const town = townFromAddress(record.address);
     return {
       id: record.id,
       reference,
@@ -71,10 +119,11 @@ const snapshot = {
       status: record.status,
       validated_date: isoDate(record.validated_date),
       authoritative_url: record.authoritative_url,
-      town: townFromAddress(record.address),
+      town,
       category: category(record),
       out_of_borough: isOutOfBorough(record),
       commons_path: `/planning/${reference.toLowerCase()}`,
+      place_links: placeLinks(record, town, placeRules),
     };
   }),
 };

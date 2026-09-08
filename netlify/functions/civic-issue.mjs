@@ -85,7 +85,7 @@ export default async request => {
     return json({
       matched: true,
       schemaVersion: data.schema_version,
-      issue: { id: issue.id, route: issue.route, name: issue.name, status: issue.status, description: issue.description, aliases: issue.aliases || [] },
+      issue: { id: issue.id, route: issue.route, name: issue.name, status: issue.status, description: issue.description, aliases: issue.aliases || [], primaryEntityId: issue.primaryEntityId },
       providers: [
         { id: 'civic-commons', name: 'Ealing Civic Commons', label: 'Ealing Civic Commons', role: 'Live civic source network and canonical public issue', url: 'https://ealing.civiccommons.co.uk/' },
         { id: 'reviewed-archive', name: 'Reviewed research archive', label: 'Reviewed research archive', role: 'Historical evidence and reviewed civic memory', url: null }
