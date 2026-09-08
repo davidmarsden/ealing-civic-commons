@@ -1,10 +1,12 @@
-const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char]));
+const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt', "'":'&#39;', '"':'&quot;' }[char]));
 const fmtDate = iso => {
   if (!iso) return 'Date unavailable';
   const date = new Date(iso);
   return Number.isNaN(date.getTime()) ? String(iso) : new Intl.DateTimeFormat('en-GB', { day:'numeric', month:'long', year:'numeric' }).format(date);
 };
 const normaliseRoute = value => String(value || '').trim().replace(/^\/+|\/+$/g, '').replace(/\.html$/i, '');
+const GASWORKS_ROUTE = 'places/southall-gasworks';
+const GASWORKS_RULE_ID = 'southall-gasworks-2-the-straight';
 
 function currentPlaceRoute() {
   const match = location.pathname.match(/^\/(places\/[^/]+)/i);
@@ -28,7 +30,20 @@ async function routeCandidates() {
 }
 
 function matchingLink(record, routes) {
-  return (record.place_links || []).find(candidate => routes.has(normaliseRoute(candidate.route))) || null;
+  const exact = (record.place_links || []).find(candidate => routes.has(normaliseRoute(candidate.route)));
+  if (exact) return exact;
+  if (!routes.has(GASWORKS_ROUTE)) return null;
+  return (record.place_links || []).find(candidate => candidate.provenance === 'reviewed-rule' && candidate.rule_id === GASWORKS_RULE_ID) || null;
+}
+
+function ensurePlanningJump() {
+  const actions = document.querySelector('#entityHero .entity-actions');
+  if (!actions || actions.querySelector('a[href="#planningSection"]')) return;
+  const link = document.createElement('a');
+  link.href = '#planningSection';
+  link.textContent = 'Planning register ↓';
+  const reporting = actions.querySelector('a[href="#reportingSection"]');
+  actions.insertBefore(link, reporting || null);
 }
 
 function renderPlanning(items, routes) {
@@ -45,6 +60,7 @@ function renderPlanning(items, routes) {
   }).join('')}</ul>`;
 
   section.hidden = false;
+  ensurePlanningJump();
   if (location.hash === '#planningSection') {
     requestAnimationFrame(() => section.scrollIntoView({ block: 'start' }));
   }
