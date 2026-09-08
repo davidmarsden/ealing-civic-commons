@@ -57,6 +57,21 @@ function reorderActions() {
   return true;
 }
 
+function ensurePlanningAction() {
+  const actions = document.querySelector('.entity-actions');
+  if (!actions) return false;
+  let link = actions.querySelector('a[href="#planningSection"]');
+  if (!link) {
+    link = document.createElement('a');
+    link.href = '#planningSection';
+    link.textContent = 'Planning register ↓';
+    actions.append(link);
+  }
+  link.hidden = false;
+  reorderActions();
+  return true;
+}
+
 function foldSection(id, label) {
   const section = document.getElementById(id);
   if (!section || section.dataset.foldReady === 'true') return;
@@ -114,19 +129,19 @@ function matchingPlanningLink(record, route) {
 
 async function renderPlacePlanning() {
   const route = normaliseRoute(window.__civicEntityRoute) || currentPlaceRoute();
-  if (!route?.startsWith('places/')) return;
+  if (!route?.startsWith('places/')) return false;
   const section = document.getElementById('planningSection');
   const root = document.getElementById('planningItems');
-  if (!section || !root) return;
+  if (!section || !root) return false;
 
   try {
-    const response = await fetch('/data/planning-latest.json', { cache: 'no-store' });
+    const response = await fetch(`/data/planning-latest.json?dossier=${Date.now()}`, { cache: 'no-store' });
     if (!response.ok) throw new Error(`Planning snapshot HTTP ${response.status}`);
     const snapshot = await response.json();
     const matches = (snapshot.records || [])
       .filter(record => !record.out_of_borough && matchingPlanningLink(record, route))
       .sort((a,b) => (Date.parse(b.validated_date || '') || 0) - (Date.parse(a.validated_date || '') || 0));
-    if (!matches.length) return;
+    if (!matches.length) return false;
 
     root.innerHTML = `<ul class="entity-list">${matches.map(record => {
       const link = matchingPlanningLink(record, route);
@@ -136,12 +151,22 @@ async function renderPlacePlanning() {
       return `<li><span class="relationship-type">${esc(record.category || 'Planning application')}</span><h3><a href="${esc(record.commons_path)}">${esc(record.reference)} · ${esc(record.address)}</a></h3><p>${esc(record.proposal)}</p><span class="entity-meta">Validated ${esc(fmtDate(record.validated_date))} · ${esc(record.status || 'Status unavailable')}</span><span class="entity-meta">${esc(provenance)} · <a href="${esc(record.authoritative_url)}" target="_blank" rel="noopener noreferrer">Ealing Council planning record ↗</a></span></li>`;
     }).join('')}</ul>`;
     section.hidden = false;
+    ensurePlanningAction();
 
     if (location.hash === '#planningSection') {
       requestAnimationFrame(() => section.scrollIntoView({ block: 'start' }));
     }
+    return true;
   } catch (error) {
     console.warn('Planning dossier unavailable', error);
+    return false;
+  }
+}
+
+async function renderPlanningWithRetry() {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    if (await renderPlacePlanning()) return;
+    await new Promise(resolve => setTimeout(resolve, 250 * (attempt + 1)));
   }
 }
 
@@ -154,7 +179,7 @@ function initialise() {
     if (reorderActions() || attempts > 40) clearInterval(timer);
   }, 50);
 
-  setTimeout(renderPlacePlanning, 250);
+  setTimeout(renderPlanningWithRetry, 150);
   window.addEventListener('hashchange', () => {
     expandHashTarget();
     const target = document.getElementById(location.hash.replace(/^#/, ''));
