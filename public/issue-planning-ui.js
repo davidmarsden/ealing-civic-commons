@@ -1,4 +1,4 @@
-const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt', "'":'&#39;', '"':'&quot;' }[char]));
+const esc = value => String(value ?? '').replace(/[&<>'\"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt', "'":'&#39;', '\"':'&quot;' }[char]));
 const fmtDate = iso => {
   if (!iso) return 'Date unavailable';
   const date = new Date(iso);
@@ -28,7 +28,10 @@ function reorderActions() {
   const actions = actionRoot();
   if (!actions) return false;
   const byHref = new Map([...actions.querySelectorAll('a')].map(link => [link.getAttribute('href'), link]));
-  ACTION_ORDER.forEach(href => { const link = byHref.get(href); if (link) actions.append(link); });
+  ACTION_ORDER.forEach(href => {
+    const link = byHref.get(href);
+    if (link && link !== actions.lastElementChild) actions.append(link);
+  });
   return true;
 }
 function ensureAction(href, label) {
@@ -138,22 +141,21 @@ async function loadIssuePlanning() {
     return false;
   }
 }
-function watchHero() {
-  const hero = document.getElementById('issueHero');
-  if (!hero) return;
-  new MutationObserver(syncActions).observe(hero, { childList:true, subtree:true });
-  syncActions();
+async function syncHeroWhenReady() {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    if (syncActions()) return true;
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  return false;
 }
-function initialiseDossier() {
+async function initialiseDossier() {
   document.documentElement.classList.add('entity-dossier-ready');
   reorderSections();
   FOLDED.forEach((label,id) => foldSection(id,label));
-  watchHero();
-  let attempts = 0;
-  const timer = setInterval(() => {
-    attempts += 1;
-    if (syncActions() || attempts > 40) clearInterval(timer);
-  }, 50);
+  const planningPromise = loadIssuePlanning();
+  await syncHeroWhenReady();
+  await planningPromise;
+  await syncHeroWhenReady();
   window.addEventListener('hashchange', () => {
     expandHashTarget();
     const target = document.getElementById(location.hash.replace(/^#/,''));
@@ -161,4 +163,3 @@ function initialiseDossier() {
   });
 }
 initialiseDossier();
-loadIssuePlanning();
