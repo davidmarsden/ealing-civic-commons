@@ -1,379 +1,362 @@
 # Southall & Ealing Civic Commons
-## Technical Architecture & Prototype Specification — v0.1
+## Technical Architecture & Implementation Notes — v0.2
 
-**Date:** 26 August 2026  
-**Status:** Proposed architecture for partner review and Phase 1 implementation
+**Updated:** 8 September 2026  
+**Status:** Living architecture for the public prototype
+
+This document began as the Phase 1 prototype specification. The implementation has moved well beyond the original read-only design, so this version records the architecture that is actually live while preserving the founding constraints.
 
 ## 1. Product proposition
 
-Build an independent, open civic information layer connecting local publishing, official democratic records, structured council data and — later — community conversation.
+Build an independent, open civic information layer connecting local publishing, official democratic records, planning/register data, public evidence and reviewed civic memory.
 
 The system begins in Southall but is designed for all seven towns in the London Borough of Ealing:
 
 **Acton, Ealing, Greenford, Hanwell, Northolt, Perivale and Southall.**
 
-A future borough-wide service should not assume that the priorities of **Ealing, Southall, Greenford, Acton, Northolt, Perivale or Hanwell are interchangeable**.
+A borough-wide service must not assume that the priorities of those places are interchangeable.
 
-The architecture must preserve one constitutional principle above all:
+The constitutional principle remains:
 
 > The Commons connects sources; it does not absorb ownership of them.
 
-## 2. Phase 1 non-goals
+That now applies not only to articles and feeds but also to official registers: Ealing Council PAM, ModernGov and other primary records remain canonical even when the Commons creates stable civic objects and relationships around them.
 
-The first prototype is not:
+## 2. What the Commons is now
 
-- a social network;
-- a replacement publishing platform;
-- a comment system;
-- a council portal;
-- an engagement-ranking algorithm;
-- an AI newsroom;
-- a comprehensive archive.
+The live prototype is no longer just a read-only timeline. It now includes:
 
-It is a trustworthy read-only civic timeline with excellent provenance.
+- source aggregation and provenance-rich chronological discovery;
+- stable civic-item pages and persistent archive memory;
+- moderated contributions and a durable review queue;
+- browser follows, personal RSS and email alerts;
+- Document Watch and official-source adapters;
+- a reviewed people/organisation/place/topic/issue graph;
+- first-class planning application objects;
+- explicit planning → place → issue relationships;
+- shared civic dossier pages that combine current material with deeper reviewed evidence/history.
+
+It is still **not** intended to become a replacement publisher, council portal, engagement-ranking system or compulsory social network.
 
 ## 3. High-level architecture
 
 ```text
-LOCAL PUBLISHERS / ORGANISATIONS
-RSS / Atom / JSON Feed
-        |
-        v
-+-------------------------+
-| Feed ingestion workers  |
-| fetch -> parse -> dedupe |
-+------------+------------+
-             |
-             v
-+----------------------------------+
-|        CIVIC DATA STORE          |
-| sources        items             |
-| organisations  places            |
-| topics         people            |
-| meetings       documents         |
-| relationships  provenance        |
-+---------+------------------------+
-          ^
-          |
-+---------+------------------------+
-| OFFICIAL / STRUCTURED DEMOCRACY  |
-| Ealing ModernGov RSS + links     |
-| Open Council Network API         |
-+----------------------------------+
-          |
-          v
-+----------------------------------+
-| ENRICHMENT / MATCHING            |
-| geography | topics | entities    |
-| meeting/article relationships    |
-| optional AI-assisted summaries   |
-+----------------+-----------------+
-                 |
-                 v
-+----------------------------------+
-| PUBLIC WEB / OPEN OUTPUTS        |
-| latest | town | topic | meeting  |
-| source pages | evidence links    |
-| RSS/Atom | OPML | JSON API       |
-+----------------------------------+
-
-Future optional edge:
-RSS.chat / another open conversation protocol
+LOCAL / CIVIC / OFFICIAL SOURCES
+RSS | Atom | public pages | official registers
+                |
+                v
++------------------------------------+
+| SOURCE-SPECIFIC INGESTION/ADAPTERS |
+| fetch -> parse -> validate -> cache |
++------------------+-----------------+
+                   |
+                   v
++------------------------------------------------+
+|             CIVIC DATA / MEMORY LAYERS         |
+| live feed snapshots     Netlify Blobs archive  |
+| reviewed assertions     research exports       |
+| planning snapshot       public contributions   |
+| review queue            entity/issue registry  |
++-----------------------+------------------------+
+                        |
+                        v
++------------------------------------------------+
+|          NORMALISED CIVIC OBJECTS / GRAPH      |
+| items | people | organisations | places        |
+| topics | issues | planning applications        |
+| documents | relationships | provenance         |
++-----------------------+------------------------+
+                        |
+                        v
++------------------------------------------------+
+|               PUBLIC CIVIC COMMONS             |
+| Latest | Archive | Planning | Explore           |
+| entity dossiers | issue dossiers | Document     |
+| Watch | follows | RSS | email | reviewed context|
++------------------------------------------------+
 ```
 
-## 4. Core data model
+The implementation deliberately mixes live/dynamic services with committed/generated public snapshots when that improves reliability and reviewability.
 
-### `sources`
-- `id`
-- `slug`
-- `name`
-- `homepage_url`
-- `feed_url`
-- `source_type`
-- `publisher_type`
-- `default_geographies[]`
-- `default_topics[]`
-- `is_official`
-- `is_active`
-- `poll_interval`
-- `last_fetch_at`
-- `last_success_at`
-- `failure_count`
-- `terms_notes`
-- timestamps
+## 4. Current implementation stack
 
-### `items`
-- `id`
-- `source_id`
-- `external_id`
-- `canonical_url`
-- `title`
-- `author`
-- `published_at`
-- `updated_at_source`
-- `summary_original`
-- `content_excerpt`
-- `raw_metadata`
-- `ingested_at`
-- `content_hash`
-- `status`
+The original specification proposed a future TypeScript/PostgreSQL application. The present prototype instead uses deliberately lightweight infrastructure:
 
-Use `(source_id, external_id)` as the primary dedupe key where a stable GUID exists, with canonical URL/content hash fallbacks.
+- static/public HTML/CSS/JavaScript;
+- Netlify hosting, Functions and Edge Functions;
+- Netlify Blobs for persistent civic-item/review/archive state;
+- scheduled GitHub Actions/Netlify workflows where appropriate;
+- repository-committed registries, reviewed rules and generated snapshots;
+- Resend for double-opt-in email delivery;
+- Node scripts for validation, ingestion, generation and source diagnostics.
 
-### `geographies`
-Begin with:
-- Borough: Ealing
-- Towns: Acton, Ealing, Greenford, Hanwell, Northolt, Perivale, Southall
-- Wards
-- neighbourhoods/estates later
+This is a prototype architecture, not a commitment that PostgreSQL or a server-rendered framework will never be appropriate later. The priority remains portability, inspectability and avoiding infrastructure that outruns the civic use case.
 
-### `topics`
-Initial controlled vocabulary:
-- Council & democracy
-- Planning & development
-- Housing
-- Environment
-- Transport
-- Community
-- Schools & young people
-- Policing & safety
-- Health & care
-- Culture & history
-- What's on
+## 5. Core civic object model
 
-### `civic_events`
-Normalised democratic events:
-- provider/external ID
-- authority
-- committee
-- event type
-- title
-- date/time
-- official URL
-- provider URL
-- status
-- raw metadata
+### Sources
 
-### `documents`
-Documents linked to civic events, preserving official/provider URLs and identifiers.
+Source identity includes homepage/feed/adapter information, source class, geography/topic defaults, operational status and provenance.
 
-### `relationships`
-Generic graph edge:
-- `from_type`, `from_id`
-- `to_type`, `to_id`
-- `relationship_type`
-- `confidence`
-- `created_by` (`source`, `rule`, `model`, `human`)
-- `review_status`
+### Civic items
 
-Examples:
-- article `covers` meeting
-- document `belongs_to` meeting
-- item `about` topic
-- item `about` place
-- historical item `precedes` current issue
+Normalised article/event/document items keep stable Commons identities while the original publisher URL remains canonical.
 
-## 5. Provenance
+### People, organisations and places
 
-The UI must distinguish:
+Public civic entities have stable IDs/routes, type, description, useful aliases, provenance and an authoritative/first-party source where one exists.
+
+A bare name is not considered a complete public entity.
+
+### Topics and issues
+
+Topics group recurring civic themes. Issues represent durable civic questions that can connect current material, entities, evidence, historical reporting and planning records.
+
+An issue may have an explicit reviewed `primaryEntityId`. This is used for relationships such as issue → primary place → planning records rather than relying on fuzzy name matching.
+
+### Planning applications
+
+Planning applications are now first-class civic records. The conservative public object contains:
+
+- stable Civic Commons planning ID;
+- application reference;
+- address/site;
+- proposal;
+- status;
+- validated date;
+- deterministic category where useful;
+- conservatively classified town where available;
+- out-of-borough flag;
+- authoritative PAM URL;
+- stable Commons path;
+- explicit `place_links[]` with provenance.
+
+Planning applicant/agent contact data, documents, drawings and mapping tiles are not mirrored merely because they are visible in a public register.
+
+### Relationships
+
+Relationships remain explicit graph edges with source/review provenance.
+
+Useful examples now include:
+
+- civic item `about` place;
+- organisation `developer_of` place;
+- official record `belongs_to` meeting;
+- planning application `located_in` town;
+- planning application `planning_at` specific reviewed place;
+- issue `has_primary_entity` place;
+- historical reporting `about` issue/place.
+
+## 6. Planning ingestion architecture
+
+Ealing Council PAM / Civica Public Access is authoritative for live Ealing planning applications.
+
+The ingestion path is intentionally **not** part of each public page request and **not** a dependency of the Netlify site build.
+
+Current flow:
+
+1. GET the live PAM weekly-list form;
+2. preserve hidden/default fields, CSRF and session state;
+3. select the latest completed local week using `Europe/London` calendar boundaries;
+4. submit the exact live form payload;
+5. paginate through all weekly results;
+6. fetch application summaries at low rate;
+7. normalize and validate factual fields;
+8. fail closed if any discovered application could not be published safely/completely;
+9. generate a committed public planning snapshot;
+10. propose snapshot changes through the repository workflow.
+
+This means the public Commons can remain available during PAM downtime and a partial refresh cannot silently replace the last complete public state.
+
+## 7. Planning place-link provenance
+
+The planning layer deliberately distinguishes two relationship classes:
+
+### `town-classification`
+
+Generated only from conservative deterministic address/place classification.
+
+### `reviewed-rule`
+
+A deliberate, inspectable rule for a specific site relationship. It may carry a rule ID and reviewer-facing note.
+
+The first live example is application `263308CND` at 2 The Straight, linked to:
+
+- `places/southall` — town classification;
+- `places/southall-gasworks` — reviewed site rule.
+
+The Southall Gasworks redevelopment issue then inherits the application through its reviewed primary-place relationship.
+
+This is preferable to fuzzy text matching because it keeps civic memory inspectable and correctable.
+
+## 8. Place as durable civic memory
+
+PAM thinks in applications; residents often think in **places**.
+
+Civic Commons therefore treats the weekly planning list as temporary input and the place as the durable civic object. A place dossier can accumulate:
+
+- current reviewed civic facts;
+- local/public data evidence;
+- recent Commons material;
+- current/recent planning applications;
+- primary evidence;
+- historical reporting;
+- reviewed relationships.
+
+The same place can connect to one or more durable civic issues.
+
+## 9. Civic dossier presentation
+
+People, organisation, place and issue pages use a common dossier-card presentation.
+
+The page presents current context before research depth. Visible section navigation is generated in exactly the same order as the rendered cards.
+
+For entity/place pages the canonical order is:
+
+1. Current civic facts;
+2. Local evidence (where available);
+3. Current Commons;
+4. Planning register (where available);
+5. Primary evidence;
+6. Historical reporting;
+7. Reviewed connections.
+
+Issue pages use the equivalent current → planning → evidence → history → connections → participants sequence.
+
+Cards are keyboard-accessible, clickable, deep-linkable and can start collapsed where the content is research-heavy. All people, organisation and place routes use one canonical civic-entity template to prevent per-entity presentation drift.
+
+## 10. Provenance classes
+
+The UI should continue to distinguish:
 
 1. Official record
 2. Independent structured information
 3. Journalism / publishing
 4. Organisation / campaign
 5. Community contribution
-6. Commons-generated enrichment
+6. Commons-generated/reviewed enrichment
 
-Every transformed/generated field should retain source IDs and transformation provenance.
+Every transformed field or relationship should retain enough provenance to explain where it came from and how it was promoted.
 
-## 6. Feed ingestion
+## 11. Geographic classification
 
-Support RSS 2.0 and Atom first; add JSON Feed when useful.
+Use layers in this order:
 
-Process:
-1. conditional HTTP fetch;
-2. parse;
-3. normalise dates/URLs;
-4. dedupe;
-5. store;
-6. attach source defaults;
-7. queue enrichment;
-8. log health/errors.
-
-Sanitise inbound HTML. Prefer excerpts + canonical links rather than full-text republication unless permission allows it.
-
-## 7. Ealing ModernGov
-
-Initial integration:
-- ingest `https://ealing.moderngov.co.uk/mgRss.aspx?XXR=0`;
-- classify item/event type;
-- preserve official links;
-- fetch individual public pages only where needed for metadata/matching.
-
-ModernGov remains the primary official source where interpretation differs.
-
-## 8. Open Council Network
-
-Preferred model: partnership/API.
-
-Confirm before production:
-- authentication;
-- endpoint catalogue;
-- price/pilot terms;
-- rate limits;
-- licensing/reuse;
-- attribution;
-- stable identifiers;
-- update/deletion semantics;
-- meetings/documents/people/committee schemas;
-- which fields are AI-generated or AI-assisted.
-
-OCN should enrich, not replace, primary official records.
-
-## 9. Geographic classification
-
-Use four layers:
-1. source defaults;
-2. deterministic matching (town/ward/postcode/place);
+1. source/register metadata;
+2. deterministic town/ward/postcode/place matching;
 3. structured provider metadata;
-4. machine-assisted classification only where necessary.
+4. reviewed explicit relationships;
+5. machine-assisted suggestions only where genuinely useful.
 
-Store evidence/confidence and support correction.
+Do not let fuzzy classification silently become reviewed civic knowledge.
 
-## 10. Topic classification
+## 12. Relationship matching
 
-Prefer source tags/categories and deterministic rules first. Machine classification may suggest topics but should not silently overwrite source categorisation.
+High-confidence deterministic signals can be used directly when the relationship is objectively encoded. Specific civic-memory relationships should otherwise be reviewed.
 
-## 11. Relationship matching
+Useful signals include:
 
-Signals:
-- direct official/OCN URL;
-- planning/licensing/application identifier;
+- official identifiers/references;
+- exact canonical URLs;
+- development/site names;
 - meeting/committee names;
-- development/site name;
-- document title;
-- date proximity;
-- named people/organisations;
-- geography + topic.
+- documents and decision references;
+- reviewed place rules;
+- named entities plus geography/topic/date context.
 
-Deterministic high-confidence matches may publish automatically. Fuzzy/AI matches should initially require review or be labelled "possibly related".
+Machine/fuzzy matches should remain suggestions until reviewed unless their status is explicitly communicated as uncertain.
 
-## 12. Phase 1 public routes
+## 13. Archive and persistence
 
-- `/`
-- `/southall` and later other towns
-- `/topics/{topic}`
-- `/sources/{source}`
-- `/items/{id}`
-- `/meetings/{id}` (Phase 2)
-- `/about`
-- `/charter`
-- `/sources`
+The Civic Archive is backed by persistent normalised item snapshots rather than an arbitrary feed-history window.
 
-Every item card shows source, source class, title, date, excerpt/summary, geography/topic and a clear **Read original** link.
+A stable item can therefore survive the original RSS item ageing out. Reviewed contribution activity can reactivate an old civic thread while preserving the source's original publication date.
 
-Default ordering is chronological, not engagement-ranked.
+Planning currently uses a different persistence strategy: a validated committed snapshot. Historical planning backfill should only be added once update/version semantics and rate/licensing boundaries are clear.
 
-## 13. Open outputs
+## 14. Review boundary
 
-Expose:
-- RSS/Atom for latest;
-- per-town feeds;
-- per-topic feeds;
-- optional per-source feeds;
-- OPML source lists;
-- documented read-only JSON API later.
+Community submissions, source discoveries, evidence suggestions, relationship suggestions and machine-generated candidates all sit on the proposal side of a review membrane.
 
-The aggregator must not become another silo.
+The constitutional rule remains:
 
-## 14. Search
+> Suggestions can propose civic knowledge; they do not silently become reviewed civic knowledge.
 
-Start with PostgreSQL full-text search. Semantic/vector search is optional later.
+Deterministic factual ingestion from an authoritative register is different from reviewed graph interpretation, but publication still requires validation and safe field minimisation.
 
-## 15. Suggested stack
+## 15. Open outputs and portability
 
-Keep it boring and portable:
-- TypeScript
-- server-rendered React framework
-- PostgreSQL
-- scheduled workers/functions
-- managed hosting
-- public repo where practical
+The Commons exposes or is designed to expose:
 
-Version-control schema, source register, charter, parsers/tests and technical decisions.
+- main and filtered RSS;
+- personal RSS;
+- source lists/OPML;
+- stable civic item/entity/planning URLs;
+- portable public metadata/JSON where useful;
+- repository-visible registries/rules/documentation.
 
-## 16. Security/privacy
+The Commons must not become another silo.
+
+## 16. Security and privacy
 
 - sanitise inbound HTML;
-- SSRF protection;
-- source allowlist;
-- fetch timeouts/size limits;
-- privacy-preserving analytics;
-- no behavioural advertising;
+- SSRF protection and bounded fetches;
+- source allowlists/controlled adapters;
 - minimal personal data;
-- admin audit trail;
-- future rate-limiting for submissions.
+- review/admin audit trail;
+- no behavioural advertising;
+- no compulsory closed-platform identity;
+- keep private submission data separate from public civic records;
+- do not create civic profiles for private planning applicants merely because a name occurs in a public register.
 
-## 17. Copyright/publisher respect
+## 17. Copyright and official-register respect
 
-Store metadata, reasonable discovery excerpts, supplied descriptions and links by default.
+Store/publish factual metadata, reasonable discovery excerpts, supplied descriptions and links by default.
 
-Do not assume an RSS feed grants permission to republish full copyrighted articles.
+Do not assume feeds or public-register pages grant permission to mirror copyrighted articles, planning drawings, documents or third-party mapping material.
 
-Provide publisher correction/opt-out routes.
+Primary publishers/registers remain canonical.
 
 ## 18. Accessibility
 
-Target WCAG 2.2 AA: keyboard access, semantic landmarks, contrast, zoom/reflow, screen-reader labels, accessible dates/times and plain-language source labels.
+Target WCAG 2.2 AA. Dossier cards and section navigation must remain keyboard accessible, deep-linkable, zoom/reflow friendly and understandable without relying on visual styling alone.
 
-## 19. Observability
+## 19. Resilience / observability
 
-Track feed health, stale sources, parsing failures, duplicates, enrichment confidence, broken links and API quota status.
+Track:
 
-## 20. Development phases
+- source health and stale feeds;
+- parser/fetch failures;
+- duplicate civic items;
+- archive health;
+- planning ingest completeness;
+- generated snapshot freshness;
+- provider/API failures;
+- broken canonical links;
+- incomplete public entities.
 
-**Phase 0:** governance, source census, partner conversations  
-**Phase 1:** read-only Southall prototype  
-**Phase 2:** structured democracy / OCN integration  
-**Phase 3:** town/topic/committee subscriptions and email digests  
-**Phase 4:** open conversation layer  
-**Phase 5:** civic memory and archives
+One failing upstream must not break the public Commons.
 
-## 21. MVP acceptance criteria
+## 20. Near-term architectural work
 
-1. At least eight independent/official feeds ingest reliably.
-2. Every item has clear source attribution and canonical link.
-3. Southall filtering has low obvious false positives.
-4. Official records are visually distinct from commentary.
-5. Duplicate items are controlled.
-6. One failing source cannot break the timeline.
-7. The Commons exposes its own RSS feed.
-8. No closed social network is required.
-9. The interface makes sense to non-RSS users.
-10. Test users discover useful local information they would otherwise have missed.
+1. Extend planning lifecycle memory to decisions and reliable ward/site geography.
+2. Link planning records to committee/decision/document/reporting context where deterministic or reviewed.
+3. Improve archive/search indexing as persistent memory grows.
+4. Complete Phase 7C structured promotion for sources/evidence/relationships.
+5. Automate public entity completeness checks.
+6. Harden source adapters/parser tests/caching without creating one-service dependencies.
+7. Restore town-aware social metadata generation for stable public routes.
 
-## 22. Questions for Open Council Network
-
-1. Could Ealing be supported as a public-interest pilot/development partnership?
-2. Which entities and stable identifiers are available?
-3. Can we retrieve meetings, committees, documents, people/attendees and topics?
-4. How are corrections and updates represented?
-5. Which fields are AI-generated or AI-assisted?
-6. What attribution is required?
-7. What caching is permitted?
-8. Are derived links/classifications permitted?
-9. What rate limits should we design for?
-10. Could lessons/code from the pilot be reused by other communities?
-11. Is OCN interested in co-designing a neighbourhood-level use case distinct from its national interface?
-
-## 23. Founding architectural principles
+## 21. Founding architectural principles
 
 - Southall first, but borough-portable.
 - Treat the seven towns as distinct civic geographies.
 - Southall Stories is a founder/participant, not owner of the ecosystem.
 - Provenance beats seamless-looking synthesis.
 - Primary records beat AI summaries.
+- Places are durable civic memory, not merely text tags.
+- Official registers remain canonical even when the Commons adds stable civic context.
 - Open outputs as well as open inputs.
-- No dependency on Facebook, Bluesky, RSS.chat or any single platform.
-- Conversation is a later, replaceable layer.
-- Prefer simple portable infrastructure over premature scale engineering.
+- No dependency on Facebook, Bluesky, RSS.chat, OCN, PAM availability or any single platform/service for the Commons to remain useful.
+- Conversation/federation remains a replaceable layer.
+- Prefer simple, inspectable infrastructure over premature scale engineering.
