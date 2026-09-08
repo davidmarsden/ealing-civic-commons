@@ -1,4 +1,4 @@
-const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt', "'":'&#39;', '"':'&quot;' }[char]));
+const esc = value => String(value ?? '').replace(/[&<>'\"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt', "'":'&#39;', '\"':'&quot;' }[char]));
 const fmtDate = iso => {
   if (!iso) return 'Date unavailable';
   const date = new Date(iso);
@@ -44,7 +44,10 @@ function reorderActions() {
   const actions = actionRoot();
   if (!actions) return false;
   const byHref = new Map([...actions.querySelectorAll('a')].map(link => [link.getAttribute('href'), link]));
-  ACTION_ORDER.forEach(href => { const link = byHref.get(href); if (link) actions.append(link); });
+  ACTION_ORDER.forEach(href => {
+    const link = byHref.get(href);
+    if (link && link !== actions.lastElementChild) actions.append(link);
+  });
   return true;
 }
 function removePlanningAction() {
@@ -147,22 +150,26 @@ async function renderPlanningWithRetry() {
   }
   return false;
 }
-function watchHero() {
-  const hero = document.getElementById('entityHero');
-  if (!hero) return;
-  const sync = () => {
-    if (planningReady) ensurePlanningAction(); else removePlanningAction();
-    reorderActions();
-  };
-  new MutationObserver(sync).observe(hero, { childList: true, subtree: true });
-  sync();
+async function syncHeroWhenReady() {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const actions = actionRoot();
+    if (actions) {
+      if (planningReady) ensurePlanningAction(); else removePlanningAction();
+      reorderActions();
+      return true;
+    }
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  return false;
 }
 async function initialise() {
   document.documentElement.classList.add('entity-dossier-ready');
   reorderSections();
   FOLDED.forEach((label, id) => foldSection(id, label));
-  watchHero();
-  await renderPlanningWithRetry();
+  const planningPromise = renderPlanningWithRetry();
+  await syncHeroWhenReady();
+  await planningPromise;
+  await syncHeroWhenReady();
   window.addEventListener('hashchange', () => {
     expandHashTarget();
     const target = document.getElementById(location.hash.replace(/^#/, ''));
