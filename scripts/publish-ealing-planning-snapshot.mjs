@@ -3,8 +3,9 @@
 import { readFile, writeFile } from 'node:fs/promises';
 
 const input = process.argv[2] || 'ealing-planning-ingest.json';
-const output = process.argv[3] || 'public/data/planning-latest.json';
-const placeRulesPath = process.argv[4] || 'scripts/data/planning-place-rules.json';
+const latestOutput = process.argv[3] || 'public/data/planning-latest.json';
+const archiveOutput = process.argv[4] || 'public/data/planning-archive.json';
+const placeRulesPath = process.argv[5] || 'scripts/data/planning-place-rules.json';
 const towns = ['Southall', 'Perivale', 'Acton', 'Greenford', 'Hanwell', 'Northolt'];
 
 function isoDate(value) {
@@ -57,14 +58,8 @@ function placeLinks(record, town, rules) {
   const links = [];
   const townPlaceRoute = townRoute(town);
   if (townPlaceRoute) {
-    links.push({
-      route: townPlaceRoute,
-      label: town,
-      relationship: 'located_in',
-      provenance: 'town-classification',
-    });
+    links.push({ route: townPlaceRoute, label: town, relationship: 'located_in', provenance: 'town-classification' });
   }
-
   for (const rule of rules) {
     if (!rule?.place_route || !matchesRule(record, rule)) continue;
     if (links.some(link => link.route === rule.place_route)) continue;
@@ -78,6 +73,39 @@ function placeLinks(record, town, rules) {
     });
   }
   return links;
+}
+
+function currentState(record) {
+  return {
+    address: record.address ?? null,
+    proposal: record.proposal ?? null,
+    status: record.status ?? null,
+    validated_date: record.validated_date ?? null,
+    authoritative_url: record.authoritative_url ?? null,
+    town: record.town ?? null,
+    category: record.category ?? null,
+    out_of_borough: Boolean(record.out_of_borough),
+    place_links: Array.isArray(record.place_links) ? record.place_links : [],
+  };
+}
+
+function sameState(a, b) {
+  return JSON.stringify(currentState(a)) === JSON.stringify(currentState(b));
+}
+
+function observation(record, week, observedAt) {
+  return { observed_at: observedAt, week, ...currentState(record) };
+}
+
+async function readArchive(path) {
+  try {
+    const parsed = JSON.parse(await readFile(path, 'utf8'));
+    if (!parsed || !Array.isArray(parsed.records)) throw new Error('records array is missing');
+    return parsed;
+  } catch (error) {
+    if (error?.code === 'ENOENT') return null;
+    throw new Error(`Refusing to update invalid planning archive ${path}: ${error.message}`);
+  }
 }
 
 const ingest = JSON.parse(await readFile(input, 'utf8'));
@@ -128,5 +156,56 @@ const snapshot = {
   }),
 };
 
-await writeFile(output, `${JSON.stringify(snapshot, null, 2)}\n`, 'utf8');
-console.log(`Published ${snapshot.records.length} planning records from weekly list ${snapshot.week} to ${output}.`);
+const previousArchive = await readArchive(archiveOutput);
+const byReference = new Map((previousArchive?.records || []).map(record => [String(record.reference || '').toLowerCase(), record]));
+
+for (const record of snapshot.records) {
+  const key = record.reference.toLowerCase();
+  const previous = byReference.get(key);
+  if (!previous) {
+    byReference.set(key, {
+      ...record,
+      first_seen_week: snapshot.week,
+      last_seen_week: snapshot.week,
+      first_seen_at: snapshot.generated_at,
+      last_seen_at: snapshot.generated_at,
+      weeks_seen: [snapshot.week],
+      history: [observation(record, snapshot.week, snapshot.generated_at)],
+    });
+    continue;
+  }
+
+  const weeksSeen = Array.isArray(previous.weeks_seen) ? [...previous.weeks_seen] : [];
+  if (!weeksSeen.includes(snapshot.week)) weeksSeen.push(snapshot.week);
+  const history = Array.isArray(previous.history) ? [...previous.history] : [];
+  if (!sameState(previous, record)) history.push(observation(record, snapshot.week, snapshot.generated_at));
+
+  byReference.set(key, {
+    ...previous,
+    ...record,
+    first_seen_week: previous.first_seen_week || snapshot.week,
+    last_seen_week: snapshot.week,
+    first_seen_at: previous.first_seen_at || snapshot.generated_at,
+    last_seen_at: snapshot.generated_at,
+    weeks_seen: weeksSeen,
+    history,
+  });
+}
+
+const archive = {
+  archive_version: 1,
+  generated_at: snapshot.generated_at,
+  latest_week: snapshot.week,
+  source: snapshot.source,
+  canonical_source: snapshot.canonical_source,
+  place_link_rules_version: snapshot.place_link_rules_version,
+  records: [...byReference.values()].sort((a, b) => {
+    const dateDelta = (Date.parse(b.validated_date || '') || 0) - (Date.parse(a.validated_date || '') || 0);
+    return dateDelta || String(a.reference || '').localeCompare(String(b.reference || ''));
+  }),
+};
+
+await writeFile(latestOutput, `${JSON.stringify(snapshot, null, 2)}\n`, 'utf8');
+await writeFile(archiveOutput, `${JSON.stringify(archive, null, 2)}\n`, 'utf8');
+console.log(`Published ${snapshot.records.length} planning records from weekly list ${snapshot.week} to ${latestOutput}.`);
+console.log(`Planning archive now contains ${archive.records.length} durable application record(s) in ${archiveOutput}.`);
