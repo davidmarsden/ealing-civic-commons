@@ -1,4 +1,4 @@
-const esc = value => String(value ?? '').replace(/[&<>'\"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt', "'":'&#39;', '\"':'&quot;' }[char]));
+const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char]));
 const fmtDate = iso => {
   if (!iso) return 'Date unavailable';
   const date = new Date(iso);
@@ -6,57 +6,65 @@ const fmtDate = iso => {
 };
 const normaliseRoute = value => String(value || '').trim().replace(/^\/+|\/+$/g, '').replace(/\.html$/i, '');
 
-const SECTION_ORDER = [
-  'commonsAssertionsSection',
-  'localEvidenceSection',
-  'currentSection',
-  'planningSection',
-  'sourcesSection',
-  'reportingSection',
-  'relationshipsSection'
+const SECTIONS = [
+  { id: 'commonsAssertionsSection', href: '#commonsAssertionsSection', label: 'Current civic facts', open: true },
+  { id: 'localEvidenceSection', href: null, label: 'Local evidence', open: true },
+  { id: 'currentSection', href: '#currentSection', label: 'Current Commons', open: true },
+  { id: 'planningSection', href: '#planningSection', label: 'Planning register', open: true },
+  { id: 'sourcesSection', href: '#sourcesSection', label: 'Primary evidence', open: false },
+  { id: 'reportingSection', href: '#reportingSection', label: 'Historical reporting', open: false },
+  { id: 'relationshipsSection', href: '#relationshipsSection', label: 'Reviewed connections', open: false }
 ];
-const ACTION_ORDER = [
-  '#commonsAssertionsSection',
-  '#currentSection',
-  '#planningSection',
-  '#sourcesSection',
-  '#reportingSection',
-  '#relationshipsSection'
-];
-const FOLDED = new Map([
-  ['sourcesSection', 'Primary evidence'],
-  ['reportingSection', 'Historical reporting'],
-  ['relationshipsSection', 'Reviewed connections']
-]);
+const ACTION_ORDER = SECTIONS.map(section => section.href).filter(Boolean);
 let planningReady = false;
+
+function ensureCardStyles() {
+  if (document.querySelector('link[data-dossier-cards]')) return;
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = '/dossier-cards.css?v=20260908-1';
+  link.dataset.dossierCards = 'true';
+  document.head.append(link);
+}
 
 function currentPlaceRoute() {
   const match = location.pathname.match(/^\/(places\/[^/]+)/i);
   return match ? normaliseRoute(match[1]) : null;
 }
+
 function reorderSections() {
   const stack = document.querySelector('.entity-stack');
   if (!stack) return;
-  SECTION_ORDER.forEach(id => { const section = document.getElementById(id); if (section) stack.append(section); });
+  SECTIONS.forEach(({ id }) => {
+    const section = document.getElementById(id);
+    if (section) stack.append(section);
+  });
 }
-function actionRoot() { return document.querySelector('#entityHero .entity-actions, .entity-actions'); }
+
+function actionRoot() {
+  return document.querySelector('#entityHero .entity-actions, .entity-actions');
+}
+
 function reorderActions() {
   const actions = actionRoot();
   if (!actions) return false;
   const byHref = new Map([...actions.querySelectorAll('a')].map(link => [link.getAttribute('href'), link]));
   ACTION_ORDER.forEach(href => {
     const link = byHref.get(href);
-    if (link && link !== actions.lastElementChild) actions.append(link);
+    if (link) actions.append(link);
   });
   return true;
 }
-function removePlanningAction() {
-  actionRoot()?.querySelector('a[href="#planningSection"]')?.remove();
-}
-function ensurePlanningAction() {
+
+function syncPlanningAction() {
   const actions = actionRoot();
-  if (!actions || !planningReady) return false;
+  if (!actions) return false;
   let link = actions.querySelector('a[href="#planningSection"]');
+  if (!planningReady) {
+    link?.remove();
+    reorderActions();
+    return true;
+  }
   if (!link) {
     link = document.createElement('a');
     link.href = '#planningSection';
@@ -66,54 +74,75 @@ function ensurePlanningAction() {
   reorderActions();
   return true;
 }
-function foldSection(id, label) {
-  const section = document.getElementById(id);
-  if (!section || section.dataset.foldReady === 'true') return;
-  section.dataset.foldReady = 'true';
-  section.classList.add('entity-section-foldable');
-  const heading = section.querySelector('h2');
-  if (!heading) return;
-  const body = document.createElement('div');
-  body.className = 'entity-section-fold-body';
-  while (heading.nextSibling) body.append(heading.nextSibling);
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'entity-section-toggle';
-  button.setAttribute('aria-expanded', 'false');
-  button.textContent = `Show ${label.toLowerCase()}`;
-  body.hidden = true;
-  button.addEventListener('click', () => {
-    const expanded = button.getAttribute('aria-expanded') === 'true';
-    button.setAttribute('aria-expanded', String(!expanded));
-    button.textContent = expanded ? `Show ${label.toLowerCase()}` : `Hide ${label.toLowerCase()}`;
-    body.hidden = expanded;
-  });
-  section.append(button, body);
-  if (location.hash === `#${id}`) {
-    button.setAttribute('aria-expanded', 'true');
-    button.textContent = `Hide ${label.toLowerCase()}`;
-    body.hidden = false;
-  }
+
+function setCardExpanded(section, expanded) {
+  const header = section.querySelector('.dossier-card-header');
+  const body = section.querySelector('.dossier-card-body');
+  if (!header || !body) return;
+  header.setAttribute('aria-expanded', String(expanded));
+  body.hidden = !expanded;
+  section.classList.toggle('dossier-card-collapsed', !expanded);
+  const state = header.querySelector('.dossier-card-state');
+  if (state) state.textContent = expanded ? 'Hide' : 'Show';
+  const chevron = header.querySelector('.dossier-card-chevron');
+  if (chevron) chevron.textContent = expanded ? '−' : '+';
 }
+
+function prepareCard(config) {
+  const section = document.getElementById(config.id);
+  if (!section || section.dataset.dossierCardReady === 'true') return;
+  section.dataset.dossierCardReady = 'true';
+  section.classList.add('dossier-card');
+
+  const eyebrow = section.querySelector(':scope > .eyebrow');
+  const heading = section.querySelector(':scope > h2');
+  if (!heading) return;
+
+  const header = document.createElement('div');
+  header.className = 'dossier-card-header';
+  header.setAttribute('role', 'button');
+  header.tabIndex = 0;
+  header.setAttribute('aria-controls', `${config.id}Body`);
+  header.innerHTML = `<div class="dossier-card-heading"><span class="dossier-card-eyebrow">${esc(eyebrow?.textContent || config.label)}</span><span class="dossier-card-title">${esc(heading.textContent)}</span></div><span class="dossier-card-control"><span class="dossier-card-state"></span><span class="dossier-card-chevron" aria-hidden="true"></span></span>`;
+
+  const body = document.createElement('div');
+  body.className = 'dossier-card-body';
+  body.id = `${config.id}Body`;
+
+  eyebrow?.remove();
+  heading.remove();
+  while (section.firstChild) body.append(section.firstChild);
+  section.append(header, body);
+
+  const toggle = () => setCardExpanded(section, header.getAttribute('aria-expanded') !== 'true');
+  header.addEventListener('click', toggle);
+  header.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      toggle();
+    }
+  });
+
+  const deepLinked = location.hash === `#${config.id}`;
+  setCardExpanded(section, deepLinked || config.open);
+}
+
 function expandHashTarget() {
   const id = location.hash.replace(/^#/, '');
-  if (!FOLDED.has(id)) return;
   const section = document.getElementById(id);
-  const button = section?.querySelector('.entity-section-toggle');
-  const body = section?.querySelector('.entity-section-fold-body');
-  if (!button || !body) return;
-  button.setAttribute('aria-expanded', 'true');
-  button.textContent = `Hide ${FOLDED.get(id).toLowerCase()}`;
-  body.hidden = false;
+  if (!section?.classList.contains('dossier-card')) return;
+  setCardExpanded(section, true);
 }
+
 function matchingPlanningLink(record, route) {
   const links = record.place_links || [];
   return links.find(link => normaliseRoute(link.route) === route)
     || (route === 'places/southall-gasworks' ? links.find(link => link.rule_id === 'southall-gasworks-2-the-straight') : null)
     || null;
 }
+
 async function renderPlacePlanning() {
-  const route = normaliseRoute(window.__civicEntityRoute) || currentPlaceRoute();
+  const route = currentPlaceRoute() || normaliseRoute(window.__civicEntityRoute);
   if (!route?.startsWith('places/')) return false;
   const section = document.getElementById('planningSection');
   const root = document.getElementById('planningItems');
@@ -126,6 +155,7 @@ async function renderPlacePlanning() {
       .filter(record => !record.out_of_borough && matchingPlanningLink(record, route))
       .sort((a,b) => (Date.parse(b.validated_date || '') || 0) - (Date.parse(a.validated_date || '') || 0));
     if (!matches.length) return false;
+
     root.innerHTML = `<ul class="entity-list">${matches.map(record => {
       const link = matchingPlanningLink(record, route);
       const provenance = link?.provenance === 'reviewed-rule'
@@ -135,7 +165,8 @@ async function renderPlacePlanning() {
     }).join('')}</ul>`;
     section.hidden = false;
     planningReady = true;
-    ensurePlanningAction();
+    setCardExpanded(section, true);
+    syncPlanningAction();
     if (location.hash === '#planningSection') requestAnimationFrame(() => section.scrollIntoView({ block: 'start' }));
     return true;
   } catch (error) {
@@ -143,6 +174,7 @@ async function renderPlacePlanning() {
     return false;
   }
 }
+
 async function renderPlanningWithRetry() {
   for (let attempt = 0; attempt < 6; attempt += 1) {
     if (await renderPlacePlanning()) return true;
@@ -150,30 +182,31 @@ async function renderPlanningWithRetry() {
   }
   return false;
 }
-async function syncHeroWhenReady() {
-  for (let attempt = 0; attempt < 40; attempt += 1) {
-    const actions = actionRoot();
-    if (actions) {
-      if (planningReady) ensurePlanningAction(); else removePlanningAction();
-      reorderActions();
-      return true;
-    }
-    await new Promise(resolve => setTimeout(resolve, 50));
+
+async function syncActionsForAWhile() {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    syncPlanningAction();
+    reorderActions();
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
-  return false;
 }
+
 async function initialise() {
+  ensureCardStyles();
   document.documentElement.classList.add('entity-dossier-ready');
   reorderSections();
-  FOLDED.forEach((label, id) => foldSection(id, label));
+  SECTIONS.forEach(prepareCard);
   const planningPromise = renderPlanningWithRetry();
-  await syncHeroWhenReady();
+  const actionPromise = syncActionsForAWhile();
   await planningPromise;
-  await syncHeroWhenReady();
+  await actionPromise;
+  syncPlanningAction();
+  reorderActions();
   window.addEventListener('hashchange', () => {
     expandHashTarget();
     const target = document.getElementById(location.hash.replace(/^#/, ''));
     if (target) requestAnimationFrame(() => target.scrollIntoView({ block: 'start' }));
   });
 }
+
 initialise();
