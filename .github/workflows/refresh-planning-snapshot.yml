@@ -21,24 +21,24 @@ jobs:
       - run: npm ci
       - name: Ingest latest completed PAM week
         run: npm run inspect:planning-ingest
-      - name: Build public planning snapshot
+      - name: Build latest snapshot and durable archive
         run: npm run publish:planning-snapshot
-      - name: Open refresh pull request when snapshot changed
+      - name: Open refresh pull request when planning data changed
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if git diff --quiet -- public/data/planning-latest.json; then
-            echo "Planning snapshot unchanged."
+          if git diff --quiet -- public/data/planning-latest.json public/data/planning-archive.json; then
+            echo "Planning data unchanged."
             exit 0
           fi
           branch="automation/planning-snapshot-${GITHUB_RUN_ID}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
-          git add public/data/planning-latest.json
-          git commit -m "Refresh planning snapshot"
+          git add public/data/planning-latest.json public/data/planning-archive.json
+          git commit -m "Refresh planning data"
           git push --set-upstream origin "$branch"
-          gh pr create --base main --head "$branch" --title "Refresh Ealing planning snapshot" --body "Automated refresh from the latest completed Ealing PAM weekly list. The source ingest remains authoritative; this PR updates only the committed public planning snapshot so Netlify deploys do not depend on PAM availability."
+          gh pr create --base main --head "$branch" --title "Refresh Ealing planning data" --body "Automated refresh from the latest completed Ealing PAM weekly list. This PR updates both the latest-week view and the durable planning archive; Ealing Council's planning register remains authoritative, and Netlify deploys remain independent of PAM availability."
       - name: Upload inspection artifact
         if: always()
         uses: actions/upload-artifact@v4
