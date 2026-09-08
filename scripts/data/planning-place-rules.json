@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "description": "Reviewed rules connecting planning applications to specific Civic Commons place identities. Town-level links are generated separately from conservative town classification.",
+  "rules": [
+    {
+      "id": "southall-gasworks-2-the-straight",
+      "place_route": "places/southall-gasworks",
+      "label": "Southall Gasworks",
+      "match": {
+        "address_contains": ["2 The Straight Southall UB1 1QX"]
+      },
+      "note": "Reviewed site match for the former Southall Gasworks redevelopment / Green Quarter site."
+    }
+  ]
+}
