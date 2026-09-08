@@ -102,27 +102,22 @@ function prepareCard(config) {
   if (!section || section.dataset.dossierCardReady === 'true') return;
   section.dataset.dossierCardReady = 'true';
   section.classList.add('dossier-card');
-
   const eyebrow = section.querySelector(':scope > .eyebrow');
   const heading = section.querySelector(':scope > h2');
   if (!heading) return;
-
   const header = document.createElement('div');
   header.className = 'dossier-card-header';
   header.setAttribute('role', 'button');
   header.tabIndex = 0;
   header.setAttribute('aria-controls', `${config.id}Body`);
   header.innerHTML = `<div class="dossier-card-heading"><span class="dossier-card-eyebrow">${esc(eyebrow?.textContent || config.label)}</span><span class="dossier-card-title">${esc(heading.textContent)}</span></div><span class="dossier-card-control"><span class="dossier-card-state"></span><span class="dossier-card-chevron" aria-hidden="true"></span></span>`;
-
   const body = document.createElement('div');
   body.className = 'dossier-card-body';
   body.id = `${config.id}Body`;
-
   eyebrow?.remove();
   heading.remove();
   while (section.firstChild) body.append(section.firstChild);
   section.append(header, body);
-
   const toggle = () => setCardExpanded(section, header.getAttribute('aria-expanded') !== 'true');
   header.addEventListener('click', toggle);
   header.addEventListener('keydown', event => {
@@ -131,7 +126,6 @@ function prepareCard(config) {
       toggle();
     }
   });
-
   const deepLinked = location.hash === `#${config.id}`;
   setCardExpanded(section, deepLinked || config.open);
 }
@@ -154,7 +148,7 @@ async function renderPlacePlanning() {
   const route = currentPlaceRoute() || normaliseRoute(window.__civicEntityRoute);
   if (!route?.startsWith('places/')) return false;
   const section = document.getElementById('planningSection');
-  const root = document.getElementById('planningItems');
+  const root = document.getElementById('planningArchiveItems');
   if (!section || !root) return false;
   try {
     const snapshot = await loadPlanningStore('dossier');
@@ -162,7 +156,6 @@ async function renderPlacePlanning() {
       .filter(record => !record.out_of_borough && matchingPlanningLink(record, route))
       .sort((a,b) => (Date.parse(b.validated_date || '') || 0) - (Date.parse(a.validated_date || '') || 0));
     if (!matches.length) return false;
-
     root.innerHTML = `<ul class="entity-list">${matches.map(record => {
       const link = matchingPlanningLink(record, route);
       const provenance = link?.provenance === 'reviewed-rule'
