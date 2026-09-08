@@ -1,6 +1,12 @@
 /site-shell.js
   Cache-Control: public, max-age=0, must-revalidate
 
+/entity.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/issue.js
+  Cache-Control: public, max-age=0, must-revalidate
+
 /entity.html
   Cache-Control: public, max-age=0, must-revalidate
 
