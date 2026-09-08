@@ -1,5 +1,5 @@
 const $ = sel => document.querySelector(sel);
-const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt',"'":'&#39;','"':'&quot;'}[c]));
+const esc = s => String(s ?? '').replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt',"'":'&#39;','\"':'&quot;'}[c]));
 const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date(iso); return new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'long',year:'numeric'}).format(d); };
 const relationshipLabels = new Map([
   ['leader_of','leader of'],
@@ -97,7 +97,8 @@ function renderHero(data) {
   const hero = $('#entityHero'); hero.hidden = false;
   const fallback = entity.type === 'person' ? 'A reviewed person in the civic-memory graph.' : entity.type === 'organisation' ? 'A reviewed organisation in the civic-memory graph.' : 'A reviewed place in the civic-memory graph.';
   const website = entity.website?.url ? `<a class="tag" href="${esc(entity.website.url)}" target="_blank" rel="noopener noreferrer">${esc(entity.website.label || 'Website')} ↗</a>` : '';
-  hero.innerHTML = `<h1>${esc(entity.name)}</h1><p class="lede">${esc(entity.description || fallback)}</p><div class="entity-kicker"><span class="tag">${esc(entity.type)}</span>${(entity.aliases || []).slice(0,5).map(alias => `<span class="tag">also: ${esc(alias)}</span>`).join('')}${website}</div><div class="entity-actions"><a href="#commonsAssertionsSection">Current civic facts ↓</a><a href="#relationshipsSection">Reviewed connections ↓</a><a href="#sourcesSection">Primary evidence ↓</a><a href="#reportingSection">Historical reporting ↓</a><a href="#currentSection">Current Commons ↓</a></div>`;
+  const planningAction = entity.type === 'place' ? '<a href="#planningSection">Planning register ↓</a>' : '';
+  hero.innerHTML = `<h1>${esc(entity.name)}</h1><p class="lede">${esc(entity.description || fallback)}</p><div class="entity-kicker"><span class="tag">${esc(entity.type)}</span>${(entity.aliases || []).slice(0,5).map(alias => `<span class="tag">also: ${esc(alias)}</span>`).join('')}${website}</div><div class="entity-actions"><a href="#commonsAssertionsSection">Current civic facts ↓</a><a href="#relationshipsSection">Reviewed connections ↓</a><a href="#sourcesSection">Primary evidence ↓</a>${planningAction}<a href="#reportingSection">Historical reporting ↓</a><a href="#currentSection">Current Commons ↓</a></div>`;
 }
 
 function renderStats(data, historicalCount = null) {
@@ -144,6 +145,30 @@ function renderSources(items) {
   $('#sources').innerHTML = `<ul class="entity-list">${items.map(source => `<li><h3>${source.url ? `<a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.title)}</a>` : esc(source.title)}</h3><span class="entity-meta">${esc(source.publisher || 'Source')} · ${esc(labelType(source.sourceType))}${source.date ? ` · ${esc(fmtDate(source.date))}` : ''}</span>${source.archiveUrls?.length ? `<span class="entity-meta">Archived copy available</span>` : ''}</li>`).join('')}</ul>`;
 }
 
+function renderPlanning(items, route) {
+  const section = $('#planningSection');
+  const root = $('#planningItems');
+  if (!section || !root || !items?.length) return;
+  section.hidden = false;
+  root.innerHTML = `<ul class="entity-list">${items.map(record => {
+    const link = (record.place_links || []).find(candidate => candidate.route === route);
+    const provenance = link?.provenance === 'reviewed-rule'
+      ? `Reviewed site link${link.note ? ` · ${link.note}` : ''}`
+      : 'Linked from conservative town classification';
+    return `<li><span class="relationship-type">${esc(record.category || 'Planning application')}</span><h3><a href="${esc(record.commons_path)}">${esc(record.reference)} · ${esc(record.address)}</a></h3><p>${esc(record.proposal)}</p><span class="entity-meta">Validated ${esc(fmtDate(record.validated_date))} · ${esc(record.status || 'Status unavailable')}</span><span class="entity-meta">${esc(provenance)} · <a href="${esc(record.authoritative_url)}" target="_blank" rel="noopener noreferrer">Ealing Council planning record ↗</a></span></li>`;
+  }).join('')}</ul>`;
+}
+
+async function loadPlacePlanning(route) {
+  const response = await fetch('/data/planning-latest.json', { cache: 'no-store' });
+  if (!response.ok) throw new Error(`Planning snapshot HTTP ${response.status}`);
+  const snapshot = await response.json();
+  const items = (snapshot.records || [])
+    .filter(record => !record.out_of_borough && (record.place_links || []).some(link => link.route === route))
+    .sort((a,b) => (Date.parse(b.validated_date || '') || 0) - (Date.parse(a.validated_date || '') || 0));
+  renderPlanning(items, route);
+}
+
 function renderReporting(items) {
   const section = $('#reportingSection'); if (!items?.length) return; section.hidden = false;
   $('#reporting').innerHTML = `<ul class="entity-list">${items.map(post => `<li><h3><a href="${esc(post.url)}" target="_blank" rel="noopener noreferrer">${esc(post.title)}</a></h3>${post.summary ? `<p>${esc(post.summary)}</p>` : ''}<span class="entity-meta">${esc(post.source || 'Publisher')} · ${esc(fmtDate(post.date))}${post.reviewedMatch ? ' · reviewed match' : ' · Civic Archive match'}</span></li>`).join('')}</ul>`;
@@ -188,6 +213,7 @@ async function load() {
     renderReporting(historical); renderStats(data, historical.length);
     if (assertionsResponse?.ok) { const assertions = await assertionsResponse.json(); if (assertions.matched) renderCommonsAssertions(assertions, data.entity); }
     if (feedResponse?.ok) { const feed = await feedResponse.json(); renderCurrent(currentMatches(feed,data.entity)); }
+    if (data.entity.type === 'place') loadPlacePlanning(route.route).catch(error => console.warn('Planning place history unavailable', error));
   } catch (error) {
     $('#entityStatus').innerHTML = `<h1>Civic entity temporarily unavailable.</h1><p>The civic entity service could not load this page. The rest of Civic Commons is unaffected.</p><p><a href="/explore.html">Explore the civic graph →</a></p>`;
     console.error('Civic entity page failed', error);
