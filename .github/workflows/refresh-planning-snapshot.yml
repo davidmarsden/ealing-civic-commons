@@ -1,0 +1,48 @@
+name: Refresh planning snapshot
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 6 * * 2'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Ingest latest completed PAM week
+        run: npm run inspect:planning-ingest
+      - name: Build public planning snapshot
+        run: npm run publish:planning-snapshot
+      - name: Open refresh pull request when snapshot changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- public/data/planning-latest.json; then
+            echo "Planning snapshot unchanged."
+            exit 0
+          fi
+          branch="automation/planning-snapshot-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add public/data/planning-latest.json
+          git commit -m "Refresh planning snapshot"
+          git push --set-upstream origin "$branch"
+          gh pr create --base main --head "$branch" --title "Refresh Ealing planning snapshot" --body "Automated refresh from the latest completed Ealing PAM weekly list. The source ingest remains authoritative; this PR updates only the committed public planning snapshot so Netlify deploys do not depend on PAM availability."
+      - name: Upload inspection artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ealing-planning-ingest
+          path: ealing-planning-ingest.json
+          retention-days: 7

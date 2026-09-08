@@ -11,6 +11,7 @@
     "inspect:ealing-data": "node scripts/ealing-data-catalog.mjs",
     "inspect:planning": "node scripts/planning-probe.mjs --verbose",
     "inspect:planning-ingest": "node scripts/ingest-ealing-planning.mjs --output=ealing-planning-ingest.json",
+    "publish:planning-snapshot": "node scripts/publish-ealing-planning-snapshot.mjs ealing-planning-ingest.json public/data/planning-latest.json",
     "render:social-cards": "node scripts/render-social-cards.mjs",
     "verify:social-cards": "node scripts/verify-social-cards.mjs",
     "generate:ealing-schools": "node scripts/generate-ealing-schools.mjs",
