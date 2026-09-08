@@ -9,6 +9,9 @@ import { EALING_SCHOOLS, EALING_SCHOOLS_META } from '../lib/ealing-schools.mjs';
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
 const EXPECTED_SCHEMA = 1;
 const REFERENCE_LIMIT = 20;
+const GASWORKS_ROUTE = 'places/southall-gasworks';
+const GASWORKS_DESCRIPTION = 'Former Southall Gasworks redevelopment site, later marketed as Southall Waterside and The Green Quarter.';
+const GASWORKS_ALIASES = ['Southall Gasworks', 'Southall Waterside', 'The Green Quarter', 'Green Quarter', 'Southall Gasworks redevelopment', 'former Southall Gasworks'];
 
 function json(body, status = 200, maxAge = 300) {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': `public, max-age=${maxAge}, stale-while-revalidate=1800`, 'access-control-allow-origin': '*' } });
@@ -26,7 +29,17 @@ function sourceFor(entity, sourceByEntity = new Map()) {
   return { label: source.publisher || source.title || 'Source', url: source.canonical_url, type: source.source_type || null };
 }
 
-function view(entity, sourceByEntity = new Map()) {
+function stableSearchIdentity(entity) {
+  if (entity.route !== GASWORKS_ROUTE) return entity;
+  return {
+    ...entity,
+    description: entity.description || GASWORKS_DESCRIPTION,
+    aliases: [...new Set([...(entity.aliases || []), ...GASWORKS_ALIASES])]
+  };
+}
+
+function view(rawEntity, sourceByEntity = new Map()) {
+  const entity = stableSearchIdentity(rawEntity);
   return {
     id: entity.id,
     route: entity.route,
