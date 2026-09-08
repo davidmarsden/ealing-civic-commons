@@ -36,20 +36,31 @@
   to = "/item.html"
   status = 200
 
+# Force every civic entity route through one canonical dossier template.
+# The explicit Gasworks rule is first so it cannot be satisfied by any stale/static path.
+[[redirects]]
+  from = "/places/southall-gasworks"
+  to = "/civic-entity.html"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/people/*"
   to = "/civic-entity.html"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/organisations/*"
   to = "/civic-entity.html"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/places/*"
   to = "/civic-entity.html"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/issues/*"
