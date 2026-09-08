@@ -10,6 +10,9 @@
 /entity.html
   Cache-Control: public, max-age=0, must-revalidate
 
+/civic-entity.html
+  Cache-Control: public, max-age=0, must-revalidate
+
 /issue.html
   Cache-Control: public, max-age=0, must-revalidate
 
@@ -17,6 +20,9 @@
   Cache-Control: public, max-age=0, must-revalidate
 
 /issue-planning-ui.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/section-nav-sync.js
   Cache-Control: public, max-age=0, must-revalidate
 
 /dossier-cards.css
