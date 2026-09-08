@@ -16,6 +16,15 @@ const SECTIONS = [
 const ACTION_ORDER = SECTIONS.map(section => section.href);
 let planningReady = false;
 
+async function loadPlanningStore(queryKey) {
+  for (const path of ['/data/planning-archive.json', '/data/planning-latest.json']) {
+    const response = await fetch(`${path}?${queryKey}=${Date.now()}`, { cache: 'no-store' });
+    if (response.ok) return response.json();
+    if (response.status !== 404) throw new Error(`Planning store HTTP ${response.status}: ${path}`);
+  }
+  throw new Error('No published planning store available');
+}
+
 function ensureCardStyles() {
   if (document.querySelector('link[data-dossier-cards]')) return;
   const link = document.createElement('link');
@@ -163,13 +172,12 @@ async function loadIssuePlanning() {
   try {
     const issueEndpoint = new URL('/.netlify/functions/civic-issue', location.origin);
     issueEndpoint.searchParams.set('route', route);
-    const [issueResponse, planningResponse] = await Promise.all([
+    const [issueResponse, snapshot] = await Promise.all([
       fetch(issueEndpoint, { cache: 'no-store' }),
-      fetch(`/data/planning-latest.json?issue=${Date.now()}`, { cache: 'no-store' })
+      loadPlanningStore('issue')
     ]);
-    if (!issueResponse.ok || !planningResponse.ok) return false;
+    if (!issueResponse.ok) return false;
     const issueData = await issueResponse.json();
-    const snapshot = await planningResponse.json();
     if (!issueData.matched || !issueData.issue?.primaryEntityId) return false;
     const primary = (issueData.entities || []).find(entity => entity.id === issueData.issue.primaryEntityId);
     const primaryRoute = primary?.commonsRoute;
