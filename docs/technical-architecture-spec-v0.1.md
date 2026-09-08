@@ -1,16 +1,16 @@
-# Southall & Ealing Civic Commons
-## Technical Architecture & Implementation Notes — v0.2
+# Ealing Civic Commons
+## Technical Architecture & Implementation Notes — v0.1
 
 **Updated:** 8 September 2026  
 **Status:** Living architecture for the public prototype
 
-This document began as the Phase 1 prototype specification. The implementation has moved well beyond the original read-only design, so this version records the architecture that is actually live while preserving the founding constraints.
+This document began as the Phase 1 prototype specification. The implementation has moved well beyond the original read-only design, so this living v0.1 now records the architecture that is actually live while preserving the founding constraints.
 
 ## 1. Product proposition
 
 Build an independent, open civic information layer connecting local publishing, official democratic records, planning/register data, public evidence and reviewed civic memory.
 
-The system begins in Southall but is designed for all seven towns in the London Borough of Ealing:
+The system began in Southall but is designed for all seven towns in the London Borough of Ealing:
 
 **Acton, Ealing, Greenford, Hanwell, Northolt, Perivale and Southall.**
 
@@ -20,7 +20,7 @@ The constitutional principle remains:
 
 > The Commons connects sources; it does not absorb ownership of them.
 
-That now applies not only to articles and feeds but also to official registers: Ealing Council PAM, ModernGov and other primary records remain canonical even when the Commons creates stable civic objects and relationships around them.
+That now applies not only to articles and feeds but also to official registers: Ealing Council PAM, ModernGov and other primary records remain canonical even when the Commons creates civic objects and relationships around them.
 
 ## 2. What the Commons is now
 
@@ -32,8 +32,8 @@ The live prototype is no longer just a read-only timeline. It now includes:
 - browser follows, personal RSS and email alerts;
 - Document Watch and official-source adapters;
 - a reviewed people/organisation/place/topic/issue graph;
-- first-class planning application objects;
-- explicit planning → place → issue relationships;
+- a current planning-application discovery layer;
+- explicit planning → place → issue relationships for the current snapshot;
 - shared civic dossier pages that combine current material with deeper reviewed evidence/history.
 
 It is still **not** intended to become a replacement publisher, council portal, engagement-ranking system or compulsory social network.
@@ -55,7 +55,7 @@ RSS | Atom | public pages | official registers
 |             CIVIC DATA / MEMORY LAYERS         |
 | live feed snapshots     Netlify Blobs archive  |
 | reviewed assertions     research exports       |
-| planning snapshot       public contributions   |
+| latest planning snapshot public contributions  |
 | review queue            entity/issue registry  |
 +-----------------------+------------------------+
                         |
@@ -110,15 +110,14 @@ A bare name is not considered a complete public entity.
 
 ### Topics and issues
 
-Topics group recurring civic themes. Issues represent durable civic questions that can connect current material, entities, evidence, historical reporting and planning records.
+Topics group recurring civic themes. Issues represent durable civic questions that can connect current material, entities, evidence, historical reporting and planning context.
 
-An issue may have an explicit reviewed `primaryEntityId`. This is used for relationships such as issue → primary place → planning records rather than relying on fuzzy name matching.
+An issue may have an explicit reviewed `primaryEntityId`. This is used for relationships such as issue → primary place → current planning records rather than relying on fuzzy name matching.
 
 ### Planning applications
 
-Planning applications are now first-class civic records. The conservative public object contains:
+Planning applications are currently exposed as first-class **current civic records** from the latest validated planning snapshot. The conservative public object contains:
 
-- stable Civic Commons planning ID;
 - application reference;
 - address/site;
 - proposal;
@@ -128,10 +127,12 @@ Planning applications are now first-class civic records. The conservative public
 - conservatively classified town where available;
 - out-of-borough flag;
 - authoritative PAM URL;
-- stable Commons path;
+- Commons route for the record while it is present in the published snapshot;
 - explicit `place_links[]` with provenance.
 
 Planning applicant/agent contact data, documents, drawings and mapping tiles are not mirrored merely because they are visible in a public register.
+
+**Current limitation:** the published planning dataset is a latest-week snapshot, not yet a persistent planning archive. When a later successful refresh replaces `planning-latest.json`, applications from the previous week are no longer available through the current planning, place or issue views unless they also appear in the new snapshot. Durable planning history is therefore a next-step capability, not a live one.
 
 ### Relationships
 
@@ -163,10 +164,10 @@ Current flow:
 6. fetch application summaries at low rate;
 7. normalize and validate factual fields;
 8. fail closed if any discovered application could not be published safely/completely;
-9. generate a committed public planning snapshot;
+9. generate a committed **latest-week** public planning snapshot;
 10. propose snapshot changes through the repository workflow.
 
-This means the public Commons can remain available during PAM downtime and a partial refresh cannot silently replace the last complete public state.
+This means the public Commons can remain available during PAM downtime and a partial refresh cannot silently replace the last complete public state. It does **not** yet mean older planning records are retained after the next successful refresh.
 
 ## 7. Planning place-link provenance
 
@@ -180,28 +181,30 @@ Generated only from conservative deterministic address/place classification.
 
 A deliberate, inspectable rule for a specific site relationship. It may carry a rule ID and reviewer-facing note.
 
-The first live example is application `263308CND` at 2 The Straight, linked to:
+The first live example is application `263308CND` at 2 The Straight, linked in the current snapshot to:
 
 - `places/southall` — town classification;
 - `places/southall-gasworks` — reviewed site rule.
 
-The Southall Gasworks redevelopment issue then inherits the application through its reviewed primary-place relationship.
+The Southall Gasworks redevelopment issue then inherits that current planning context through its reviewed primary-place relationship.
 
-This is preferable to fuzzy text matching because it keeps civic memory inspectable and correctable.
+This is preferable to fuzzy text matching because it keeps civic context inspectable and correctable.
 
 ## 8. Place as durable civic memory
 
 PAM thinks in applications; residents often think in **places**.
 
-Civic Commons therefore treats the weekly planning list as temporary input and the place as the durable civic object. A place dossier can accumulate:
+Civic Commons therefore treats the **place** as the durable civic object. A place dossier can accumulate:
 
 - current reviewed civic facts;
 - local/public data evidence;
 - recent Commons material;
-- current/recent planning applications;
+- current planning applications from the latest published snapshot;
 - primary evidence;
 - historical reporting;
 - reviewed relationships.
+
+The place persists even when a current planning record drops out of the latest-week snapshot. Retaining prior planning records so that planning itself becomes part of durable place history is planned work and should not be confused with the persistence already provided by the place/entity layer.
 
 The same place can connect to one or more durable civic issues.
 
@@ -272,7 +275,7 @@ The Civic Archive is backed by persistent normalised item snapshots rather than 
 
 A stable item can therefore survive the original RSS item ageing out. Reviewed contribution activity can reactivate an old civic thread while preserving the source's original publication date.
 
-Planning currently uses a different persistence strategy: a validated committed snapshot. Historical planning backfill should only be added once update/version semantics and rate/licensing boundaries are clear.
+Planning currently uses a different and more limited persistence strategy: a validated committed **latest-week snapshot**. The current record route and its place/issue appearances therefore last only while that record remains in `planning-latest.json`. Historical planning retention/backfill should be added only with clear update/version semantics and appropriate rate/licensing boundaries.
 
 ## 14. Review boundary
 
@@ -291,7 +294,8 @@ The Commons exposes or is designed to expose:
 - main and filtered RSS;
 - personal RSS;
 - source lists/OPML;
-- stable civic item/entity/planning URLs;
+- stable civic item/entity URLs;
+- planning record routes for records in the current published snapshot;
 - portable public metadata/JSON where useful;
 - repository-visible registries/rules/documentation.
 
@@ -339,13 +343,14 @@ One failing upstream must not break the public Commons.
 
 ## 20. Near-term architectural work
 
-1. Extend planning lifecycle memory to decisions and reliable ward/site geography.
-2. Link planning records to committee/decision/document/reporting context where deterministic or reviewed.
-3. Improve archive/search indexing as persistent memory grows.
-4. Complete Phase 7C structured promotion for sources/evidence/relationships.
-5. Automate public entity completeness checks.
-6. Harden source adapters/parser tests/caching without creating one-service dependencies.
-7. Restore town-aware social metadata generation for stable public routes.
+1. **Persist planning records across refreshes** before describing planning itself as durable civic memory.
+2. Add planning decision/status history and reliable ward/site geography.
+3. Link retained planning records to committee/decision/document/reporting context where deterministic or reviewed.
+4. Improve archive/search indexing as persistent memory grows.
+5. Complete Phase 7C structured promotion for sources/evidence/relationships.
+6. Automate public entity completeness checks.
+7. Harden source adapters/parser tests/caching without creating one-service dependencies.
+8. Restore town-aware social metadata generation for stable public routes.
 
 ## 21. Founding architectural principles
 
@@ -355,7 +360,8 @@ One failing upstream must not break the public Commons.
 - Provenance beats seamless-looking synthesis.
 - Primary records beat AI summaries.
 - Places are durable civic memory, not merely text tags.
-- Official registers remain canonical even when the Commons adds stable civic context.
+- Current planning context must not be described as persistent planning history until records survive weekly refreshes.
+- Official registers remain canonical even when the Commons adds civic context.
 - Open outputs as well as open inputs.
 - No dependency on Facebook, Bluesky, RSS.chat, OCN, PAM availability or any single platform/service for the Commons to remain useful.
 - Conversation/federation remains a replaceable layer.
