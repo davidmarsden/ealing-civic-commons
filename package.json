@@ -11,14 +11,15 @@
     "inspect:ealing-data": "node scripts/ealing-data-catalog.mjs",
     "inspect:planning": "node scripts/planning-probe.mjs --verbose",
     "inspect:planning-ingest": "node scripts/ingest-ealing-planning.mjs --output=ealing-planning-ingest.json",
-    "publish:planning-snapshot": "node scripts/publish-ealing-planning-snapshot.mjs ealing-planning-ingest.json public/data/planning-latest.json",
+    "publish:planning-snapshot": "node scripts/publish-ealing-planning-snapshot.mjs ealing-planning-ingest.json public/data/planning-latest.json public/data/planning-archive.json",
+    "test:planning-history": "node scripts/test-planning-history.mjs",
     "render:social-cards": "node scripts/render-social-cards.mjs",
     "verify:social-cards": "node scripts/verify-social-cards.mjs",
     "generate:ealing-schools": "node scripts/generate-ealing-schools.mjs",
     "generate:ealing-election-candidates": "node scripts/generate-ealing-election-candidates.mjs",
     "generate:ealing-candidacy-history": "node scripts/generate-ealing-candidacy-history.mjs",
     "publish:ealing-candidacy-history": "node scripts/publish-ealing-candidacy-history.mjs",
-    "build": "npm run validate:contributions && npm run validate:evidence && npm run generate:ealing-schools && npm run generate:ealing-election-candidates && npm run generate:ealing-candidacy-history && npm run validate:ealing-candidacy-history && npm run publish:ealing-candidacy-history && mkdir -p dist/documents/content && cp -R public/. dist/ && cp docs/*.md dist/documents/content/ && npm run render:social-cards && npm run verify:social-cards"
+    "build": "npm run validate:contributions && npm run validate:evidence && npm run test:planning-history && npm run generate:ealing-schools && npm run generate:ealing-election-candidates && npm run generate:ealing-candidacy-history && npm run validate:ealing-candidacy-history && npm run publish:ealing-candidacy-history && mkdir -p dist/documents/content && cp -R public/. dist/ && cp docs/*.md dist/documents/content/ && npm run render:social-cards && npm run verify:social-cards"
   },
   "dependencies": {
     "@netlify/blobs": "^11.0.1",

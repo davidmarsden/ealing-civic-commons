@@ -14,31 +14,59 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Ingest latest completed PAM week
-        run: npm run inspect:planning-ingest
-      - name: Build public planning snapshot
-        run: npm run publish:planning-snapshot
-      - name: Open refresh pull request when snapshot changed
+      - run: npm install --no-audit --no-fund
+      - name: Continue durable planning refresh branch
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if git diff --quiet -- public/data/planning-latest.json; then
-            echo "Planning snapshot unchanged."
-            exit 0
-          fi
-          branch="automation/planning-snapshot-${GITHUB_RUN_ID}"
+          branch="automation/planning-snapshot"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b "$branch"
-          git add public/data/planning-latest.json
-          git commit -m "Refresh planning snapshot"
+          git fetch origin main
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            git fetch origin "$branch"
+            git checkout -B "$branch" "origin/$branch"
+            # Preserve any still-unmerged archive additions, while also carrying
+            # forward unrelated changes that have landed on main.
+            git merge --no-edit origin/main
+          else
+            git checkout -b "$branch" origin/main
+          fi
+      - name: Ingest latest completed PAM week
+        run: npm run inspect:planning-ingest
+      - name: Build latest snapshot and durable archive
+        run: npm run publish:planning-snapshot
+      - name: Update planning refresh pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch="automation/planning-snapshot"
+          if ! git diff --quiet -- public/data/planning-latest.json public/data/planning-archive.json; then
+            git add public/data/planning-latest.json public/data/planning-archive.json
+            git commit -m "Refresh planning data"
+          fi
+
+          # Push the continuing branch even when this run only merged a newer
+          # main into an already-open refresh PR.
           git push --set-upstream origin "$branch"
-          gh pr create --base main --head "$branch" --title "Refresh Ealing planning snapshot" --body "Automated refresh from the latest completed Ealing PAM weekly list. The source ingest remains authoritative; this PR updates only the committed public planning snapshot so Netlify deploys do not depend on PAM availability."
+
+          if git diff --quiet origin/main...HEAD; then
+            echo "Planning data unchanged and no refresh PR is needed."
+            exit 0
+          fi
+
+          existing_pr="$(gh pr list --state open --base main --head "$branch" --json number --jq '.[0].number // empty')"
+          if [ -n "$existing_pr" ]; then
+            echo "Updated existing planning refresh PR #$existing_pr."
+            exit 0
+          fi
+
+          gh pr create --base main --head "$branch" --title "Refresh Ealing planning data" --body "Automated refresh from the latest completed Ealing PAM weekly list. This continuing PR updates both the latest-week view and the durable planning archive, so an unmerged week's applications are carried forward into later scheduled refreshes. Ealing Council's planning register remains authoritative, and Netlify deploys remain independent of PAM availability."
       - name: Upload inspection artifact
         if: always()
         uses: actions/upload-artifact@v4
