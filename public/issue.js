@@ -1,7 +1,7 @@
 import { stableItemKey } from './follow-store.js';
 
 const $ = sel => document.querySelector(sel);
-const esc = s => String(s ?? '').replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]));
+const esc = s => String(s ?? '').replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt',"'":'&#39;','\"':'&quot;'}[c]));
 const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date(iso); return new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'long',year:'numeric'}).format(d); };
 const labelType = value => String(value || '').replaceAll('_',' ');
 const pillClass = type => type === 'Official record' ? 'official' : type === 'Journalism / publishing' ? 'journalism' : type === 'Independent civic data / analysis' ? 'analysis' : 'organisation';
@@ -22,6 +22,19 @@ function topicLink(topic) {
 function canonicalUrl(value) { try { const url=new URL(value,location.origin); url.hash=''; if(url.pathname!=='/')url.pathname=url.pathname.replace(/\/+$/,''); return url.toString(); } catch { return String(value||'').trim(); } }
 function mergeReporting(reviewed=[],archived=[]) { const out=[],seen=new Set(); const add=item=>{const key=canonicalUrl(item.url); if(!key||seen.has(key))return; seen.add(key); out.push(item);}; reviewed.forEach(post=>add({...post,source:post.source||'Southall Stories',date:post.date||post.publishedAt||null,reviewedMatch:true})); archived.forEach(record=>{const item=record?.item;if(item?.url)add({title:item.title,url:item.url,summary:item.summary,date:item.publishedAt||record.archivedAt,source:item.source||'Archived publisher',archivedMatch:true});}); return out.sort((a,b)=>(Date.parse(b.date||'')||0)-(Date.parse(a.date||'')||0)); }
 async function archivedReporting(terms=[]) { const endpoint=new URL('/.netlify/functions/historical-reporting',location.origin); [...new Set(terms.filter(term=>String(term||'').trim().length>=3))].slice(0,20).forEach(term=>endpoint.searchParams.append('term',term)); endpoint.searchParams.set('limit','100'); const response=await fetch(endpoint,{cache:'no-store'}); if(!response.ok)throw new Error(`Historical reporting HTTP ${response.status}`); return (await response.json()).records||[]; }
+
+function normaliseName(value) {
+  return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+function visibleActors(data) {
+  const issue = data?.issue || {};
+  const primaryNames = new Set([
+    ...(issue.aliases || []),
+    String(issue.name || '').replace(/\s+(?:re)?development$/i, '')
+  ].map(normaliseName).filter(Boolean));
+  return (data?.entities || []).filter(entity => !primaryNames.has(normaliseName(entity.name)));
+}
+
 function renderHero(data) {
   document.title = `${data.issue.name} — ${commonsName()}`;
   $('#issueStatus').hidden = true;
@@ -31,7 +44,7 @@ function renderHero(data) {
 function renderStats(data,historicalCount=null) {
   const c = data.counts || {};
   const reporting = historicalCount == null ? (c.reporting || 0) : historicalCount;
-  const stats = [[c.entities || 0,'key entities'], [c.relationships || 0,'reviewed relationships'], [c.sources || 0,'curated evidence sources'], [reporting,'historical reports']];
+  const stats = [[visibleActors(data).length,'key entities'], [c.relationships || 0,'reviewed relationships'], [c.sources || 0,'curated evidence sources'], [reporting,'historical reports']];
   $('#issueStats').innerHTML = stats.map(([n,label]) => `<div class="entity-stat"><strong>${n}</strong><span>${label}</span></div>`).join('');
   $('#issueTopics').innerHTML = (data.topics || []).map(topicLink).join('') || '<span class="entity-empty">No reviewed topics found.</span>';
 }
@@ -81,7 +94,7 @@ async function load() {
     const issueResponse = await fetch(endpoint,{cache:'no-store'});
     if (!issueResponse.ok) throw new Error(`Issue HTTP ${issueResponse.status}`);
     const data = await issueResponse.json(); if (!data.matched) throw new Error(data.reason || 'Issue not found');
-    renderHero(data); renderStats(data); renderProviders(data.providers); renderActors(data.entities); renderRelationships(data.relationships); renderSources(data.sources);
+    renderHero(data); renderStats(data); renderProviders(data.providers); renderActors(visibleActors(data)); renderRelationships(data.relationships); renderSources(data.sources);
     const [archiveResult,feedResponse] = await Promise.all([
       archivedReporting([data.issue.name,...(data.issue.aliases||[])]).catch(()=>[]),
       fetch('/.netlify/functions/combined-feed',{cache:'no-store'}).catch(()=>null)
