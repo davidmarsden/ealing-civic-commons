@@ -7,13 +7,16 @@
     "dev": "netlify dev",
     "validate:contributions": "node scripts/validate-contributions.mjs",
     "validate:evidence": "node scripts/validate-evidence.mjs",
+    "validate:ealing-candidacy-history": "node scripts/validate-ealing-candidacy-history.mjs",
     "inspect:ealing-data": "node scripts/ealing-data-catalog.mjs",
     "inspect:planning": "node scripts/planning-probe.mjs --verbose",
     "render:social-cards": "node scripts/render-social-cards.mjs",
     "verify:social-cards": "node scripts/verify-social-cards.mjs",
     "generate:ealing-schools": "node scripts/generate-ealing-schools.mjs",
     "generate:ealing-election-candidates": "node scripts/generate-ealing-election-candidates.mjs",
-    "build": "npm run validate:contributions && npm run validate:evidence && npm run generate:ealing-schools && npm run generate:ealing-election-candidates && mkdir -p dist/documents/content && cp -R public/. dist/ && cp docs/*.md dist/documents/content/ && npm run render:social-cards && npm run verify:social-cards"
+    "generate:ealing-candidacy-history": "node scripts/generate-ealing-candidacy-history.mjs",
+    "publish:ealing-candidacy-history": "node scripts/publish-ealing-candidacy-history.mjs",
+    "build": "npm run validate:contributions && npm run validate:evidence && npm run generate:ealing-schools && npm run generate:ealing-election-candidates && npm run generate:ealing-candidacy-history && npm run validate:ealing-candidacy-history && npm run publish:ealing-candidacy-history && mkdir -p dist/documents/content && cp -R public/. dist/ && cp docs/*.md dist/documents/content/ && npm run render:social-cards && npm run verify:social-cards"
   },
   "dependencies": {
     "@netlify/blobs": "^11.0.1",

@@ -46,13 +46,17 @@ function electionReferenceCard(entity) {
     const result = item.elected ? ' · elected' : '';
     return `<li><strong>${esc(item.ward)} ward</strong> · ${esc(item.party)} · ${esc(date)}${votes}${result}</li>`;
   }).join('');
-  const evidence = (entity.evidence || []).map(item => `<a class="entity-source-link" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title || 'Official election record')} ↗</a>`).join('');
-  return `<article class="entity-card entity-reference-card"><div class="entity-card-main"><h3>${esc(entity.name)}</h3><p class="entity-public-role">Official election candidate record</p><p>This is a dated civic role from Ealing Council election results, not a standalone Civic Commons profile.</p>${roles ? `<ul>${roles}</ul>` : ''}</div><div class="entity-card-footer"><div class="entity-card-meta"><span class="entity-provider-pill">Search-only civic reference</span></div><div>${evidence}</div></div></article>`;
+  const evidence = (entity.evidence || []).filter(item => item?.url).map(item => `<a class="entity-source-link" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title || 'Public record')} ↗</a>`).join('');
+  const reviewed = Number(entity.reviewedReferenceCount || 0);
+  const context = reviewed
+    ? `This person also appears in ${reviewed} reviewed civic ${reviewed === 1 ? 'record' : 'records'}. Election candidacies are kept as dated public-record events rather than a separate person.`
+    : 'This is a dated civic role from Ealing Council election results, not a standalone Civic Commons profile.';
+  return `<article class="entity-card entity-reference-card"><div class="entity-card-main"><h3>${esc(entity.name)}</h3><p class="entity-public-role">Civic reference with election record</p><p>${esc(context)}</p>${roles ? `<ul>${roles}</ul>` : ''}</div><div class="entity-card-footer"><div class="entity-card-meta"><span class="entity-provider-pill">Reference, not profile</span></div><div>${evidence}</div></div></article>`;
 }
 
 function referenceCard(entity) {
   if (entity.referenceKind === 'election-candidate') return electionReferenceCard(entity);
-  const evidence = (entity.evidence || []).map(item => `<a class="entity-source-link" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title || 'Public record')} ↗</a>`).join('');
+  const evidence = (entity.evidence || []).filter(item => item?.url).map(item => `<a class="entity-source-link" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title || 'Public record')} ↗</a>`).join('');
   const count = Number(entity.referenceCount || 0);
   return `<article class="entity-card entity-reference-card"><div class="entity-card-main"><h3>${esc(entity.name)}</h3><p class="entity-public-role">Civic reference</p><p>This name appears in ${count} reviewed civic ${count === 1 ? 'record' : 'records'}. It does not have a standalone Civic Commons profile.</p></div><div class="entity-card-footer"><div class="entity-card-meta"><span class="entity-provider-pill">Reference, not profile</span></div><div>${evidence}</div></div></article>`;
 }
@@ -102,15 +106,59 @@ function render() {
   $('#exploreStatus').textContent = referenceCount ? `${matches.length} matches, including ${referenceCount} ${referenceCount === 1 ? 'civic reference' : 'civic references'}` : `${matches.length} civic ${matches.length === 1 ? 'profile' : 'profiles'}`;
 }
 
+function refNormal(value) {
+  return String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function fullReferenceSignature(value) {
+  const parts = refNormal(value).split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return null;
+  return `${parts[parts.length - 1]}:${parts[0][0]}`;
+}
+
+function electionReferenceSignature(entity) {
+  const sourceName = entity.candidacies?.[0]?.candidateNameSource || entity.name;
+  const parts = refNormal(sourceName).split(/\s+/).filter(Boolean);
+  if (parts.length < 2 || parts[parts.length - 1].length !== 1) return null;
+  return `${parts[parts.length - 2]}:${parts[parts.length - 1]}`;
+}
+
 function mergeReferences(...sets) {
-  const byName = new Map();
-  for (const entity of sets.flat()) {
-    if (!entity?.name) continue;
-    const key = entity.name.trim().toLowerCase();
-    const existing = byName.get(key);
-    if (!existing || entity.referenceKind === 'election-candidate') byName.set(key, entity);
+  const entities = sets.flat().filter(entity => entity?.name);
+  const archive = entities.filter(entity => entity.referenceKind !== 'election-candidate');
+  const elections = entities.filter(entity => entity.referenceKind === 'election-candidate');
+  const usedArchive = new Set();
+  const merged = [];
+
+  for (const election of elections) {
+    const signature = electionReferenceSignature(election);
+    const candidates = signature ? archive.filter(item => fullReferenceSignature(item.name) === signature) : [];
+    if (candidates.length === 1) {
+      const civic = candidates[0];
+      usedArchive.add(civic);
+      merged.push({
+        ...election,
+        name: civic.name,
+        description: civic.description || election.description,
+        reviewedReferenceCount: Number(civic.referenceCount || 0),
+        referenceCount: Number(civic.referenceCount || 0) + Number(election.referenceCount || 0),
+        evidence: [...(civic.evidence || []), ...(election.evidence || [])]
+      });
+    } else {
+      merged.push(election);
+    }
   }
-  return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
+
+  for (const civic of archive) {
+    if (!usedArchive.has(civic)) merged.push(civic);
+  }
+
+  const byKey = new Map();
+  for (const entity of merged) {
+    const key = `${entity.referenceKind || 'civic'}:${refNormal(entity.name)}`;
+    if (!byKey.has(key)) byKey.set(key, entity);
+  }
+  return [...byKey.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
 async function fetchReferences(query) {
