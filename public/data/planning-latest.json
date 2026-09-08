@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-08T07:14:17.086Z",
+  "generated_at": "2026-09-08T20:03:09.929Z",
   "week": "31 Aug 2026",
   "source": "Ealing PAM / Civica Public Access",
   "canonical_source": "Ealing Council Planning Register",
@@ -17,7 +17,14 @@
       "category": "Prior approval",
       "out_of_borough": false,
       "commons_path": "/planning/263349palhe",
-      "place_links": [{"route":"places/ealing","label":"Ealing","relationship":"located_in","provenance":"town-classification"}]
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ]
     },
     {
       "id": "planning:ealing:263335ptc",
@@ -31,7 +38,14 @@
       "category": "Tree works",
       "out_of_borough": false,
       "commons_path": "/planning/263335ptc",
-      "place_links": [{"route":"places/ealing","label":"Ealing","relationship":"located_in","provenance":"town-classification"}]
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ]
     },
     {
       "id": "planning:ealing:263308cnd",
@@ -46,8 +60,20 @@
       "out_of_borough": false,
       "commons_path": "/planning/263308cnd",
       "place_links": [
-        {"route":"places/southall","label":"Southall","relationship":"located_in","provenance":"town-classification"},
-        {"route":"places/southall-gasworks","label":"Southall Gasworks","relationship":"planning_at","provenance":"reviewed-rule","rule_id":"southall-gasworks-2-the-straight","note":"Reviewed site match for the former Southall Gasworks redevelopment / Green Quarter site."}
+        {
+          "route": "places/southall",
+          "label": "Southall",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        },
+        {
+          "route": "places/southall-gasworks",
+          "label": "Southall Gasworks",
+          "relationship": "planning_at",
+          "provenance": "reviewed-rule",
+          "rule_id": "southall-gasworks-2-the-straight",
+          "note": "Reviewed site match for the former Southall Gasworks redevelopment / Green Quarter site."
+        }
       ]
     },
     {
@@ -76,7 +102,14 @@
       "category": "Tree works",
       "out_of_borough": false,
       "commons_path": "/planning/263315ptc",
-      "place_links": [{"route":"places/ealing","label":"Ealing","relationship":"located_in","provenance":"town-classification"}]
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ]
     },
     {
       "id": "planning:ealing:263292ptc",
@@ -118,7 +151,14 @@
       "category": "Tree works",
       "out_of_borough": false,
       "commons_path": "/planning/263298ptt",
-      "place_links": [{"route":"places/perivale","label":"Perivale","relationship":"located_in","provenance":"town-classification"}]
+      "place_links": [
+        {
+          "route": "places/perivale",
+          "label": "Perivale",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ]
     },
     {
       "id": "planning:ealing:263272palhe",
@@ -132,7 +172,14 @@
       "category": "Prior approval",
       "out_of_borough": false,
       "commons_path": "/planning/263272palhe",
-      "place_links": [{"route":"places/southall","label":"Southall","relationship":"located_in","provenance":"town-classification"}]
+      "place_links": [
+        {
+          "route": "places/southall",
+          "label": "Southall",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ]
     },
     {
       "id": "planning:ealing:263276ptc",
@@ -146,7 +193,14 @@
       "category": "Tree works",
       "out_of_borough": false,
       "commons_path": "/planning/263276ptc",
-      "place_links": [{"route":"places/ealing","label":"Ealing","relationship":"located_in","provenance":"town-classification"}]
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ]
     }
   ]
 }
