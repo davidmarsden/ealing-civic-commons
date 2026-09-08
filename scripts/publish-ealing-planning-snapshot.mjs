@@ -73,6 +73,20 @@ function placeLinks(record, town, rules) {
   return links;
 }
 
+function enrichRecord(record, rules) {
+  const reference = String(record.reference || '').trim();
+  const town = townFromAddress(record.address);
+  return {
+    ...record,
+    reference,
+    town,
+    category: category(record),
+    out_of_borough: isOutOfBorough(record),
+    commons_path: `/planning/${reference.toLowerCase()}`,
+    place_links: placeLinks(record, town, rules),
+  };
+}
+
 function currentState(record) {
   return {
     address: record.address ?? null,
@@ -87,8 +101,22 @@ function currentState(record) {
   };
 }
 
+function derivedState(record) {
+  return {
+    town: record.town ?? null,
+    category: record.category ?? null,
+    out_of_borough: Boolean(record.out_of_borough),
+    commons_path: record.commons_path ?? null,
+    place_links: Array.isArray(record.place_links) ? record.place_links : [],
+  };
+}
+
 function sameState(a, b) {
   return JSON.stringify(currentState(a)) === JSON.stringify(currentState(b));
+}
+
+function sameDerivedState(a, b) {
+  return JSON.stringify(derivedState(a)) === JSON.stringify(derivedState(b));
 }
 
 function observation(record, week, observedAt) {
@@ -122,7 +150,7 @@ async function readArchive(path) {
   return parsed;
 }
 
-function seedArchive(snapshot) {
+function seedArchive(snapshot, rules) {
   if (!snapshot || !Array.isArray(snapshot.records) || !snapshot.records.length || !snapshot.week) return null;
   const observedAt = snapshot.generated_at || new Date().toISOString();
   return {
@@ -132,7 +160,7 @@ function seedArchive(snapshot) {
     source: snapshot.source,
     canonical_source: snapshot.canonical_source || 'Ealing Council Planning Register',
     place_link_rules_version: snapshot.place_link_rules_version ?? null,
-    records: snapshot.records.map(record => archiveRecord(record, snapshot.week, observedAt)),
+    records: snapshot.records.map(record => archiveRecord(enrichRecord(record, rules), snapshot.week, observedAt)),
   };
 }
 
@@ -158,31 +186,22 @@ const snapshot = {
   source: ingest.source,
   canonical_source: 'Ealing Council Planning Register',
   place_link_rules_version: placeRulesDocument?.version ?? null,
-  records: ingest.records.map((record) => {
-    const reference = String(record.reference).trim();
-    const town = townFromAddress(record.address);
-    return {
-      id: record.id,
-      reference,
-      address: record.address,
-      proposal: record.proposal,
-      status: record.status,
-      validated_date: isoDate(record.validated_date),
-      authoritative_url: record.authoritative_url,
-      town,
-      category: category(record),
-      out_of_borough: isOutOfBorough(record),
-      commons_path: `/planning/${reference.toLowerCase()}`,
-      place_links: placeLinks(record, town, placeRules),
-    };
-  }),
+  records: ingest.records.map((record) => enrichRecord({
+    id: record.id,
+    reference: String(record.reference).trim(),
+    address: record.address,
+    proposal: record.proposal,
+    status: record.status,
+    validated_date: isoDate(record.validated_date),
+    authoritative_url: record.authoritative_url,
+  }, placeRules)),
 };
 
 let previousArchive = await readArchive(archiveOutput);
 const archiveExisted = Boolean(previousArchive);
 if (!previousArchive) {
   const previousLatest = await readJsonIfExists(latestOutput, 'planning snapshot');
-  previousArchive = seedArchive(previousLatest);
+  previousArchive = seedArchive(previousLatest, placeRules);
 }
 
 const byReference = new Map((previousArchive?.records || []).map(record => [String(record.reference || '').toLowerCase(), record]));
@@ -215,6 +234,12 @@ for (const record of snapshot.records) {
     weeks_seen: weeksSeen,
     history,
   });
+}
+
+for (const [key, record] of byReference.entries()) {
+  const enriched = enrichRecord(record, placeRules);
+  if (!sameDerivedState(record, enriched)) archiveMutated = true;
+  byReference.set(key, enriched);
 }
 
 const archive = {
