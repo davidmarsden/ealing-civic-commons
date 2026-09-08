@@ -2,6 +2,7 @@
   const NAV_ITEMS = [
     { label: 'Latest', href: '/' },
     { label: 'Archive', href: '/archive.html', match: path => path === '/archive.html' },
+    { label: 'Planning', href: '/planning.html', match: path => path === '/planning.html' || path.startsWith('/planning/') },
     { label: 'Explore', href: '/explore.html', match: path => path === '/explore.html' || path.startsWith('/people/') || path.startsWith('/organisations/') || path.startsWith('/places/') || path.startsWith('/issues/') || path.startsWith('/topics/') },
     { label: 'Document Watch', href: '/document-watch.html', match: path => path === '/document-watch.html' },
     { label: 'Sources', href: '/#sources' },
