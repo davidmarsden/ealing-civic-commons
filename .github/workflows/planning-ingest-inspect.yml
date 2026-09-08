@@ -1,0 +1,37 @@
+name: Planning ingestion inspection
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Ingest latest completed Ealing planning week
+        run: npm run inspect:planning-ingest
+
+      - name: Show ingestion summary
+        if: always()
+        run: |
+          node -e "const fs=require('fs'); const p='ealing-planning-ingest.json'; if (!fs.existsSync(p)) process.exit(0); const x=JSON.parse(fs.readFileSync(p)); console.log(JSON.stringify({ok:x.ok,week:x.week,pages_scanned:x.pages_scanned,applications_discovered:x.applications_discovered,applications_normalized:x.applications_normalized,errors:x.errors?.length||0,fatal_error:x.fatal_error||null},null,2));"
+
+      - name: Upload normalized inspection artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ealing-planning-ingest
+          path: ealing-planning-ingest.json
+          if-no-files-found: warn
+          retention-days: 7
