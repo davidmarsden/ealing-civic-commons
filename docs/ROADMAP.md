@@ -1,19 +1,44 @@
 # Southall & Ealing Civic Commons — roadmap
 
-**Updated:** 6 September 2026  
+**Updated:** 8 September 2026  
 **Status:** Public working roadmap
 
 This is the canonical implementation-level roadmap for the Ealing Civic Commons implementation. The public version lives at `/roadmap.html`. The wider Civic Commons network front door is **[civiccommons.co.uk](https://civiccommons.co.uk/)**; local and borough subdomains should always retain a visible route back to it.
 
-The project has moved well beyond the original read-only RSS prototype. It now has five working layers:
+The project has moved well beyond the original read-only RSS prototype. It now has six working layers:
 
 1. **Discovery** — local journalism, civic organisations, faith/community institutions, video and official publishing in one provenance-rich timeline.
 2. **Participation** — stable item pages, moderated contributions and public reviewed additions.
 3. **Following** — account-free browser follows, portable personal RSS and double-opt-in email alerts.
-4. **Memory** — persistent civic items, a browsable Civic Archive, council Document Watch and reviewed research relationships.
-5. **Review** — a durable moderation queue with audit history, publication reconciliation, contributor receipts and private submission-status pages.
+4. **Memory** — persistent civic items, a browsable Civic Archive, Document Watch and reviewed research relationships.
+5. **Civic records** — stable official/register-derived objects such as planning applications, linked into places and issues while the authoritative public register remains canonical.
+6. **Review** — a durable moderation queue with audit history, publication reconciliation, contributor receipts and private submission-status pages.
 
-The priority is no longer to invent the social layer. The social and review primitives are live. The next work is to extend structured promotion to more evidence types, improve archive/search infrastructure and keep source growth sustainable.
+The priority is no longer to invent the social layer. The social and review primitives are live. The next work is to deepen civic memory around places and issues, extend planning lifecycle/context, improve archive/search infrastructure and keep source growth sustainable.
+
+## September 2026 milestone — planning becomes civic memory
+
+Planning applications are now a first-class Civic Commons record type rather than merely a source-link experiment.
+
+Live now:
+
+- Ealing Council PAM/Civica weekly planning ingestion using the live form/session/CSRF state;
+- latest completed week chosen in `Europe/London` time;
+- multi-page weekly result traversal and detail-summary normalization;
+- validated public snapshot generation decoupled from Netlify builds;
+- fail-closed publishing so a partial ingest cannot replace the last complete snapshot;
+- stable `/planning/{reference}` Civic Commons objects;
+- conservative town classification and explicit reviewed site-link rules;
+- planning records surfaced on place pages;
+- issue pages inheriting planning through a reviewed primary place;
+- first live specific-site relationship: `263308CND` at 2 The Straight → Southall → Southall Gasworks → Southall Gasworks redevelopment issue;
+- shared dossier-card presentation for places/entities/issues, with current context before deeper evidence/history;
+- section navigation generated in the same order as visible cards;
+- one canonical civic-entity template for people, organisations and places.
+
+The key design decision is now explicit: **the weekly planning list is temporary input; the place is the durable civic object.**
+
+Ealing Council's planning register remains canonical. Civic Commons does not mirror planning documents, drawings or mapping tiles, and planning applicants are not automatically turned into civic profiles.
 
 ## Entity completeness standard
 
@@ -32,15 +57,7 @@ Explore and the entity APIs should expose missing-description/source audits so i
 
 The original read-only Civic Commons foundation is live: server-side RSS/Atom ingestion and normalisation; chronological provenance-rich timelines; video/YouTube ingestion; filtered London-wide sources; monitored structured/public pages; town/topic/source-class filtering; visible source health; source submissions; Ealing Council news feeds; Document Watch; selected City Hall/London Assembly material; filtered Met material; Open Council Network public Ealing summaries; ModernGov publication events; and a growing range of community, education, faith, campaign, commentary and local political sources.
 
-Recent source expansion now includes Stop The Towers, Friends of the Victoria Hall, Southall Speaks, Visit Southall, Vicious Ealing Council, EALING.NEWS, LAGER Can, the four main Ealing local party organisations, Hanwell Community Forum, Southall Community Alliance, Norwood Green Residents’ Association and Bedford Park Society. Positive Greenford and Visions for Northolt are already live too. This confirms that the Commons now has three established ingestion patterns rather than one: native feeds where available, conservative public-page adapters for structured first-party publishing, and carefully bounded fallbacks/bridges where upstream access is awkward.
-
-Further source discovery, registry migration, parser resilience and upstream interoperability are continuing operational/infrastructure work rather than unfinished Phase 1 scope. They now sit primarily in Phase 8 and normal source operations:
-
-- continue verifying useful local feeds, channels and public pages across all seven towns and communities;
-- expand first-party community/faith/residents coverage without turning routine notices into civic news;
-- move remaining hard-coded source configuration toward a cleaner registry-driven model;
-- improve parser tests, conditional requests and caching;
-- prefer resilient adapters/bridges for awkward upstreams without allowing one external service to block the Commons.
+Further source discovery, registry migration, parser resilience and upstream interoperability are now normal operations / Phase 8 work rather than unfinished Phase 1 scope.
 
 ## Phase 2 — Stable civic items and moderated participation
 
@@ -55,7 +72,7 @@ Live now:
 - approved contributions rendered on permanent item pages;
 - contribution activity can resurface an older archived story without pretending the original publisher republished it.
 
-The old manual JSON publication workflow has now been superseded by Phase 7B.
+The old manual JSON publication workflow has been superseded by Phase 7B.
 
 ## Phase 3 — Follow, RSS and email delivery
 
@@ -75,7 +92,7 @@ Live now:
 Still open:
 
 - improve subscription management and explain snapshot semantics more clearly;
-- use the persistent archive to make historical follows richer where useful;
+- use persistent civic memory to make historical/place follows richer where useful;
 - consider optional identity only if it solves a real moderation/subscription problem.
 
 ## Phase 4 — Persistent civic memory
@@ -88,52 +105,46 @@ Live now:
 - scheduled archival every 15 minutes;
 - stable item pages fall back to the archive after RSS items age out;
 - a first-class `/archive.html` Civic Archive with search, source, place and topic filtering plus pagination;
-- archive browsing reads the authoritative item store rather than imposing an arbitrary fixed-history ceiling;
-- directly followed stories remain resolvable in personal RSS;
-- complete Document Watch stream is archived even when only selected documents reach Latest;
-- reviewed context can reactivate an older archived civic item as new Commons activity while preserving the original publication date and source.
+- complete Document Watch stream archived even when selected documents alone reach Latest;
+- reviewed context can reactivate an older archived civic item as new Commons activity while preserving the original source/date;
+- place/entity/issue dossiers combine current and historical layers without flattening their provenance.
 
 Still open:
 
-- optimise archive indexing as the collection grows into tens of thousands of records;
-- add stronger date/issue facets and richer full-text search;
+- optimise archive indexing as the collection grows;
+- stronger date/issue/place facets and richer full-text search;
 - define retention/version rules for changed upstream items;
 - improve link-rot resilience and preservation of key primary evidence;
 - distinguish current representation from historical versions where that matters.
 
-## Phase 5 — Official publishing and Document Watch
+## Phase 5 — Official publishing, Document Watch and public registers
 
 **Status: active; major v1 live**
 
 Live now:
 
 - Ealing Council main news RSS;
-- 13 council news-category feeds used as enrichment rather than duplicate publishers;
+- council category feeds used as enrichment rather than duplicate publishers;
 - 47 council document-download feeds registered;
 - curated Document Watch collections with freshness states;
-- human-readable document descriptions where the council exposes them;
 - dedicated `/document-watch.html` filtering;
-- full Document Watch memory retained even when routine files stay out of Latest;
 - official Ealing Council, London Assembly/City Hall and filtered Met material in the same civic pipeline;
-- Open Council Network public Ealing meeting summaries integrated through a conservative public-page bridge, with direct links back to OCN;
-- Ealing ModernGov publication events integrated from the official RSS feed through a public feed-reader bridge after direct server-side requests were blocked;
-- ModernGov agenda, minutes, decisions, issues, plans and ePetitions are normalised as official records while preserving the original council publisher and public destination links.
-
-Parallel/unresolved:
-
-- a formal OCN API/partnership remains potentially valuable for richer structured meeting/document relationships, but the current public-page bridge already provides useful coverage and the paid API is not a dependency;
-- some ModernGov event links need better direct public destinations where the feed exposes login-oriented or generic URLs;
-- historical/dormant council feeds need selective review rather than presentation as current.
+- Open Council Network public Ealing meeting summaries through a conservative public-page bridge;
+- ModernGov agenda/minutes/decisions/issues/plans/ePetitions publication events through a public feed-reader bridge while preserving official provenance;
+- **Ealing PAM planning applications as stable civic records** with authoritative PAM deep links;
+- committed validated planning snapshot separate from the public site build;
+- low-rate exact-form/session ingestion rather than public-page scraping on demand.
 
 Next improvements:
 
-- better document search/indexing;
-- preservation and relationship-building around high-value evidence streams;
-- richer relationships between ModernGov events, meetings, committees, documents, issues and civic entities;
-- transcript/caption enrichment for official video while keeping the original video canonical;
-- continue improving council taxonomy without reproducing the council website’s information architecture.
+- planning lifecycle updates (validated → decided) and decision dates/status history;
+- reliable ward/site geography and related-application relationships;
+- links between planning, committees, decisions, documents and reporting where deterministic/reviewed;
+- better direct ModernGov destinations and meeting/document relationships;
+- transcript/caption enrichment for official video while keeping original video canonical;
+- better document search/indexing and preservation of high-value evidence streams.
 
-## Phase 6 — Reviewed civic graph and research context
+## Phase 6 — Reviewed civic graph, place memory and research context
 
 **Status: core live; active refinement**
 
@@ -145,19 +156,26 @@ Live now:
 - civic topic pages and Explore/graph surface;
 - issue pages, beginning with Southall Gasworks redevelopment;
 - reviewed relationships and source records;
-- related civic memory on relevant stories;
 - Commons-native reviewed assertions alongside research-archive evidence with provenance preserved;
 - entity-note prose flowing into public descriptions;
 - first-party/authoritative website or source links where available;
-- current and historical identities framed distinctly.
+- current and historical identities framed distinctly;
+- **planning → place links with explicit provenance** (`town-classification` vs `reviewed-rule`);
+- **issue → primary place → planning** inheritance without fuzzy name guessing;
+- shared clickable dossier-card presentation for entity and issue pages;
+- section navigation generated from visible cards in canonical page order;
+- one canonical template for all public people/organisation/place routes.
+
+Place memory is now a central architectural pattern. A place can accumulate current civic facts, local/public data, current Commons material, planning records, primary evidence, historical reporting and reviewed relationships over time.
 
 Still open:
 
 - complete the entity audit until every public entity meets the **identity + description + provenance + source/website** standard;
 - deepen coherent evidence clusters rather than isolated links;
 - improve temporal relationships and roles;
-- connect archived official documents, notices and videos to issues, entities and earlier reporting;
-- automate validation so newly introduced incomplete entities are flagged early.
+- connect archived official documents/notices/videos/planning decisions to issues, entities and earlier reporting;
+- automate validation so newly introduced incomplete entities are flagged early;
+- expand reviewed specific-site relationships only where there is a clear civic-memory benefit.
 
 ## Phase 7 — Structured review and civic knowledge
 
@@ -181,30 +199,27 @@ Live now:
 
 Live now:
 
-- **Accept & publish** automatically promotes reviewed `item-contribution` records into the public contribution store;
+- **Accept & publish** promotes reviewed item contributions into the public contribution store;
 - no manual `contributions.json` editing;
 - public records preserve stable contribution ID, civic thread, provenance and publication time;
-- accepted-but-unpublished and published states are distinguishable in review;
-- publication can be retried/reconciled safely and withdrawn if a later moderation decision changes;
-- contributor receipt emails when an address is supplied;
-- meaningful outcome emails for published, needs-info and not-published decisions;
-- private high-entropy submission-status URLs for contributors with or without email;
-- status pages expose only public-safe state, dates and links — never email addresses, private moderation notes or reviewer identity;
-- notification delivery is deduplicated for ordinary sequential retries and is fail-soft; concurrent duplicate deliveries are not yet protected by an atomic claim;
+- accepted-but-unpublished and published states are distinguishable;
+- publication can be retried/reconciled safely and withdrawn if moderation changes;
+- contributor receipt/outcome emails where an address is supplied;
+- private high-entropy submission-status URLs;
+- public status pages never expose private moderation notes or submitter details;
 - published context can create new Commons activity around an older archived story.
 
 ### 7C — unified civic review and promotion — next
 
-Extend the same deliberate promotion model one review kind at a time:
+Extend the deliberate promotion model one review kind at a time:
 
-- define what accepting a `source-submission` means operationally and how a source enters the source registry safely;
-- define how accepted `evidence-suggestion` records become public evidence, Document Watch/Archive relationships or issue/entity links;
-- define how accepted `relationship-suggestion` records become reviewed graph assertions;
+- define accepted `source-submission` → source-registry promotion;
+- define accepted `evidence-suggestion` → public evidence / Document Watch / Archive / issue/entity relationship;
+- define accepted `relationship-suggestion` → reviewed graph assertion;
 - preserve an explicit audit link from review record to public representation;
-- never make one universal “Accept” button silently perform different dangerous actions;
 - keep machine/discovery suggestions, private-research candidates and community submissions subject to the same review boundary.
 
-The constitutional rule remains: suggestions can propose civic knowledge; they must not silently rewrite or become reviewed knowledge without an explicit human decision.
+The constitutional rule remains: suggestions can propose civic knowledge; they must not silently become reviewed knowledge without an explicit human decision.
 
 ## Phase 8 — Sustainable automation, search and resilience
 
@@ -218,27 +233,28 @@ Already automated:
 - browsable persistent Civic Archive;
 - research exports and public graph rebuilds after curated changes;
 - entity descriptions exported from curated research notes;
-- source-health collection with public-friendly status language and an alphabetised public source list;
-- detailed transport/fetch diagnostics hidden from ordinary readers but available through `?debug=1` for troubleshooting;
-- bridge/adaptor patterns for external sources that block or distort normal server-side access;
-- source-specific HTML parsing and bounded fallback strategies for useful first-party publishers without clean RSS.
+- source-health collection with public-friendly status language and debug diagnostics;
+- adapter patterns for external sources that block or distort normal server-side access;
+- **planning ingestion/validation/snapshot generation separated from Netlify builds**;
+- weekly/manual planning refresh that only proposes a public snapshot change when a complete validated ingest changes;
+- fail-closed planning publication when discovered/normalised counts do not reconcile.
 
 Next:
 
-- scalable/sharded archive indexing rather than scanning the whole canonical store indefinitely;
-- stronger feed caching and parser regression tests;
+- scalable/sharded archive indexing rather than indefinite whole-store scans;
+- stronger feed/planning parser regression tests;
 - registry-driven source configuration and safer source lifecycle handling;
 - better private source-health review tooling and alerts;
 - searchable/grouped source facets as the source universe grows;
-- automated completeness checks for public entities and provider/source links;
-- safer refresh/version handling across research and live civic items;
-- operational monitoring as the source set grows.
+- automated completeness checks for public entities/provider links;
+- planning snapshot freshness/decision lifecycle monitoring;
+- safer refresh/version handling across research, planning and live civic items.
 
 ## Public presentation, subdomains and town views
 
 **Status: major v1 partly live**
 
-The Commons now has a coherent borough identity plus town-specific presentation for Ealing, Acton, Greenford, Hanwell, Northolt, Perivale and Southall. Town marks and town-aware views are live, while the civic data remains one Commons rather than seven duplicated sites.
+The Commons has a coherent borough identity plus town-specific presentation for Ealing, Acton, Greenford, Hanwell, Northolt, Perivale and Southall. Town marks and town-aware views are live, while civic data remains one Commons rather than seven duplicated sites.
 
 The navigation hierarchy is explicit:
 
@@ -246,17 +262,14 @@ The navigation hierarchy is explicit:
 - **Canonical Ealing Commons:** [ealing.civiccommons.co.uk](https://ealing.civiccommons.co.uk/)
 - **Southall doorway:** `commons.southallstories.uk` redirects into the Southall-filtered Ealing view.
 
-Southall can therefore be entered through its dedicated Commons doorway, and town-scoped links can preserve a local view without severing navigation back to the wider borough Commons **or** to the Civic Commons network. The same rule applies to any future civic/local subdomain: local entry points must never become navigational dead ends, and should always provide a visible route to `https://civiccommons.co.uk/`.
-
-Town share-card assets also exist, but that part is not yet complete: public item and entity routes currently resolve to static HTML shells without the town-aware Open Graph/Twitter metadata renderer, so social crawlers will not reliably receive those cards.
+Entity and issue dossier presentation is now standardised around clickable cards. Current context appears before the deeper research dossier, reducing endless-scroll pages without hiding evidence/history. Section navigation must always follow the same order as the rendered cards.
 
 Still open:
 
-- restore social-metadata rendering for shared item/entity URLs so the existing town share cards are actually emitted;
+- restore town-aware Open Graph/Twitter metadata rendering for stable item/entity routes;
 - continue polishing town-specific landing/share behaviour where useful;
-- keep town branding consistent without allowing presentation concerns to fork the underlying civic data model;
-- make network-front-door navigation a standard requirement for any local or borough subdomain;
-- review whether additional civic/local subdomains add genuine utility before creating them.
+- keep town branding consistent without forking the underlying civic data model;
+- make network-front-door navigation a standard requirement for every local/borough entry point.
 
 ## Later / parallel — federation and external bridges
 
@@ -266,20 +279,24 @@ The Commons should preserve its own public URLs, source provenance, stable item/
 
 ## Immediate next slice
 
-1. **Build Phase 7C promotion rules** for accepted source submissions and evidence suggestions first, then relationship suggestions.
-2. **Connect accepted evidence to civic memory** — archived stories, Document Watch records, issues, entities and earlier reporting — without duplicating canonical source material.
-3. **Improve archive/search indexing** so growth from dozens of sources to hundreds remains fast and complete rather than relying on whole-store scans.
-4. **Make source filtering scale** with searchable/grouped publisher families as dozens of source identities become hundreds.
+1. **Extend planning lifecycle memory** — decisions/status history, reliable ward/site geography and related applications.
+2. **Connect planning to democratic context** — committees, decisions, documents and relevant reporting where deterministic or reviewed.
+3. **Build Phase 7C promotion rules** for accepted source submissions and evidence suggestions first, then relationship suggestions.
+4. **Improve archive/search indexing** so growth from dozens of sources to hundreds remains fast and complete.
 5. **Finish the public entity completeness audit** and automate checks for newly incomplete records.
-6. **Harden and extend official-source ingestion** — especially direct ModernGov destinations, meeting/document relationships, parser tests, caching and preservation of high-value primary records.
-7. **Finish town-aware sharing** by restoring metadata rendering for item/entity URLs so the existing town share-card assets are actually emitted to social crawlers.
-8. **Continue deliberate source expansion by geographic and thematic gap, while hardening current adapters.** Greenford and Northolt now have live first-party sources, Hanwell coverage has improved with Hanwell Community Forum, and Southall/Norwood Green community coverage has deepened. **Perivale remains the clearest geographic publishing gap.** Keep looking for stronger routine first-party publishing there and continue monitoring upstream health for fragile sources such as Hanwell Community Forum. Explore an OCN partnership/API arrangement in parallel, but neither OCN nor ModernGov is a blocker.
+6. **Harden official-source ingestion** — ModernGov destinations/relationships, planning parser tests, caching and preservation of high-value primary records.
+7. **Finish town-aware sharing** by restoring metadata rendering for stable item/entity URLs.
+8. **Continue deliberate source expansion by geographic/thematic gap**, especially Perivale, while keeping fragile upstreams visible through source health.
+9. **Explore OCN partnership/API and later federation bridges** without making either a dependency.
 
 ## Non-negotiable design boundaries
 
-- Original publishers and official records remain canonical.
+- Original publishers and official registers remain canonical.
 - Provenance stays visible, but public wording should be understandable without knowing the ingestion architecture.
 - A bare name is not a finished civic entity.
+- A person named in a planning/public register is not automatically a civic-profile candidate.
+- Places are durable civic-memory objects; weekly lists and feeds are transient inputs.
+- Specific site relationships should be reviewed/explicit rather than silently inferred through fuzzy text matching.
 - Historical and current organisations must be framed temporally rather than flattened together.
 - Chronology is not replaced by engagement ranking.
 - Participation and civic assertions are moderated rather than popularity-ranked.
