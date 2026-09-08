@@ -38,17 +38,17 @@
 
 [[redirects]]
   from = "/people/*"
-  to = "/entity.html"
+  to = "/civic-entity.html"
   status = 200
 
 [[redirects]]
   from = "/organisations/*"
-  to = "/entity.html"
+  to = "/civic-entity.html"
   status = 200
 
 [[redirects]]
   from = "/places/*"
-  to = "/entity.html"
+  to = "/civic-entity.html"
   status = 200
 
 [[redirects]]
