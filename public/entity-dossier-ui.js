@@ -18,6 +18,15 @@ const SECTIONS = [
 const ACTION_ORDER = SECTIONS.map(section => section.href).filter(Boolean);
 let planningReady = false;
 
+async function loadPlanningStore(queryKey) {
+  for (const path of ['/data/planning-archive.json', '/data/planning-latest.json']) {
+    const response = await fetch(`${path}?${queryKey}=${Date.now()}`, { cache: 'no-store' });
+    if (response.ok) return response.json();
+    if (response.status !== 404) throw new Error(`Planning store HTTP ${response.status}: ${path}`);
+  }
+  throw new Error('No published planning store available');
+}
+
 function ensureCardStyles() {
   if (document.querySelector('link[data-dossier-cards]')) return;
   const link = document.createElement('link');
@@ -148,9 +157,7 @@ async function renderPlacePlanning() {
   const root = document.getElementById('planningItems');
   if (!section || !root) return false;
   try {
-    const response = await fetch(`/data/planning-latest.json?dossier=${Date.now()}`, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`Planning snapshot HTTP ${response.status}`);
-    const snapshot = await response.json();
+    const snapshot = await loadPlanningStore('dossier');
     const matches = (snapshot.records || [])
       .filter(record => !record.out_of_borough && matchingPlanningLink(record, route))
       .sort((a,b) => (Date.parse(b.validated_date || '') || 0) - (Date.parse(a.validated_date || '') || 0));
