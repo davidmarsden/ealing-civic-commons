@@ -1,5 +1,6 @@
 /data/contributions.json  /.netlify/functions/public-contributions  200!
 /items/*  /item.html  200
+/planning/*  /planning-item.html  200
 /people/*  /entity.html  200
 /organisations/*  /entity.html  200
 /places/*  /entity.html  200
