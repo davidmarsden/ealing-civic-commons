@@ -56,4 +56,25 @@ await publish('2026-09-08T09:00:00Z');
 const secondArchiveText = await readFile(archivePath, 'utf8');
 assert.equal(secondArchiveText, firstArchiveText, 'unchanged same-week rerun must not mutate durable archive');
 
-console.log('Planning history retention and idempotence OK.');
+await writeFile(rulesPath, JSON.stringify({
+  version: 2,
+  rules: [{
+    id: 'old-site-review',
+    place_route: 'places/old-site',
+    label: 'Old Site',
+    match: { address_contains: ['1 Old Road Ealing W5 1AA'] },
+    note: 'Reviewed historical site match.'
+  }]
+}), 'utf8');
+await publish('2026-09-08T10:00:00Z');
+const rulesArchiveText = await readFile(archivePath, 'utf8');
+const rulesArchive = JSON.parse(rulesArchiveText);
+const reEnrichedOld = rulesArchive.records.find(record => record.reference === 'OLD1');
+assert.equal(rulesArchive.place_link_rules_version, 2);
+assert.ok(reEnrichedOld.place_links.some(link => link.route === 'places/old-site' && link.provenance === 'reviewed-rule'), 'retained records must receive newly reviewed place links');
+
+await publish('2026-09-08T11:00:00Z');
+const finalArchiveText = await readFile(archivePath, 'utf8');
+assert.equal(finalArchiveText, rulesArchiveText, 'unchanged rerun after rule enrichment must remain idempotent');
+
+console.log('Planning history retention, rule re-enrichment and idempotence OK.');
