@@ -1,5 +1,23 @@
 /site-shell.js
   Cache-Control: public, max-age=0, must-revalidate
 
+/entity.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/issue.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/entity-dossier-ui.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/issue-planning-ui.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/places/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/issues/*
+  Cache-Control: public, max-age=0, must-revalidate
+
 /data/planning-latest.json
   Cache-Control: public, max-age=0, must-revalidate
