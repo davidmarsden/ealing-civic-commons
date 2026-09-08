@@ -1,4 +1,4 @@
-# Southall & Ealing Civic Commons — roadmap
+# Ealing Civic Commons — roadmap
 
 **Updated:** 8 September 2026  
 **Status:** Public working roadmap
@@ -11,14 +11,14 @@ The project has moved well beyond the original read-only RSS prototype. It now h
 2. **Participation** — stable item pages, moderated contributions and public reviewed additions.
 3. **Following** — account-free browser follows, portable personal RSS and double-opt-in email alerts.
 4. **Memory** — persistent civic items, a browsable Civic Archive, Document Watch and reviewed research relationships.
-5. **Civic records** — stable official/register-derived objects such as planning applications, linked into places and issues while the authoritative public register remains canonical.
+5. **Civic records** — current official/register-derived objects such as the latest validated planning applications, linked into places and issues while the authoritative public register remains canonical.
 6. **Review** — a durable moderation queue with audit history, publication reconciliation, contributor receipts and private submission-status pages.
 
-The priority is no longer to invent the social layer. The social and review primitives are live. The next work is to deepen civic memory around places and issues, extend planning lifecycle/context, improve archive/search infrastructure and keep source growth sustainable.
+The priority is no longer to invent the social layer. The social and review primitives are live. The next work is to deepen civic memory around places and issues, make planning history persistent across refreshes, improve archive/search infrastructure and keep source growth sustainable.
 
-## September 2026 milestone — planning becomes civic memory
+## September 2026 milestone — planning joins place context
 
-Planning applications are now a first-class Civic Commons record type rather than merely a source-link experiment.
+Planning applications from the latest completed Ealing Council PAM week are now exposed as first-class current Civic Commons records rather than merely source links.
 
 Live now:
 
@@ -27,16 +27,18 @@ Live now:
 - multi-page weekly result traversal and detail-summary normalization;
 - validated public snapshot generation decoupled from Netlify builds;
 - fail-closed publishing so a partial ingest cannot replace the last complete snapshot;
-- stable `/planning/{reference}` Civic Commons objects;
+- `/planning/{reference}` routes for records present in the current snapshot;
 - conservative town classification and explicit reviewed site-link rules;
-- planning records surfaced on place pages;
-- issue pages inheriting planning through a reviewed primary place;
+- current planning records surfaced on place pages;
+- issue pages inheriting current planning through a reviewed primary place;
 - first live specific-site relationship: `263308CND` at 2 The Straight → Southall → Southall Gasworks → Southall Gasworks redevelopment issue;
 - shared dossier-card presentation for places/entities/issues, with current context before deeper evidence/history;
 - section navigation generated in the same order as visible cards;
 - one canonical civic-entity template for people, organisations and places.
 
-The key design decision is now explicit: **the weekly planning list is temporary input; the place is the durable civic object.**
+The key design decision is explicit: **the place is the durable civic object; the current weekly planning snapshot is transient input.**
+
+**Current limitation:** `planning-latest.json` is replaced by each successful refresh. Applications that fall out of the latest week also fall out of the Commons planning/place/issue views. Persistent planning history and stable historical planning routes are therefore planned work, not a live capability yet.
 
 Ealing Council's planning register remains canonical. Civic Commons does not mirror planning documents, drawings or mapping tiles, and planning applicants are not automatically turned into civic profiles.
 
@@ -131,15 +133,16 @@ Live now:
 - official Ealing Council, London Assembly/City Hall and filtered Met material in the same civic pipeline;
 - Open Council Network public Ealing meeting summaries through a conservative public-page bridge;
 - ModernGov agenda/minutes/decisions/issues/plans/ePetitions publication events through a public feed-reader bridge while preserving official provenance;
-- **Ealing PAM planning applications as stable civic records** with authoritative PAM deep links;
+- **latest-week Ealing PAM planning applications as current civic records** with authoritative PAM deep links;
 - committed validated planning snapshot separate from the public site build;
 - low-rate exact-form/session ingestion rather than public-page scraping on demand.
 
 Next improvements:
 
+- **retain planning records across successful weekly refreshes** with explicit update/version semantics;
 - planning lifecycle updates (validated → decided) and decision dates/status history;
 - reliable ward/site geography and related-application relationships;
-- links between planning, committees, decisions, documents and reporting where deterministic/reviewed;
+- links between retained planning, committees, decisions, documents and reporting where deterministic/reviewed;
 - better direct ModernGov destinations and meeting/document relationships;
 - transcript/caption enrichment for official video while keeping original video canonical;
 - better document search/indexing and preservation of high-value evidence streams.
@@ -160,20 +163,21 @@ Live now:
 - entity-note prose flowing into public descriptions;
 - first-party/authoritative website or source links where available;
 - current and historical identities framed distinctly;
-- **planning → place links with explicit provenance** (`town-classification` vs `reviewed-rule`);
-- **issue → primary place → planning** inheritance without fuzzy name guessing;
+- **current planning → place links with explicit provenance** (`town-classification` vs `reviewed-rule`);
+- **issue → primary place → current planning** inheritance without fuzzy name guessing;
 - shared clickable dossier-card presentation for entity and issue pages;
 - section navigation generated from visible cards in canonical page order;
 - one canonical template for all public people/organisation/place routes.
 
-Place memory is now a central architectural pattern. A place can accumulate current civic facts, local/public data, current Commons material, planning records, primary evidence, historical reporting and reviewed relationships over time.
+Place memory is a central architectural pattern. A place can accumulate current civic facts, local/public data, current Commons material, primary evidence, historical reporting and reviewed relationships over time. Current planning can now appear alongside those layers, but planning records themselves do not yet persist once they leave the latest snapshot.
 
 Still open:
 
 - complete the entity audit until every public entity meets the **identity + description + provenance + source/website** standard;
 - deepen coherent evidence clusters rather than isolated links;
 - improve temporal relationships and roles;
-- connect archived official documents/notices/videos/planning decisions to issues, entities and earlier reporting;
+- retain and connect planning decisions as historical place evidence;
+- connect archived official documents/notices/videos to issues, entities and earlier reporting;
 - automate validation so newly introduced incomplete entities are flagged early;
 - expand reviewed specific-site relationships only where there is a clear civic-memory benefit.
 
@@ -235,12 +239,13 @@ Already automated:
 - entity descriptions exported from curated research notes;
 - source-health collection with public-friendly status language and debug diagnostics;
 - adapter patterns for external sources that block or distort normal server-side access;
-- **planning ingestion/validation/snapshot generation separated from Netlify builds**;
+- **planning ingestion/validation/latest-snapshot generation separated from Netlify builds**;
 - weekly/manual planning refresh that only proposes a public snapshot change when a complete validated ingest changes;
 - fail-closed planning publication when discovered/normalised counts do not reconcile.
 
 Next:
 
+- planning retention/versioning across weekly refreshes;
 - scalable/sharded archive indexing rather than indefinite whole-store scans;
 - stronger feed/planning parser regression tests;
 - registry-driven source configuration and safer source lifecycle handling;
@@ -262,7 +267,7 @@ The navigation hierarchy is explicit:
 - **Canonical Ealing Commons:** [ealing.civiccommons.co.uk](https://ealing.civiccommons.co.uk/)
 - **Southall doorway:** `commons.southallstories.uk` redirects into the Southall-filtered Ealing view.
 
-Entity and issue dossier presentation is now standardised around clickable cards. Current context appears before the deeper research dossier, reducing endless-scroll pages without hiding evidence/history. Section navigation must always follow the same order as the rendered cards.
+Entity and issue dossier presentation is standardised around clickable cards. Current context appears before the deeper research dossier, reducing endless-scroll pages without hiding evidence/history. Section navigation must always follow the same order as the rendered cards.
 
 Still open:
 
@@ -279,15 +284,16 @@ The Commons should preserve its own public URLs, source provenance, stable item/
 
 ## Immediate next slice
 
-1. **Extend planning lifecycle memory** — decisions/status history, reliable ward/site geography and related applications.
-2. **Connect planning to democratic context** — committees, decisions, documents and relevant reporting where deterministic or reviewed.
-3. **Build Phase 7C promotion rules** for accepted source submissions and evidence suggestions first, then relationship suggestions.
-4. **Improve archive/search indexing** so growth from dozens of sources to hundreds remains fast and complete.
-5. **Finish the public entity completeness audit** and automate checks for newly incomplete records.
-6. **Harden official-source ingestion** — ModernGov destinations/relationships, planning parser tests, caching and preservation of high-value primary records.
-7. **Finish town-aware sharing** by restoring metadata rendering for stable item/entity URLs.
-8. **Continue deliberate source expansion by geographic/thematic gap**, especially Perivale, while keeping fragile upstreams visible through source health.
-9. **Explore OCN partnership/API and later federation bridges** without making either a dependency.
+1. **Retain planning records across weekly refreshes** so planning can genuinely become durable place history.
+2. **Extend planning lifecycle memory** — decisions/status history, reliable ward/site geography and related applications.
+3. **Connect retained planning to democratic context** — committees, decisions, documents and relevant reporting where deterministic or reviewed.
+4. **Build Phase 7C promotion rules** for accepted source submissions and evidence suggestions first, then relationship suggestions.
+5. **Improve archive/search indexing** so growth from dozens of sources to hundreds remains fast and complete.
+6. **Finish the public entity completeness audit** and automate checks for newly incomplete records.
+7. **Harden official-source ingestion** — ModernGov destinations/relationships, planning parser tests, caching and preservation of high-value primary records.
+8. **Finish town-aware sharing** by restoring metadata rendering for stable item/entity URLs.
+9. **Continue deliberate source expansion by geographic/thematic gap**, especially Perivale, while keeping fragile upstreams visible through source health.
+10. **Explore OCN partnership/API and later federation bridges** without making either a dependency.
 
 ## Non-negotiable design boundaries
 
@@ -295,7 +301,7 @@ The Commons should preserve its own public URLs, source provenance, stable item/
 - Provenance stays visible, but public wording should be understandable without knowing the ingestion architecture.
 - A bare name is not a finished civic entity.
 - A person named in a planning/public register is not automatically a civic-profile candidate.
-- Places are durable civic-memory objects; weekly lists and feeds are transient inputs.
+- Places are durable civic-memory objects; weekly planning snapshots and feeds are transient inputs until their records are explicitly retained.
 - Specific site relationships should be reviewed/explicit rather than silently inferred through fuzzy text matching.
 - Historical and current organisations must be framed temporally rather than flattened together.
 - Chronology is not replaced by engagement ranking.
