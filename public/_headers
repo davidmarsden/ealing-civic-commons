@@ -19,6 +19,9 @@
 /issue-planning-ui.js
   Cache-Control: public, max-age=0, must-revalidate
 
+/dossier-cards.css
+  Cache-Control: public, max-age=0, must-revalidate
+
 /places/*
   Cache-Control: public, max-age=0, must-revalidate
 
