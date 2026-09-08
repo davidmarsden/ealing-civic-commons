@@ -146,13 +146,13 @@ function applicationLinks(html, baseUrl) {
   return found;
 }
 
-function paginationLinks(html, baseUrl) {
-  const links = [];
-  for (const match of html.matchAll(/<a\b[^>]*href=["']([^"']*weeklyListResults\.do\?[^"']+)["'][^>]*>/gi)) {
+function nextPageLink(html, baseUrl) {
+  for (const match of html.matchAll(/<a\b[^>]*href=["']([^"']*weeklyListResults\.do\?[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
     const url = new URL(decodeEntities(match[1]), baseUrl).toString();
-    if (/action=(?:nextPage|previousPage|firstPage|lastPage|page)/i.test(url)) links.push(url);
+    const text = stripTags(match[2]);
+    if (/action=nextPage/i.test(url) || /^next\b/i.test(text)) return url;
   }
-  return [...new Set(links)];
+  return null;
 }
 
 function normalizeLabel(value) {
@@ -226,28 +226,25 @@ function normalizeApplication(html, authoritativeUrl, listDescription, weekLabel
 }
 
 async function collectWeeklyLinks(firstResults, cookie) {
-  const queue = [{ url: firstResults.response.url, html: firstResults.text }];
-  const visitedPages = new Set();
   const applications = new Map();
+  let current = firstResults;
+  let pagesScanned = 0;
 
-  while (queue.length && visitedPages.size < MAX_RESULT_PAGES) {
-    const item = queue.shift();
-    if (visitedPages.has(item.url)) continue;
-    visitedPages.add(item.url);
-
-    for (const app of applicationLinks(item.html, item.url)) {
+  while (pagesScanned < MAX_RESULT_PAGES) {
+    pagesScanned += 1;
+    const before = applications.size;
+    for (const app of applicationLinks(current.text, current.response.url)) {
       if (!applications.has(app.url)) applications.set(app.url, app);
     }
 
-    for (const url of paginationLinks(item.html, item.url)) {
-      if (visitedPages.has(url) || queue.some((queued) => queued.url === url)) continue;
-      const page = await fetchText(url, { headers: { referer: item.url, ...(cookie ? { cookie } : {}) } });
-      queue.push({ url: page.response.url, html: page.text });
-    }
+    const next = nextPageLink(current.text, current.response.url);
+    if (!next) return { applications: [...applications.values()], pages_scanned: pagesScanned };
+    if (applications.size === before && pagesScanned > 1) throw new Error('PAM weekly pagination did not advance to new applications');
+
+    current = await fetchText(next, { headers: { referer: current.response.url, ...(cookie ? { cookie } : {}) } });
   }
 
-  if (queue.length) throw new Error(`PAM weekly results exceeded safety limit of ${MAX_RESULT_PAGES} pages`);
-  return { applications: [...applications.values()], pages_scanned: visitedPages.size };
+  throw new Error(`PAM weekly results exceeded safety limit of ${MAX_RESULT_PAGES} pages`);
 }
 
 const result = {
