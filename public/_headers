@@ -1,0 +1,5 @@
+/site-shell.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/data/planning-latest.json
+  Cache-Control: public, max-age=0, must-revalidate
