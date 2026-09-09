@@ -57,22 +57,14 @@
     document.head.appendChild(icon);
   }
 
-  function brandForTown(town) {
-    return TOWN_BRANDS[town] || null;
-  }
-
-  function assetForBrand(brand) {
-    if (!brand) return '/brand/ealing-oak-approved.webp';
-    return `/brand/towns/${brand.slug}.${brand.staticMark ? 'svg' : 'webp'}`;
-  }
-
+  function brandForTown(town) { return TOWN_BRANDS[town] || null; }
+  function assetForBrand(brand) { if (!brand) return '/brand/ealing-oak-approved.webp'; return `/brand/towns/${brand.slug}.${brand.staticMark ? 'svg' : 'webp'}`; }
   function townFromPlacePath() {
     const match = path.match(/^\/places\/([^/]+)/i);
     if (!match) return null;
     const slug = decodeURIComponent(match[1]).toLowerCase();
     return TOWN_BY_SLUG[slug] || Object.keys(TOWN_BRANDS).find(town => town.toLowerCase() === slug) || null;
   }
-
   function requestedTown() {
     if (path === '/') {
       const town = new URLSearchParams(window.location.search).get('town');
@@ -80,14 +72,12 @@
     }
     return townFromPlacePath();
   }
-
   function applyTownBrand(town = null) {
     const brand = brandForTown(town);
     const mark = document.querySelector('.brand-mark');
     const strapLabel = document.querySelector('.brand-copy .strap-label');
     const icon = document.querySelector('link[rel="icon"][data-commons-brand]');
     if (!mark || !strapLabel) return;
-
     if (brand) {
       const asset = assetForBrand(brand);
       mark.src = asset;
@@ -104,14 +94,7 @@
     }
   }
 
-  window.CivicCommonsBrand = {
-    towns: TOWN_BRANDS,
-    setTown: applyTownBrand,
-    reset: () => applyTownBrand(null),
-    townFromPlacePath,
-    brandForTown,
-    assetForBrand
-  };
+  window.CivicCommonsBrand = { towns: TOWN_BRANDS, setTown: applyTownBrand, reset: () => applyTownBrand(null), townFromPlacePath, brandForTown, assetForBrand };
 
   if (header) {
     const nav = NAV_ITEMS.map(item => {
@@ -119,44 +102,25 @@
       const external = item.external ? ' rel="home"' : '';
       return `<a href="${item.href}"${external}${active ? ' aria-current="page"' : ''}>${item.label}</a>`;
     }).join('');
-
     header.innerHTML = `<div class="wrap header-inner"><a class="brand-lockup" href="/" aria-label="${commonsName}"><img class="brand-mark" src="/brand/ealing-oak-approved.webp" alt="" aria-hidden="true"><span class="brand-divider" aria-hidden="true"></span><span class="brand-copy"><strong class="brand">CIVIC COMMONS</strong><span class="strap"><span></span><span class="strap-label">Ealing</span><span></span></span></span></a><nav aria-label="Primary">${nav}</nav></div>`;
     applyTownBrand(requestedTown());
   }
 
-  if (footer) {
-    footer.innerHTML = `<div class="wrap footer-inner"><span>${commonsName}</span><span><a href="https://civiccommons.co.uk/start/">Start a Civic Commons</a> · <a href="https://civiccommons.co.uk/" rel="home">Civic Commons network</a> · Original sources remain canonical.</span></div>`;
-  }
+  if (footer) footer.innerHTML = `<div class="wrap footer-inner"><span>${commonsName}</span><span><a href="https://civiccommons.co.uk/start/">Start a Civic Commons</a> · <a href="https://civiccommons.co.uk/" rel="home">Civic Commons network</a> · Original sources remain canonical.</span></div>`;
 
   function newStatusToken() {
-    const bytes = new Uint8Array(32);
-    crypto.getRandomValues(bytes);
-    let binary = '';
+    const bytes = new Uint8Array(32); crypto.getRandomValues(bytes); let binary = '';
     bytes.forEach(byte => { binary += String.fromCharCode(byte); });
     return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
   }
-
   document.querySelectorAll('form[name="item-contribution"], form[name="submit-source"]').forEach(form => {
     let input = form.querySelector('input[name="status-token"]');
-    if (!input) {
-      input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'status-token';
-      form.appendChild(input);
-    }
+    if (!input) { input = document.createElement('input'); input.type = 'hidden'; input.name = 'status-token'; form.appendChild(input); }
     if (!input.value) input.value = newStatusToken();
-    form.addEventListener('submit', () => {
-      sessionStorage.setItem('civic-commons:last-submission-status-token', input.value);
-    });
+    form.addEventListener('submit', () => { sessionStorage.setItem('civic-commons:last-submission-status-token', input.value); });
   });
 
-  if (path === '/') {
-    import('/commons-scope.js?v=20260903-3').catch(error => console.warn('Commons scope module unavailable', error));
-  }
-  if (/^\/(people|organisations|places|issues|topics)\//.test(path)) {
-    import('/context-reporting.js?v=20260902-1').catch(error => console.warn('Context reporting unavailable', error));
-  }
-  if (path === '/explore.html') {
-    import('/explore-issue-hubs.js?v=20260902-1').catch(error => console.warn('Explore issue hubs unavailable', error));
-  }
+  if (path === '/') import('/commons-scope.js?v=20260903-3').catch(error => console.warn('Commons scope module unavailable', error));
+  if (/^\/(people|organisations|places|issues|topics)\//.test(path)) import('/context-reporting.js?v=20260902-1').catch(error => console.warn('Context reporting unavailable', error));
+  if (path === '/explore.html') import('/explore-issue-hubs.js?v=20260902-1').catch(error => console.warn('Explore issue hubs unavailable', error));
 })();
