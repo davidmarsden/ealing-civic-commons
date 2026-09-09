@@ -300,8 +300,9 @@ function normalizeReference(row, typeName, typeDef, taxonomyTerms) {
   const excerpt = stripHtml(row.excerpt?.rendered ?? '');
   const description = content || excerpt || null;
   const locationTaxonomy = typeName === 'venue' ? 'venue-town' : 'creative---location';
-  const sourceTown = taxonomyNames(taxonomies, locationTaxonomy)[0] ?? null;
-  const town = sourceTown ? normalizeTown(sourceTown) : null;
+  const sourceLocations = taxonomyNames(taxonomies, locationTaxonomy);
+  const locations = sourceLocations.map((source) => normalizeTown(source));
+  const primaryGeography = locations[0] ?? null;
   const reference = {
     id: `reference:ealing-culture:${typeName}:${row.id}`,
     reference_type: typeName,
@@ -309,17 +310,18 @@ function normalizeReference(row, typeName, typeDef, taxonomyTerms) {
     description,
     canonical_url: row.link ?? null,
     taxonomies,
-    geography: town,
+    geography: primaryGeography,
+    geographies: locations,
     provenance: sourceMeta(row),
     promotion_policy: typeName === 'creative'
       ? 'reference-only; do not auto-create civic person profiles'
       : 'reference-only until entity matching/promotion rules are applied',
-    parse_warnings: [...parseWarnings, ...(town?.warnings ?? [])],
+    parse_warnings: [...parseWarnings, ...locations.flatMap((location) => location.warnings)],
   };
   reference.dedupe = {
     source_key: `${SOURCE_ID}:${typeName}:${row.id}`,
     canonical_url: reference.canonical_url,
-    fingerprint: stableHash([typeName, title, sourceTown].join('|').toLowerCase()),
+    fingerprint: stableHash([typeName, title, ...sourceLocations].join('|').toLowerCase()),
   };
   return reference;
 }
