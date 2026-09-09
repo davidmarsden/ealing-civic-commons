@@ -9,6 +9,7 @@
     "validate:evidence": "node scripts/validate-evidence.mjs",
     "validate:ealing-candidacy-history": "node scripts/validate-ealing-candidacy-history.mjs",
     "inspect:ealing-data": "node scripts/ealing-data-catalog.mjs",
+    "inspect:ealing-culture": "node scripts/ealing-culture-probe.mjs --verbose",
     "inspect:planning": "node scripts/planning-probe.mjs --verbose",
     "inspect:planning-ingest": "node scripts/ingest-ealing-planning.mjs --output=ealing-planning-ingest.json",
     "publish:planning-snapshot": "node scripts/publish-ealing-planning-snapshot.mjs ealing-planning-ingest.json public/data/planning-latest.json public/data/planning-archive.json",
