@@ -27,6 +27,8 @@ const ENDPOINTS = [
   ['creatives', '/creatives-directory/'],
 ];
 
+const TARGET_TYPES = ['event', 'news', 'venue', 'creative'];
+
 function decodeEntities(value = '') {
   return value
     .replaceAll('&amp;', '&')
@@ -80,6 +82,16 @@ async function fetchText(url, options = {}) {
   return { response, text };
 }
 
+async function fetchJson(url) {
+  const { response, text } = await fetchText(url, { headers: { accept: 'application/json' } });
+  if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+  try {
+    return { response, json: JSON.parse(text), text };
+  } catch {
+    throw new Error(`Expected JSON from ${response.url}`);
+  }
+}
+
 function detectPlatform(html = '', headers = {}) {
   const lower = html.toLowerCase();
   const generator = html.match(/<meta\s+[^>]*name=["']generator["'][^>]*content=["']([^"']+)["']/i)?.[1]
@@ -118,18 +130,8 @@ function discoverLinks(html = '', baseUrl = BASE) {
 
 function classifyLinks(links) {
   const buckets = {
-    event: [],
-    event_type: [],
-    event_location: [],
-    audience: [],
-    news: [],
-    news_category: [],
-    creative: [],
-    creative_category: [],
-    creative_location: [],
-    space: [],
-    suitability: [],
-    pagination: [],
+    event: [], event_type: [], event_location: [], audience: [], news: [], news_category: [],
+    creative: [], creative_category: [], creative_location: [], space: [], suitability: [], pagination: [],
   };
 
   for (const link of links) {
@@ -205,6 +207,14 @@ function extractVisibleSample(html = '', baseUrl = BASE) {
   };
 }
 
+function isFeedResponse(response, text) {
+  const contentType = response.headers.get('content-type') || '';
+  if (/application\/(?:rss|atom)\+xml|application\/xml|text\/xml/i.test(contentType)) {
+    return /<(?:rss|feed)\b/i.test(text);
+  }
+  return /^\s*<\?xml[\s\S]*<(?:rss|feed)\b/i.test(text);
+}
+
 async function probeEndpoint(name, path) {
   const started = Date.now();
   const url = new URL(path, BASE);
@@ -216,12 +226,14 @@ async function probeEndpoint(name, path) {
     if (/application\/json/i.test(contentType) || /^[\s\r\n]*[\[{]/.test(text)) {
       try { json = JSON.parse(text); } catch { /* diagnostic only */ }
     }
+    const feedValid = name === 'feed' || name === 'rss' ? isFeedResponse(response, text) : undefined;
     return {
       ok: response.ok,
       name,
       ...diagnostics,
       bytes: Buffer.byteLength(text),
       elapsed_ms: Date.now() - started,
+      ...(feedValid === undefined ? {} : { feed_valid: feedValid }),
       platform: name === 'homepage' ? detectPlatform(text, diagnostics) : undefined,
       json_summary: json ? {
         kind: Array.isArray(json) ? 'array' : typeof json,
@@ -243,11 +255,104 @@ async function probeEndpoint(name, path) {
   }
 }
 
-function summarize(results) {
+function compactWpRecord(row) {
+  if (!row || typeof row !== 'object') return null;
+  const result = {
+    id: row.id ?? null,
+    date: row.date ?? null,
+    modified: row.modified ?? null,
+    slug: row.slug ?? null,
+    link: row.link ?? null,
+    status: row.status ?? null,
+    title: row.title?.rendered ?? row.title ?? null,
+    field_keys: Object.keys(row),
+  };
+  for (const [key, value] of Object.entries(row)) {
+    if (['id', 'date', 'modified', 'slug', 'link', 'status', 'title', 'content', 'excerpt', 'guid', '_links', '_embedded'].includes(key)) continue;
+    if (Array.isArray(value) && value.every((item) => ['number', 'string'].includes(typeof item))) result[key] = value;
+    else if (value == null || ['number', 'string', 'boolean'].includes(typeof value)) result[key] = value;
+    else if (typeof value === 'object' && Object.keys(value).length <= 12) result[key] = value;
+  }
+  return result;
+}
+
+async function probeWordPressSchema() {
+  const started = Date.now();
+  try {
+    const [{ json: types }, { json: taxonomies }] = await Promise.all([
+      fetchJson(new URL('/wp-json/wp/v2/types', BASE)),
+      fetchJson(new URL('/wp-json/wp/v2/taxonomies', BASE)),
+    ]);
+
+    const typeResults = {};
+    for (const typeName of TARGET_TYPES) {
+      const type = types[typeName];
+      if (!type) {
+        typeResults[typeName] = { available: false };
+        continue;
+      }
+      const restBase = type.rest_base || typeName;
+      const collectionUrl = new URL(`/wp-json/wp/v2/${restBase}`, BASE);
+      collectionUrl.searchParams.set('per_page', '1');
+      collectionUrl.searchParams.set('_embed', '1');
+      const { response, json } = await fetchJson(collectionUrl);
+      const rows = Array.isArray(json) ? json : [];
+      typeResults[typeName] = {
+        available: true,
+        rest_base: restBase,
+        rest_namespace: type.rest_namespace ?? 'wp/v2',
+        taxonomies: type.taxonomies ?? [],
+        collection_url: collectionUrl.toString(),
+        total: Number(response.headers.get('x-wp-total') || rows.length),
+        total_pages: Number(response.headers.get('x-wp-totalpages') || 1),
+        sample: compactWpRecord(rows[0]),
+      };
+    }
+
+    const taxonomyResults = {};
+    const relevantTaxonomies = [...new Set(TARGET_TYPES.flatMap((name) => types[name]?.taxonomies ?? []))];
+    for (const taxonomyName of relevantTaxonomies) {
+      const taxonomy = taxonomies[taxonomyName];
+      if (!taxonomy) {
+        taxonomyResults[taxonomyName] = { available: false };
+        continue;
+      }
+      const restBase = taxonomy.rest_base || taxonomyName;
+      const collectionUrl = new URL(`/wp-json/wp/v2/${restBase}`, BASE);
+      collectionUrl.searchParams.set('per_page', '100');
+      const { response, json } = await fetchJson(collectionUrl);
+      const rows = Array.isArray(json) ? json : [];
+      taxonomyResults[taxonomyName] = {
+        available: true,
+        rest_base: restBase,
+        rest_namespace: taxonomy.rest_namespace ?? 'wp/v2',
+        types: taxonomy.types ?? [],
+        total: Number(response.headers.get('x-wp-total') || rows.length),
+        terms: rows.slice(0, 100).map((row) => ({ id: row.id, name: row.name, slug: row.slug, count: row.count, link: row.link })),
+      };
+    }
+
+    return {
+      ok: true,
+      elapsed_ms: Date.now() - started,
+      types: typeResults,
+      taxonomies: taxonomyResults,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      elapsed_ms: Date.now() - started,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+function summarize(results, wordpress) {
   const homepage = results.find((item) => item.name === 'homepage');
   const available = results.filter((item) => item.ok).map((item) => item.name);
   const wp = results.find((item) => item.name === 'wp_json');
   const feed = results.find((item) => item.name === 'feed');
+  const rss = results.find((item) => item.name === 'rss');
   const sitemap = results.find((item) => item.name === 'sitemap_index' && item.ok)
     ?? results.find((item) => item.name === 'sitemap' && item.ok);
 
@@ -264,22 +369,25 @@ function summarize(results) {
   }
 
   const platformHints = homepage?.platform?.hints ?? [];
+  const conventionalFeed = Boolean(feed?.feed_valid || rss?.feed_valid);
   const notes = [];
   if (platformHints.includes('jadu')) notes.push('Homepage contains Jadu markers.');
   if (platformHints.includes('wordpress')) notes.push('Homepage contains WordPress markers.');
   if (wp?.ok) notes.push('WordPress REST root is publicly reachable.');
   else notes.push('WordPress REST root was not confirmed; do not assume WordPress.');
-  if (feed?.ok) notes.push('A conventional /feed/ endpoint is reachable.');
+  if (conventionalFeed) notes.push('A conventional RSS/Atom feed was validated.');
+  else if (feed?.ok || rss?.ok) notes.push('Conventional feed paths returned HTTP success but did not validate as RSS/Atom; redirects to HTML are not counted as feeds.');
   if (sitemap) notes.push(`A sitemap endpoint is reachable at ${sitemap.url}.`);
   if (taxonomies.event?.length) notes.push('Event detail URLs are discoverable from public listings.');
-  if (taxonomies.creative_location?.length || taxonomies.event_type?.length || taxonomies.suitability?.length) notes.push('Public taxonomy/archive URLs are discoverable and can support structured fallback ingestion.');
+  if (wordpress?.ok) notes.push('Custom WordPress REST collections and their taxonomies were probed directly for ingestion design.');
 
   return {
     available_endpoints: available,
     platform_hints: platformHints,
-    conventional_feed_available: Boolean(feed?.ok),
+    conventional_feed_available: conventionalFeed,
     sitemap_available: Boolean(sitemap),
     wordpress_rest_available: Boolean(wp?.ok),
+    wordpress_structured_collections_available: Boolean(wordpress?.ok),
     discovered_taxonomies: taxonomies,
     notes,
   };
@@ -287,13 +395,15 @@ function summarize(results) {
 
 const endpointResults = [];
 for (const [name, path] of ENDPOINTS) endpointResults.push(await probeEndpoint(name, path));
+const wordpress = await probeWordPressSchema();
 
 const report = {
   generated_at: new Date().toISOString(),
   source: 'Ealing Culture',
   source_url: BASE,
   purpose: 'Read-only source discovery. No Ealing Culture records are persisted or republished by this probe.',
-  summary: summarize(endpointResults),
+  summary: summarize(endpointResults, wordpress),
+  wordpress,
   endpoints: Object.fromEntries(endpointResults.map((item) => [item.name, item])),
 };
 
@@ -301,8 +411,14 @@ await writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
 console.log(`Ealing Culture probe written to ${outputPath}`);
 console.log(`Platform hints: ${report.summary.platform_hints.join(', ') || 'none detected'}`);
 console.log(`WordPress REST: ${report.summary.wordpress_rest_available ? 'YES' : 'NO'}`);
+console.log(`Structured WP collections: ${report.summary.wordpress_structured_collections_available ? 'YES' : 'NO'}`);
 console.log(`Conventional feed: ${report.summary.conventional_feed_available ? 'YES' : 'NO'}`);
 console.log(`Sitemap: ${report.summary.sitemap_available ? 'YES' : 'NO'}`);
+if (wordpress.ok) {
+  for (const [name, info] of Object.entries(wordpress.types)) {
+    console.log(`${name.padEnd(10)} REST=${String(info.rest_base ?? '-').padEnd(14)} total=${info.total ?? '-'}`);
+  }
+}
 for (const [key, values] of Object.entries(report.summary.discovered_taxonomies)) {
   if (values.length) console.log(`${key.padEnd(18)} ${values.length} discovered`);
 }
