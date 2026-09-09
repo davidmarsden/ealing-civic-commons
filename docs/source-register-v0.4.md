@@ -1,7 +1,7 @@
 # Southall & Ealing Civic Commons
 ## Source Register — v0.4
 
-**Date:** 6 September 2026  
+**Date:** 9 September 2026  
 **Status:** Audited operational register plus borough civic-source census  
 **Coverage:** Ealing's seven distinct towns/areas — **Acton, Ealing, Greenford, Hanwell, Northolt, Perivale and Southall**.
 
@@ -43,6 +43,7 @@ The following named source surfaces are configured in the current live aggregati
 | EALING.NEWS | Borough-wide | Local journalism | Main WordPress RSS filtered conservatively for civic/public-interest material; routine sport, food/drink, reviews, event listings and commercial promotion excluded; Opinion retained with an explicit content label | **INGESTING** |
 | Ealing Council — ModernGov | Borough-wide | Official democratic record | Official RSS transported through a public feed-reader bridge because direct server-to-server access is blocked | **INGESTING** |
 | Ealing Council — News | Borough-wide | Official publishing | Official council RSS, with category feeds used for topic enrichment | **INGESTING** |
+| Ealing Culture | Borough-wide plus publisher town/cross-boundary metadata | Official cultural publishing / civic context | Public WordPress REST API. News is surfaced as official-source material; events require explicit civic/community relevance. Venue and Creative Directory collections are retained as reference data only, not public Commons directories or automatic civic profiles. `Boroughwide` remains source metadata; `Park Royal` remains cross-boundary rather than an eighth Ealing town. | **INGESTING** |
 | Ealing Council — YouTube | Borough-wide | Official publishing / video | YouTube Atom | **INGESTING** |
 | Southall Black Sisters — YouTube | Southall | Organisation / campaign / video | YouTube Atom | **INGESTING** |
 | London Assembly — YouTube | Borough-wide relevance | Official publishing / video | YouTube Atom | **INGESTING** |
@@ -166,7 +167,10 @@ A thin register must not be interpreted as thin civic life. Gaps should trigger 
 
 - The Commons must preserve publisher identity and canonical links.
 - Publisher allegations or claims remain attributable to the publisher; ingestion does not turn them into Civic Commons assertions.
-- Native RSS/Atom is preferred where available, but safe source-specific adapters are legitimate when they preserve first-party provenance and stable identities.
+- Native RSS/Atom is preferred where available, but safe source-specific adapters and structured first-party APIs are legitimate when they preserve first-party provenance and stable identities.
+- A rich source should not automatically become a parallel product inside the Commons: material can be filtered into the civic timeline, retained as reference data, or left on the canonical publisher according to editorial fit.
+- `All Ealing` is a viewer-level no-filter state, not publisher geography; source metadata such as `Boroughwide` and cross-boundary `Park Royal` must remain distinct.
+- Reference datasets do not automatically create civic entities or people profiles.
 - Closed social networks should not become foundational dependencies.
 - High-volume official feeds must not crowd quieter civic publishers out of the live view.
 - High-volume general-news feeds should be filtered for civic relevance so they do not crowd quieter civic publishers out of the live view.
