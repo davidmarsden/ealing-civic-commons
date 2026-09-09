@@ -1,0 +1,56 @@
+name: Ealing Culture ingest inspection
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/ingest-ealing-culture.mjs'
+      - 'package.json'
+      - '.github/workflows/ealing-culture-ingest-inspect.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run Ealing Culture ingest preview
+        run: node scripts/ingest-ealing-culture.mjs --output=ealing-culture-ingest.json
+
+      - name: Show summary
+        if: always()
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          if (!fs.existsSync('ealing-culture-ingest.json')) process.exit(0);
+          const report = JSON.parse(fs.readFileSync('ealing-culture-ingest.json', 'utf8'));
+          console.log(JSON.stringify({ ok: report.ok, counts: report.counts, errors: report.errors }, null, 2));
+          const conflictEvents = (report.items?.events ?? []).filter((item) =>
+            (item.parse_warnings ?? []).some((warning) => warning.startsWith('town_address_conflict:'))
+          );
+          if (conflictEvents.length) {
+            console.log('Town/address discrepancies:');
+            for (const item of conflictEvents.slice(0, 20)) {
+              console.log(`- ${item.title}: ${(item.parse_warnings ?? []).join(', ')}`);
+            }
+          }
+          NODE
+
+      - name: Upload ingest preview
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ealing-culture-ingest
+          path: ealing-culture-ingest.json
+          if-no-files-found: warn
+          retention-days: 7
