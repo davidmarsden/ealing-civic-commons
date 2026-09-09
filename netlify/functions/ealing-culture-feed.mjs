@@ -10,6 +10,8 @@ const TYPES = {
   creative: { taxonomies: ['creative---business-type', 'creative-category', 'creative---location'] }
 };
 
+const CIVIC_EVENT_TERMS = /\b(?:community|communities|public art|local history|heritage|library|libraries|museum|civic|council|borough|neighbourhood|neighborhood|public realm|regeneration|consultation|awareness|foodbank|food bank|green space|environment|climate|town hall|community centre|community center|volunteer|volunteering|young people|youth|school|schools|accessibility|inclusion|inclusive|history awareness|community day)\b/i;
+
 function decode(value = '') {
   return String(value)
     .replaceAll('&nbsp;', ' ')
@@ -109,9 +111,9 @@ function townShape(sourceLocations = []) {
 function topicGuess(text = '', extra = []) {
   const value = `${text} ${extra.join(' ')}`.toLowerCase();
   const topics = ['Culture & history'];
-  if (/community|library|public art|local history|heritage/.test(value)) topics.push('Community');
+  if (/community|library|public art|local history|heritage|museum|foodbank|green space/.test(value)) topics.push('Community');
   if (/school|children|young people|youth|student/.test(value)) topics.push('Schools & young people');
-  if (/council|funding|grant|consultation|opportunit|vacanc|role/.test(value)) topics.push('Council & democracy');
+  if (/council|funding|grant|consultation|opportunit|vacanc|role|regeneration|public realm/.test(value)) topics.push('Council & democracy');
   return [...new Set(topics)].slice(0, 3);
 }
 
@@ -144,10 +146,15 @@ function baseItem(row, kind, maps) {
     topics: topicGuess(`${title} ${summary}`, cats),
     derived: false,
     aiGenerated: false,
-    contentLabel: kind === 'event' ? 'Event' : (cats.includes('Opportunities') ? 'Opportunity' : null),
+    contentLabel: kind === 'event' ? 'Civic / community event' : (cats.includes('Opportunities') ? 'Opportunity' : null),
     publisherCategories: cats,
     provenance: { source: 'Ealing Culture', owner: 'London Borough of Ealing', kind: 'official', recordId: row.id }
   };
+}
+
+function isCivicEvent(item) {
+  const haystack = `${item.title || ''} ${item.summary || ''} ${(item.publisherCategories || []).join(' ')}`;
+  return CIVIC_EVENT_TERMS.test(haystack);
 }
 
 function reference(row, kind, maps) {
@@ -193,7 +200,8 @@ export async function fetchEalingCultureFeed() {
     }
   }
 
-  const eventItems = raw.event.map(row => baseItem(row, 'event', maps));
+  const allEventItems = raw.event.map(row => baseItem(row, 'event', maps));
+  const eventItems = allEventItems.filter(isCivicEvent);
   const newsItems = raw.news.map(row => baseItem(row, 'news', maps));
   const references = {
     venues: raw.venue.map(row => reference(row, 'venue', maps)),
@@ -208,20 +216,29 @@ export async function fetchEalingCultureFeed() {
     items,
     archiveItems: items,
     references,
+    counts: {
+      news: newsItems.length,
+      eventsTotal: allEventItems.length,
+      eventsCivic: eventItems.length,
+      venues: references.venues.length,
+      creatives: references.creatives.length
+    },
     warnings,
     errors,
     health: [{
       id: 'ealing-culture',
       name: 'Ealing Culture — Ealing Council',
       homepage: HOME,
-      ok: errors.length === 0 && eventItems.length > 0 && newsItems.length > 0,
+      ok: errors.length === 0 && allEventItems.length > 0 && newsItems.length > 0,
       status: errors.length ? 'upstream' : 'ok',
       itemCount: items.length,
       error: errors.length ? errors.join('; ') : null,
-      diagnostics: [{ mode: 'wordpress-rest', outcome: errors.length ? 'partial' : 'http-response', httpStatus: errors.length ? null : 200, elapsedMs: Date.now() - started }]
+      diagnostics: [{ mode: 'wordpress-rest-civic-filter', outcome: errors.length ? 'partial' : 'http-response', httpStatus: errors.length ? null : 200, elapsedMs: Date.now() - started }]
     }]
   };
 }
+
+export const _test = { isCivicEvent, topicGuess, townShape };
 
 export default async () => new Response(JSON.stringify(await fetchEalingCultureFeed()), {
   headers: {
