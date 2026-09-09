@@ -10,6 +10,7 @@ const SOURCE_NAME = 'Ealing Culture';
 const SOURCE_OWNER = 'London Borough of Ealing';
 const USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
 const TARGET_TYPES = ['event', 'news', 'venue', 'creative'];
+const REQUIRED_TYPES = ['event', 'news'];
 const COMMONS_TOWNS = ['acton', 'ealing', 'greenford', 'hanwell', 'northolt', 'perivale', 'southall'];
 
 const outputArg = process.argv.find((value) => value.startsWith('--output='));
@@ -49,6 +50,15 @@ function slugify(value = '') {
 
 function stableHash(value) {
   return createHash('sha256').update(String(value)).digest('hex').slice(0, 20);
+}
+
+function wpGmtInstant(value, fallback = null) {
+  if (!value) return fallback || null;
+  const raw = String(value).trim();
+  if (!raw) return fallback || null;
+  const explicit = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw) ? raw : `${raw}Z`;
+  const parsed = new Date(explicit);
+  return Number.isNaN(parsed.getTime()) ? (fallback || raw) : parsed.toISOString();
 }
 
 function restUrl(namespace, restBase) {
@@ -97,15 +107,12 @@ async function fetchAllCollection(namespace, restBase) {
 
 function termMap(rows = []) {
   return new Map(rows.map((row) => [Number(row.id), {
-    id: Number(row.id),
-    name: row.name ?? null,
-    slug: row.slug ?? null,
-    count: row.count ?? null,
-    link: row.link ?? null,
+    id: Number(row.id), name: row.name ?? null, slug: row.slug ?? null,
+    count: row.count ?? null, link: row.link ?? null,
   }]));
 }
 
-async function loadSchemaAndTerms() {
+async function loadSchemaAndTerms(warnings) {
   const [{ json: types }, { json: taxonomies }] = await Promise.all([
     fetchJson(new URL('/wp-json/wp/v2/types', BASE)),
     fetchJson(new URL('/wp-json/wp/v2/taxonomies', BASE)),
@@ -114,38 +121,47 @@ async function loadSchemaAndTerms() {
   const typeDefs = {};
   for (const typeName of TARGET_TYPES) {
     const type = types[typeName];
-    if (!type) throw new Error(`Target WordPress type not exposed: ${typeName}`);
+    if (!type) {
+      warnings.push(`type_unavailable:${typeName}`);
+      continue;
+    }
     typeDefs[typeName] = type;
   }
 
-  const relevantTaxonomies = [...new Set(TARGET_TYPES.flatMap((name) => typeDefs[name].taxonomies ?? []))];
-  const taxonomyDefs = {};
+  const relevantTaxonomies = [...new Set(Object.values(typeDefs).flatMap((type) => type.taxonomies ?? []))];
   const taxonomyTerms = {};
   for (const taxonomyName of relevantTaxonomies) {
     const taxonomy = taxonomies[taxonomyName];
-    if (!taxonomy) continue;
-    taxonomyDefs[taxonomyName] = taxonomy;
-    const rows = await fetchAllCollection(taxonomy.rest_namespace || 'wp/v2', taxonomy.rest_base || taxonomyName);
-    taxonomyTerms[taxonomyName] = termMap(rows);
+    if (!taxonomy) {
+      warnings.push(`taxonomy_schema_unavailable:${taxonomyName}`);
+      continue;
+    }
+    try {
+      const rows = await fetchAllCollection(taxonomy.rest_namespace || 'wp/v2', taxonomy.rest_base || taxonomyName);
+      taxonomyTerms[taxonomyName] = termMap(rows);
+    } catch (error) {
+      warnings.push(`taxonomy_fetch_failed:${taxonomyName}:${error instanceof Error ? error.message : String(error)}`);
+      taxonomyTerms[taxonomyName] = new Map();
+    }
   }
 
-  return { typeDefs, taxonomyDefs, taxonomyTerms };
+  return { typeDefs, taxonomyTerms };
 }
 
-function collectTaxonomyTerms(row, typeDef, taxonomyTerms) {
+function collectTaxonomyTerms(row, typeDef, taxonomyTerms, parseWarnings) {
   const result = {};
-  for (const taxonomyName of typeDef.taxonomies ?? []) {
+  for (const taxonomyName of typeDef?.taxonomies ?? []) {
     const raw = row[taxonomyName];
     const ids = Array.isArray(raw) ? raw.map(Number).filter(Number.isFinite) : [];
     const map = taxonomyTerms[taxonomyName];
     result[taxonomyName] = ids.map((id) => map?.get(id)).filter(Boolean);
+    if (ids.length && !map?.size) parseWarnings?.push(`taxonomy_terms_unavailable:${taxonomyName}`);
   }
   return result;
 }
 
 function recursiveCandidates(row) {
-  const roots = [row, row?.acf, row?.meta];
-  return roots.filter((value) => value && typeof value === 'object' && !Array.isArray(value));
+  return [row, row?.acf, row?.meta].filter((value) => value && typeof value === 'object' && !Array.isArray(value));
 }
 
 function firstValue(row, names) {
@@ -153,8 +169,7 @@ function firstValue(row, names) {
   for (const root of recursiveCandidates(row)) {
     for (const [key, value] of Object.entries(root)) {
       const normalized = key.toLowerCase().replace(/[^a-z0-9]/g, '');
-      if (!wanted.includes(normalized)) continue;
-      if (value === '' || value == null) continue;
+      if (!wanted.includes(normalized) || value === '' || value == null) continue;
       if (typeof value === 'object' && value?.rendered != null) return value.rendered;
       return value;
     }
@@ -166,13 +181,12 @@ function asText(value) {
   if (value == null) return null;
   if (Array.isArray(value)) return value.map(asText).filter(Boolean).join(', ') || null;
   if (typeof value === 'object') {
-    if (value.rendered != null) return stripHtml(value.rendered);
+    if (value.rendered != null) return stripHtml(value.rendered) || null;
     if (value.address != null) return asText(value.address);
     if (value.name != null) return asText(value.name);
     return null;
   }
-  const text = stripHtml(value);
-  return text || null;
+  return stripHtml(value) || null;
 }
 
 function taxonomyNames(taxonomies, name) {
@@ -184,12 +198,8 @@ function normalizeTown(sourceTown) {
   const slug = slugify(raw);
   if (!slug) return { source: raw || null, commons_town: null, scope: 'unknown', warnings: ['town_missing'] };
   if (COMMONS_TOWNS.includes(slug)) return { source: raw, commons_town: slug, scope: 'town', warnings: [] };
-  if (slug === 'boroughwide' || slug === 'borough-wide' || slug === 'all-ealing') {
-    return { source: raw, commons_town: null, scope: 'boroughwide', warnings: [] };
-  }
-  if (slug === 'park-royal') {
-    return { source: raw, commons_town: null, scope: 'cross-boundary', warnings: ['park_royal_cross_boundary'] };
-  }
+  if (slug === 'boroughwide' || slug === 'borough-wide' || slug === 'all-ealing') return { source: raw, commons_town: null, scope: 'boroughwide', warnings: [] };
+  if (slug === 'park-royal') return { source: raw, commons_town: null, scope: 'cross-boundary', warnings: ['park_royal_cross_boundary'] };
   return { source: raw, commons_town: null, scope: 'other', warnings: ['town_unmapped'] };
 }
 
@@ -197,10 +207,9 @@ function addressTownConflict(sourceTown, address) {
   const normalized = slugify(sourceTown);
   if (!COMMONS_TOWNS.includes(normalized) || !address) return null;
   const lower = String(address).toLowerCase();
-  const found = COMMONS_TOWNS.filter((town) => lower.includes(town));
+  const found = COMMONS_TOWNS.filter((town) => new RegExp(`\\b${town}\\b`, 'i').test(lower));
   const conflicting = found.filter((town) => town !== normalized);
-  if (!conflicting.length || found.includes(normalized)) return null;
-  return conflicting;
+  return conflicting.length ? conflicting : null;
 }
 
 function sourceMeta(row) {
@@ -211,7 +220,7 @@ function sourceMeta(row) {
     source_kind: 'official',
     source_url: row.link ?? BASE,
     source_record_id: row.id ?? null,
-    source_modified: row.modified_gmt ?? row.modified ?? null,
+    source_modified: wpGmtInstant(row.modified_gmt, row.modified ?? null),
   };
 }
 
@@ -225,8 +234,8 @@ function baseRecord(row, kind, taxonomies) {
     title,
     summary,
     body,
-    published_at: row.date_gmt ?? row.date ?? null,
-    updated_at: row.modified_gmt ?? row.modified ?? null,
+    published_at: wpGmtInstant(row.date_gmt, row.date ?? null),
+    updated_at: wpGmtInstant(row.modified_gmt, row.modified ?? null),
     canonical_url: row.link ?? null,
     taxonomies,
     provenance: sourceMeta(row),
@@ -235,8 +244,10 @@ function baseRecord(row, kind, taxonomies) {
 }
 
 function normalizeEvent(row, typeDef, taxonomyTerms) {
-  const taxonomies = collectTaxonomyTerms(row, typeDef, taxonomyTerms);
+  const parseWarnings = [];
+  const taxonomies = collectTaxonomyTerms(row, typeDef, taxonomyTerms, parseWarnings);
   const record = baseRecord(row, 'event', taxonomies);
+  record.parse_warnings.push(...parseWarnings);
   const sourceTown = taxonomyNames(taxonomies, 'town')[0] ?? asText(firstValue(row, ['town', 'location_town', 'event_town']));
   const town = normalizeTown(sourceTown);
   const address = asText(firstValue(row, ['location', 'address', 'venue_address', 'event_location', 'full_address']));
@@ -262,35 +273,32 @@ function normalizeEvent(row, typeDef, taxonomyTerms) {
   if (conflict) record.parse_warnings.push(`town_address_conflict:${conflict.join(',')}`);
 
   const fingerprint = ['event', record.title, eventDate, sourceTown, address].map((value) => String(value || '').toLowerCase().trim()).join('|');
-  record.dedupe = {
-    source_key: `${SOURCE_ID}:event:${row.id}`,
-    canonical_url: record.canonical_url,
-    fingerprint: stableHash(fingerprint),
-  };
+  record.dedupe = { source_key: `${SOURCE_ID}:event:${row.id}`, canonical_url: record.canonical_url, fingerprint: stableHash(fingerprint) };
   return record;
 }
 
 function normalizeNews(row, typeDef, taxonomyTerms) {
-  const taxonomies = collectTaxonomyTerms(row, typeDef, taxonomyTerms);
+  const parseWarnings = [];
+  const taxonomies = collectTaxonomyTerms(row, typeDef, taxonomyTerms, parseWarnings);
   const record = baseRecord(row, 'news', taxonomies);
+  record.parse_warnings.push(...parseWarnings);
   const sourceTown = taxonomyNames(taxonomies, 'town')[0] ?? asText(firstValue(row, ['town', 'location_town']));
   const town = normalizeTown(sourceTown);
   if (sourceTown) record.geography = town;
   record.categories = taxonomyNames(taxonomies, 'news-category');
   record.parse_warnings.push(...(sourceTown ? town.warnings : []));
   const fingerprint = ['news', record.title, record.published_at, sourceTown].map((value) => String(value || '').toLowerCase().trim()).join('|');
-  record.dedupe = {
-    source_key: `${SOURCE_ID}:news:${row.id}`,
-    canonical_url: record.canonical_url,
-    fingerprint: stableHash(fingerprint),
-  };
+  record.dedupe = { source_key: `${SOURCE_ID}:news:${row.id}`, canonical_url: record.canonical_url, fingerprint: stableHash(fingerprint) };
   return record;
 }
 
 function normalizeReference(row, typeName, typeDef, taxonomyTerms) {
-  const taxonomies = collectTaxonomyTerms(row, typeDef, taxonomyTerms);
+  const parseWarnings = [];
+  const taxonomies = collectTaxonomyTerms(row, typeDef, taxonomyTerms, parseWarnings);
   const title = stripHtml(row.title?.rendered ?? row.title ?? '') || null;
-  const description = stripHtml(row.content?.rendered ?? row.excerpt?.rendered ?? '') || null;
+  const content = stripHtml(row.content?.rendered ?? '');
+  const excerpt = stripHtml(row.excerpt?.rendered ?? '');
+  const description = content || excerpt || null;
   const locationTaxonomy = typeName === 'venue' ? 'venue-town' : 'creative---location';
   const sourceTown = taxonomyNames(taxonomies, locationTaxonomy)[0] ?? null;
   const town = sourceTown ? normalizeTown(sourceTown) : null;
@@ -306,7 +314,7 @@ function normalizeReference(row, typeName, typeDef, taxonomyTerms) {
     promotion_policy: typeName === 'creative'
       ? 'reference-only; do not auto-create civic person profiles'
       : 'reference-only until entity matching/promotion rules are applied',
-    parse_warnings: town?.warnings ?? [],
+    parse_warnings: [...parseWarnings, ...(town?.warnings ?? [])],
   };
   reference.dedupe = {
     source_key: `${SOURCE_ID}:${typeName}:${row.id}`,
@@ -319,13 +327,7 @@ function normalizeReference(row, typeName, typeDef, taxonomyTerms) {
 const result = {
   generated_at: new Date().toISOString(),
   purpose: 'Normalized Ealing Culture ingestion preview. Events and news are Commons-ready candidate items; venues and creatives remain reference-only. No records are persisted to Civic Commons storage by this script.',
-  source: {
-    id: SOURCE_ID,
-    name: SOURCE_NAME,
-    owner: SOURCE_OWNER,
-    kind: 'official',
-    url: BASE,
-  },
+  source: { id: SOURCE_ID, name: SOURCE_NAME, owner: SOURCE_OWNER, kind: 'official', url: BASE },
   ok: false,
   counts: {},
   items: { events: [], news: [] },
@@ -335,11 +337,23 @@ const result = {
 };
 
 try {
-  const { typeDefs, taxonomyTerms } = await loadSchemaAndTerms();
+  const { typeDefs, taxonomyTerms } = await loadSchemaAndTerms(result.warnings);
   const raw = {};
+
   for (const typeName of TARGET_TYPES) {
     const type = typeDefs[typeName];
-    raw[typeName] = await fetchAllCollection(type.rest_namespace || 'wp/v2', type.rest_base || typeName);
+    if (!type) {
+      raw[typeName] = [];
+      continue;
+    }
+    try {
+      raw[typeName] = await fetchAllCollection(type.rest_namespace || 'wp/v2', type.rest_base || typeName);
+    } catch (error) {
+      raw[typeName] = [];
+      const message = error instanceof Error ? error.message : String(error);
+      if (REQUIRED_TYPES.includes(typeName)) result.errors.push(`collection_fetch_failed:${typeName}:${message}`);
+      else result.warnings.push(`reference_collection_fetch_failed:${typeName}:${message}`);
+    }
   }
 
   result.items.events = raw.event.map((row) => normalizeEvent(row, typeDefs.event, taxonomyTerms));
@@ -354,9 +368,12 @@ try {
     creatives: result.references.creatives.length,
     event_warnings: result.items.events.reduce((sum, row) => sum + row.parse_warnings.length, 0),
     news_warnings: result.items.news.reduce((sum, row) => sum + row.parse_warnings.length, 0),
+    ingest_warnings: result.warnings.length,
   };
-  result.ok = result.counts.events > 0 && result.counts.news > 0;
-  if (!result.ok) result.errors.push('Expected non-empty event and news collections');
+
+  result.ok = result.counts.events > 0 && result.counts.news > 0 && result.errors.length === 0;
+  if (!result.counts.events) result.errors.push('Expected non-empty event collection');
+  if (!result.counts.news) result.errors.push('Expected non-empty news collection');
 } catch (error) {
   result.errors.push(error instanceof Error ? error.message : String(error));
 }
@@ -370,7 +387,7 @@ console.log(`Venues (reference): ${result.counts.venues ?? 0}`);
 console.log(`Creatives (reference): ${result.counts.creatives ?? 0}`);
 console.log(`Event warnings: ${result.counts.event_warnings ?? 0}`);
 console.log(`News warnings: ${result.counts.news_warnings ?? 0}`);
-if (result.errors.length) {
-  for (const error of result.errors) console.error(`- ${error}`);
-}
+console.log(`Ingest warnings: ${result.counts.ingest_warnings ?? result.warnings.length}`);
+for (const warning of result.warnings) console.warn(`- WARN ${warning}`);
+for (const error of result.errors) console.error(`- ERROR ${error}`);
 if (!result.ok) process.exitCode = 2;
