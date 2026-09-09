@@ -184,7 +184,7 @@ function reference(row, kind, maps) {
   };
 }
 
-export async function fetchEalingCultureFeed() {
+export async function fetchEalingCultureFeed({ includeReferences = false } = {}) {
   const started = Date.now();
   const errors = [];
   const { maps, warnings } = await loadTaxonomies();
@@ -203,10 +203,10 @@ export async function fetchEalingCultureFeed() {
   const allEventItems = raw.event.map(row => baseItem(row, 'event', maps));
   const eventItems = allEventItems.filter(isCivicEvent);
   const newsItems = raw.news.map(row => baseItem(row, 'news', maps));
-  const references = {
+  const references = includeReferences ? {
     venues: raw.venue.map(row => reference(row, 'venue', maps)),
     creatives: raw.creative.map(row => reference(row, 'creative', maps))
-  };
+  } : { venues: [], creatives: [] };
   const items = [...eventItems, ...newsItems]
     .filter(item => item.title && item.url && item.publishedAt)
     .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
@@ -220,8 +220,8 @@ export async function fetchEalingCultureFeed() {
       news: newsItems.length,
       eventsTotal: allEventItems.length,
       eventsCivic: eventItems.length,
-      venues: references.venues.length,
-      creatives: references.creatives.length
+      venues: raw.venue.length,
+      creatives: raw.creative.length
     },
     warnings,
     errors,
@@ -240,7 +240,7 @@ export async function fetchEalingCultureFeed() {
 
 export const _test = { isCivicEvent, topicGuess, townShape };
 
-export default async () => new Response(JSON.stringify(await fetchEalingCultureFeed()), {
+export default async () => new Response(JSON.stringify(await fetchEalingCultureFeed({ includeReferences: true })), {
   headers: {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'public, max-age=300, stale-while-revalidate=900',
