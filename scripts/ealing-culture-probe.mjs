@@ -42,6 +42,7 @@ function stripTags(value = '') {
 }
 
 function absoluteUrl(value, base = BASE) {
+  if (!value) return null;
   try {
     return new URL(decodeEntities(value), base).toString();
   } catch {
@@ -179,13 +180,24 @@ function extractLdJson(html = '') {
   return results.slice(0, 20);
 }
 
+function extractCanonical(html = '', baseUrl = BASE) {
+  for (const match of html.matchAll(/<link\b[^>]*>/gi)) {
+    const tag = match[0];
+    const rel = tag.match(/\brel\s*=\s*["']([^"']*)["']/i)?.[1] ?? '';
+    if (!rel.split(/\s+/).some((value) => value.toLowerCase() === 'canonical')) continue;
+    const href = tag.match(/\bhref\s*=\s*["']([^"']+)["']/i)?.[1] ?? null;
+    return absoluteUrl(href, baseUrl);
+  }
+  return null;
+}
+
 function extractVisibleSample(html = '', baseUrl = BASE) {
   const text = stripTags(html);
   const links = classifyLinks(discoverLinks(html, baseUrl));
   const dates = [...text.matchAll(/\b(?:Every\s+[A-Za-z]+|\d{1,2}[-\s][A-Za-z]{3,9}[-\s]\d{4})\b/g)].map((m) => m[0]);
   return {
     title: stripTags(html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '') || null,
-    canonical: absoluteUrl(html.match(/<link\b[^>]*rel=["']canonical["'][^>]*href=["']([^"']+)["']/i)?.[1] ?? '', baseUrl),
+    canonical: extractCanonical(html, baseUrl),
     date_patterns: [...new Set(dates)].slice(0, 20),
     links,
     ld_json: extractLdJson(html),
