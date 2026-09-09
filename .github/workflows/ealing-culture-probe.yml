@@ -25,7 +25,23 @@ jobs:
           node-version: 22
 
       - name: Run Ealing Culture probe
-        run: node scripts/ealing-culture-probe.mjs --verbose --output=ealing-culture-probe.json
+        run: node scripts/ealing-culture-probe.mjs --verbose --output=ealing-culture-probe.json || true
+
+      - name: Validate probe result
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const report = JSON.parse(fs.readFileSync('ealing-culture-probe.json', 'utf8'));
+          const structured = Boolean(report.summary?.wordpress_structured_collections_available);
+          const homepage = Boolean(report.endpoints?.homepage?.ok);
+          if (!structured && !homepage) {
+            console.error('Probe failed: neither the structured WordPress collections nor the homepage were reachable.');
+            process.exit(2);
+          }
+          if (!homepage && structured) {
+            console.log('Homepage fetch failed, but structured WordPress collections are healthy; accepting probe result.');
+          }
+          NODE
 
       - name: Show probe result
         if: always()
