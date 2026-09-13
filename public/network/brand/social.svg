@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Civic Commons</title>
+  <desc id="desc">Civic Commons social sharing card with the open gate mark and the words Local public memory, held in common.</desc>
+  <rect width="1200" height="630" fill="#f4f0e4"/>
+  <rect x="0" y="0" width="404" height="630" fill="#dbe4d8"/>
+  <g transform="translate(48 115) scale(1.9)">
+    <path fill="#163c29" d="M38 55C46 28 61 16 80 16s34 12 42 39l-10 5C105 37 95 27 80 27S55 37 48 60l-10-5Z"/>
+    <path fill="#163c29" d="M10 58 35 44v86L10 144V58ZM150 58l-25-14v86l25 14V58Z"/>
+    <path fill="#f4f0e4" d="m17 76 11-5v9l-11 4v-8Zm126 0-11-5v9l11 4v-8Z"/>
+    <path fill="#7fa18d" d="M36 108c12-10 27-15 45-15 17 0 31 5 43 14v23H36v-22Z"/>
+    <path fill="#4e7f68" d="M36 119c17-7 33-10 49-9 15 0 28 4 39 10v10H36v-11Z"/>
+    <path fill="#163c29" d="M57 74h6v30h-6zM60 86l-8-9 4-3 6 7 6-8 4 3-9 11-3-1Z"/>
+    <g fill="#163c29"><circle cx="60" cy="67" r="12"/><circle cx="50" cy="72" r="9"/><circle cx="70" cy="72" r="9"/><circle cx="53" cy="61" r="8"/><circle cx="67" cy="60" r="8"/><circle cx="60" cy="56" r="8"/></g>
+    <path fill="#163c29" d="M87 82h13v21H87zM84 82l9-8 10 8H84Zm18-12h15v33h-15zM108 58h4v12h-4zM105 70l5-12 5 12h-10Zm11 19h8v14h-8z"/>
+    <path fill="#4e7f68" d="M77 88h10v15H77zM75 88l7-6 7 6H75Z"/>
+    <path fill="#f4f0e4" d="M87 160H52c18-14 31-25 31-34 0-7-10-11-30-14 11-8 24-11 39-9 11 1 20 5 27 11-17-2-27 2-27 9 0 9 18 18 32 37H87Z"/>
+  </g>
+  <text x="468" y="153" fill="#163c29" font-family="Georgia,Times New Roman,serif" font-size="70" letter-spacing="2">CIVIC</text>
+  <text x="468" y="235" fill="#163c29" font-family="Georgia,Times New Roman,serif" font-size="70" letter-spacing="1">COMMONS</text>
+  <line x1="470" y1="270" x2="590" y2="270" stroke="#b7963e" stroke-width="5"/>
+  <text x="468" y="345" fill="#163c29" font-family="Georgia,Times New Roman,serif" font-size="40" font-style="italic">Local public memory,</text>
+  <text x="468" y="398" fill="#163c29" font-family="Georgia,Times New Roman,serif" font-size="40" font-style="italic">held in common.</text>
+  <text x="468" y="505" fill="#4e655a" font-family="Inter,Arial,sans-serif" font-size="25">Independent sources · public records</text>
+  <text x="468" y="543" fill="#4e655a" font-family="Inter,Arial,sans-serif" font-size="25">community knowledge · civic memory</text>
+</svg>
