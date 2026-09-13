@@ -1,8 +1,3 @@
-const EALING_HOSTS = new Set([
-  'ealing.civiccommons.co.uk',
-  'ealing-civic-commons.netlify.app'
-]);
-
 const TOWNS = {
   Acton: { slug: 'acton', label: 'Acton' },
   Ealing: { slug: 'ealing-town', label: 'Ealing town' },
@@ -19,6 +14,13 @@ const BOROUGH = {
   title: 'Ealing Civic Commons',
   description: 'Local reporting, community voices and official democratic records connected across the London Borough of Ealing.'
 };
+
+function isEalingHost(hostname) {
+  const host = hostname.toLowerCase();
+  return host === 'ealing.civiccommons.co.uk'
+    || host === 'ealing-civic-commons.netlify.app'
+    || host.endsWith('--ealing-civic-commons.netlify.app');
+}
 
 function escapeAttribute(value) {
   return String(value)
@@ -69,10 +71,10 @@ function socialTags(meta, url) {
 }
 
 export default async (request, context) => {
-  if (request.method !== 'GET' && request.method !== 'HEAD') return context.next();
+  if (request.method !== 'GET') return context.next();
 
   const url = new URL(request.url);
-  if (!EALING_HOSTS.has(url.hostname.toLowerCase()) || url.pathname !== '/') {
+  if (!isEalingHost(url.hostname) || url.pathname !== '/') {
     return context.next();
   }
 
@@ -87,7 +89,8 @@ export default async (request, context) => {
 
   const headers = new Headers(response.headers);
   headers.delete('content-length');
-  headers.set('vary', 'Host');
+  const vary = headers.get('vary');
+  headers.set('vary', vary ? `${vary}, Host` : 'Host');
 
   return new Response(rewritten, {
     status: response.status,
