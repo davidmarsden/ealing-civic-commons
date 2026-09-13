@@ -17,6 +17,18 @@ for (const slug of socialSlugs) {
   console.log(`${slug}.jpg ${info.size} bytes`);
 }
 
+const networkCard = path.resolve("dist/network/brand/social.jpg");
+await access(networkCard);
+const networkMetadata = await sharp(networkCard).metadata();
+const networkInfo = await stat(networkCard);
+if (networkMetadata.width !== 1200 || networkMetadata.height !== 630) {
+  throw new Error(`network social.jpg has unexpected dimensions ${networkMetadata.width}x${networkMetadata.height}`);
+}
+if (networkInfo.size < 10_000) {
+  throw new Error(`network social.jpg looks unexpectedly small (${networkInfo.size} bytes)`);
+}
+console.log(`network social.jpg 1200x630 ${networkInfo.size} bytes`);
+
 for (const slug of townSlugs) {
   const svg = path.resolve(`dist/brand/towns/${slug}.svg`);
   await access(svg);
