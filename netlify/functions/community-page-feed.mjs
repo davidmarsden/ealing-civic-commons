@@ -11,6 +11,19 @@ const sources = [
     requireNearby: /Published\s+on/i,
     excludePath: /^\/(?:$|about|contact|services|projects|training|events|whats-on|ealing-community-voluntary-services\/?$)/i,
     dateStyle: 'published-on'
+  },
+  {
+    id: 'west-london-equality-centre',
+    name: 'West London Equality Centre',
+    url: 'https://www.wlec.net/blog/',
+    homepage: 'https://www.wlec.net/',
+    sourceClass: 'Organisation / campaign',
+    towns: ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'],
+    defaultTopics: ['Community'],
+    hostPattern: /^(?:www\.)?wlec\.net$/i,
+    requireNearby: /\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+20\d{2}\b/i,
+    excludePath: /^\/(?:$|about|contact|what-we-do|projects-and-services|volunteering|membership|publications|newsletter|blog\/?$)/i,
+    dateStyle: 'month-day-year'
   }
 ];
 
@@ -53,25 +66,30 @@ function absoluteUrl(href, base) {
 }
 
 function parsePublishedDate(text = '') {
-  const match = String(text).match(/Published\s+on\s*:?[\s\u00a0]*([0-3]?\d\s+[A-Za-z]+\s+20\d{2})/i);
-  if (!match) return null;
-  const timestamp = Date.parse(match[1]);
+  const value = String(text);
+  const publishedOn = value.match(/Published\s+on\s*:?[\s\u00a0]*([0-3]?\d\s+[A-Za-z]+\s+20\d{2})/i);
+  const monthDayYear = value.match(/\b((?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+20\d{2})\b/i);
+  const raw = publishedOn?.[1] || monthDayYear?.[1];
+  if (!raw) return null;
+  const timestamp = Date.parse(raw);
   return Number.isNaN(timestamp) ? null : new Date(timestamp).toISOString();
 }
 
 function removeDateText(text = '') {
-  return String(text).replace(/Published\s+on\s*:?[\s\u00a0]*[0-3]?\d\s+[A-Za-z]+\s+20\d{2}/i, ' ');
+  return String(text)
+    .replace(/Published\s+on\s*:?[\s\u00a0]*[0-3]?\d\s+[A-Za-z]+\s+20\d{2}/i, ' ')
+    .replace(/\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+20\d{2}\b/i, ' ');
 }
 
 function topicGuess(text, defaults = []) {
   const value = String(text || '').toLowerCase();
   const rules = [
     ['Planning & development', /planning|development|hmo|licensing|housing scheme|regeneration|sports pitch/],
-    ['Housing', /housing|tenant|rent|homeless|hmo/],
+    ['Housing', /housing|tenant|tenancy|rent|homeless|hmo|eviction/],
     ['Environment', /air quality|pollution|climate|green|park|tree|environment|recycling|waste|smoke-free|nature reserve|rewild|biodiversity|meadow|wildlife/],
     ['Transport', /traffic|transport|bus|rail|road|parking|cycle|heathrow/],
     ['Schools & young people', /school|children|young people|youth|education|nursery/],
-    ['Policing & safety', /police|crime|safety|domestic abuse|violence|asb|antisocial|anti-social/],
+    ['Policing & safety', /police|crime|hate crime|safety|domestic abuse|violence|asb|antisocial|anti-social/],
     ['Council & democracy', /council|consultation|election|committee|scrutiny|petition|foi|freedom of information/],
     ['Public health', /health|vaccine|smoke-free|wellbeing|cancer|prostate/]
   ];
