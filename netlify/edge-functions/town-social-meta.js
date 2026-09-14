@@ -15,6 +15,8 @@ const BOROUGH = {
   description: 'Local reporting, community voices and official democratic records connected across the London Borough of Ealing.'
 };
 
+const SOCIAL_CARD_VERSION = '20260914-oak-1';
+
 function isEalingHost(hostname) {
   const host = hostname.toLowerCase();
   return host === 'ealing.civiccommons.co.uk'
@@ -47,6 +49,7 @@ function socialTags(meta, url) {
   const requestedTown = url.searchParams.get('town');
   if (TOWNS[requestedTown]) canonical.searchParams.set('town', requestedTown);
   const image = new URL(`/brand/social/${meta.slug}.jpg`, url.origin);
+  image.searchParams.set('v', SOCIAL_CARD_VERSION);
 
   const title = escapeAttribute(meta.title);
   const description = escapeAttribute(meta.description);
@@ -60,6 +63,7 @@ function socialTags(meta, url) {
     `<meta property="og:url" content="${canonicalUrl}" />`,
     '<meta property="og:type" content="website" />',
     `<meta property="og:image" content="${imageUrl}" />`,
+    `<meta property="og:image:secure_url" content="${imageUrl}" />`,
     '<meta property="og:image:width" content="1200" />',
     '<meta property="og:image:height" content="630" />',
     '<meta property="og:image:type" content="image/jpeg" />',
