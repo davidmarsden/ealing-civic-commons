@@ -8,6 +8,7 @@ const outputDir = path.resolve("dist/brand/social");
 const townOutputDir = path.resolve("dist/brand/towns");
 const networkSource = path.resolve("public/network/brand/social.svg");
 const networkOutput = path.resolve("dist/network/brand/social.jpg");
+const ealingOak = path.resolve("public/brand/ealing-oak-approved.webp");
 
 await mkdir(outputDir, { recursive: true });
 await mkdir(townOutputDir, { recursive: true });
@@ -23,10 +24,13 @@ const mimeFor = ext => ({
   ".jpeg": "image/jpeg"
 }[ext.toLowerCase()]);
 
-async function svgWithEmbeddedAssets(file) {
+async function svgWithEmbeddedAssets(file, { omitEalingOak = false } = {}) {
   let svg = await readFile(file, "utf8");
-  const refs = [...svg.matchAll(/href="(\/[^\"]+\.(?:svg|webp|png|jpe?g))"/gi)];
+  if (omitEalingOak) {
+    svg = svg.replace(/\s*<image href="\/brand\/ealing-oak-approved\.webp"[^>]*\/>/i, "");
+  }
 
+  const refs = [...svg.matchAll(/href="(\/[^\"]+\.(?:svg|webp|png|jpe?g))"/gi)];
   for (const [, href] of refs) {
     const assetPath = path.join(publicDir, href.replace(/^\//, ""));
     const asset = await readFile(assetPath);
@@ -43,13 +47,30 @@ for (const file of files) {
   const input = path.join(sourceDir, file);
   const slug = file.replace(/\.svg$/i, "");
   const output = path.join(outputDir, `${slug}.jpg`);
-  const source = await svgWithEmbeddedAssets(input);
+  const source = await svgWithEmbeddedAssets(input, { omitEalingOak: slug === "ealing" });
 
-  await sharp(source, { density: 144 })
-    .resize(1200, 630, { fit: "cover" })
-    .flatten({ background: "#0f4a37" })
-    .jpeg({ quality: 90, progressive: true, chromaSubsampling: "4:4:4" })
-    .toFile(output);
+  if (slug === "ealing") {
+    const base = await sharp(source, { density: 144 })
+      .resize(1200, 630, { fit: "cover" })
+      .flatten({ background: "#0f4a37" })
+      .png()
+      .toBuffer();
+    const oak = await sharp(ealingOak)
+      .resize(300, 266, { fit: "contain" })
+      .png()
+      .toBuffer();
+
+    await sharp(base)
+      .composite([{ input: oak, left: 54, top: 64 }])
+      .jpeg({ quality: 90, progressive: true, chromaSubsampling: "4:4:4" })
+      .toFile(output);
+  } else {
+    await sharp(source, { density: 144 })
+      .resize(1200, 630, { fit: "cover" })
+      .flatten({ background: "#0f4a37" })
+      .jpeg({ quality: 90, progressive: true, chromaSubsampling: "4:4:4" })
+      .toFile(output);
+  }
 
   console.log(`Rendered ${path.basename(output)}`);
 
