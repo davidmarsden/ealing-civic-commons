@@ -11,7 +11,7 @@ const TOWN_IMAGE = {
   Perivale: 'perivale',
   Southall: 'southall'
 };
-const SOCIAL_CARD_VERSION = '20260914-oak-1';
+const SOCIAL_CARD_VERSION = '20260914-oak-2';
 
 const identity = {
   siteName: 'Ealing Civic Commons',
