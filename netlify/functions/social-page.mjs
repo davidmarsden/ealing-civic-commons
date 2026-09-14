@@ -11,6 +11,7 @@ const TOWN_IMAGE = {
   Perivale: 'perivale',
   Southall: 'southall'
 };
+const SOCIAL_CARD_VERSION = '20260914-oak-1';
 
 const identity = {
   siteName: 'Ealing Civic Commons',
@@ -171,8 +172,9 @@ export default async request => {
   catch (error) { console.error('Social metadata lookup failed', error); }
 
   const socialIdentity = meta?.socialIdentity || identity;
-  const imageUrl = `${origin}/brand/social/${socialIdentity.imageKey}.jpg`;
-  const body = inject(await shellResponse.text(), meta, canonical, imageUrl, socialIdentity);
+  const imageUrl = new URL(`/brand/social/${socialIdentity.imageKey}.jpg`, origin);
+  imageUrl.searchParams.set('v', SOCIAL_CARD_VERSION);
+  const body = inject(await shellResponse.text(), meta, canonical, imageUrl.href, socialIdentity);
   return new Response(body, {
     status: 200,
     headers: {
