@@ -15,7 +15,7 @@ const BOROUGH = {
   description: 'Local reporting, community voices and official democratic records connected across the London Borough of Ealing.'
 };
 
-const SOCIAL_CARD_VERSION = '20260914-oak-1';
+const SOCIAL_CARD_VERSION = '20260914-oak-2';
 
 function isEalingHost(hostname) {
   const host = hostname.toLowerCase();
