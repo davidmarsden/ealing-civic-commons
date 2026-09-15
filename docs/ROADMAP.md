@@ -1,6 +1,6 @@
 # Ealing Civic Commons — roadmap
 
-**Updated:** 8 September 2026  
+**Updated:** 9 September 2026  
 **Status:** Public working roadmap
 
 This is the canonical implementation-level roadmap for the Ealing Civic Commons implementation. The public version lives at `/roadmap.html`. The wider Civic Commons network front door is **[civiccommons.co.uk](https://civiccommons.co.uk/)**; local and borough subdomains should always retain a visible route back to it.
@@ -47,6 +47,24 @@ The key design decision remains explicit: **the place is the durable civic objec
 
 Ealing Council's planning register remains canonical. Civic Commons does not mirror planning documents, drawings or mapping tiles, and planning applicants are not automatically turned into civic profiles.
 
+## September 2026 source milestone — structured culture without becoming a listings site
+
+Ealing Culture is now integrated through its public WordPress REST API as an official civic-context source.
+
+The integration deliberately does **not** reproduce Ealing Culture's full “What's on?” or Creative Directory experience. Instead:
+
+- Ealing Culture news can enter the normal provenance-rich civic timeline;
+- events require explicit civic/community signals such as public art, libraries, heritage/local history, community activity, consultation/regeneration, green space, youth/schools, accessibility or inclusion;
+- routine entertainment/listings remain on the canonical Ealing Culture site;
+- venue and creative records are retained as reference data for possible future graph/entity matching rather than published as Commons directories;
+- Creative Directory entries do not automatically become civic people profiles;
+- `All Ealing` remains a viewer-level no-geographic-filter choice, while source `Boroughwide` metadata and cross-boundary `Park Royal` remain distinct concepts;
+- source health and upstream REST failures stay visible.
+
+This is now an explicit source-governance pattern: **a rich source can contribute civic context without Civic Commons cloning the source's whole product.** The event filter should be tuned from observed live results rather than assumed perfect at launch.
+
+See [Ealing Culture integration](./ealing-culture-integration.md).
+
 ## Entity completeness standard
 
 A civic entity is not considered complete merely because it has a stable ID and name. Before an entity is treated as finished it should have, at minimum:
@@ -62,7 +80,7 @@ Explore and the entity APIs should expose missing-description/source audits so i
 
 **Status: complete**
 
-The original read-only Civic Commons foundation is live: server-side RSS/Atom ingestion and normalisation; chronological provenance-rich timelines; video/YouTube ingestion; filtered London-wide sources; monitored structured/public pages; town/topic/source-class filtering; visible source health; source submissions; Ealing Council news feeds; Document Watch; selected City Hall/London Assembly material; filtered Met material; Open Council Network public Ealing summaries; ModernGov publication events; and a growing range of community, education, faith, campaign, commentary and local political sources.
+The original read-only Civic Commons foundation is live: server-side RSS/Atom ingestion and normalisation; structured first-party API adapters; chronological provenance-rich timelines; video/YouTube ingestion; filtered London-wide sources; monitored structured/public pages; town/topic/source-class filtering; visible source health; source submissions; Ealing Council news feeds; selective Ealing Culture civic-context ingestion; Document Watch; selected City Hall/London Assembly material; filtered Met material; Open Council Network public Ealing summaries; ModernGov publication events; and a growing range of community, education, faith, campaign, commentary and local political sources.
 
 Further source discovery, registry migration, parser resilience and upstream interoperability are now normal operations / Phase 8 work rather than unfinished Phase 1 scope.
 
@@ -133,6 +151,8 @@ Live now:
 
 - Ealing Council main news RSS;
 - council category feeds used as enrichment rather than duplicate publishers;
+- **Ealing Culture WordPress REST integration as selective official civic context rather than a duplicate “What's on?” service**;
+- Ealing Culture venue/creative collections retained as reference-only data, with no automatic civic-profile promotion;
 - 47 council document-download feeds registered;
 - curated Document Watch collections with freshness states;
 - dedicated `/document-watch.html` filtering;
@@ -151,7 +171,8 @@ Next improvements:
 - links between retained planning, committees, decisions, documents and reporting where deterministic/reviewed;
 - better direct ModernGov destinations and meeting/document relationships;
 - transcript/caption enrichment for official video while keeping original video canonical;
-- better document search/indexing and preservation of high-value evidence streams.
+- better document search/indexing and preservation of high-value evidence streams;
+- monitor/tune Ealing Culture civic-event inclusion from live results so useful events appear without ordinary listings crowding the timeline.
 
 ## Phase 6 — Reviewed civic graph, place memory and research context
 
@@ -186,7 +207,8 @@ Still open:
 - extend planning decisions/status observations as historical place evidence;
 - connect archived official documents/notices/videos to issues, entities and earlier reporting;
 - automate validation so newly introduced incomplete entities are flagged early;
-- expand reviewed specific-site relationships only where there is a clear civic-memory benefit.
+- expand reviewed specific-site relationships only where there is a clear civic-memory benefit;
+- define when reference-only datasets such as Ealing Culture venues should be promoted into reviewed place/organisation relationships, if at all.
 
 ## Phase 7 — Structured review and civic knowledge
 
@@ -238,7 +260,7 @@ The constitutional rule remains: suggestions can propose civic knowledge; they m
 
 Already automated:
 
-- combined feed aggregation across RSS/Atom, video, filtered broad-area sources, monitored public pages and official-source adapters;
+- combined feed aggregation across RSS/Atom, video, filtered broad-area sources, monitored public pages, structured first-party APIs and official-source adapters;
 - scheduled email delivery;
 - scheduled civic-item archiving;
 - browsable persistent Civic Archive;
@@ -246,6 +268,7 @@ Already automated:
 - entity descriptions exported from curated research notes;
 - source-health collection with public-friendly status language and debug diagnostics;
 - adapter patterns for external sources that block or distort normal server-side access;
+- selective civic filtering for high-volume/general-purpose source surfaces such as EALING.NEWS and Ealing Culture events;
 - **planning ingestion/validation/latest-snapshot + durable-archive generation separated from Netlify builds**;
 - weekly/manual planning refresh using one continuing review branch so unmerged archive additions carry into later runs;
 - fail-closed planning publication when discovered/normalised counts do not reconcile;
@@ -255,13 +278,14 @@ Next:
 
 - fuller planning lifecycle/version observation, especially decisions/status changes;
 - scalable/sharded archive indexing rather than indefinite whole-store scans;
-- stronger feed/planning parser regression tests;
+- stronger feed/planning/parser regression tests, including structured REST/taxonomy drift where relevant;
 - registry-driven source configuration and safer source lifecycle handling;
 - better private source-health review tooling and alerts;
 - searchable/grouped source facets as the source universe grows;
 - automated completeness checks for public entities/provider links;
 - planning snapshot/archive freshness monitoring;
-- safer refresh/version handling across research, planning and live civic items.
+- safer refresh/version handling across research, planning and live civic items;
+- evidence-led tuning of civic-interest filters so broad source surfaces remain useful without overwhelming quieter material.
 
 ## Public presentation, subdomains and town views
 
@@ -276,6 +300,8 @@ The navigation hierarchy is explicit:
 - **Southall doorway:** `commons.southallstories.uk` redirects into the Southall-filtered Ealing view.
 
 Entity and issue dossier presentation is standardised around clickable cards. Current context appears before the deeper research dossier, reducing endless-scroll pages without hiding evidence/history. Section navigation must always follow the same order as the rendered cards.
+
+Geographic UI semantics must remain distinct from source metadata: `All Ealing` means “show every town” at viewer level; it is not interchangeable with a publisher's `Boroughwide` label. Cross-boundary source geography such as Park Royal must not silently become an eighth Ealing town.
 
 Still open:
 
@@ -299,16 +325,19 @@ The Commons should preserve its own public URLs, source provenance, stable item/
 5. **Improve archive/search indexing** so growth from dozens of sources to hundreds remains fast and complete.
 6. **Finish the public entity completeness audit** and automate checks for newly incomplete records.
 7. **Harden official-source ingestion** — ModernGov destinations/relationships, planning parser tests, caching and preservation of high-value primary records.
-8. **Finish town-aware sharing** by restoring metadata rendering for stable item/entity URLs.
-9. **Continue deliberate source expansion by geographic/thematic gap**, especially Perivale, while keeping fragile upstreams visible through source health.
-10. **Explore OCN partnership/API and later federation bridges** without making either a dependency.
+8. **Monitor and tune broad-source civic filters**, beginning with Ealing Culture events, from observed live results rather than letting generic listings crowd the timeline.
+9. **Finish town-aware sharing** by restoring metadata rendering for stable item/entity URLs.
+10. **Continue deliberate source expansion by geographic/thematic gap**, especially Perivale, while keeping fragile upstreams visible through source health.
+11. **Explore OCN partnership/API and later federation bridges** without making either a dependency.
 
 ## Non-negotiable design boundaries
 
 - Original publishers and official registers remain canonical.
 - Provenance stays visible, but public wording should be understandable without knowing the ingestion architecture.
 - A bare name is not a finished civic entity.
-- A person named in a planning/public register is not automatically a civic-profile candidate.
+- A person named in a planning/public register or source directory is not automatically a civic-profile candidate.
+- Rich source APIs/directories can remain reference-only; integration does not require Civic Commons to clone the publisher's entire product.
+- `All Ealing` is a viewer filter, not publisher geography; `Boroughwide` and cross-boundary source labels remain source metadata.
 - Places are durable civic-memory objects; weekly planning snapshots and feeds are transient inputs, while explicitly retained planning records can become durable memory.
 - Specific site relationships should be reviewed/explicit rather than silently inferred through fuzzy text matching.
 - Historical and current organisations must be framed temporally rather than flattened together.
@@ -318,6 +347,3 @@ The Commons should preserve its own public URLs, source provenance, stable item/
 - No behavioural advertising.
 - No compulsory closed-platform identity.
 - The Commons must remain useful when any one external service is unavailable.
-- Every local or borough subdomain must retain a visible route back to **[civiccommons.co.uk](https://civiccommons.co.uk/)**.
-
-**Publish anywhere. Connect locally. Participate openly. Remember civically.**

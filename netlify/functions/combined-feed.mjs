@@ -10,6 +10,7 @@ import { fetchBoroughTownSources } from './borough-town-sources.mjs';
 import { fetchMetEalingFeed } from './met-ealing-feed.mjs';
 import { fetchEalingCitizensFeed } from './ealing-citizens-feed.mjs';
 import { fetchEalingNewsFeed } from './ealing-news-feed.mjs';
+import { fetchEalingCultureFeed } from './ealing-culture-feed.mjs';
 import { fetchFilteredVideoFeed } from './filtered-video-feed.mjs';
 import { fetchFaithCommunityFeed } from './faith-community-feed.mjs';
 import { fetchLocalPoliticalEnvironmentFeed } from './local-political-environment-feed.mjs';
@@ -124,7 +125,7 @@ async function reviewedContextActivity() {
 }
 
 export default async request => {
-  const [localResponse, modernGov, gla, community, living, rich, stopTowers, victoriaHall, southallExtras, boroughTown, met, citizens, ealingNews, videos, faith, localPoliticalEnvironment, contextActivity] = await Promise.all([
+  const [localResponse, modernGov, gla, community, living, rich, stopTowers, victoriaHall, southallExtras, boroughTown, met, citizens, ealingNews, ealingCulture, videos, faith, localPoliticalEnvironment, contextActivity] = await Promise.all([
     localFeedHandler(request),
     fetchModernGovWhatsNew().catch(error => ({ items: [], health: [{ id: 'modern-gov', name: 'Ealing Council — ModernGov', homepage: 'https://ealing.moderngov.co.uk/', ok: false, status: 'upstream', error: String(error?.message || error), itemCount: 0 }] })),
     fetchGlaFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'gla-filtered', name: 'London City Hall / Assembly', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
@@ -138,6 +139,7 @@ export default async request => {
     fetchMetEalingFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'met-ealing', name: 'Metropolitan Police — Ealing', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchEalingCitizensFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'ealing-citizens', name: 'Ealing Citizens / Citizens UK', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchEalingNewsFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'ealing-news', name: 'EALING.NEWS', homepage: 'https://www.ealing.news/', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
+    fetchEalingCultureFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], references: { venues: [], creatives: [] }, health: [{ id: 'ealing-culture', name: 'Ealing Culture — Ealing Council', homepage: 'https://ealingculture.org/', ok: false, status: 'upstream', error: String(error?.message || error), itemCount: 0 }] })),
     fetchFilteredVideoFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'filtered-video', name: 'Filtered civic video sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchFaithCommunityFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'faith-community', name: 'Faith and community sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchLocalPoliticalEnvironmentFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'local-political-environment', name: 'Local political and environmental sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
@@ -150,14 +152,17 @@ export default async request => {
     items: (localRaw.items || []).filter(item => item.sourceId !== 'modern-gov'),
     health: (localRaw.health || []).filter(entry => entry.id !== 'modern-gov')
   };
-  const combined = dedupe([...(contextActivity || []), ...(modernGov.items || []), ...(local.items || []), ...(rich.items || []), ...(stopTowers.items || []), ...(victoriaHall.items || []), ...(southallExtras.items || []), ...(boroughTown.items || []), ...(gla.items || []), ...(community.items || []), ...(living.items || []), ...(met.items || []), ...(citizens.items || []), ...(ealingNews.items || []), ...(videos.items || []), ...(faith.items || []), ...(localPoliticalEnvironment.items || [])]);
+  const combined = dedupe([...(contextActivity || []), ...(modernGov.items || []), ...(local.items || []), ...(rich.items || []), ...(stopTowers.items || []), ...(victoriaHall.items || []), ...(southallExtras.items || []), ...(boroughTown.items || []), ...(gla.items || []), ...(community.items || []), ...(living.items || []), ...(met.items || []), ...(citizens.items || []), ...(ealingNews.items || []), ...(ealingCulture.items || []), ...(videos.items || []), ...(faith.items || []), ...(localPoliticalEnvironment.items || [])]);
   const items = coveragePreservingSlice(combined);
-  const health = alphabetiseHealth([...(modernGov.health || []), ...(local.health || []), ...(rich.health || []), ...(stopTowers.health || []), ...(victoriaHall.health || []), ...(southallExtras.health || []), ...(boroughTown.health || []), ...(gla.health || []), ...(community.health || []), ...(living.health || []), ...(met.health || []), ...(citizens.health || []), ...(ealingNews.health || []), ...(videos.health || []), ...(faith.health || []), ...(localPoliticalEnvironment.health || [])]);
+  const health = alphabetiseHealth([...(modernGov.health || []), ...(local.health || []), ...(rich.health || []), ...(stopTowers.health || []), ...(victoriaHall.health || []), ...(southallExtras.health || []), ...(boroughTown.health || []), ...(gla.health || []), ...(community.health || []), ...(living.health || []), ...(met.health || []), ...(citizens.health || []), ...(ealingNews.health || []), ...(ealingCulture.health || []), ...(videos.health || []), ...(faith.health || []), ...(localPoliticalEnvironment.health || [])]);
 
   return new Response(JSON.stringify({
     generatedAt: new Date().toISOString(),
     items,
     health,
+    references: {
+      ealingCulture: ealingCulture.references || { venues: [], creatives: [] }
+    },
     enrichment: {
       ...(local.enrichment || {}),
       modernGovPublishing: { included: modernGov.items?.length || 0, method: 'Official Ealing ModernGov RSS publication events transported through a public RSS reader because direct server-to-server access is blocked upstream; original ModernGov publisher links are retained and event GUIDs/dedupe keys preserve separate agenda, minutes and decision publications even when they share a destination.' },
@@ -173,6 +178,7 @@ export default async request => {
       metropolitanPoliceEaling: { included: met.items?.length || 0, method: 'Official Met newsroom items filtered for explicit Ealing-area terms plus content-hashed current priorities for Southall/Norwood Green Safer Neighbourhood teams.' },
       ealingCitizens: { included: citizens.items?.length || 0, method: 'Citizens UK West London news archive filtered for explicit Ealing-area relevance.' },
       ealingNews: { included: ealingNews.items?.length || 0, archiveCandidates: ealingNews.archiveItems?.length || 0, method: 'EALING.NEWS main RSS is filtered conservatively for council, democracy, housing, planning, environment, public services, transport, education, health, policing and other explicit civic-interest signals. Routine sport, food/drink, reviews, event listings and commercial promotion are excluded; publisher opinion is retained with an explicit Opinion content label.' },
+      ealingCulture: { included: ealingCulture.items?.length || 0, venues: ealingCulture.references?.venues?.length || 0, creatives: ealingCulture.references?.creatives?.length || 0, method: 'Official Ealing Culture WordPress REST collections. News and events are surfaced as attributed official-source items; venue and creative-directory entries remain reference-only and preserve all source locations. Creative listings are never auto-promoted into civic person profiles.' },
       filteredCivicVideo: { included: videos.items?.length || 0, method: 'Official YouTube Atom feeds filtered to retain explicit local/civic material and suppress routine high-frequency worship/video output.' },
       faithCommunity: { included: faith.items?.length || 0, method: 'First-party faith/community and education pages monitored only for civic, interfaith, outreach or explicitly local public-interest material.' },
       localPoliticalEnvironment: { included: localPoliticalEnvironment.items?.length || 0, method: 'First-party LAGER Can blog and local party publication pages. All four political parties use the same source class and extraction rules; political claims remain attributable to the publishing party. LAGER Can is read from its blog rather than the compromised/spam-injected homepage body.' }

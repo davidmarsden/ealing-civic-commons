@@ -17,6 +17,28 @@ for (const slug of socialSlugs) {
   console.log(`${slug}.jpg ${info.size} bytes`);
 }
 
+const ealingCard = path.resolve("dist/brand/social/ealing.jpg");
+const oakStats = await sharp(ealingCard)
+  .extract({ left: 54, top: 64, width: 300, height: 266 })
+  .stats();
+const oakVariation = Math.max(...oakStats.channels.slice(0, 3).map(channel => channel.stdev));
+if (oakVariation < 5) {
+  throw new Error(`ealing.jpg oak region appears blank or nearly uniform (max channel stdev ${oakVariation.toFixed(2)})`);
+}
+console.log(`ealing.jpg oak-region variation ${oakVariation.toFixed(2)}`);
+
+const networkCard = path.resolve("dist/network/brand/social.jpg");
+await access(networkCard);
+const networkMetadata = await sharp(networkCard).metadata();
+const networkInfo = await stat(networkCard);
+if (networkMetadata.width !== 1200 || networkMetadata.height !== 630) {
+  throw new Error(`network social.jpg has unexpected dimensions ${networkMetadata.width}x${networkMetadata.height}`);
+}
+if (networkInfo.size < 10_000) {
+  throw new Error(`network social.jpg looks unexpectedly small (${networkInfo.size} bytes)`);
+}
+console.log(`network social.jpg 1200x630 ${networkInfo.size} bytes`);
+
 for (const slug of townSlugs) {
   const svg = path.resolve(`dist/brand/towns/${slug}.svg`);
   await access(svg);
