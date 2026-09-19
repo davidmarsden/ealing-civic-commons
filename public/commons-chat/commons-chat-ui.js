@@ -1,7 +1,7 @@
 (function () {
   const CIVIC_ORIGIN = "https://ealing.civiccommons.co.uk";
-  const REPORT_ENDPOINT = CIVIC_ORIGIN + "/.netlify/functions/commons-chat-report";
-  const GUIDELINES_URL = CIVIC_ORIGIN + "/community-guidelines/";
+  const REPORT_ENDPOINT = "https://deploy-preview-120--ealing-civic-commons.netlify.app/.netlify/functions/commons-chat-report";
+  const GUIDELINES_URL = "https://deploy-preview-120--ealing-civic-commons.netlify.app/community-guidelines/";
   const OAK_URL = CIVIC_ORIGIN + "/brand/ealing-oak-approved.webp";
   const params = new URLSearchParams (window.location.search);
   const commonsObjectUrl = params.get ("commonsObjectUrl");
