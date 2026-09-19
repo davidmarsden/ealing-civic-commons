@@ -1,5 +1,7 @@
 (function () {
   const CIVIC_ORIGIN = "https://ealing.civiccommons.co.uk";
+  const REPORT_ENDPOINT = CIVIC_ORIGIN + "/.netlify/functions/commons-chat-report";
+  const GUIDELINES_URL = CIVIC_ORIGIN + "/community-guidelines/";
   const OAK_URL = CIVIC_ORIGIN + "/brand/ealing-oak-approved.webp";
   const params = new URLSearchParams (window.location.search);
   const commonsObjectUrl = params.get ("commonsObjectUrl");
@@ -87,6 +89,18 @@
       mainMenu.appendChild (divider);
       mainMenu.appendChild (row);
     }
+
+    if (mainMenu && !mainMenu.querySelector (".commons-guidelines-link")) {
+      const row = document.createElement ("li");
+      row.className = "commons-guidelines-link";
+      const link = document.createElement ("a");
+      link.href = GUIDELINES_URL;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "Community guidelines";
+      row.appendChild (link);
+      mainMenu.appendChild (row);
+    }
   }
 
   function installContextBanner () {
@@ -153,12 +167,213 @@
     return "Civic Commons item";
   }
 
+  function closeReportDialog () {
+    const overlay = document.getElementById ("idCommonsReportOverlay");
+    if (overlay) overlay.remove ();
+  }
+
+  function plainPostExcerpt (item) {
+    const raw = item?.markdowntext || item?.description || item?.title || "";
+    const div = document.createElement ("div");
+    div.innerHTML = String (raw);
+    return (div.textContent || div.innerText || String (raw))
+      .replace (/\s+/g, " ")
+      .trim ()
+      .slice (0, 1000);
+  }
+
+  function reportPostUrl (item) {
+    if (item?.guid) return item.guid;
+    if (item?.id !== undefined) return window.location.origin + "/?id=" + encodeURIComponent (item.id);
+    return window.location.href;
+  }
+
+  function openReportDialog (item) {
+    closeReportDialog ();
+
+    const overlay = document.createElement ("div");
+    overlay.id = "idCommonsReportOverlay";
+    overlay.className = "commons-report-overlay";
+
+    const dialog = document.createElement ("section");
+    dialog.className = "commons-report-dialog";
+    dialog.setAttribute ("role", "dialog");
+    dialog.setAttribute ("aria-modal", "true");
+    dialog.setAttribute ("aria-labelledby", "idCommonsReportTitle");
+
+    const header = document.createElement ("header");
+    header.className = "commons-report-header";
+    const copy = document.createElement ("div");
+    const eyebrow = document.createElement ("p");
+    eyebrow.className = "commons-settings-eyebrow";
+    eyebrow.textContent = "Commons Chat";
+    const heading = document.createElement ("h1");
+    heading.id = "idCommonsReportTitle";
+    heading.textContent = "Report this post";
+    const intro = document.createElement ("p");
+    intro.textContent = "Reports go to the Civic Commons moderation queue. Reporting a post does not remove it automatically.";
+    copy.append (eyebrow, heading, intro);
+    const close = document.createElement ("button");
+    close.type = "button";
+    close.className = "commons-settings-close";
+    close.setAttribute ("aria-label", "Close");
+    close.textContent = "×";
+    close.addEventListener ("click", closeReportDialog);
+    header.append (copy, close);
+
+    const form = document.createElement ("div");
+    form.className = "commons-report-body";
+
+    const reasonLabel = document.createElement ("label");
+    reasonLabel.className = "commons-settings-field";
+    const reasonText = document.createElement ("span");
+    reasonText.className = "commons-settings-label";
+    reasonText.textContent = "Why are you reporting this?";
+    const reason = document.createElement ("select");
+    [
+      ["", "Choose a reason…"],
+      ["abuse-or-harassment", "Abuse or harassment"],
+      ["hate-or-discrimination", "Hate or discrimination"],
+      ["threats-or-safety", "Threats or immediate safety concern"],
+      ["spam-or-manipulation", "Spam or manipulation"],
+      ["private-information", "Private or personal information"],
+      ["other", "Something else"]
+    ].forEach (function (pair) {
+      const option = document.createElement ("option");
+      option.value = pair[0];
+      option.textContent = pair[1];
+      reason.appendChild (option);
+    });
+    reasonLabel.append (reasonText, reason);
+
+    const detailLabel = document.createElement ("label");
+    detailLabel.className = "commons-settings-field";
+    const detailText = document.createElement ("span");
+    detailText.className = "commons-settings-label";
+    detailText.textContent = "Anything the moderator should know? (optional)";
+    const details = document.createElement ("textarea");
+    details.rows = 4;
+    details.maxLength = 2000;
+    details.placeholder = "Add context that will help us review the post.";
+    detailLabel.append (detailText, details);
+
+    const standards = document.createElement ("p");
+    standards.className = "commons-report-guidelines";
+    const standardsLink = document.createElement ("a");
+    standardsLink.href = GUIDELINES_URL;
+    standardsLink.target = "_blank";
+    standardsLink.rel = "noopener noreferrer";
+    standardsLink.textContent = "Read the Community Guidelines ↗";
+    standards.append ("Not every disagreement is a moderation issue. ", standardsLink);
+
+    form.append (reasonLabel, detailLabel, standards);
+
+    const footer = document.createElement ("footer");
+    footer.className = "commons-settings-footer";
+    const status = document.createElement ("p");
+    status.className = "commons-settings-status";
+    status.setAttribute ("aria-live", "polite");
+    const buttons = document.createElement ("div");
+    buttons.className = "commons-settings-buttons";
+    const cancel = document.createElement ("button");
+    cancel.type = "button";
+    cancel.className = "commons-settings-cancel";
+    cancel.textContent = "Cancel";
+    cancel.addEventListener ("click", closeReportDialog);
+    const submit = document.createElement ("button");
+    submit.type = "button";
+    submit.className = "commons-settings-save";
+    submit.textContent = "Send report";
+
+    submit.addEventListener ("click", async function () {
+      if (!reason.value) {
+        status.textContent = "Choose a reason first.";
+        reason.focus ();
+        return;
+      }
+
+      submit.disabled = true;
+      cancel.disabled = true;
+      status.textContent = "Sending…";
+
+      let reportedBy = "";
+      try {
+        if (window.globals && globals.myRssNetwork && globals.myRssNetwork.userIsSignedIn ()) {
+          reportedBy = globals.myRssNetwork.getScreenname () || "";
+        }
+      } catch {}
+
+      try {
+        const response = await fetch (REPORT_ENDPOINT, {
+          method: "POST",
+          headers: {"content-type": "application/json"},
+          body: JSON.stringify ({
+            postId: String (item?.id ?? ""),
+            postUrl: reportPostUrl (item),
+            postAuthor: item?.author || item?.screenname || "",
+            excerpt: plainPostExcerpt (item),
+            reason: reason.value,
+            details: details.value.trim (),
+            reportedBy
+            })
+          });
+        const data = await response.json ().catch (function () { return {}; });
+        if (!response.ok) throw new Error (data.error || "The report could not be sent.");
+
+        status.textContent = "Report received. Thank you.";
+        submit.textContent = "Reported ✓";
+        window.setTimeout (closeReportDialog, 900);
+      }
+      catch (err) {
+        submit.disabled = false;
+        cancel.disabled = false;
+        status.textContent = err.message || "The report could not be sent.";
+      }
+    });
+
+    buttons.append (cancel, submit);
+    footer.append (status, buttons);
+    dialog.append (header, form, footer);
+    overlay.append (dialog);
+    overlay.addEventListener ("click", function (event) {
+      if (event.target === overlay) closeReportDialog ();
+    });
+    document.body.append (overlay);
+    reason.focus ();
+  }
+
+  function installReportControl (thread, item) {
+    if (!item || thread.find (".commons-report-button").length > 0) return;
+    const body = thread.find (".divTweetBody").first ();
+    if (!body.length) return;
+    const actions = body.find (".divTweetActions").first ();
+    if (!actions.length) return;
+
+    const button = document.createElement ("button");
+    button.type = "button";
+    button.className = "commons-report-button";
+    button.textContent = "Report";
+    button.title = "Report this post for moderation review";
+    button.addEventListener ("click", function (event) {
+      event.preventDefault ();
+      event.stopPropagation ();
+      openReportDialog (item);
+    });
+    actions.append (button);
+  }
+
   function decorateBoundPosts () {
     if (!window.jQuery) return;
     window.jQuery (".divThread").each (function () {
       const thread = window.jQuery (this);
       const item = thread.data ("item");
-      if (!item || !item.commonsObjectUrl || thread.find (".commons-object-card").length > 0) {
+      if (!item) {
+        return;
+      }
+
+      installReportControl (thread, item);
+
+      if (!item.commonsObjectUrl || thread.find (".commons-object-card").length > 0) {
         return;
       }
 
