@@ -412,6 +412,18 @@
 
     body.append (identity, account, writing, advanced);
 
+    const scrollHint = document.createElement ("div");
+    scrollHint.className = "commons-settings-scroll-hint";
+    scrollHint.setAttribute ("aria-hidden", "true");
+    scrollHint.textContent = "More settings below ↓";
+
+    function updateScrollHint () {
+      const canScroll = body.scrollHeight > body.clientHeight + 8;
+      const atBottom = body.scrollTop + body.clientHeight >= body.scrollHeight - 12;
+      scrollHint.hidden = !canScroll || atBottom;
+    }
+    body.addEventListener ("scroll", updateScrollHint, {passive: true});
+
     const footer = document.createElement ("footer");
     footer.className = "commons-settings-footer";
     const status = document.createElement ("p");
@@ -462,7 +474,7 @@
 
     buttons.append (cancel, save);
     footer.append (status, buttons);
-    dialog.append (header, body, footer);
+    dialog.append (header, body, scrollHint, footer);
     overlay.append (dialog);
 
     overlay.addEventListener ("click", function (event) {
@@ -476,6 +488,8 @@
     });
 
     document.body.append (overlay);
+    window.requestAnimationFrame (updateScrollHint);
+    window.addEventListener ("resize", updateScrollHint, {once: true});
     nameInput.focus ();
   }
 
