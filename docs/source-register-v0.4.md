@@ -79,6 +79,7 @@ The following named source surfaces are configured in the current live aggregati
 | Ealing Conservatives — News | Borough-wide | Political organisation / campaign | First-party local news/publication page; same political-source treatment as other parties | **INGESTING** |
 | Ealing Green Party — News | Borough-wide | Political organisation / campaign | First-party news page; same political-source treatment as other parties | **INGESTING** |
 | Ealing Liberal Democrats — News | Borough-wide | Political organisation / campaign | First-party local news page; same political-source treatment as other parties | **INGESTING** |
+| Rupa Huq MP — News | Ealing / Acton | Elected representative / political publishing | Dated first-party article links from the MP’s website; political claims remain attributable to the publisher and current office metadata remains anchored to Parliament | **INGESTING** |
 | Hanwell Community Forum | Hanwell | Community forum | First-party site monitored for safely dated community/civic publications; health remains visible if the upstream site is unavailable or exposes no current dated items | **INGESTING** |
 | Southall Community Alliance | Southall | Community alliance / charity | First-party news section; article metadata and scoped article content extracted conservatively | **INGESTING** |
 | Norwood Green Residents’ Association | Southall / Norwood Green | Residents / community | Current first-party residents’ site monitored for safely dated civic/community publications | **INGESTING** |
@@ -131,6 +132,9 @@ The key rule from now on is simple: **READY/VERIFIED must never be used as a syn
 | Hanger Hill (East) Residents’ Association | Ealing | Residents / planning | **PARTNER** | Active site; native feed unclear. |
 | Hanger Hill Garden Estate Residents’ Association | Ealing | Residents / conservation | **PARTNER** | Site/news present; RSS not yet verified. |
 | Grand Union Alliance | Multi-area canal corridor | Environment / planning / community | **PARTNER** | Potentially relevant across Greenford, Southall and Old Oak. |
+| Deirdre Costigan MP — personal site | Ealing Southall | Elected representative / political publishing | **REFERENCE** | First-party site confirmed, but it still contains stale 2024 candidate/“next MP” copy. Parliament is authoritative for her current MP status; verify a safely dated current publication surface before live ingestion. |
+| James Murray MP — personal site | Ealing North | Elected representative / political publishing | **REFERENCE** | First-party site confirmed and useful for biography/contact/campaign context; no dependable fresh dated publication listing has yet been verified. |
+| Peter Mason — personal site | Borough-wide / Southall Green | Elected representative / political publishing | **REFERENCE** | First-party personal site confirmed. Current council leadership is verified against Ealing Council/ModernGov; no dependable dated publication stream has yet been verified from the personal site. |
 
 This table is intentionally conservative. A source is not promoted to `INGESTING` merely because a feed exists.
 
@@ -175,7 +179,8 @@ A thin register must not be interpreted as thin civic life. Gaps should trigger 
 - High-volume official feeds must not crowd quieter civic publishers out of the live view.
 - High-volume general-news feeds should be filtered for civic relevance so they do not crowd quieter civic publishers out of the live view.
 - Local party-political publishing is a legitimate civic source class, but all significant local parties should be integrated on equivalent terms and clearly distinguished from official council records.
-- Political claims and campaign language remain attributable to the publishing party; ingestion is not endorsement or verification by Civic Commons.
+- Political claims and campaign language remain attributable to the publishing party or representative; ingestion is not endorsement or verification by Civic Commons.
+- Current elected-office metadata must be anchored to official democratic records (for example Parliament or Ealing Council/ModernGov), not inferred from personal or campaign websites that may contain stale role copy.
 - Routine document publishing belongs in Document Watch/civic memory rather than automatically dominating the attention timeline.
 - Source failures should be visible through health diagnostics rather than silently disappearing.
 - The register should be updated in the same PR whenever a source is added, removed, materially reworked or reclassified.

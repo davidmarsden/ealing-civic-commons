@@ -35,6 +35,7 @@ Status values:
 | St John's Southall Green | community / faith | live living-page watch | Community/outreach programme monitored; routine worship content is not used as civic news. |
 | West London College | community / education | live, local civic-filtered | Dated college news admitted for explicit Ealing/Southall/public-interest relevance. |
 | Villiers High School | community / education | live, local civic-filtered | Family Bulletin monitored for Southall/community/council/policing/public-interest material; ordinary school notices are filtered out. |
+| Rupa Huq MP | elected representative / political publishing | live | First-party dated news articles from rupahuq.org.uk; publication claims remain attributable to Huq. Current office/constituency metadata must be verified against Parliament rather than inferred from campaign-site copy. |
 
 ## High-priority verified/reference sources
 
@@ -43,6 +44,9 @@ Status values:
 | Ealing Law Centre | legal / community organisation | verified reference source | Housing, immigration, welfare rights and social-justice material; seek a stable updates surface before live ingestion. |
 | London Assembly ModernGov | official record | verified | Meeting documents; useful companion to Assembly video and City Hall RSS. |
 | Bassam Mahfouz AM | elected representative | live graph / verified source | Current Assembly roles are reviewed graph evidence. |
+| Deirdre Costigan MP | elected representative / political publishing | verified reference source | First-party site confirmed, but its current pages still contain 2024 candidate/“next MP” campaign copy despite Costigan being the sitting Ealing Southall MP. Do not use the site as authority for current office metadata; seek a safely dated current publication surface before ingestion. |
+| James Murray MP | elected representative / political publishing | verified reference source | First-party Ealing North MP site confirmed; useful for biography, contact and campaign/publication context, but no dependable fresh dated listing has yet been verified for live ingestion. |
+| Peter Mason | elected representative / political publishing | verified reference source | First-party personal site confirmed for the current Ealing Council leader; useful for stated roles and policy/campaign context, but no dependable dated publication stream has yet been verified. Current council role remains anchored to Ealing Council/ModernGov. |
 | The Kings Centre Southall | community / faith | verified reference source | First-party identity/site confirmed; no durable current-news feed yet. |
 | Guru Nanak Darbar Southall | community / faith | verified first-party source | First-party gurdwara site with media/kirtan resources; identify civic/community updates suitable for selective ingestion. |
 | Ramgarhia Sabha Southall | community / faith | verified entity/source lead | Canonical Commons identity added; continue first-party source verification before live ingestion. |
@@ -86,4 +90,5 @@ The inclusion rule is **civic relevance, not theology**: routine worship/service
 7. Captions/transcripts may be derived searchable text but never replace the canonical video/source.
 8. Third-party reporting is evidence about an organisation, not a substitute for that organisation's own source channel.
 9. Faith/community sources are selected on civic/public-interest output, not religious tradition; apply the same rule consistently across faiths and non-faith civic institutions.
-10. Political organisations are treated as attributed political sources, not neutral official records; candidacy, elected office and formal council status must remain distinct facts.
+10. Political organisations and elected representatives’ personal sites are treated as attributed political sources, not neutral official records; candidacy, elected office and formal council status must remain distinct facts.
+11. Current elected-office metadata should come from the relevant official democratic record (for example Parliament or Ealing Council/ModernGov), not from potentially stale campaign-site biography copy.
