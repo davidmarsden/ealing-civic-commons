@@ -59,6 +59,18 @@ const sources = [
     defaultTopics: ['Council & democracy']
   },
   {
+    id: 'rupa-huq-news',
+    name: 'Rupa Huq MP — News',
+    url: 'https://www.rupahuq.org.uk/',
+    homepage: 'https://www.rupahuq.org.uk/',
+    sourceClass: 'Political representative / campaign',
+    contentLabel: 'First-party elected-representative publishing',
+    type: 'political',
+    towns: ['Ealing', 'Acton'],
+    articlePattern: /^\/\d{4}\/\d{2}\/\d{2}\/[a-z0-9-]+\/?$/i,
+    defaultTopics: ['Council & democracy', 'Community']
+  },
+  {
     id: 'hanwell-community-forum',
     name: 'Hanwell Community Forum',
     url: 'https://hanwellcommunityforum.org.uk/',
