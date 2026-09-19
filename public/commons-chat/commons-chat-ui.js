@@ -17,16 +17,16 @@
           const row = link.closest ("li");
           if (row) row.style.display = "none";
         }
-        else {
+        else if (link.textContent !== text) {
           link.textContent = text;
         }
       }
     });
   }
 
-  function replaceExactText (from, to) {
-    document.querySelectorAll ("body *").forEach (function (el) {
-      if (el.children.length === 0 && el.textContent.trim () === from) {
+  function replaceInterfaceText (selector, from, to) {
+    document.querySelectorAll (selector).forEach (function (el) {
+      if (el.textContent.trim () === from && el.textContent !== to) {
         el.textContent = to;
       }
     });
@@ -49,7 +49,7 @@
     }
 
     const mainToggle = document.querySelector ("#idMainMenu > a");
-    if (mainToggle) {
+    if (mainToggle && mainToggle.childNodes.length > 0 && mainToggle.childNodes[0].nodeValue !== "More ") {
       mainToggle.childNodes[0].nodeValue = "More ";
     }
 
@@ -66,11 +66,11 @@
     setTextForOnclick ("createAccountCommand", "Join Commons Chat…", false);
     setTextForOnclick ("signInCommand", "Sign in…", false);
 
-    replaceExactText ("Home", "Conversations");
-    replaceExactText ("New post", "Start a conversation");
-    replaceExactText ("Your feed", "My posts");
-    replaceExactText ("Your prefs", "Profile & settings");
-    replaceExactText ("Post", "Publish");
+    replaceInterfaceText (".divIconsContainer .spanIconLabel", "Home", "Conversations");
+    replaceInterfaceText (".divIconsContainer .spanIconLabel", "New post", "Start a conversation");
+    replaceInterfaceText (".divIconsContainer .spanIconLabel", "Your feed", "My posts");
+    replaceInterfaceText (".divIconsContainer .spanIconLabel", "Your prefs", "Profile & settings");
+    replaceInterfaceText (".buttonPost", "Post", "Publish");
 
     const mainMenu = document.querySelector ("#idMainMenu .dropdown-menu");
     if (mainMenu && !mainMenu.querySelector (".commons-about-link")) {
