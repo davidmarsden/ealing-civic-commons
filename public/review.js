@@ -39,13 +39,14 @@ function card(record) {
   const submittedTitle = p.title || p.body?.slice(0,100) || `${record.kind} candidate`;
   const title = record.kind === 'item-contribution' && record.canonicalTarget?.title ? record.canonicalTarget.title : submittedTitle;
   const link = p.url || p.relatedUrl || p.originalUrl || p.commonsPermalink;
+  const linkLabel = record.kind === 'commons-chat-report' ? 'Open reported post ↗' : 'Open submitted source ↗';
   const privateBits = [priv.displayName && `Name: ${esc(priv.displayName)}`, priv.email && `Email: ${esc(priv.email)}`, priv.moderationContext && esc(priv.moderationContext)].filter(Boolean);
   const latest = Array.isArray(record.history) && record.history.length ? record.history[record.history.length - 1] : null;
   return `<article class="review-card" data-id="${esc(record.id)}">
     <div class="review-card-head"><div><div class="review-meta"><span class="review-kind">${esc(record.kind)}</span><span>${esc(record.source)}</span><span>${esc(fmtDate(record.createdAt))}</span></div><h2>${esc(title)}</h2></div><span class="review-state ${esc(record.status)}">${esc(stateLabel(record.status))}</span></div>
     ${p.body ? `<p class="review-body">${esc(p.body)}</p>` : ''}
     <div class="review-meta">${p.contributionType ? `<span>${esc(p.contributionType)}</span>` : ''}${p.noticeType ? `<span>${esc(p.noticeType)}</span>` : ''}${p.area ? `<span>${esc(p.area)}</span>` : ''}${p.reportReason ? `<span>Reason: ${esc(p.reportReason.replaceAll('-', ' '))}</span>` : ''}${p.postAuthor ? `<span>Post author: ${esc(p.postAuthor)}</span>` : ''}${(p.topics || []).map(topic => `<span>${esc(topic)}</span>`).join('')}</div>
-    ${link ? `<p class="review-link"><a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open submitted source ↗</a></p>` : ''}
+    ${link ? `<p class="review-link"><a href="${esc(link)}" target="_blank" rel="noopener noreferrer">${linkLabel}</a></p>` : ''}
     <p><small>${esc(record.provenance || '')}</small></p>${canonicalTarget(record)}${publicationState(record)}
     ${privateBits.length ? `<div class="review-private"><strong>Private moderation data</strong><br>${privateBits.join('<br>')}</div>` : ''}${decisionButtons(record)}
     ${latest ? `<div class="review-history">Last decision: ${esc(latest.reviewer)} · ${esc(stateLabel(latest.to))} · ${esc(fmtDate(latest.at))}${latest.note ? ` — ${esc(latest.note)}` : ''}</div>` : ''}
