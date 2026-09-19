@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>[%productNameForDisplay%]</title>
+		<title>Conversations — Ealing Civic Commons</title>
 		<meta charset="UTF-8">
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -52,20 +52,21 @@
 		<script src="//s3.amazonaws.com/scripting.com/code/rsschat/misc.js?x=2"></script>
 		<script src="https://code.scripting.com/rsschat/api.js?x=2"></script>
 		<link href="https://code.scripting.com/rsschat/styles.css?x=2" rel="stylesheet">
+		<link href="https://ealing.civiccommons.co.uk/commons-chat/commons-chat.css?v=20260919-1" rel="stylesheet">
 		<script src="https://code.scripting.com/rsschat/code.js?x=2"></script>
 		
 		<!-- Facebook metadata -->
 			<meta property="og:url" content="[%urlServerForClient%]" />
 			<meta property="og:type" content="website" />
 			<meta property="og:title" content="[%productNameForDisplay%]" />
-			<meta property="og:description" content="We're bootstrapping a network of twitter-like systems built out of components of the web and nothing more. Every part replaceable." />
+			<meta property="og:description" content="Local conversations connected to the civic record across Ealing." />
 			<meta property="og:site_name" content="[%productNameForDisplay%]" />
 		<!-- Twitter metadata -->
 			<meta name="twitter:card" content="summary_large_image">
 			<meta name="twitter:site" content="@davewiner">
 			<meta name="twitter:title" content="[%productNameForDisplay%]">
 			<meta name="twitter:url" content="[%urlServerForClient%]">
-			<meta name="twitter:description" content="We're bootstrapping a network of twitter-like systems built out of components of the web and nothing more. Every part replaceable.">
+			<meta name="twitter:description" content="Local conversations connected to the civic record across Ealing.">
 		
 		</head>
 	<body>
@@ -211,81 +212,7 @@
 		<div class="divChatContainer">
 			</div>
 
-		<script>
-			(function () {
-				const params = new URLSearchParams (window.location.search);
-				const commonsObjectUrl = params.get ("commonsObjectUrl");
-				if (!commonsObjectUrl) {
-					return;
-					}
-				const commonsObjectType = params.get ("commonsObjectType") || "item";
-				const commonsObjectTitle = params.get ("commonsObjectTitle") || "Civic Commons item";
-				const flCompose = params.get ("compose") === "1";
-				let flNetworkPatched = false;
-				let flComposerOpened = false;
-
-				function installContextBanner () {
-					if (document.getElementById ("idCommonsContextBanner")) {
-						return;
-						}
-					const container = document.querySelector (".divChatContainer");
-					if (!container) {
-						return;
-						}
-					const banner = document.createElement ("div");
-					banner.id = "idCommonsContextBanner";
-					banner.style.cssText = "margin:16px auto 0;max-width:940px;padding:12px 16px;border:1px solid #b8cdbd;border-radius:8px;background:#eef5ef;color:#24402b;font-family:Ubuntu,sans-serif;box-sizing:border-box;";
-					const label = document.createElement ("strong");
-					label.textContent = "Discussing: ";
-					const title = document.createElement ("span");
-					title.textContent = commonsObjectTitle;
-					const spacer = document.createTextNode (" · ");
-					const link = document.createElement ("a");
-					link.href = commonsObjectUrl;
-					link.target = "_blank";
-					link.rel = "noopener noreferrer";
-					link.textContent = "View civic item ↗";
-					link.style.cssText = "color:#23633a;font-weight:700;";
-					banner.append (label, title, spacer, link);
-					container.parentNode.insertBefore (banner, container);
-					}
-
-				function patchNetwork () {
-					if (flNetworkPatched || !window.globals || !globals.myRssNetwork) {
-						return;
-						}
-					const originalNewPost = globals.myRssNetwork.newPost.bind (globals.myRssNetwork);
-					globals.myRssNetwork.newPost = function (postRec, callback) {
-						if (postRec && postRec.commonsObjectUrl === undefined) {
-							postRec.commonsObjectUrl = commonsObjectUrl;
-							postRec.commonsObjectType = commonsObjectType;
-							}
-						return (originalNewPost (postRec, callback));
-						};
-					flNetworkPatched = true;
-					}
-
-				function openComposer () {
-					if (!flCompose || flComposerOpened || !window.globals || !globals.myChatUserInterface || !globals.myRssNetwork) {
-						return;
-						}
-					if (!globals.myRssNetwork.userIsSignedIn ()) {
-						return;
-						}
-					globals.myChatUserInterface.editNewItem ();
-					flComposerOpened = true;
-					}
-
-				const bridgeTimer = window.setInterval (function () {
-					installContextBanner ();
-					patchNetwork ();
-					openComposer ();
-					if (flNetworkPatched && (!flCompose || flComposerOpened)) {
-						window.clearInterval (bridgeTimer);
-						}
-					}, 100);
-				})();
-			</script>
+		<script src="https://ealing.civiccommons.co.uk/commons-chat/commons-chat-ui.js?v=20260919-1"></script>
 
 		<script>
 			$(document).ready (function () {
