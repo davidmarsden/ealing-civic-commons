@@ -11,7 +11,9 @@ async function api(path = '', options = {}) { const response = await fetch(`${AP
 function stateLabel(value) { return value === 'needs-info' ? 'Needs info' : value.charAt(0).toUpperCase() + value.slice(1); }
 
 function decisionButtons(record) {
-  const labels = [['accepted', record.kind === 'item-contribution' ? 'Accept & publish' : 'Accept'], ['needs-info','Needs info'], ['rejected','Reject']];
+  const acceptedLabel = record.kind === 'item-contribution' ? 'Accept & publish' : record.kind === 'commons-chat-report' ? 'Mark actioned' : 'Accept';
+  const rejectedLabel = record.kind === 'commons-chat-report' ? 'Dismiss' : 'Reject';
+  const labels = [['accepted', acceptedLabel], ['needs-info','Needs info'], ['rejected', rejectedLabel]];
   const decisions = labels.filter(([status]) => status !== record.status).map(([status,label]) => `<button type="button" data-decision="${status}">${label}</button>`).join('');
   const retry = record.kind === 'item-contribution' && record.status === 'accepted' && !record.publication?.published ? '<button type="button" data-reconcile-publication>Retry publish</button>' : '';
   return `<div class="review-decision">${retry}${decisions}</div>`;
@@ -42,7 +44,7 @@ function card(record) {
   return `<article class="review-card" data-id="${esc(record.id)}">
     <div class="review-card-head"><div><div class="review-meta"><span class="review-kind">${esc(record.kind)}</span><span>${esc(record.source)}</span><span>${esc(fmtDate(record.createdAt))}</span></div><h2>${esc(title)}</h2></div><span class="review-state ${esc(record.status)}">${esc(stateLabel(record.status))}</span></div>
     ${p.body ? `<p class="review-body">${esc(p.body)}</p>` : ''}
-    <div class="review-meta">${p.contributionType ? `<span>${esc(p.contributionType)}</span>` : ''}${p.noticeType ? `<span>${esc(p.noticeType)}</span>` : ''}${p.area ? `<span>${esc(p.area)}</span>` : ''}${(p.topics || []).map(topic => `<span>${esc(topic)}</span>`).join('')}</div>
+    <div class="review-meta">${p.contributionType ? `<span>${esc(p.contributionType)}</span>` : ''}${p.noticeType ? `<span>${esc(p.noticeType)}</span>` : ''}${p.area ? `<span>${esc(p.area)}</span>` : ''}${p.reportReason ? `<span>Reason: ${esc(p.reportReason.replaceAll('-', ' '))}</span>` : ''}${p.postAuthor ? `<span>Post author: ${esc(p.postAuthor)}</span>` : ''}${(p.topics || []).map(topic => `<span>${esc(topic)}</span>`).join('')}</div>
     ${link ? `<p class="review-link"><a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open submitted source ↗</a></p>` : ''}
     <p><small>${esc(record.provenance || '')}</small></p>${canonicalTarget(record)}${publicationState(record)}
     ${privateBits.length ? `<div class="review-private"><strong>Private moderation data</strong><br>${privateBits.join('<br>')}</div>` : ''}${decisionButtons(record)}
