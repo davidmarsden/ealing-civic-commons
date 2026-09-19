@@ -11,8 +11,8 @@ function routeKey() { const parts = window.location.pathname.split('/').filter(B
 function findItem(data, key) { return (data?.items || []).find(candidate => stableItemKey(candidate.id) === key); }
 function threadId(key) { return `civic-item:${key}`; }
 function safeHttpUrl(value) { if (!value) return null; try { const url = new URL(value, window.location.origin); return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null; } catch { return null; } }
-function commonsItemUrl() { return `${window.location.origin}${window.location.pathname}`; }
-function commonsChatUrl(item) { const url = new URL('https://chat-dev.ealing.civiccommons.co.uk/'); url.searchParams.set('commonsObjectUrl', commonsItemUrl()); url.searchParams.set('commonsObjectType', 'item'); url.searchParams.set('commonsObjectTitle', item.title || 'Civic Commons item'); url.searchParams.set('compose', '1'); return url.href; }
+function commonsItemUrl(item) { const key = stableItemKey(item.id); return `https://ealing.civiccommons.co.uk/items/${key}`; }
+function commonsChatUrl(item) { const url = new URL('https://chat-dev.ealing.civiccommons.co.uk/'); url.searchParams.set('commonsObjectUrl', commonsItemUrl(item)); url.searchParams.set('commonsObjectType', 'item'); url.searchParams.set('commonsObjectTitle', item.title || 'Civic Commons item'); url.searchParams.set('compose', '1'); return url.href; }
 
 function followButton(type, id, label, text) {
   const active = isFollowing(type, id);
