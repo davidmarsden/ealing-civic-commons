@@ -1,7 +1,7 @@
 # Civic Commons contribution moderation workflow
 
 **Status:** Phase 7B live workflow  
-**Updated:** 1 September 2026
+**Updated:** 20 September 2026
 
 The Civic Commons accepts item-level contributions through the Netlify `item-contribution` form. Those submissions are **private moderation inputs**, not automatically public comments.
 
@@ -110,3 +110,25 @@ Phase 7B automatic publication currently applies only to `item-contribution` rec
 `source-submission`, `evidence-suggestion` and `relationship-suggestion` records can be reviewed and accepted, but acceptance does **not** yet mean automatic public promotion. Phase 7C will add explicit promotion rules for those review kinds one at a time.
 
 The constitutional rule remains: entering or being accepted in the private review queue is not, by itself, publication or a reviewed public assertion.
+
+
+## Commons Chat reports
+
+Commons Chat now has a separate moderation path for conversational content.
+
+Every visible post has a **Report** control. Reports are sent to the Civic Commons review queue as `commons-chat-report` records and are rate-limited at the public endpoint. A report records the post URL and ID, reported author, selected reason, optional reporter context, and a bounded excerpt for review.
+
+The reporting categories are:
+
+- abuse or harassment;
+- hate or discrimination;
+- threats or immediate safety concerns;
+- spam or manipulation;
+- private or personal information;
+- other.
+
+A report **does not automatically hide, delete or demote a post**. It creates a private moderation task for human review. This is deliberate: the reporting system is not an engagement signal or a mechanism for voting down disagreement.
+
+In the review queue, Chat reports use **Mark actioned**, **Needs info**, and **Dismiss**. Marking a report actioned records the moderation decision; it does not yet execute a server-side deletion or account restriction automatically. Until those moderator actions are implemented, any removal or account restriction must be carried out explicitly on the Commons Chat server and noted in the review record.
+
+The public-facing rules for what may be moderated are published at `/community-guidelines/`. Moderation should distinguish robust civic disagreement from behaviour that creates abuse, intimidation, privacy or safety risks.
