@@ -309,9 +309,6 @@
           headers: {"content-type": "application/json"},
           body: JSON.stringify ({
             postId: String (item?.id ?? ""),
-            postUrl: reportPostUrl (item),
-            postAuthor: item?.author || item?.screenname || "",
-            excerpt: plainPostExcerpt (item),
             reason: reason.value,
             details: details.value.trim (),
             reportedBy
