@@ -423,6 +423,9 @@
       scrollHint.hidden = !canScroll || atBottom;
     }
     body.addEventListener ("scroll", updateScrollHint, {passive: true});
+    advanced.addEventListener ("toggle", function () {
+      window.requestAnimationFrame (updateScrollHint);
+    });
 
     const footer = document.createElement ("footer");
     footer.className = "commons-settings-footer";
