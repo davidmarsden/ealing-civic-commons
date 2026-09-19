@@ -33,7 +33,9 @@
   }
 
   function installBranding () {
-    document.title = "Conversations — Ealing Civic Commons";
+    if (document.title !== "Conversations — Ealing Civic Commons") {
+      document.title = "Conversations — Ealing Civic Commons";
+    }
 
     const brand = document.querySelector (".navbar .brand");
     if (brand && !brand.dataset.commonsBranded) {
@@ -199,15 +201,33 @@
     decorateBoundPosts ();
   }
 
-  const observer = new MutationObserver (function () {
-    tidyInterface ();
-  });
-  observer.observe (document.documentElement, {childList: true, subtree: true});
+  let chatObserver;
 
-  const timer = window.setInterval (tidyInterface, 250);
+  function startChatObserver () {
+    const chatContainer = document.querySelector (".divChatContainer");
+    if (!chatContainer || chatObserver) {
+      return;
+    }
+
+    chatObserver = new MutationObserver (function () {
+      decorateBoundPosts ();
+      installBranding ();
+    });
+
+    chatObserver.observe (chatContainer, {childList: true, subtree: true});
+  }
+
+  const timer = window.setInterval (function () {
+    tidyInterface ();
+    startChatObserver ();
+  }, 250);
+
   window.setTimeout (function () {
     window.clearInterval (timer);
   }, 15000);
 
-  document.addEventListener ("DOMContentLoaded", tidyInterface);
+  document.addEventListener ("DOMContentLoaded", function () {
+    tidyInterface ();
+    startChatObserver ();
+  });
 })();
