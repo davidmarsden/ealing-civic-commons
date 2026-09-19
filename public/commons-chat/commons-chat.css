@@ -1,0 +1,273 @@
+:root {
+  --cc-ink: #18221d;
+  --cc-muted: #68726c;
+  --cc-paper: #f6f4ee;
+  --cc-card: #fffdf8;
+  --cc-line: #d9d8cf;
+  --cc-green: #1f5b42;
+  --cc-green-dark: #173f30;
+  --cc-amber: #b25a26;
+  --cc-shadow: 0 10px 30px rgba(24,34,29,.06);
+}
+
+html, body {
+  background: var(--cc-paper) !important;
+  color: var(--cc-ink) !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+body { padding-top: 72px !important; }
+
+.navbar.navbar-fixed-top {
+  background: rgba(246,244,238,.97) !important;
+  border-bottom: 1px solid var(--cc-line) !important;
+  box-shadow: none !important;
+  min-height: 72px;
+}
+
+.navbar-inner {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  min-height: 72px !important;
+}
+
+.navbar .container {
+  width: min(1180px, calc(100% - 32px)) !important;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+}
+
+.navbar .brand {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px 0 0 !important;
+  margin: 0 !important;
+  color: var(--cc-ink) !important;
+  text-shadow: none !important;
+  text-decoration: none !important;
+}
+
+.commons-brand-oak {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.commons-brand-copy {
+  display: grid;
+  line-height: 1.05;
+}
+
+.commons-brand-name {
+  font-weight: 850;
+  letter-spacing: -.02em;
+  font-size: 17px;
+}
+
+.commons-brand-section {
+  color: var(--cc-muted);
+  font-size: 11px;
+  margin-top: 3px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-weight: 750;
+}
+
+.navbar .nav > li > a {
+  color: var(--cc-muted) !important;
+  text-shadow: none !important;
+  font-weight: 700;
+}
+
+.navbar .nav > li > a:hover,
+.navbar .nav > li > a:focus {
+  color: var(--cc-green) !important;
+}
+
+.navbar .nav.pull-right {
+  margin-left: auto !important;
+}
+
+#idDocsMenu { display: none !important; }
+
+.dropdown-menu {
+  border: 1px solid var(--cc-line) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--cc-shadow) !important;
+  background: var(--cc-card) !important;
+}
+
+.dropdown-menu > li > a {
+  color: var(--cc-ink) !important;
+}
+
+.dropdown-menu > li > a:hover,
+.dropdown-menu > li > a:focus {
+  background: #e8eee9 !important;
+  color: var(--cc-green-dark) !important;
+}
+
+.divChatContainer {
+  width: min(1180px, calc(100% - 32px)) !important;
+  margin: 0 auto !important;
+}
+
+.divChat {
+  background: transparent !important;
+}
+
+.divLeftColumn {
+  background: transparent !important;
+  border-right: 1px solid var(--cc-line) !important;
+}
+
+.divMiddleColumn {
+  background: transparent !important;
+}
+
+.divTweet {
+  background: var(--cc-card) !important;
+  border-color: var(--cc-line) !important;
+}
+
+.divThread {
+  border-color: var(--cc-line) !important;
+}
+
+.divTweetText {
+  color: #3f4943 !important;
+  font-size: 16px !important;
+  line-height: 1.55 !important;
+}
+
+.spanAuthor,
+.divProfileName {
+  color: var(--cc-ink) !important;
+  font-weight: 800 !important;
+}
+
+.aTimestamp,
+.divReplyingTo,
+.divProfileHandle {
+  color: var(--cc-muted) !important;
+}
+
+.buttonPost,
+.buttonReplyPost {
+  background: var(--cc-green) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  border: 0 !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+.buttonPost:hover,
+.buttonReplyPost:hover {
+  background: var(--cc-green-dark) !important;
+}
+
+.inputComposer,
+.inputReplyComposer,
+.textareaMarkdown {
+  border-color: var(--cc-line) !important;
+  background: var(--cc-card) !important;
+  color: var(--cc-ink) !important;
+  border-radius: 10px !important;
+}
+
+.spanFeedIcon,
+.aFeedIcon {
+  display: none !important;
+}
+
+#idCommonsContextBanner {
+  margin: 22px auto 8px;
+  max-width: 900px;
+  padding: 18px 20px;
+  border: 1px solid #bfd0c4;
+  border-radius: 12px;
+  background: #e8eee9;
+  color: var(--cc-ink);
+  box-shadow: var(--cc-shadow);
+}
+
+.commons-context-eyebrow {
+  margin: 0 0 5px;
+  color: var(--cc-green);
+  text-transform: uppercase;
+  letter-spacing: .11em;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.commons-context-title {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(22px, 3vw, 31px);
+  line-height: 1.08;
+  letter-spacing: -.02em;
+}
+
+.commons-context-copy {
+  margin: 8px 0 0;
+  color: #505a54;
+  font-size: 14px;
+}
+
+.commons-context-link,
+.commons-object-link {
+  color: var(--cc-green) !important;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.commons-object-card {
+  margin: 14px 0 2px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--cc-green);
+  border-radius: 0 9px 9px 0;
+  background: #eef3ef;
+}
+
+.commons-object-card strong {
+  display: block;
+  color: var(--cc-green-dark);
+  font-size: 13px;
+}
+
+.commons-object-card span {
+  display: block;
+  margin-top: 2px;
+  color: var(--cc-muted);
+  font-size: 12px;
+}
+
+.commons-object-card a {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.divThemeVersion { display: none !important; }
+
+@media (max-width: 720px) {
+  body { padding-top: 62px !important; }
+  .navbar.navbar-fixed-top,
+  .navbar-inner,
+  .navbar .container { min-height: 62px !important; }
+  .navbar .container {
+    width: calc(100% - 20px) !important;
+  }
+  .commons-brand-oak { width: 32px; height: 32px; }
+  .commons-brand-name { font-size: 15px; }
+  .commons-brand-section { font-size: 9px; }
+  .divChatContainer { width: calc(100% - 12px) !important; }
+  #idCommonsContextBanner { margin: 12px 6px 6px; }
+}
