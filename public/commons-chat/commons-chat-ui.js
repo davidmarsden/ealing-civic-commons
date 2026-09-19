@@ -88,7 +88,7 @@
   }
 
   function installContextBanner () {
-    if (!commonsObjectUrl || document.getElementById ("idCommonsContextBanner")) {
+    if (document.getElementById ("idCommonsContextBanner")) {
       return;
     }
     const container = document.querySelector (".divChatContainer");
@@ -96,14 +96,25 @@
 
     const banner = document.createElement ("section");
     banner.id = "idCommonsContextBanner";
-    banner.innerHTML =
-      '<p class="commons-context-eyebrow">Civic Commons discussion</p>' +
-      '<h1 class="commons-context-title"></h1>' +
-      '<p class="commons-context-copy">Your conversation will stay linked to this civic item, so people can move between the discussion and the public record.</p>' +
-      '<p class="commons-context-copy"><a class="commons-context-link" target="_blank" rel="noopener noreferrer">Back to the civic item ↗</a></p>';
-    banner.querySelector (".commons-context-title").textContent = commonsObjectTitle;
-    const link = banner.querySelector (".commons-context-link");
-    link.href = commonsObjectUrl;
+
+    if (commonsObjectUrl) {
+      banner.innerHTML =
+        '<p class="commons-context-eyebrow">Civic Commons discussion</p>' +
+        '<h1 class="commons-context-title"></h1>' +
+        '<p class="commons-context-copy">Talk about this civic item here. The conversation stays linked to the public record.</p>' +
+        '<p class="commons-context-copy"><a class="commons-context-link" target="_blank" rel="noopener noreferrer">Back to the civic item ↗</a></p>';
+      banner.querySelector (".commons-context-title").textContent = commonsObjectTitle;
+      const link = banner.querySelector (".commons-context-link");
+      link.href = commonsObjectUrl;
+    }
+    else {
+      banner.innerHTML =
+        '<p class="commons-context-eyebrow">Ealing Civic Commons</p>' +
+        '<h1 class="commons-context-title">Conversations</h1>' +
+        '<p class="commons-context-copy">A place to talk about what is happening across Ealing. Conversations started from a Civic Commons item stay connected to that public record.</p>' +
+        '<p class="commons-context-copy"><a class="commons-context-link" href="' + CIVIC_ORIGIN + '/">Browse the Civic Commons ↗</a></p>';
+    }
+
     container.parentNode.insertBefore (banner, container);
   }
 
