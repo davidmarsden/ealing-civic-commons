@@ -15,6 +15,18 @@ function commonsItemUrl(item) { const key = stableItemKey(item.id); return `http
 function commonsChatUrl(item) { const url = new URL('https://chat-dev.ealing.civiccommons.co.uk/'); url.searchParams.set('commonsObjectUrl', commonsItemUrl(item)); url.searchParams.set('commonsObjectType', 'item'); url.searchParams.set('commonsObjectTitle', item.title || 'Civic Commons item'); url.searchParams.set('compose', '1'); return url.href; }
 function commonsChatThreadUrl(thread) { const url = new URL('https://chat-dev.ealing.civiccommons.co.uk/'); if (thread?.id != null) url.searchParams.set('id', thread.id); return url.href; }
 function chatCountText(conversations, posts) { const c = Number(conversations || 0); const p = Number(posts || 0); if (c === 1) return p > 1 ? `1 conversation · ${p} posts` : '1 conversation'; return `${c} conversations${p ? ` · ${p} posts` : ''}`; }
+function conversationPreview(thread, maxLength = 180) {
+  const source = thread?.title || thread?.markdowntext || thread?.description || 'Open conversation';
+  const plain = String(source)
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/[*_~`>#-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (plain.length <= maxLength) return plain || 'Open conversation';
+  return plain.slice(0, maxLength - 1).trimEnd() + '…';
+}
 
 async function loadChatDiscussions(item) {
   const panel = $('#commonsChatDiscovery');
@@ -39,7 +51,7 @@ async function loadChatDiscussions(item) {
     action.href = commonsChatThreadUrl(threads[0]);
     const cards = threads.slice(0, 3).map(thread => {
       const author = esc(thread.author || thread.screenname || 'Local contributor');
-      const text = esc(thread.title || thread.markdowntext || thread.description || 'Open conversation');
+      const text = esc(conversationPreview(thread));
       const replies = Number(thread.ctPosts || 1) - 1;
       return `<a class="chat-thread-card" href="${esc(commonsChatThreadUrl(thread))}" target="_blank" rel="noopener noreferrer"><span class="chat-thread-author">${author}</span><strong>${text}</strong><span class="chat-thread-meta">${replies > 0 ? `${replies} ${replies === 1 ? 'reply' : 'replies'}` : 'No replies yet'} · Open conversation ↗</span></a>`;
     }).join('');
