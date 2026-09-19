@@ -1034,3 +1034,128 @@ body { padding-top: 72px !important; }
     flex: 1;
   }
 }
+
+
+/* Settings usability fixes: make scrolling obvious and keep native selects legible. */
+.commons-settings-overlay {
+  padding-top: 34px !important;
+  padding-bottom: 18px !important;
+}
+
+.commons-settings-dialog {
+  position: relative !important;
+  max-height: calc(100dvh - 52px) !important;
+}
+
+.commons-settings-header {
+  padding-top: 18px !important;
+  padding-bottom: 15px !important;
+}
+
+.commons-settings-header h1 {
+  font-size: clamp(26px, 3.6vw, 36px) !important;
+}
+
+.commons-settings-body {
+  scrollbar-width: auto;
+  scrollbar-color: #7f9788 #ebece7;
+}
+
+.commons-settings-body::-webkit-scrollbar {
+  width: 12px;
+}
+
+.commons-settings-body::-webkit-scrollbar-track {
+  background: #ebece7;
+  border-left: 1px solid var(--cc-line);
+}
+
+.commons-settings-body::-webkit-scrollbar-thumb {
+  background: #7f9788;
+  border: 3px solid #ebece7;
+  border-radius: 999px;
+}
+
+.commons-settings-scroll-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 72px;
+  z-index: 3;
+  transform: translateX(-50%);
+  padding: 7px 12px;
+  border: 1px solid #bfd0c4;
+  border-radius: 999px;
+  background: rgba(238,243,239,.96);
+  color: var(--cc-green-dark);
+  box-shadow: 0 5px 18px rgba(24,34,29,.12);
+  font-size: 12px;
+  font-weight: 850;
+  pointer-events: none;
+}
+
+.commons-settings-scroll-hint[hidden] {
+  display: none;
+}
+
+.commons-settings-editor {
+  max-width: 340px !important;
+}
+
+.commons-settings-editor select {
+  min-height: 44px !important;
+  height: 44px !important;
+  padding: 9px 38px 9px 12px !important;
+  border: 1px solid var(--cc-line) !important;
+  border-radius: 10px !important;
+  background-color: #fff !important;
+  color: var(--cc-ink) !important;
+  -webkit-text-fill-color: var(--cc-ink) !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 650 !important;
+  line-height: 1.2 !important;
+  text-indent: 0 !important;
+  text-shadow: none !important;
+  appearance: auto !important;
+  -webkit-appearance: menulist !important;
+  color-scheme: light !important;
+}
+
+.commons-settings-editor select option {
+  background: #fff !important;
+  color: #18221d !important;
+  -webkit-text-fill-color: #18221d !important;
+  font: 15px/1.2 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+@media (max-width: 900px) {
+  .commons-settings-overlay {
+    padding-top: 18px !important;
+    padding-bottom: 12px !important;
+  }
+
+  .commons-settings-dialog {
+    max-height: calc(100dvh - 30px) !important;
+  }
+
+  .commons-settings-header {
+    padding-top: 14px !important;
+    padding-bottom: 12px !important;
+  }
+
+  .commons-settings-header p:not(.commons-settings-eyebrow) {
+    margin-top: 6px !important;
+  }
+
+  .commons-settings-scroll-hint {
+    bottom: 70px;
+  }
+}
+
+@media (max-width: 640px) {
+  .commons-settings-scroll-hint {
+    bottom: 106px;
+    max-width: calc(100% - 40px);
+    white-space: nowrap;
+  }
+}
