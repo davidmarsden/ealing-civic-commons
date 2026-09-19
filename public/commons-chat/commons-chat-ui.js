@@ -193,12 +193,321 @@
     });
   }
 
+  function getCurrentPrefs () {
+    const saved = (window.globals && globals.userData && globals.userData.prefs) ? globals.userData.prefs : {};
+    const current = (typeof window.appPrefs === "object" && window.appPrefs) ? window.appPrefs : {};
+    return Object.assign ({}, current, saved);
+  }
+
+  function closeCommonsSettings () {
+    const overlay = document.getElementById ("idCommonsSettingsOverlay");
+    if (overlay) overlay.remove ();
+  }
+
+  function makeField (labelText, input) {
+    const label = document.createElement ("label");
+    label.className = "commons-settings-field";
+    const labelSpan = document.createElement ("span");
+    labelSpan.className = "commons-settings-label";
+    labelSpan.textContent = labelText;
+    label.append (labelSpan, input);
+    return label;
+  }
+
+  function openCommonsSettings () {
+    if (!window.globals || !globals.myRssNetwork || !globals.myRssNetwork.userIsSignedIn ()) {
+      if (typeof window.signInCommand === "function") window.signInCommand ();
+      return;
+    }
+
+    closeCommonsSettings ();
+
+    const prefs = getCurrentPrefs ();
+    const overlay = document.createElement ("div");
+    overlay.id = "idCommonsSettingsOverlay";
+    overlay.className = "commons-settings-overlay";
+
+    const dialog = document.createElement ("section");
+    dialog.className = "commons-settings-dialog";
+    dialog.setAttribute ("role", "dialog");
+    dialog.setAttribute ("aria-modal", "true");
+    dialog.setAttribute ("aria-labelledby", "idCommonsSettingsTitle");
+
+    const header = document.createElement ("header");
+    header.className = "commons-settings-header";
+    const headingWrap = document.createElement ("div");
+    const eyebrow = document.createElement ("p");
+    eyebrow.className = "commons-settings-eyebrow";
+    eyebrow.textContent = "Ealing Civic Commons";
+    const heading = document.createElement ("h1");
+    heading.id = "idCommonsSettingsTitle";
+    heading.textContent = "Your profile & settings";
+    const intro = document.createElement ("p");
+    intro.textContent = "Choose how you appear in conversations. The technical bits stay out of the way.";
+    headingWrap.append (eyebrow, heading, intro);
+    const closeButton = document.createElement ("button");
+    closeButton.type = "button";
+    closeButton.className = "commons-settings-close";
+    closeButton.setAttribute ("aria-label", "Close");
+    closeButton.textContent = "×";
+    closeButton.addEventListener ("click", closeCommonsSettings);
+    header.append (headingWrap, closeButton);
+
+    const body = document.createElement ("div");
+    body.className = "commons-settings-body";
+
+    const identity = document.createElement ("section");
+    identity.className = "commons-settings-section";
+    const identityTitle = document.createElement ("h2");
+    identityTitle.textContent = "How people see you";
+
+    const profileGrid = document.createElement ("div");
+    profileGrid.className = "commons-settings-profile-grid";
+
+    const avatarWrap = document.createElement ("div");
+    avatarWrap.className = "commons-settings-avatar-wrap";
+    const avatar = document.createElement ("div");
+    avatar.className = "commons-settings-avatar";
+    const avatarImg = document.createElement ("img");
+    avatarImg.alt = "";
+    const fallback = document.createElement ("span");
+    fallback.textContent = ((prefs.myFeedTitle || globals.myRssNetwork.getScreenname () || "?").trim ()[0] || "?").toUpperCase ();
+    avatar.append (avatarImg, fallback);
+    avatarWrap.append (avatar);
+
+    const fields = document.createElement ("div");
+    fields.className = "commons-settings-fields";
+
+    const nameInput = document.createElement ("input");
+    nameInput.type = "text";
+    nameInput.maxLength = 80;
+    nameInput.value = prefs.myFeedTitle || "";
+    nameInput.placeholder = "The name you want people to see";
+
+    const bioInput = document.createElement ("textarea");
+    bioInput.rows = 4;
+    bioInput.maxLength = 400;
+    bioInput.value = prefs.myFeedDescription || "";
+    bioInput.placeholder = "A short introduction — optional";
+
+    const websiteInput = document.createElement ("input");
+    websiteInput.type = "url";
+    websiteInput.value = prefs.myFeedLink || "";
+    websiteInput.placeholder = "https://…";
+
+    const avatarInput = document.createElement ("input");
+    avatarInput.type = "url";
+    avatarInput.value = prefs.myAvatarImageUrl || "";
+    avatarInput.placeholder = "https://…";
+
+    function updateAvatarPreview () {
+      const url = avatarInput.value.trim ();
+      if (url) {
+        avatarImg.src = url;
+        avatarImg.hidden = false;
+        fallback.hidden = true;
+      }
+      else {
+        avatarImg.removeAttribute ("src");
+        avatarImg.hidden = true;
+        fallback.hidden = false;
+      }
+    }
+    avatarImg.addEventListener ("error", function () {
+      avatarImg.hidden = true;
+      fallback.hidden = false;
+    });
+    avatarInput.addEventListener ("input", updateAvatarPreview);
+    nameInput.addEventListener ("input", function () {
+      fallback.textContent = ((nameInput.value || globals.myRssNetwork.getScreenname () || "?").trim ()[0] || "?").toUpperCase ();
+    });
+    updateAvatarPreview ();
+
+    fields.append (
+      makeField ("Display name", nameInput),
+      makeField ("About you", bioInput),
+      makeField ("Website", websiteInput),
+      makeField ("Profile picture", avatarInput)
+      );
+    profileGrid.append (avatarWrap, fields);
+    identity.append (identityTitle, profileGrid);
+
+    const account = document.createElement ("section");
+    account.className = "commons-settings-section commons-settings-account";
+    const accountTitle = document.createElement ("h2");
+    accountTitle.textContent = "Your account";
+    const accountGrid = document.createElement ("div");
+    accountGrid.className = "commons-settings-account-grid";
+
+    function accountRow (labelText, valueText) {
+      const row = document.createElement ("div");
+      const label = document.createElement ("span");
+      label.textContent = labelText;
+      const value = document.createElement ("strong");
+      value.textContent = valueText || "—";
+      row.append (label, value);
+      return row;
+    }
+
+    accountGrid.append (
+      accountRow ("Username", globals.myRssNetwork.getScreenname ()),
+      accountRow ("Email", globals.myRssNetwork.getEmail ())
+      );
+    const privacyNote = document.createElement ("p");
+    privacyNote.className = "commons-settings-note";
+    privacyNote.textContent = "Your email address is used for sign-in and is not shown publicly.";
+    account.append (accountTitle, accountGrid, privacyNote);
+
+    const writing = document.createElement ("section");
+    writing.className = "commons-settings-section";
+    const writingTitle = document.createElement ("h2");
+    writingTitle.textContent = "Writing";
+
+    const wordCountLabel = document.createElement ("label");
+    wordCountLabel.className = "commons-settings-toggle";
+    const wordCountInput = document.createElement ("input");
+    wordCountInput.type = "checkbox";
+    wordCountInput.checked = Boolean (prefs.flWordCount);
+    const wordCountCopy = document.createElement ("span");
+    const wordCountStrong = document.createElement ("strong");
+    wordCountStrong.textContent = "Show word count";
+    const wordCountSmall = document.createElement ("small");
+    wordCountSmall.textContent = "A quiet count while you write.";
+    wordCountCopy.append (wordCountStrong, wordCountSmall);
+    wordCountLabel.append (wordCountInput, wordCountCopy);
+
+    const editorLabel = document.createElement ("label");
+    editorLabel.className = "commons-settings-field commons-settings-editor";
+    const editorSpan = document.createElement ("span");
+    editorSpan.className = "commons-settings-label";
+    editorSpan.textContent = "Writing mode";
+    const editorSelect = document.createElement ("select");
+    const rich = document.createElement ("option");
+    rich.value = "wizzy";
+    rich.textContent = "Normal editor";
+    const markdown = document.createElement ("option");
+    markdown.value = "markdown";
+    markdown.textContent = "Markdown";
+    editorSelect.append (rich, markdown);
+    editorSelect.value = prefs.defaultEditorMode === "markdown" ? "markdown" : "wizzy";
+    editorLabel.append (editorSpan, editorSelect);
+
+    writing.append (writingTitle, wordCountLabel, editorLabel);
+
+    const advanced = document.createElement ("details");
+    advanced.className = "commons-settings-advanced";
+    const summary = document.createElement ("summary");
+    summary.textContent = "Advanced";
+    const advancedBody = document.createElement ("div");
+    advancedBody.className = "commons-settings-advanced-body";
+    const feedText = document.createElement ("p");
+    feedText.textContent = "Your public posts are also available as an open web feed:";
+    const feedLink = document.createElement ("a");
+    feedLink.href = globals.myRssNetwork.getFeedUrl ();
+    feedLink.target = "_blank";
+    feedLink.rel = "noopener noreferrer";
+    feedLink.textContent = "Open your public feed ↗";
+    advancedBody.append (feedText, feedLink);
+    advanced.append (summary, advancedBody);
+
+    body.append (identity, account, writing, advanced);
+
+    const footer = document.createElement ("footer");
+    footer.className = "commons-settings-footer";
+    const status = document.createElement ("p");
+    status.className = "commons-settings-status";
+    status.setAttribute ("aria-live", "polite");
+    const buttons = document.createElement ("div");
+    buttons.className = "commons-settings-buttons";
+    const cancel = document.createElement ("button");
+    cancel.type = "button";
+    cancel.className = "commons-settings-cancel";
+    cancel.textContent = "Cancel";
+    cancel.addEventListener ("click", closeCommonsSettings);
+    const save = document.createElement ("button");
+    save.type = "button";
+    save.className = "commons-settings-save";
+    save.textContent = "Save changes";
+
+    save.addEventListener ("click", function () {
+      const merged = Object.assign ({}, prefs, {
+        myFeedTitle: nameInput.value.trim (),
+        myFeedDescription: bioInput.value.trim (),
+        myFeedLink: websiteInput.value.trim (),
+        myAvatarImageUrl: avatarInput.value.trim (),
+        flWordCount: wordCountInput.checked,
+        defaultEditorMode: editorSelect.value
+        });
+
+      save.disabled = true;
+      cancel.disabled = true;
+      status.textContent = "Saving…";
+
+      globals.myRssNetwork.savePrefs (merged, function (err) {
+        if (err) {
+          save.disabled = false;
+          cancel.disabled = false;
+          status.textContent = err.message || "Could not save your changes.";
+          return;
+        }
+
+        if (globals.userData) globals.userData.prefs = merged;
+        if (typeof window.appPrefs === "object" && window.appPrefs) {
+          Object.assign (window.appPrefs, merged);
+        }
+        status.textContent = "Saved. Refreshing…";
+        window.setTimeout (function () { window.location.reload (); }, 350);
+        });
+      });
+
+    buttons.append (cancel, save);
+    footer.append (status, buttons);
+    dialog.append (header, body, footer);
+    overlay.append (dialog);
+
+    overlay.addEventListener ("click", function (event) {
+      if (event.target === overlay) closeCommonsSettings ();
+    });
+    document.addEventListener ("keydown", function onKeydown (event) {
+      if (event.key === "Escape" && document.getElementById ("idCommonsSettingsOverlay")) {
+        closeCommonsSettings ();
+        document.removeEventListener ("keydown", onKeydown);
+      }
+    });
+
+    document.body.append (overlay);
+    nameInput.focus ();
+  }
+
+  function installFriendlySettings () {
+    if (!window.globals || !globals.myRssNetwork) return;
+
+    if (window.settingsCommand !== openCommonsSettings) {
+      window.settingsCommand = openCommonsSettings;
+    }
+
+    if (!window.jQuery) return;
+    window.jQuery (".divIconsContainer .divIcon").each (function () {
+      const icon = window.jQuery (this);
+      const label = icon.find (".spanIconLabel").text ().trim ();
+      if (label === "Profile & settings") {
+        const iconDef = icon.data ("iconDef");
+        if (iconDef && iconDef.click !== openCommonsSettings) {
+          iconDef.click = openCommonsSettings;
+          iconDef.tooltip = "Change your profile and conversation settings.";
+        }
+        icon.attr ("title", "Profile & settings");
+      }
+    });
+  }
+
   function tidyInterface () {
     installBranding ();
     installContextBanner ();
     patchNetwork ();
     openComposer ();
     decorateBoundPosts ();
+    installFriendlySettings ();
   }
 
   let chatObserver;
@@ -212,6 +521,7 @@
     chatObserver = new MutationObserver (function () {
       decorateBoundPosts ();
       installBranding ();
+      installFriendlySettings ();
     });
 
     chatObserver.observe (chatContainer, {childList: true, subtree: true});
