@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { getDeployStore, getStore } from '@netlify/blobs';
 
 export const STORE_NAME = 'civic-commons-review-queue';
-export const REVIEW_KINDS = ['item-contribution', 'source-submission', 'evidence-suggestion', 'relationship-suggestion'];
+export const REVIEW_KINDS = ['item-contribution', 'source-submission', 'evidence-suggestion', 'relationship-suggestion', 'commons-chat-report'];
 export const REVIEW_STATUSES = ['pending', 'needs-info', 'accepted', 'rejected'];
 
 export const store = () => Netlify.context?.deploy?.context === 'production'
@@ -68,7 +68,10 @@ export function normalizeReview(input = {}) {
       topics: cleanArray(payload.topics),
       towns: cleanArray(payload.towns),
       publisher: cleanText(payload.publisher, 300),
-      publishedAt: cleanText(payload.publishedAt, 80)
+      publishedAt: cleanText(payload.publishedAt, 80),
+      postId: cleanText(payload.postId, 120),
+      postAuthor: cleanText(payload.postAuthor, 300),
+      reportReason: cleanText(payload.reportReason, 120)
     },
     private: {
       displayName: cleanText(input.private?.displayName || payload.displayName, 300),
