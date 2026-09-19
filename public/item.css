@@ -88,3 +88,82 @@
 code { overflow-wrap: anywhere; }
 @media (max-width: 820px) { .contribution-layout, .contribution-group, .memory-grid { grid-template-columns: 1fr; gap: 30px; }.contribution-group-heading { position: static; }.civic-memory-heading { grid-template-columns:1fr; } }
 @media (max-width: 560px) { .discussion-heading { grid-template-columns: 1fr; gap: 8px; }.follow-options { display: grid; grid-template-columns: 1fr; }.follow-options .follow-button { text-align: left; }.entity-link-chips { display: grid; grid-template-columns: 1fr; }.entity-link-chip { justify-content: space-between; } }
+
+
+.chat-discovery {
+  max-width: 900px;
+  margin-top: 4px;
+  padding: 20px;
+  border: 1px solid #bfd0c4;
+  border-radius: 14px;
+  background: #e8eee9;
+  box-shadow: var(--shadow);
+}
+.chat-discovery[hidden] { display: none; }
+.chat-discovery-heading {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 24px;
+  align-items: end;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #c9d6cc;
+}
+.chat-discovery-heading .eyebrow { margin: 0 0 6px; }
+.chat-discovery-heading h2 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  letter-spacing: -.02em;
+  line-height: 1.05;
+}
+.chat-discovery-heading p {
+  margin: 7px 0 0;
+  color: #505a54;
+  font-size: .9rem;
+}
+.chat-start-another {
+  color: var(--green);
+  font-size: .82rem;
+  font-weight: 800;
+  text-underline-offset: 3px;
+}
+.chat-thread-list {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+}
+.chat-thread-card {
+  display: grid;
+  gap: 3px;
+  padding: 14px 15px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--card);
+  color: var(--ink);
+  text-decoration: none;
+}
+.chat-thread-card:hover,
+.chat-thread-card:focus {
+  border-color: var(--green);
+  background: #fff;
+}
+.chat-thread-author {
+  color: var(--green-dark);
+  font-size: .75rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: .045em;
+}
+.chat-thread-card strong {
+  font-family: Georgia, serif;
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+.chat-thread-meta {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: .76rem;
+}
+@media (max-width: 640px) {
+  .chat-discovery-heading { grid-template-columns: 1fr; gap: 10px; }
+}
