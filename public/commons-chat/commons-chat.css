@@ -1,0 +1,658 @@
+:root {
+  --cc-ink: #18221d;
+  --cc-muted: #68726c;
+  --cc-paper: #f6f4ee;
+  --cc-card: #fffdf8;
+  --cc-line: #d9d8cf;
+  --cc-green: #1f5b42;
+  --cc-green-dark: #173f30;
+  --cc-amber: #b25a26;
+  --cc-shadow: 0 10px 30px rgba(24,34,29,.06);
+}
+
+html, body {
+  background: var(--cc-paper) !important;
+  color: var(--cc-ink) !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+body { padding-top: 72px !important; }
+
+.navbar.navbar-fixed-top {
+  background: rgba(246,244,238,.97) !important;
+  border-bottom: 1px solid var(--cc-line) !important;
+  box-shadow: none !important;
+  min-height: 72px;
+}
+
+.navbar-inner {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  min-height: 72px !important;
+}
+
+.navbar .container {
+  width: min(1180px, calc(100% - 32px)) !important;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+}
+
+.navbar .brand {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px 0 0 !important;
+  margin: 0 !important;
+  color: var(--cc-ink) !important;
+  text-shadow: none !important;
+  text-decoration: none !important;
+}
+
+.commons-brand-oak {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.commons-brand-copy {
+  display: grid;
+  line-height: 1.05;
+}
+
+.commons-brand-name {
+  font-weight: 850;
+  letter-spacing: -.02em;
+  font-size: 17px;
+}
+
+.commons-brand-section {
+  color: var(--cc-muted);
+  font-size: 11px;
+  margin-top: 3px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-weight: 750;
+}
+
+.navbar .nav > li > a {
+  color: var(--cc-muted) !important;
+  text-shadow: none !important;
+  font-weight: 700;
+}
+
+.navbar .nav > li > a:hover,
+.navbar .nav > li > a:focus {
+  color: var(--cc-green) !important;
+}
+
+.navbar .nav.pull-right {
+  margin-left: auto !important;
+}
+
+#idDocsMenu { display: none !important; }
+
+.dropdown-menu {
+  border: 1px solid var(--cc-line) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--cc-shadow) !important;
+  background: var(--cc-card) !important;
+}
+
+.dropdown-menu > li > a {
+  color: var(--cc-ink) !important;
+}
+
+.dropdown-menu > li > a:hover,
+.dropdown-menu > li > a:focus {
+  background: #e8eee9 !important;
+  color: var(--cc-green-dark) !important;
+}
+
+.divChatContainer {
+  width: min(1180px, calc(100% - 32px)) !important;
+  margin: 0 auto !important;
+}
+
+.divChat {
+  background: transparent !important;
+}
+
+.divLeftColumn {
+  background: transparent !important;
+  border-right: 1px solid var(--cc-line) !important;
+}
+
+.divMiddleColumn {
+  background: transparent !important;
+}
+
+.divTweet {
+  background: var(--cc-card) !important;
+  border-color: var(--cc-line) !important;
+}
+
+.divThread {
+  border-color: var(--cc-line) !important;
+}
+
+.divTweetText {
+  color: #3f4943 !important;
+  font-size: 16px !important;
+  line-height: 1.55 !important;
+}
+
+.spanAuthor,
+.divProfileName {
+  color: var(--cc-ink) !important;
+  font-weight: 800 !important;
+}
+
+.aTimestamp,
+.divReplyingTo,
+.divProfileHandle {
+  color: var(--cc-muted) !important;
+}
+
+.buttonPost,
+.buttonReplyPost {
+  background: var(--cc-green) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  border: 0 !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+.buttonPost:hover,
+.buttonReplyPost:hover {
+  background: var(--cc-green-dark) !important;
+}
+
+.inputComposer,
+.inputReplyComposer,
+.textareaMarkdown {
+  border-color: var(--cc-line) !important;
+  background: var(--cc-card) !important;
+  color: var(--cc-ink) !important;
+  border-radius: 10px !important;
+}
+
+.spanFeedIcon,
+.aFeedIcon {
+  display: none !important;
+}
+
+#idCommonsContextBanner {
+  margin: 22px auto 8px;
+  max-width: 900px;
+  padding: 18px 20px;
+  border: 1px solid #bfd0c4;
+  border-radius: 12px;
+  background: #e8eee9;
+  color: var(--cc-ink);
+  box-shadow: var(--cc-shadow);
+}
+
+.commons-context-eyebrow {
+  margin: 0 0 5px;
+  color: var(--cc-green);
+  text-transform: uppercase;
+  letter-spacing: .11em;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.commons-context-title {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(22px, 3vw, 31px);
+  line-height: 1.08;
+  letter-spacing: -.02em;
+}
+
+.commons-context-copy {
+  margin: 8px 0 0;
+  color: #505a54;
+  font-size: 14px;
+}
+
+.commons-context-link,
+.commons-object-link {
+  color: var(--cc-green) !important;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.commons-object-card {
+  margin: 14px 0 2px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--cc-green);
+  border-radius: 0 9px 9px 0;
+  background: #eef3ef;
+}
+
+.commons-object-card strong {
+  display: block;
+  color: var(--cc-green-dark);
+  font-size: 13px;
+}
+
+.commons-object-card span {
+  display: block;
+  margin-top: 2px;
+  color: var(--cc-muted);
+  font-size: 12px;
+}
+
+.commons-object-card a {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.divThemeVersion { display: none !important; }
+
+@media (max-width: 720px) {
+  body { padding-top: 62px !important; }
+  .navbar.navbar-fixed-top,
+  .navbar-inner,
+  .navbar .container { min-height: 62px !important; }
+  .navbar .container {
+    width: calc(100% - 20px) !important;
+  }
+  .commons-brand-oak { width: 32px; height: 32px; }
+  .commons-brand-name { font-size: 15px; }
+  .commons-brand-section { font-size: 9px; }
+  .divChatContainer { width: calc(100% - 12px) !important; }
+  #idCommonsContextBanner { margin: 12px 6px 6px; }
+}
+
+
+/* Phase 2 polish: make the left navigation feel like Civic Commons, not stock rss.chat. */
+.divChat {
+  grid-template-columns: 220px minmax(0, 1fr) 54px !important;
+  gap: 0 !important;
+}
+
+.divChatLeft {
+  padding: 22px 14px 0 0 !important;
+}
+
+.divIconsContainer {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+.divIcon {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-height: 42px !important;
+  padding: 9px 12px !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  color: var(--cc-muted) !important;
+  font-weight: 750 !important;
+  transition: background .15s ease, color .15s ease, border-color .15s ease !important;
+}
+
+.divIcon:hover,
+.divIcon:focus-within {
+  background: #e8eee9 !important;
+  color: var(--cc-green-dark) !important;
+  border-color: #c9d6cc !important;
+}
+
+.divIcon.flSelected,
+.divIcon.divIconSelected,
+.divIcon.active {
+  background: var(--cc-green-dark) !important;
+  color: #fff !important;
+  border-color: var(--cc-green-dark) !important;
+}
+
+.divIcon > i,
+.divIcon .fa,
+.divIcon .fas,
+.divIcon .far,
+.divIcon .fab {
+  width: 20px !important;
+  text-align: center !important;
+  color: currentColor !important;
+  opacity: .92;
+}
+
+.spanIconLabel {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  line-height: 1.2 !important;
+  font-size: 14px !important;
+  letter-spacing: -.01em !important;
+}
+
+.divChatCenter {
+  min-width: 0 !important;
+}
+
+@media (max-width: 980px) {
+  .divChat {
+    grid-template-columns: 200px minmax(0, 1fr) 44px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .divChat {
+    grid-template-columns: 1fr !important;
+  }
+
+  .divChatLeft {
+    padding: 10px 0 14px !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--cc-line) !important;
+  }
+
+  .divIconsContainer {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .divIcon {
+    min-height: 40px !important;
+    padding: 8px 10px !important;
+  }
+
+  .spanIconLabel {
+    font-size: 13px !important;
+  }
+}
+
+
+/* Make the left rail unmistakably part of Civic Commons. */
+.divChat .divChatLeft {
+  width: 210px !important;
+  padding: 18px 14px 18px 6px !important;
+  background: transparent !important;
+  border-right: 1px solid var(--cc-line) !important;
+}
+
+.divChat .divIconsContainer {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  padding-top: 0 !important;
+}
+
+.divChat .divIconsContainer .divIcon {
+  min-height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 11px !important;
+  padding: 10px 12px !important;
+  border-radius: 12px !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: var(--cc-green-dark) !important;
+  opacity: .72 !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+}
+
+.divChat .divIconsContainer .divIcon.enabled {
+  opacity: 1 !important;
+}
+
+.divChat .divIconsContainer .divIcon:hover {
+  background: #e8eee9 !important;
+  border-color: #cad8ce !important;
+}
+
+.divChat .divIconsContainer .divIcon.flSelected,
+.divChat .divIconsContainer .divIcon:focus-visible {
+  background: var(--cc-green-dark) !important;
+  border-color: var(--cc-green-dark) !important;
+  color: #fff !important;
+}
+
+.divChat .divIconsContainer .divIcon svg,
+.divChat .divIconsContainer .divIcon i {
+  width: 22px !important;
+  min-width: 22px !important;
+  color: currentColor !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+}
+
+.divChat .spanIconLabel {
+  color: currentColor !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -.01em !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+/* Modern Civic Commons composer / reply window. */
+.divReplyOverlay {
+  background: rgba(24, 34, 29, .54) !important;
+  backdrop-filter: blur(4px) !important;
+  padding: 88px 18px 28px !important;
+  align-items: flex-start !important;
+}
+
+.divReplyModal {
+  width: min(780px, calc(100vw - 36px)) !important;
+  max-width: none !important;
+  max-height: calc(100vh - 116px) !important;
+  background: var(--cc-card) !important;
+  border: 1px solid var(--cc-line) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 28px 80px rgba(24,34,29,.24) !important;
+  overflow: hidden !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+.divReplyModal.flNoParent .divReplyModalTop,
+.divReplyModalTop {
+  padding: 20px 22px 14px !important;
+  gap: 12px !important;
+  background: var(--cc-card) !important;
+  border-bottom: 1px solid var(--cc-line) !important;
+}
+
+.divReplyModalTop .divComposerTitle {
+  min-width: 0 !important;
+  width: min(360px, 48vw) !important;
+  max-width: none !important;
+  padding: 10px 12px !important;
+  background: #fff !important;
+  border: 1px solid var(--cc-line) !important;
+  border-radius: 10px !important;
+  color: var(--cc-ink) !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+
+.divReplyModalTop .divComposerTitle.flPlaceholder {
+  color: var(--cc-muted) !important;
+  opacity: 1 !important;
+  font-weight: 500 !important;
+}
+
+.divReplyModalTop .divComposerTitle:focus {
+  border-color: var(--cc-green) !important;
+  box-shadow: 0 0 0 3px rgba(31,91,66,.10) !important;
+  background: #fff !important;
+}
+
+.divModalToolbar {
+  gap: 5px !important;
+}
+
+.buttonModalTool,
+.divModalToolbar .buttonContextMenu {
+  width: 36px !important;
+  height: 36px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border-radius: 9px !important;
+  color: var(--cc-green-dark) !important;
+  opacity: .72 !important;
+}
+
+.buttonModalTool:hover,
+.divModalToolbar .buttonContextMenu:hover {
+  background: #e8eee9 !important;
+  opacity: 1 !important;
+}
+
+.divReplyComposerRow {
+  padding: 18px 22px !important;
+  background: var(--cc-card) !important;
+}
+
+.inputReplyComposer,
+.textareaMarkdown {
+  min-height: 260px !important;
+  padding: 16px 17px !important;
+  border: 1px solid var(--cc-line) !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  color: var(--cc-ink) !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-size: 18px !important;
+  line-height: 1.55 !important;
+  box-shadow: inset 0 1px 0 rgba(24,34,29,.02) !important;
+}
+
+.inputReplyComposer:focus,
+.textareaMarkdown:focus {
+  border-color: var(--cc-green) !important;
+  box-shadow: 0 0 0 3px rgba(31,91,66,.10) !important;
+  background: #fff !important;
+}
+
+.inputReplyComposer:empty:not(.flUserTouched):before,
+.textareaMarkdown::placeholder {
+  color: #8a918d !important;
+}
+
+.divModalBottom {
+  padding: 14px 22px 18px !important;
+  border-top: 1px solid var(--cc-line) !important;
+  background: #f2f0e9 !important;
+}
+
+.divModalStatusGroup {
+  justify-content: flex-start !important;
+  gap: 22px !important;
+}
+
+.divModalWhen,
+.divModalCharCount,
+.divModalStatus {
+  color: var(--cc-muted) !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+}
+
+.buttonReplyCancel {
+  padding: 9px 15px !important;
+  border: 1px solid var(--cc-line) !important;
+  border-radius: 9px !important;
+  background: var(--cc-card) !important;
+  color: var(--cc-ink) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.buttonReplyCancel:hover {
+  background: #e8eee9 !important;
+  border-color: #cad8ce !important;
+}
+
+.buttonReplyPost {
+  padding: 10px 18px !important;
+  border: 0 !important;
+  border-radius: 9px !important;
+  background: var(--cc-green) !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.buttonReplyPost:hover {
+  background: var(--cc-green-dark) !important;
+}
+
+@media (max-width: 900px) {
+  .divChat .divChatLeft {
+    width: 190px !important;
+  }
+
+  .divReplyOverlay {
+    padding-top: 70px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .divChat .divChatLeft {
+    width: 100% !important;
+  }
+
+  .divChat .divIconsContainer {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+  }
+
+  .divChat .spanIconLabel {
+    display: block !important;
+  }
+
+  .divReplyOverlay {
+    padding: 12px !important;
+    align-items: center !important;
+  }
+
+  .divReplyModal {
+    width: calc(100vw - 24px) !important;
+    max-height: calc(100vh - 24px) !important;
+    border-radius: 14px !important;
+  }
+
+  .divReplyModalTop {
+    padding: 14px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .divReplyModalTop .divComposerTitle {
+    width: 100% !important;
+  }
+
+  .divReplyComposerRow {
+    padding: 14px !important;
+  }
+
+  .inputReplyComposer,
+  .textareaMarkdown {
+    min-height: 220px !important;
+    font-size: 17px !important;
+  }
+
+  .divModalBottom {
+    padding: 12px 14px 14px !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+  }
+}
