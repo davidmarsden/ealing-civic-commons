@@ -1424,3 +1424,32 @@ body { padding-top: 72px !important; }
     text-align: center;
   }
 }
+
+
+/* Make long-post expansion discoverable. */
+.commons-read-more {
+  display: inline-flex;
+  align-items: center;
+  margin: 8px 0 10px;
+  padding: 6px 10px;
+  border: 1px solid #bfd0c4;
+  border-radius: 999px;
+  background: #eef3ef;
+  color: var(--cc-green-dark);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.commons-read-more:hover,
+.commons-read-more:focus {
+  background: #e1ebe4;
+  border-color: #9fb8a7;
+}
+
+.commons-read-more:focus-visible {
+  outline: 3px solid rgba(31,91,66,.2);
+  outline-offset: 2px;
+}

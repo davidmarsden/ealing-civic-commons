@@ -450,6 +450,55 @@
     actions.append (button);
   }
 
+  function installReadMoreControl (thread, item) {
+    if (thread.find (".commons-read-more").length > 0) return;
+    if (thread.closest (".divStory").length > 0) return;
+
+    const tweetText = thread.find (".divTweetText").first ();
+    if (!tweetText.length) return;
+
+    const renderedText = tweetText.text ();
+    const plain = String (renderedText || item?.title || "")
+      .replace (/\s+/g, " ")
+      .trim ();
+
+    if (plain.length < 700) return;
+
+    const toggleExpand = tweetText.data ("toggleExpand");
+    if (typeof toggleExpand !== "function") return;
+
+    const body = thread.find (".divTweetBody").first ();
+    if (!body.length) return;
+
+    const readMore = document.createElement ("button");
+    readMore.type = "button";
+    readMore.className = "commons-read-more";
+
+    function refreshReadMoreLabel () {
+      const flCollapsed = tweetText.hasClass ("bodyTruncated");
+      readMore.textContent = flCollapsed ? "Read more" : "Show less";
+      readMore.setAttribute ("aria-expanded", flCollapsed ? "false" : "true");
+      readMore.setAttribute ("aria-label", flCollapsed ? "Expand this post" : "Collapse this post");
+    }
+
+    refreshReadMoreLabel ();
+
+    readMore.addEventListener ("click", function (event) {
+      event.preventDefault ();
+      event.stopPropagation ();
+      toggleExpand ();
+      window.requestAnimationFrame (refreshReadMoreLabel);
+    });
+
+    const actions = body.find (".divTweetActions").first ();
+    if (actions.length) {
+      actions.before (readMore);
+    }
+    else {
+      body.append (readMore);
+    }
+  }
+
   function decorateBoundPosts () {
     if (!window.jQuery) return;
     window.jQuery (".divThread").each (function () {
@@ -460,6 +509,7 @@
       }
 
       installReportControl (thread, item);
+      installReadMoreControl (thread, item);
 
       if (!item.commonsObjectUrl || thread.find (".commons-object-card").length > 0) {
         return;
