@@ -452,13 +452,20 @@
 
   function installReadMoreControl (thread, item) {
     if (thread.find (".commons-read-more").length > 0) return;
+    if (thread.closest (".divStory").length > 0) return;
 
-    const renderedText = thread.find (".divTweetText").first ().text ();
+    const tweetText = thread.find (".divTweetText").first ();
+    if (!tweetText.length) return;
+
+    const renderedText = tweetText.text ();
     const plain = String (renderedText || item?.title || "")
       .replace (/\s+/g, " ")
       .trim ();
 
     if (plain.length < 700) return;
+
+    const toggleExpand = tweetText.data ("toggleExpand");
+    if (typeof toggleExpand !== "function") return;
 
     const body = thread.find (".divTweetBody").first ();
     if (!body.length) return;
@@ -466,19 +473,21 @@
     const readMore = document.createElement ("button");
     readMore.type = "button";
     readMore.className = "commons-read-more";
-    readMore.textContent = "Read more";
-    readMore.setAttribute ("aria-label", "Read this post in full");
+
+    function refreshReadMoreLabel () {
+      const flCollapsed = tweetText.hasClass ("bodyTruncated");
+      readMore.textContent = flCollapsed ? "Read more" : "Show less";
+      readMore.setAttribute ("aria-expanded", flCollapsed ? "false" : "true");
+      readMore.setAttribute ("aria-label", flCollapsed ? "Expand this post" : "Collapse this post");
+    }
+
+    refreshReadMoreLabel ();
+
     readMore.addEventListener ("click", function (event) {
       event.preventDefault ();
       event.stopPropagation ();
-      const url = window.location.origin + "/?id=" + encodeURIComponent (item.id);
-      if (window.globals && globals.myChatUserInterface && typeof globals.myChatUserInterface.viewStory === "function") {
-        history.pushState ({id: item.id}, "", url);
-        globals.myChatUserInterface.viewStory (url);
-      }
-      else {
-        window.location.href = url;
-      }
+      toggleExpand ();
+      window.requestAnimationFrame (refreshReadMoreLabel);
     });
 
     const actions = body.find (".divTweetActions").first ();
