@@ -102,7 +102,7 @@ The [Community Guidelines](/community-guidelines/) apply to Commons Chat.
 
 ## 6. Micro.blog integration
 
-Micro.blog added RSS.chat as a manual cross-posting destination in August 2026.
+Micro.blog added RSS.chat as a manual cross-posting destination in August 2026 ([Micro.blog News, 6 August 2026](https://news.micro.blog/2026/08/06/added-rsschat-as-an-option.html)).
 
 A Micro.blog account can connect to this Commons Chat server using:
 
@@ -141,7 +141,7 @@ Micro.blog can cross-post blog/feed sources to services including Mastodon, Blue
 
 That means Micro.blog can act as an interoperability hub around the same canonical publishing source.
 
-Upstream RSS.chat development has also demonstrated an RSS.chat post reaching Bluesky through Micro.blog. We should treat that as evidence that the bridge is viable, not as proof that every target behaves identically with Commons Chat.
+Upstream RSS.chat development has also demonstrated an RSS.chat post reaching Bluesky through Micro.blog ([Scripting News, 8 August 2026](http://scripting.com/2026/08/08.html)). We should treat that as evidence that the bridge is viable, not as proof that every target behaves identically with Commons Chat.
 
 ### Not yet a Commons Chat promise
 
@@ -181,3 +181,12 @@ Ealing Civic Commons must retain its own:
 If RSS.chat, Micro.blog or any external social network disappears or changes direction, the civic record must remain useful.
 
 **Conversation is connected to the Commons. It does not own the Commons.**
+
+
+## References
+
+- [RSS.chat source repository](https://github.com/scripting/rss.chat)
+- [RSS.chat HTTP API documentation](https://github.com/scripting/rss.chat/blob/main/server/docs/api.md)
+- [Micro.blog: manual cross-posting](https://help.micro.blog/t/manual-cross-posting/2509)
+- [Micro.blog: automatic cross-posting to Mastodon and other services](https://help.micro.blog/t/automatic-cross-posting-to-mastodon-and-other-services/860)
+- [Micro.blog: Bluesky integration](https://help.micro.blog/t/bluesky-cross-posting-and-mentions/1702)
