@@ -1,0 +1,10 @@
+{
+  "upstream": "https://github.com/scripting/rss.chat",
+  "upstreamCommit": "0a77f7b0cdb6d61291248ded69daa6b78f10860a",
+  "upstreamVersion": "0.6.14",
+  "checkedAt": "2026-09-20",
+  "productionService": "rsschat.service",
+  "productionServerPath": "/opt/rsschat/rssnetwork.js",
+  "productionConfigPath": "/opt/rsschat/config.json",
+  "productionDatabasePath": "/opt/rsschat/data/data.db"
+}
