@@ -213,7 +213,7 @@ const helperBlock = [
   '\t\t}',
   '',
   ''
-].join('\\n');
+].join('\n');
 
 source = source.slice(0, helperIndex) + helperBlock + source.slice(helperIndex);
 changes.push('civic helper functions');
