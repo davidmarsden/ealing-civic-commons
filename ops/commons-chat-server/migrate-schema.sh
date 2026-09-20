@@ -15,8 +15,13 @@ fi
 
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 BACKUP="${DB}.pre-commons-schema-${STAMP}"
-cp -p "$DB" "$BACKUP"
-echo "Database backup: $BACKUP"
+
+# Use SQLite's online backup mechanism rather than copying the database file
+# directly. In WAL mode, committed pages may still live in the -wal file, so
+# copying only data.db can produce an incomplete rollback copy while the
+# service is running.
+sqlite3 "$DB" ".backup '$BACKUP'"
+echo "SQLite backup: $BACKUP"
 
 has_column() {
   sqlite3 "$DB" "pragma table_info(items);" | awk -F'|' -v wanted="$1" '$2 == wanted { found=1 } END { exit(found ? 0 : 1) }'
