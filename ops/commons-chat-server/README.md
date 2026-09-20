@@ -35,6 +35,8 @@ The recursive discussion query deliberately uses `UNION`, not `UNION ALL`, so a 
 
 ## Runtime preflight
 
+**Production status: installed and active on the Commons Chat Droplet as of 20 September 2026.**
+
 `preflight.sh` protects the running service from a different class of failure: the code may be correct while the Node runtime or native dependencies are not.
 
 Before rss.chat starts it:
@@ -177,7 +179,7 @@ Civic Commons item → **Start/Join conversation** → Commons Chat post → Civ
 
 ## Configuration belongs outside the overlay
 
-Production configuration remains in `/opt/rsschat/config.json`. In particular:
+Production configuration remains in `/opt/rsschat/config.json`. The live service has been returned from the temporary PR #123 preview client to the canonical production client URL. In particular:
 
 ```json
 {
