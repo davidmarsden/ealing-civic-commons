@@ -48,6 +48,30 @@ The server is an upstream RSS.chat deployment plus a reproducible Civic Commons 
 
 The overlay is pinned to a known upstream baseline, verified in CI and designed to fail closed when upstream source anchors no longer match. This keeps local changes reviewable rather than depending on undocumented edits on the server.
 
+### Runtime preflight
+
+Commons Chat now also has a systemd `ExecStartPre` safety check installed on the production Droplet.
+
+Before every rss.chat start it:
+
+- validates the real `config.json`;
+- requires `database.flUseSqlite === true`;
+- checks that `better-sqlite3` can open an in-memory database under the current Node runtime;
+- leaves `node_modules` untouched when that succeeds;
+- rebuilds only `better-sqlite3` if the native module cannot load, then tests it again;
+- refuses startup if the rebuild still fails;
+- runs `node --check` against `rssnetwork.js`.
+
+This protects the service against a common native-module failure mode after Node upgrades: the package can still be present on disk while its compiled addon targets an older Node ABI.
+
+The preflight is intentionally conservative. A normal restart does not run `npm install` and does not rebuild working dependencies.
+
+The production service currently runs Node 24 with SQLite explicitly enabled. The client shell source is the canonical production URL:
+
+```text
+https://ealing.civiccommons.co.uk/commons-chat/index.html
+```
+
 ## 3. Civic object binding
 
 A Commons Chat root post can carry:
