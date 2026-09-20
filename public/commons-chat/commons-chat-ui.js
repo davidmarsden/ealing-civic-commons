@@ -450,6 +450,48 @@
     actions.append (button);
   }
 
+  function installReadMoreControl (thread, item) {
+    if (thread.find (".commons-read-more").length > 0) return;
+
+    const raw = item?.markdowntext || item?.description || item?.title || "";
+    const scratch = document.createElement ("div");
+    scratch.innerHTML = String (raw);
+    const plain = (scratch.textContent || scratch.innerText || String (raw))
+      .replace (/\s+/g, " ")
+      .trim ();
+
+    if (plain.length < 700) return;
+
+    const body = thread.find (".divTweetBody").first ();
+    if (!body.length) return;
+
+    const readMore = document.createElement ("button");
+    readMore.type = "button";
+    readMore.className = "commons-read-more";
+    readMore.textContent = "Read more";
+    readMore.setAttribute ("aria-label", "Read this post in full");
+    readMore.addEventListener ("click", function (event) {
+      event.preventDefault ();
+      event.stopPropagation ();
+      const url = window.location.origin + "/?id=" + encodeURIComponent (item.id);
+      if (window.globals && globals.myChatUserInterface && typeof globals.myChatUserInterface.viewStory === "function") {
+        history.pushState ({id: item.id}, "", url);
+        globals.myChatUserInterface.viewStory (url);
+      }
+      else {
+        window.location.href = url;
+      }
+    });
+
+    const actions = body.find (".divTweetActions").first ();
+    if (actions.length) {
+      actions.before (readMore);
+    }
+    else {
+      body.append (readMore);
+    }
+  }
+
   function decorateBoundPosts () {
     if (!window.jQuery) return;
     window.jQuery (".divThread").each (function () {
@@ -460,6 +502,7 @@
       }
 
       installReportControl (thread, item);
+      installReadMoreControl (thread, item);
 
       if (!item.commonsObjectUrl || thread.find (".commons-object-card").length > 0) {
         return;
