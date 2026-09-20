@@ -35,6 +35,8 @@ jobs:
         run: |
           node ops/commons-chat-server/apply-overlay.mjs /tmp/rssnetwork.js
           node ops/commons-chat-server/verify-overlay.mjs /tmp/rssnetwork.js
+      - name: Check runtime preflight shell syntax
+        run: bash -n ops/commons-chat-server/preflight.sh
 
   current-upstream:
     runs-on: ubuntu-latest
@@ -52,3 +54,5 @@ jobs:
         run: |
           node ops/commons-chat-server/apply-overlay.mjs /tmp/rssnetwork.js
           node ops/commons-chat-server/verify-overlay.mjs /tmp/rssnetwork.js
+      - name: Check runtime preflight shell syntax
+        run: bash -n ops/commons-chat-server/preflight.sh
