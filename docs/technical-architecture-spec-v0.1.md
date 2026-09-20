@@ -104,6 +104,7 @@ The current implementation uses:
 - Resend email-link authentication;
 - a Civic Commons-owned client shell and presentation layer;
 - a repository-managed server overlay under `ops/commons-chat-server/`, pinned to a known upstream baseline and verified in CI;
+- a production systemd runtime preflight that validates config, requires SQLite, checks `better-sqlite3` against the current Node runtime and only rebuilds that native module when it cannot load;
 - `commonsObjectUrl` and `commonsObjectType` fields to bind a root conversation to a durable Civic Commons object;
 - a public `/getcommonsdiscussions` endpoint so civic pages can discover existing discussions;
 - a `commons:object` RSS element so the civic binding survives outside the web client.
@@ -389,7 +390,7 @@ One failing upstream must not break the public Commons.
 6. Automate public entity completeness checks.
 7. Harden source adapters/parser tests/caching without creating one-service dependencies.
 8. Restore town-aware social metadata generation for stable public routes.
-9. Harden Commons Chat moderation/authentication controls and test external feed bridges without making conversation infrastructure a core civic dependency.
+9. Harden Commons Chat moderation/authentication controls and test external feed bridges without making conversation infrastructure a core civic dependency. Runtime startup hardening is now live: config/SQLite/native-module checks run before every service start.
 
 ## 21. Founding architectural principles
 
