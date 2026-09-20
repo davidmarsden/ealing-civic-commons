@@ -453,10 +453,8 @@
   function installReadMoreControl (thread, item) {
     if (thread.find (".commons-read-more").length > 0) return;
 
-    const raw = item?.markdowntext || item?.description || item?.title || "";
-    const scratch = document.createElement ("div");
-    scratch.innerHTML = String (raw);
-    const plain = (scratch.textContent || scratch.innerText || String (raw))
+    const renderedText = thread.find (".divTweetText").first ().text ();
+    const plain = String (renderedText || item?.title || "")
       .replace (/\s+/g, " ")
       .trim ();
 
