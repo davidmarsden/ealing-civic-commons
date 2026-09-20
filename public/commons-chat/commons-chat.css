@@ -1299,3 +1299,128 @@ body { padding-top: 72px !important; }
     padding-right: 16px;
   }
 }
+
+
+/* New-user onboarding */
+.commons-context-privacy {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--cc-green);
+  border-radius: 0 8px 8px 0;
+  background: rgba(255,255,255,.55);
+  color: #46514a;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.commons-welcome {
+  margin-top: 16px;
+  padding: 16px 18px;
+  border: 1px solid #c9d7cd;
+  border-radius: 11px;
+  background: var(--cc-card);
+}
+
+.commons-welcome h2 {
+  margin: 0 0 7px;
+  color: var(--cc-ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.commons-welcome > p {
+  margin: 7px 0;
+  color: #505a54;
+  line-height: 1.5;
+}
+
+.commons-welcome ol {
+  margin: 12px 0;
+  padding-left: 22px;
+  color: #3f4943;
+}
+
+.commons-welcome li {
+  margin: 5px 0;
+  line-height: 1.45;
+}
+
+.commons-welcome-privacy {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f4f3ed;
+  font-size: 13px;
+}
+
+.commons-welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin-top: 13px;
+}
+
+.commons-welcome-actions button,
+.commons-welcome-actions a {
+  min-height: 42px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.commons-welcome-actions button {
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.commons-welcome-primary {
+  border: 1px solid var(--cc-green);
+  background: var(--cc-green);
+  color: #fff;
+}
+
+.commons-welcome-primary:hover,
+.commons-welcome-primary:focus {
+  background: var(--cc-green-dark);
+}
+
+.commons-welcome-secondary {
+  border: 1px solid var(--cc-line);
+  background: #fff;
+  color: var(--cc-ink);
+}
+
+.commons-welcome-secondary:hover,
+.commons-welcome-secondary:focus {
+  background: #eef3ef;
+}
+
+.commons-welcome-actions a {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 6px;
+  color: var(--cc-green);
+}
+
+.commons-welcome-actions button:focus-visible,
+.commons-welcome-actions a:focus-visible {
+  outline: 3px solid rgba(31,91,66,.25);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .commons-welcome-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .commons-welcome-actions button,
+  .commons-welcome-actions a {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+}
