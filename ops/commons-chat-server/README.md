@@ -43,7 +43,7 @@ bash migrate-schema.sh /opt/rsschat/data/data.db
 
 The migration:
 
-- makes a timestamped copy of the SQLite database first;
+- makes a timestamped SQLite online backup first, so WAL-mode commits are included even if the service is still running;
 - inspects `PRAGMA table_info(items)`;
 - adds only missing columns;
 - can safely be run again.
