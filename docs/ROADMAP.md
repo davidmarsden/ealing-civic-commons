@@ -310,11 +310,21 @@ Still open:
 - keep town branding consistent without forking the underlying civic data model;
 - make network-front-door navigation a standard requirement for every local/borough entry point.
 
-## Later / parallel — federation and external bridges
+## Commons Chat and external bridges — live / active
 
-RSS.chat, ActivityPub, AT Protocol or other open social systems remain possible bridges, not core dependencies.
+The first open conversation bridge is now live.
 
-The Commons should preserve its own public URLs, source provenance, stable item/thread identities, subscriptions, reviewed contributions and civic relationships. External systems should be able to connect to those primitives without owning them.
+Commons Chat runs the open-source RSS.chat client/server as a separate conversation layer. Civic Commons items can start or discover bound discussions; chat roots retain the canonical civic object URL/type; the binding is also emitted in RSS; and RSS.chat's public feeds, HTTP API and websocket stream remain available.
+
+Micro.blog manual cross-posting into Commons Chat has been verified on the Ealing instance. This gives a practical publishing path from a canonical blog/article into the local civic conversation without making Commons Chat the publication of record.
+
+Micro.blog can also cross-post feed/blog sources to Bluesky, Mastodon and other networks. The next interoperability experiment is therefore deliberately modest: test Commons Chat RSS → Micro.blog source → Bluesky/Mastodon before attempting native ActivityPub or AT Protocol federation.
+
+Native two-way federation with Mastodon/ActivityPub, Bluesky/AT Protocol or other networks remains possible future work, not a current Commons Chat capability.
+
+The Commons must preserve its own public URLs, source provenance, stable item/thread identities, subscriptions, reviewed contributions and civic relationships. External systems should be able to connect to those primitives without owning them.
+
+See [Commons Chat — architecture and interoperability](./commons-chat-architecture.md).
 
 ## Immediate next slice
 
@@ -328,7 +338,8 @@ The Commons should preserve its own public URLs, source provenance, stable item/
 8. **Monitor and tune broad-source civic filters**, beginning with Ealing Culture events, from observed live results rather than letting generic listings crowd the timeline.
 9. **Finish town-aware sharing** by restoring metadata rendering for stable item/entity URLs.
 10. **Continue deliberate source expansion by geographic/thematic gap**, especially Perivale, while keeping fragile upstreams visible through source health.
-11. **Explore OCN partnership/API and later federation bridges** without making either a dependency.
+11. **Test Commons Chat interoperability bridges** — first RSS → Micro.blog → Bluesky/Mastodon, while keeping native federation optional and replaceable.
+12. **Explore OCN partnership/API** without making it a dependency.
 
 ## Non-negotiable design boundaries
 
