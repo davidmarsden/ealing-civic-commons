@@ -63,7 +63,7 @@ Those values are stored with the chat item and emitted in RSS through the Civic 
   type="item" />
 ```
 
-The public `/getcommonsdiscussions` endpoint lets a Civic Commons page discover existing discussion roots and their reply trees for the same civic object.
+The public `/getcommonsdiscussions` endpoint lets a Civic Commons page discover existing discussion roots for the same civic object. For each root it returns a recursive `ctPosts` count covering that root and its descendants; it does not return the descendant reply records themselves.
 
 This gives one durable relationship in both directions:
 
