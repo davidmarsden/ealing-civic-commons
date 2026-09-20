@@ -2,6 +2,9 @@
   const CIVIC_ORIGIN = "https://ealing.civiccommons.co.uk";
   const REPORT_ENDPOINT = CIVIC_ORIGIN + "/.netlify/functions/commons-chat-report";
   const GUIDELINES_URL = CIVIC_ORIGIN + "/community-guidelines/";
+  const ABOUT_CHAT_URL = CIVIC_ORIGIN + "/commons-chat/about.html";
+  const ROADMAP_URL = CIVIC_ORIGIN + "/roadmap.html";
+  const DOCUMENTS_URL = CIVIC_ORIGIN + "/documents/";
   const OAK_URL = CIVIC_ORIGIN + "/brand/ealing-oak-approved.webp";
   const params = new URLSearchParams (window.location.search);
   const commonsObjectUrl = params.get ("commonsObjectUrl");
@@ -101,6 +104,24 @@
       row.appendChild (link);
       mainMenu.appendChild (row);
     }
+
+    if (mainMenu && !mainMenu.querySelector (".commons-about-chat-link")) {
+      [
+        ["About Commons Chat", ABOUT_CHAT_URL, "commons-about-chat-link"],
+        ["Roadmap", ROADMAP_URL, "commons-roadmap-link"],
+        ["Civic Commons documents", DOCUMENTS_URL, "commons-documents-link"]
+      ].forEach (function (entry) {
+        const row = document.createElement ("li");
+        row.className = entry[2];
+        const link = document.createElement ("a");
+        link.href = entry[1];
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = entry[0];
+        row.appendChild (link);
+        mainMenu.appendChild (row);
+      });
+    }
   }
 
   function installContextBanner () {
@@ -118,6 +139,7 @@
         '<p class="commons-context-eyebrow">Civic Commons discussion</p>' +
         '<h1 class="commons-context-title"></h1>' +
         '<p class="commons-context-copy">Talk about this civic item here. The conversation stays linked to the public record.</p>' +
+        '<p class="commons-context-privacy"><strong>Conversations are public.</strong> Your sign-in email is private and is not shown publicly.</p>' +
         '<p class="commons-context-copy"><a class="commons-context-link" target="_blank" rel="noopener noreferrer">Back to the civic item ↗</a></p>';
       banner.querySelector (".commons-context-title").textContent = commonsObjectTitle;
       const link = banner.querySelector (".commons-context-link");
@@ -128,10 +150,79 @@
         '<p class="commons-context-eyebrow">Ealing Civic Commons</p>' +
         '<h1 class="commons-context-title">Conversations</h1>' +
         '<p class="commons-context-copy">A place to talk about what is happening across Ealing. Conversations started from a Civic Commons item stay connected to that public record.</p>' +
+        '<p class="commons-context-privacy"><strong>Conversations are public.</strong> Your sign-in email is private and is not shown publicly.</p>' +
         '<p class="commons-context-copy"><a class="commons-context-link" href="' + CIVIC_ORIGIN + '/">Browse the Civic Commons ↗</a></p>';
     }
 
     container.parentNode.insertBefore (banner, container);
+  }
+
+  function installWelcomePanel () {
+    const banner = document.getElementById ("idCommonsContextBanner");
+    if (!banner || !window.globals || !globals.myRssNetwork) return;
+
+    const existing = document.getElementById ("idCommonsWelcome");
+    if (globals.myRssNetwork.userIsSignedIn ()) {
+      if (existing) existing.remove ();
+      return;
+    }
+    if (existing) return;
+
+    const welcome = document.createElement ("section");
+    welcome.id = "idCommonsWelcome";
+    welcome.className = "commons-welcome";
+    welcome.setAttribute ("aria-labelledby", "idCommonsWelcomeTitle");
+
+    const title = document.createElement ("h2");
+    title.id = "idCommonsWelcomeTitle";
+    title.textContent = "Join the conversation";
+
+    const intro = document.createElement ("p");
+    intro.textContent = "Anyone can read Commons Chat. To post or reply, create an account using your email address.";
+
+    const steps = document.createElement ("ol");
+    [
+      "Choose Join Commons Chat.",
+      "Enter your email address and choose a username.",
+      "Use the sign-in link sent to your email, then start posting."
+    ].forEach (function (text) {
+      const li = document.createElement ("li");
+      li.textContent = text;
+      steps.appendChild (li);
+    });
+
+    const privacy = document.createElement ("p");
+    privacy.className = "commons-welcome-privacy";
+    privacy.innerHTML = "<strong>Your email address stays private.</strong> Your profile name and anything you publish are public.";
+
+    const actions = document.createElement ("div");
+    actions.className = "commons-welcome-actions";
+
+    const join = document.createElement ("button");
+    join.type = "button";
+    join.className = "commons-welcome-primary";
+    join.textContent = "Join Commons Chat";
+    join.addEventListener ("click", function () {
+      if (typeof window.createAccountCommand === "function") window.createAccountCommand ();
+    });
+
+    const signIn = document.createElement ("button");
+    signIn.type = "button";
+    signIn.className = "commons-welcome-secondary";
+    signIn.textContent = "Already have an account? Sign in";
+    signIn.addEventListener ("click", function () {
+      if (typeof window.signInCommand === "function") window.signInCommand ();
+    });
+
+    const learn = document.createElement ("a");
+    learn.href = ABOUT_CHAT_URL;
+    learn.target = "_blank";
+    learn.rel = "noopener noreferrer";
+    learn.textContent = "How Commons Chat works ↗";
+
+    actions.append (join, signIn, learn);
+    welcome.append (title, intro, steps, privacy, actions);
+    banner.appendChild (welcome);
   }
 
   function patchNetwork () {
@@ -733,6 +824,7 @@
   function tidyInterface () {
     installBranding ();
     installContextBanner ();
+    installWelcomePanel ();
     patchNetwork ();
     openComposer ();
     decorateBoundPosts ();
@@ -751,6 +843,7 @@
       decorateBoundPosts ();
       installBranding ();
       installFriendlySettings ();
+      installWelcomePanel ();
     });
 
     chatObserver.observe (chatContainer, {childList: true, subtree: true});
