@@ -19,6 +19,9 @@ const PUBLIC_EPETITIONS = 'https://ealing.moderngov.co.uk/mgEPetitionListDisplay
 // return HTTP 422 on the public endpoint.
 const RSS_BRIDGE = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(MODERNGOV_RSS)}`;
 const SUPPORTED_EVENT = /^(Agenda published|Minutes published|Decision sheet published|Issue published|Decision published|ePetition|Publication of plan)\s*:\s*(.+)$/i;
+const xmlParser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', textNodeName: '#text' });
+const asArray = value => value == null ? [] : Array.isArray(value) ? value : [value];
+const textValue = value => value?.['#text'] ?? value ?? '';
 
 function cleanText(value = '') {
   return String(value)
