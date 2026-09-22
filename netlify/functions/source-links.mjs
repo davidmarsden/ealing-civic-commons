@@ -16,7 +16,8 @@ const allowedHosts = new Set([
 const youtubeFeeds = new Map([
   ['Ealing Council — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=EalingCouncil'],
   ['Southall Black Sisters — YouTube', 'https://www.youtube.com/feeds/videos.xml?channel_id=UCUsEWqUfUJYr9uwLtXymxVA'],
-  ['London Assembly — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=LondonAssembly']
+  ['London Assembly — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=LondonAssembly'],
+  ['ExposureBox — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=exposurebox']
 ]);
 
 const json = (statusCode, body) => ({
