@@ -10,9 +10,15 @@
   "theme_color": "#0f4a37",
   "icons": [
     {
-      "src": "/brand/ealing-oak-approved.webp",
-      "sizes": "any",
-      "type": "image/webp",
+      "src": "/brand/ealing-pwa-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/ealing-pwa-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
       "purpose": "any"
     }
   ]
