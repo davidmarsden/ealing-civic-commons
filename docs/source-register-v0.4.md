@@ -47,6 +47,7 @@ The following named source surfaces are configured in the current live aggregati
 | Ealing Council — YouTube | Borough-wide | Official publishing / video | YouTube Atom | **INGESTING** |
 | Southall Black Sisters — YouTube | Southall | Organisation / campaign / video | YouTube Atom | **INGESTING** |
 | London Assembly — YouTube | Borough-wide relevance | Official publishing / video | YouTube Atom | **INGESTING** |
+| ExposureBox — YouTube | Borough-wide | Independent local journalism / video | YouTube Atom from the ExposureBox channel; videos retain publisher attribution and are surfaced as video items | **INGESTING** |
 | Open Council Network — Ealing | Borough-wide | Independent civic data / analysis | Conservative public-page bridge; richer API/partnership remains desirable | **INGESTING** |
 | The View from W5 | Ealing | Independent newsletter | Substack RSS | **INGESTING** |
 | MySouthall | Southall | Newsletter / campaigning | Substack RSS | **INGESTING** |
