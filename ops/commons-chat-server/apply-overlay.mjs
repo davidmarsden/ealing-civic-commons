@@ -255,7 +255,7 @@ replaceOnce(
   '\t\t\t\tdisplay: "standalone",\n' +
   '\t\t\t\tbackground_color: "#f6f4ee",\n' +
   '\t\t\t\ttheme_color: "#0f4a37",\n' +
-  '\t\t\t\ticons: [{src: "https://ealing.civiccommons.co.uk/brand/ealing-oak-approved.webp", sizes: "any", type: "image/webp", purpose: "any"}]\n' +
+  '\t\t\t\ticons: [{src: "https://ealing.civiccommons.co.uk/brand/ealing-pwa-192.svg", sizes: "192x192", type: "image/svg+xml", purpose: "any"}, {src: "https://ealing.civiccommons.co.uk/brand/ealing-pwa-512.svg", sizes: "512x512", type: "image/svg+xml", purpose: "any"}]\n' +
   '\t\t\t\t}), {"cache-control": "public, max-age=3600"});\n' +
   '\t\t\treturn (true);\n' +
   '\t\tcase "/sw.js": // COMMONS CHAT OVERLAY: PWA\n' +
