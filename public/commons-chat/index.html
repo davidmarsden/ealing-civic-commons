@@ -4,7 +4,20 @@
 		<meta charset="UTF-8">
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="theme-color" content="#0f4a37">
+		<link rel="manifest" href="/manifest.webmanifest">
+		<link rel="apple-touch-icon" href="https://ealing.civiccommons.co.uk/brand/ealing-oak-approved.webp">
 		<link rel="alternate" type="application/rss+xml" href="[%feedUrlEveryone%]">
+		
+		<script>
+			if ('serviceWorker' in navigator) {
+				window.addEventListener('load', function () {
+					navigator.serviceWorker.register('/sw.js').catch(function (error) {
+						console.warn('Commons Chat service worker registration failed:', error);
+						});
+					});
+				}
+			</script>
 		
 		<script>
 			const settingsFromServer = { //4/15/26 by DW -- values filled in by server
