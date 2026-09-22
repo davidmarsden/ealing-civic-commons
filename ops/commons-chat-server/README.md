@@ -30,6 +30,7 @@ The tested upstream baseline is recorded in `upstream-baseline.json`:
    - `<commons:object url="…" type="…"/>`
 5. **`GET /getcommonsdiscussions?url=…`**, which returns root conversations and recursive post counts for a Civic Commons object.
 6. **`/localbindcommons`**, a localhost-only maintenance route used to bind an existing post to a Civic Commons object.
+7. **PWA endpoints** at `/manifest.webmanifest`, `/sw.js` and `/offline.html`, so the chat origin can be installed independently of the main Civic Commons app with a self-contained offline fallback.
 
 The recursive discussion query deliberately uses `UNION`, not `UNION ALL`, so a malformed reply cycle cannot recurse forever. Root conversations are capped at eight per object for the discovery endpoint.
 
@@ -211,3 +212,5 @@ The Civic Commons web integration remains separately versioned in:
 - `netlify/functions/commons-chat-report.mjs`
 
 That separation is intentional: the server remains an open conversation service, while Ealing Civic Commons supplies the local civic context, discovery proxy, moderation workflow and public interface.
+
+Commons Chat is also installable as its own PWA. Its manifest and service worker are served by the chat server overlay because service workers must be same-origin; the homepage template in `public/commons-chat/index.html` registers them.
