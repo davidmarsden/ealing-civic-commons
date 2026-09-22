@@ -176,6 +176,46 @@ const sources = [
     mediaType: 'video'
   },
   {
+    id: 'clean-air-southall-hayes-youtube',
+    name: 'Clean Air for Southall and Hayes — YouTube',
+    url: 'https://www.youtube.com/feeds/videos.xml?channel_id=UChFHFUx8LL0v7u5NIwyImZQ',
+    homepage: 'https://www.youtube.com/@cleanairforsouthallandhaye4650',
+    sourceClass: 'Organisation / campaign',
+    towns: ['Southall'],
+    defaultTopics: ['Environment', 'Planning & development', 'Community'],
+    mediaType: 'video'
+  },
+  {
+    id: 'southall-youtube',
+    name: 'Southall — YouTube',
+    url: 'https://www.youtube.com/feeds/videos.xml?user=southall8980',
+    homepage: 'https://www.youtube.com/@southall8980',
+    sourceClass: 'Community / local video',
+    towns: ['Southall'],
+    defaultTopics: ['Community', 'Culture & history'],
+    mediaType: 'video'
+  },
+  {
+    id: 'young-ealing-foundation-youtube',
+    name: 'Young Ealing Foundation — YouTube',
+    url: 'https://www.youtube.com/feeds/videos.xml?user=youngealingfoundation',
+    homepage: 'https://www.youtube.com/@youngealingfoundation',
+    sourceClass: 'Organisation / voluntary sector',
+    towns: BOROUGH_TOWNS,
+    defaultTopics: ['Schools & young people', 'Community'],
+    mediaType: 'video'
+  },
+  {
+    id: 'cap-the-towers-youtube',
+    name: 'Cap The Towers — YouTube',
+    url: 'https://www.youtube.com/feeds/videos.xml?user=capthetowers6717',
+    homepage: 'https://www.youtube.com/@capthetowers6717',
+    sourceClass: 'Organisation / campaign',
+    towns: BOROUGH_TOWNS,
+    defaultTopics: ['Planning & development', 'Housing', 'Council & democracy'],
+    mediaType: 'video'
+  },
+  {
     id: 'open-council-network-ealing',
     name: 'Open Council Network — Ealing',
     url: 'https://opencouncil.network/councils/ealing',
