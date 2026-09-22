@@ -243,6 +243,34 @@ replaceOnce(
 );
 
 replaceOnce(
+  'pwa routes',
+  '\t\tcase "/feed":\n',
+  '\t\tcase "/manifest.webmanifest": // COMMONS CHAT OVERLAY: PWA\n' +
+  '\t\t\ttheRequest.httpReturn (200, "application/manifest+json", JSON.stringify ({\n' +
+  '\t\t\t\tname: "Commons Chat — Ealing Civic Commons",\n' +
+  '\t\t\t\tshort_name: "Commons Chat",\n' +
+  '\t\t\t\tdescription: "Public local conversations connected to the civic record across Ealing.",\n' +
+  '\t\t\t\tstart_url: "/",\n' +
+  '\t\t\t\tscope: "/",\n' +
+  '\t\t\t\tdisplay: "standalone",\n' +
+  '\t\t\t\tbackground_color: "#f6f4ee",\n' +
+  '\t\t\t\ttheme_color: "#0f4a37",\n' +
+  '\t\t\t\ticons: [{src: "https://ealing.civiccommons.co.uk/brand/ealing-oak-approved.webp", sizes: "any", type: "image/webp", purpose: "any"}]\n' +
+  '\t\t\t\t}), {"cache-control": "public, max-age=3600"});\n' +
+  '\t\t\treturn (true);\n' +
+  '\t\tcase "/sw.js": // COMMONS CHAT OVERLAY: PWA\n' +
+  '\t\t\tconst sw = [\n' +
+  '\t\t\t\t"const CACHE = \\\"commons-chat-pwa-v1\\\";",\n' +
+  '\t\t\t\t"self.addEventListener(\\\"install\\\", event => { event.waitUntil(caches.open(CACHE).then(cache => cache.add(\\\"/\\\")).catch(() => undefined)); self.skipWaiting(); });",\n' +
+  '\t\t\t\t"self.addEventListener(\\\"activate\\\", event => { event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())); });",\n' +
+  '\t\t\t\t"self.addEventListener(\\\"fetch\\\", event => { const req = event.request; if (req.method !== \\\"GET\\\") return; const url = new URL(req.url); if (url.origin !== self.location.origin) return; if (req.mode === \\\"navigate\\\") { event.respondWith(fetch(req).then(res => { const copy = res.clone(); caches.open(CACHE).then(cache => cache.put(req, copy)); return res; }).catch(async () => (await caches.match(req)) || (await caches.match(\\\"/\\\")) || new Response(\\\"Commons Chat is offline. Reconnect to load conversations.\\\", {headers:{\\\"content-type\\\":\\\"text/plain; charset=utf-8\\\"}}))); } });"\n' +
+  '\t\t\t\t].join ("\\n");\n' +
+  '\t\t\ttheRequest.httpReturn (200, "application/javascript", sw, {"cache-control": "no-cache", "service-worker-allowed": "/"});\n' +
+  '\t\t\treturn (true);\n' +
+  '\t\tcase "/feed":\n'
+);
+
+replaceOnce(
   'discussion route',
   '\t\tcase "/getrecentitems": //4/29/26 by DW\n\t\t\tgetRecentItems (params.screenname, params.ct, httpReturn);\n\t\t\treturn (true);\n',
   '\t\tcase "/getrecentitems": //4/29/26 by DW\n' +
