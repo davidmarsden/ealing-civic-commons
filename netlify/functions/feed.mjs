@@ -166,6 +166,16 @@ const sources = [
     mediaType: 'video'
   },
   {
+    id: 'eci-ealing-youtube',
+    name: 'ECI Ealing — YouTube',
+    url: 'https://www.youtube.com/feeds/videos.xml?user=eci-ealing',
+    homepage: 'https://www.youtube.com/@eci-ealing',
+    sourceClass: 'Political organisation / campaign',
+    towns: BOROUGH_TOWNS,
+    defaultTopics: ['Council & democracy', 'Community'],
+    mediaType: 'video'
+  },
+  {
     id: 'open-council-network-ealing',
     name: 'Open Council Network — Ealing',
     url: 'https://opencouncil.network/councils/ealing',
