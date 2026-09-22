@@ -1,9 +1,6 @@
 const CACHE = 'ealing-civic-commons-pwa-v1';
 const APP_SHELL = [
-  '/',
-  '/styles.css',
-  '/site-shell.js',
-  '/brand/brand.css',
+  '/offline.html',
   '/brand/ealing-oak-approved.webp'
 ];
 
@@ -36,12 +33,10 @@ self.addEventListener('fetch', event => {
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
-        .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE).then(cache => cache.put(request, copy));
-          return response;
-        })
-        .catch(async () => (await caches.match(request)) || (await caches.match('/')))
+        .catch(async () => (await caches.match('/offline.html')) || new Response(
+          'Civic Commons is offline. Reconnect to load the latest civic record.',
+          { headers: { 'content-type': 'text/plain; charset=utf-8' } }
+        ))
     );
     return;
   }
