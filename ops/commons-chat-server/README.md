@@ -30,7 +30,7 @@ The tested upstream baseline is recorded in `upstream-baseline.json`:
    - `<commons:object url="…" type="…"/>`
 5. **`GET /getcommonsdiscussions?url=…`**, which returns root conversations and recursive post counts for a Civic Commons object.
 6. **`/localbindcommons`**, a localhost-only maintenance route used to bind an existing post to a Civic Commons object.
-7. **PWA endpoints** at `/manifest.webmanifest` and `/sw.js`, so the chat origin can be installed independently of the main Civic Commons app.
+7. **PWA endpoints** at `/manifest.webmanifest`, `/sw.js` and `/offline.html`, so the chat origin can be installed independently of the main Civic Commons app with a self-contained offline fallback.
 
 The recursive discussion query deliberately uses `UNION`, not `UNION ALL`, so a malformed reply cycle cannot recurse forever. Root conversations are capped at eight per object for the discovery endpoint.
 
