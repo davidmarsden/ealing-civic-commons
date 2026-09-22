@@ -47,15 +47,14 @@ self.addEventListener('fetch', event => {
   }
 
   event.respondWith(
-    caches.match(request).then(cached => {
-      if (cached) return cached;
-      return fetch(request).then(response => {
+    fetch(request)
+      .then(response => {
         if (response.ok && ['style', 'script', 'image', 'font'].includes(request.destination)) {
           const copy = response.clone();
           caches.open(CACHE).then(cache => cache.put(request, copy));
         }
         return response;
-      });
-    })
+      })
+      .catch(async () => (await caches.match(request)) || Response.error())
   );
 });
