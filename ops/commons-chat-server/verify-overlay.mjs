@@ -17,6 +17,9 @@ const required = [
   'function localBindCommons',
   'case "/getcommonsdiscussions"',
   'case "/localbindcommons"',
+  'case "/manifest.webmanifest"',
+  'case "/sw.js"',
+  'COMMONS CHAT OVERLAY: PWA',
   'https://civiccommons.co.uk/ns/commons-chat/1.0'
 ];
 
@@ -48,9 +51,21 @@ if (baseUrl) {
       Array.isArray(data.threads);
     console.log((ok ? 'OK   ' : 'FAIL ') + 'GET /getcommonsdiscussions smoke test');
     if (!ok) failed = true;
+
+    const manifestResponse = await fetch(new URL('/manifest.webmanifest', baseUrl), { signal: AbortSignal.timeout(5000) });
+    const manifest = await manifestResponse.json();
+    const manifestOk = manifestResponse.ok && manifest.name === 'Commons Chat — Ealing Civic Commons' && manifest.display === 'standalone';
+    console.log((manifestOk ? 'OK   ' : 'FAIL ') + 'GET /manifest.webmanifest smoke test');
+    if (!manifestOk) failed = true;
+
+    const swResponse = await fetch(new URL('/sw.js', baseUrl), { signal: AbortSignal.timeout(5000) });
+    const swText = await swResponse.text();
+    const swOk = swResponse.ok && /serviceWorker|addEventListener\(["']fetch/.test(swText);
+    console.log((swOk ? 'OK   ' : 'FAIL ') + 'GET /sw.js smoke test');
+    if (!swOk) failed = true;
   } catch (error) {
     failed = true;
-    console.log('FAIL GET /getcommonsdiscussions smoke test: ' + error.message);
+    console.log('FAIL Commons Chat HTTP smoke tests: ' + error.message);
   }
 }
 
