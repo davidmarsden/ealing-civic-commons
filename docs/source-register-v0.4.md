@@ -50,6 +50,10 @@ The following named source surfaces are configured in the current live aggregati
 | ExposureBox — YouTube | Borough-wide | Independent local journalism / video | YouTube Atom from the ExposureBox channel; videos retain publisher attribution and are surfaced as video items | **INGESTING** |
 | ECI Southall — YouTube | Southall | Political organisation / campaign / video | YouTube Atom from the ECI Southall channel; political claims remain attributable to the publisher | **INGESTING** |
 | ECI Ealing — YouTube | Borough-wide | Political organisation / campaign / video | YouTube Atom from the ECI Ealing channel; political claims remain attributable to the publisher | **INGESTING** |
+| Clean Air for Southall and Hayes — YouTube | Southall / Hayes | Environment / community campaign / video | YouTube Atom using verified channel ID; campaign claims remain attributable to the publisher | **INGESTING** |
+| Southall — YouTube | Southall | Community / local video | YouTube Atom from the Southall channel; retained as a local civic-memory/community-video source | **INGESTING** |
+| Young Ealing Foundation — YouTube | Borough-wide | Voluntary sector / youth / video | YouTube Atom from Young Ealing Foundation; charity and youth-sector material retains publisher attribution | **INGESTING** |
+| Cap The Towers — YouTube | Borough-wide | Planning / housing campaign / video | YouTube Atom from Cap The Towers; campaign claims remain attributable to the publisher | **INGESTING** |
 | Open Council Network — Ealing | Borough-wide | Independent civic data / analysis | Conservative public-page bridge; richer API/partnership remains desirable | **INGESTING** |
 | The View from W5 | Ealing | Independent newsletter | Substack RSS | **INGESTING** |
 | MySouthall | Southall | Newsletter / campaigning | Substack RSS | **INGESTING** |
