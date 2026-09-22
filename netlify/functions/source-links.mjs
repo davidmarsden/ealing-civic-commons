@@ -16,7 +16,14 @@ const allowedHosts = new Set([
 const youtubeFeeds = new Map([
   ['Ealing Council — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=EalingCouncil'],
   ['Southall Black Sisters — YouTube', 'https://www.youtube.com/feeds/videos.xml?channel_id=UCUsEWqUfUJYr9uwLtXymxVA'],
-  ['London Assembly — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=LondonAssembly']
+  ['London Assembly — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=LondonAssembly'],
+  ['ExposureBox — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=exposurebox'],
+  ['ECI Southall — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=eci-southall'],
+  ['ECI Ealing — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=eci-ealing'],
+  ['Clean Air for Southall and Hayes — YouTube', 'https://www.youtube.com/feeds/videos.xml?channel_id=UChFHFUx8LL0v7u5NIwyImZQ'],
+  ['Southall — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=southall8980'],
+  ['Young Ealing Foundation — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=youngealingfoundation'],
+  ['Cap The Towers — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=capthetowers6717']
 ]);
 
 const json = (statusCode, body) => ({
