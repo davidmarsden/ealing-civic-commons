@@ -21,6 +21,16 @@ const decode = value => String(value || '')
   .replace(/&#([0-9]+);?/g, (_, dec) => String.fromCodePoint(Number.parseInt(dec, 10)))
   .replace(/&([a-z][a-z0-9]+);/gi, (m, name) => entities[name.toLowerCase()] ?? m);
 const strip = value => decode(String(value || '').replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+const stripFragment = value => {
+  let fragment = String(value || '');
+  const firstOpen = fragment.indexOf('<');
+  const firstClose = fragment.indexOf('>');
+  if (firstClose >= 0 && (firstOpen < 0 || firstClose < firstOpen)) fragment = fragment.slice(firstClose + 1);
+  const lastOpen = fragment.lastIndexOf('<');
+  const lastClose = fragment.lastIndexOf('>');
+  if (lastOpen > lastClose) fragment = fragment.slice(0, lastOpen);
+  return strip(fragment);
+};
 const relevant = text => localityTerms.some(term => new RegExp(`(^|[^A-Za-z])${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^A-Za-z]|$)`, 'i').test(text));
 const topics = text => {
   const value = String(text || '').toLowerCase();
@@ -90,7 +100,7 @@ function parseNews(html) {
     if (url.hostname !== 'news.met.police.uk') continue;
     const title = strip(match[2]);
     if (title.length < 12 || title.length > 220) continue;
-    const nearby = strip(html.slice(Math.max(0, match.index - 250), Math.min(html.length, rx.lastIndex + 700)));
+    const nearby = stripFragment(html.slice(Math.max(0, match.index - 250), Math.min(html.length, rx.lastIndex + 700)));
     const dateMatch = nearby.match(/([0-3]?\d\s+[A-Za-z]+\s+20\d{2})\s+([0-2]?\d:[0-5]\d)/);
     const publishedAt = dateMatch ? new Date(`${dateMatch[1]} ${dateMatch[2]} GMT`).toISOString() : null;
     const summary = nearby.replace(title, '').replace(dateMatch?.[0] || '', '').trim().slice(0, 420);
