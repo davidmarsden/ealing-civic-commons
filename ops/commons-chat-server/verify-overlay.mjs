@@ -19,6 +19,7 @@ const required = [
   'case "/localbindcommons"',
   'case "/manifest.webmanifest"',
   'case "/sw.js"',
+  'case "/offline.html"',
   'COMMONS CHAT OVERLAY: PWA',
   'https://civiccommons.co.uk/ns/commons-chat/1.0'
 ];
@@ -63,6 +64,12 @@ if (baseUrl) {
     const swOk = swResponse.ok && /serviceWorker|addEventListener\(["']fetch/.test(swText);
     console.log((swOk ? 'OK   ' : 'FAIL ') + 'GET /sw.js smoke test');
     if (!swOk) failed = true;
+
+    const offlineResponse = await fetch(new URL('/offline.html', baseUrl), { signal: AbortSignal.timeout(5000) });
+    const offlineText = await offlineResponse.text();
+    const offlineOk = offlineResponse.ok && /Commons Chat is offline/.test(offlineText);
+    console.log((offlineOk ? 'OK   ' : 'FAIL ') + 'GET /offline.html smoke test');
+    if (!offlineOk) failed = true;
   } catch (error) {
     failed = true;
     console.log('FAIL Commons Chat HTTP smoke tests: ' + error.message);
