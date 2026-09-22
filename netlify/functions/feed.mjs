@@ -146,6 +146,16 @@ const sources = [
     mediaType: 'video'
   },
   {
+    id: 'exposurebox-youtube',
+    name: 'ExposureBox — YouTube',
+    url: 'https://www.youtube.com/feeds/videos.xml?user=exposurebox',
+    homepage: 'https://www.youtube.com/@exposurebox',
+    sourceClass: 'Journalism / publishing',
+    towns: BOROUGH_TOWNS,
+    defaultTopics: ['Council & democracy', 'Planning & development', 'Community'],
+    mediaType: 'video'
+  },
+  {
     id: 'open-council-network-ealing',
     name: 'Open Council Network — Ealing',
     url: 'https://opencouncil.network/councils/ealing',
