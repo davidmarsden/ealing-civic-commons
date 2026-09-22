@@ -18,7 +18,8 @@ const youtubeFeeds = new Map([
   ['Southall Black Sisters — YouTube', 'https://www.youtube.com/feeds/videos.xml?channel_id=UCUsEWqUfUJYr9uwLtXymxVA'],
   ['London Assembly — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=LondonAssembly'],
   ['ExposureBox — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=exposurebox'],
-  ['ECI Southall — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=eci-southall']
+  ['ECI Southall — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=eci-southall'],
+  ['ECI Ealing — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=eci-ealing']
 ]);
 
 const json = (statusCode, body) => ({
