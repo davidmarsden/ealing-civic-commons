@@ -156,6 +156,16 @@ const sources = [
     mediaType: 'video'
   },
   {
+    id: 'eci-southall-youtube',
+    name: 'ECI Southall — YouTube',
+    url: 'https://www.youtube.com/feeds/videos.xml?user=eci-southall',
+    homepage: 'https://www.youtube.com/@eci-southall',
+    sourceClass: 'Political organisation / campaign',
+    towns: ['Southall'],
+    defaultTopics: ['Council & democracy', 'Community'],
+    mediaType: 'video'
+  },
+  {
     id: 'open-council-network-ealing',
     name: 'Open Council Network — Ealing',
     url: 'https://opencouncil.network/councils/ealing',
