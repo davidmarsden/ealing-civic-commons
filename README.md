@@ -76,7 +76,7 @@ All people, organisation and place routes use the same canonical civic-entity te
 - Runs a dedicated **Document Watch** section with collection/topic filtering and freshness diagnostics.
 - Keeps routine council documents out of the main attention timeline while retaining the complete Document Watch stream in persistent civic memory.
 - Enriches generic council download entries with the council's own human-readable document descriptions where available.
-- Imports ModernGov publication events through a public feed-reader bridge because direct server-to-server access is blocked upstream.
+- Imports ModernGov publication events through a Civic Commons static-egress relay using a DigitalOcean Reserved IP that can be allow-listed upstream; the existing public feed-reader bridge remains as a resilience fallback.
 - Integrates Ealing Culture's structured WordPress source without turning Civic Commons into a parallel cultural listings service.
 
 ## Public roadmap
@@ -120,7 +120,7 @@ These are public so that assumptions, omissions and design decisions can be scru
 
 Open Council Network, Ealing Council/ModernGov/PAM, Ealing Culture, RSS.chat and other open systems can substantially enrich the Commons. None is allowed to become a prerequisite for the Commons remaining useful.
 
-ModernGov remains the publisher of its official RSS events. Because direct server-side requests are blocked, Civic Commons currently transports those events through a public feed reader and keeps the official ModernGov destination/provenance visible.
+ModernGov remains the publisher of its official RSS events. Civic Commons transports those events through its own fixed-egress DigitalOcean relay so the council's supplier can allow-list one source IP, while retaining the public feed-reader bridge as a fallback and keeping official ModernGov destination/provenance visible.
 
 Ealing Council PAM remains canonical for planning applications. Civic Commons keeps a validated latest-week discovery snapshot, a durable retained planning archive and reviewed civic relationships but does not replace the council register or document store.
 

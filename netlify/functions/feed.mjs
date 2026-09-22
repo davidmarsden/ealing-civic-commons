@@ -2,6 +2,7 @@ import { XMLParser } from 'fast-xml-parser';
 import { enrichEalingCouncilTopics } from './ealing-council-topics.mjs';
 
 const BOROUGH_TOWNS = ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
+const MODERNGOV_RELAY = process.env.MODERNGOV_RELAY_URL || 'https://chat-dev.ealing.civiccommons.co.uk/_relay/moderngov/rss';
 
 const sources = [
   {
@@ -97,7 +98,7 @@ const sources = [
   {
     id: 'modern-gov',
     name: 'Ealing Council — ModernGov',
-    url: 'https://ealing.moderngov.co.uk/mgRss.aspx?XXR=0',
+    url: MODERNGOV_RELAY,
     homepage: 'https://ealing.moderngov.co.uk/',
     sourceClass: 'Official record',
     towns: BOROUGH_TOWNS,

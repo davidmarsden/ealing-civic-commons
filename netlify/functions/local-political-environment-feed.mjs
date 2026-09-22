@@ -59,6 +59,18 @@ const sources = [
     defaultTopics: ['Council & democracy']
   },
   {
+    id: 'rupa-huq-news',
+    name: 'Rupa Huq MP — News',
+    url: 'https://www.rupahuq.org.uk/',
+    homepage: 'https://www.rupahuq.org.uk/',
+    sourceClass: 'Political representative / campaign',
+    contentLabel: 'First-party elected-representative publishing',
+    type: 'representative',
+    towns: ['Ealing', 'Acton'],
+    articlePattern: /^\/\d{4}\/\d{2}\/\d{2}\/[a-z0-9-]+\/?$/i,
+    defaultTopics: ['Council & democracy', 'Community']
+  },
+  {
     id: 'hanwell-community-forum',
     name: 'Hanwell Community Forum',
     url: 'https://hanwellcommunityforum.org.uk/',
@@ -333,9 +345,11 @@ async function enrich(source, entry) {
     boroughWide: placeScope.boroughWide,
     topics: inferTopics(contentText, source.defaultTopics),
     derived: true,
-    derivedFrom: source.type === 'political'
-      ? 'First-party local party news/publication page; political claims remain attributable to the publisher'
-      : source.type === 'community'
+    derivedFrom: source.type === 'representative'
+      ? 'First-party elected-representative news/publication page; political claims remain attributable to the representative'
+      : source.type === 'political'
+        ? 'First-party local party news/publication page; political claims remain attributable to the publisher'
+        : source.type === 'community'
         ? 'First-party community/residents publication page; article metadata and scoped content extracted conservatively'
         : 'First-party organisation blog page; article links and publisher dates extracted conservatively'
   };

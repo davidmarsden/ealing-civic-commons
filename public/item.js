@@ -11,6 +11,59 @@ function routeKey() { const parts = window.location.pathname.split('/').filter(B
 function findItem(data, key) { return (data?.items || []).find(candidate => stableItemKey(candidate.id) === key); }
 function threadId(key) { return `civic-item:${key}`; }
 function safeHttpUrl(value) { if (!value) return null; try { const url = new URL(value, window.location.origin); return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null; } catch { return null; } }
+function commonsItemUrl(item) { const key = stableItemKey(item.id); return `https://ealing.civiccommons.co.uk/items/${key}`; }
+function commonsChatUrl(item) { const url = new URL('https://chat-dev.ealing.civiccommons.co.uk/'); url.searchParams.set('commonsObjectUrl', commonsItemUrl(item)); url.searchParams.set('commonsObjectType', 'item'); url.searchParams.set('commonsObjectTitle', item.title || 'Civic Commons item'); url.searchParams.set('compose', '1'); return url.href; }
+function commonsChatThreadUrl(thread) { const url = new URL('https://chat-dev.ealing.civiccommons.co.uk/'); if (thread?.id != null) url.searchParams.set('id', thread.id); return url.href; }
+function chatCountText(conversations, posts) { const c = Number(conversations || 0); const p = Number(posts || 0); if (c === 1) return p > 1 ? `1 conversation · ${p} posts` : '1 conversation'; return `${c} conversations${p ? ` · ${p} posts` : ''}`; }
+function conversationPreview(thread, maxLength = 180) {
+  const source = thread?.title || thread?.markdowntext || thread?.description || 'Open conversation';
+  const plain = String(source)
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/[*_~`>#-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (plain.length <= maxLength) return plain || 'Open conversation';
+  return plain.slice(0, maxLength - 1).trimEnd() + '…';
+}
+
+async function loadChatDiscussions(item) {
+  const panel = $('#commonsChatDiscovery');
+  const action = $('#commonsChatAction');
+  if (!panel || !action) return;
+  const startUrl = commonsChatUrl(item);
+  try {
+    const url = new URL('/.netlify/functions/commons-chat-discussions', location.origin);
+    url.searchParams.set('url', commonsItemUrl(item));
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    const threads = Array.isArray(data.threads) ? data.threads : [];
+    if (!data.available || !threads.length) {
+      action.textContent = 'Start a conversation ↗';
+      action.href = startUrl;
+      panel.hidden = true;
+      return;
+    }
+
+    action.textContent = 'Join the conversation ↗';
+    action.href = commonsChatThreadUrl(threads[0]);
+    const cards = threads.slice(0, 3).map(thread => {
+      const author = esc(thread.author || thread.screenname || 'Local contributor');
+      const text = esc(conversationPreview(thread));
+      const replies = Number(thread.ctPosts || 1) - 1;
+      return `<a class="chat-thread-card" href="${esc(commonsChatThreadUrl(thread))}" target="_blank" rel="noopener noreferrer"><span class="chat-thread-author">${author}</span><strong>${text}</strong><span class="chat-thread-meta">${replies > 0 ? `${replies} ${replies === 1 ? 'reply' : 'replies'}` : 'No replies yet'} · Open conversation ↗</span></a>`;
+    }).join('');
+    panel.innerHTML = `<div class="chat-discovery-heading"><div><p class="eyebrow">Conversation</p><h2>People are talking about this.</h2><p>${esc(chatCountText(data.conversationCount, data.postCount))} linked to this civic record.</p></div><a class="chat-start-another" href="${esc(startUrl)}" target="_blank" rel="noopener noreferrer">Start another conversation ↗</a></div><div class="chat-thread-list">${cards}</div>`;
+    panel.hidden = false;
+  } catch (error) {
+    action.textContent = 'Start a conversation ↗';
+    action.href = startUrl;
+    panel.hidden = true;
+    console.warn('Commons Chat discussion discovery unavailable', error);
+  }
+}
 
 function followButton(type, id, label, text) {
   const active = isFollowing(type, id);
@@ -31,8 +84,8 @@ function fillContributionFields(item, key) {
 function renderItem(item, key) {
   document.title = `${item.title} — Civic Commons`; $('#itemStatus').hidden = true;
   const view = $('#itemView'); view.hidden = false;
-  view.innerHTML = `<div class="item-page-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass)}</span><span>${esc(item.source)}</span><span>${esc(fmtDate(item.publishedAt))}</span></div><h1>${esc(item.title)}</h1>${item.summary ? `<p class="item-page-summary">${esc(item.summary)}</p>` : ''}${item.derived ? `<p class="provenance-note"><strong>Source note:</strong> ${esc(item.derivedFrom || 'Imported or extracted from the original source')}.</p>` : ''}<div class="tags">${(item.towns || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}${(item.topics || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div><section id="itemEntityLinks" class="item-entity-links" hidden aria-labelledby="itemEntityLinksTitle"><p class="eyebrow">Civic connections</p><h2 id="itemEntityLinksTitle">People and organisations in the graph</h2><div id="itemEntityLinksContent"></div></section><div class="item-page-actions"><a class="primary-source-link" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Read the original source ↗</a><a href="#contribute">Add to this story ↓</a></div><div id="itemFollowControls" class="item-follow-controls" aria-label="Follow this civic information"></div><p class="canonical-note">The original publisher remains the canonical source. This Commons URL exists so local context, evidence, corrections, discussion and follows can attach to a stable civic object.</p>`;
-  renderFollowControls(item, key); fillContributionFields(item, key); $('#contribute').hidden = false; $('#discussion').hidden = false; loadItemEntityLinks(item); loadCivicMemory(item);
+  view.innerHTML = `<div class="item-page-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass)}</span><span>${esc(item.source)}</span><span>${esc(fmtDate(item.publishedAt))}</span></div><h1>${esc(item.title)}</h1>${item.summary ? `<p class="item-page-summary">${esc(item.summary)}</p>` : ''}${item.derived ? `<p class="provenance-note"><strong>Source note:</strong> ${esc(item.derivedFrom || 'Imported or extracted from the original source')}.</p>` : ''}<div class="tags">${(item.towns || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}${(item.topics || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div><section id="itemEntityLinks" class="item-entity-links" hidden aria-labelledby="itemEntityLinksTitle"><p class="eyebrow">Civic connections</p><h2 id="itemEntityLinksTitle">People and organisations in the graph</h2><div id="itemEntityLinksContent"></div></section><div class="item-page-actions"><a class="primary-source-link" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Read the original source ↗</a><a id="commonsChatAction" class="commons-chat-link" href="${esc(commonsChatUrl(item))}" target="_blank" rel="noopener noreferrer">Start a conversation ↗</a><a href="#contribute">Add evidence or context ↓</a></div><section id="commonsChatDiscovery" class="chat-discovery" hidden aria-live="polite"></section><div id="itemFollowControls" class="item-follow-controls" aria-label="Follow this civic information"></div><p class="canonical-note">The original publisher remains the canonical source. This Commons URL exists so local context, evidence, corrections, discussion and follows can attach to a stable civic object.</p>`;
+  renderFollowControls(item, key); fillContributionFields(item, key); $('#contribute').hidden = false; $('#discussion').hidden = false; loadChatDiscussions(item); loadItemEntityLinks(item); loadCivicMemory(item);
 }
 
 function normalizedText(value) {

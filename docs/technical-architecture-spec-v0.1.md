@@ -1,7 +1,7 @@
 # Ealing Civic Commons
 ## Technical Architecture & Implementation Notes — v0.1
 
-**Updated:** 8 September 2026  
+**Updated:** 20 September 2026  
 **Status:** Living architecture for the public prototype
 
 This document began as the Phase 1 prototype specification. The implementation has moved well beyond the original read-only design, so this living v0.1 now records the architecture that is actually live while preserving the founding constraints.
@@ -34,7 +34,8 @@ The live prototype is no longer just a read-only timeline. It now includes:
 - a reviewed people/organisation/place/topic/issue graph;
 - a planning-application discovery layer with latest-week and durable archive views;
 - explicit planning → place → issue relationships with retained planning history;
-- shared civic dossier pages that combine current material with deeper reviewed evidence/history.
+- shared civic dossier pages that combine current material with deeper reviewed evidence/history;
+- Commons Chat as a public conversation layer built on RSS.chat, with Civic Commons object binding and open RSS/API/websocket outputs.
 
 It is still **not** intended to become a replacement publisher, council portal, engagement-ranking system or compulsory social network.
 
@@ -91,6 +92,28 @@ The original specification proposed a future TypeScript/PostgreSQL application. 
 - Node scripts for validation, ingestion, generation and source diagnostics.
 
 This is a prototype architecture, not a commitment that PostgreSQL or a server-rendered framework will never be appropriate later. The priority remains portability, inspectability and avoiding infrastructure that outruns the civic use case.
+
+### Commons Chat conversation layer
+
+Commons Chat is now live as a distinct conversation service rather than being embedded into the civic data store.
+
+The current implementation uses:
+
+- the open-source RSS.chat client/server;
+- a DigitalOcean-hosted Node/SQLite server behind Caddy HTTPS/WSS;
+- Resend email-link authentication;
+- a Civic Commons-owned client shell and presentation layer;
+- a repository-managed server overlay under `ops/commons-chat-server/`, pinned to a known upstream baseline and verified in CI;
+- a production systemd runtime preflight that validates config, requires SQLite, checks `better-sqlite3` against the current Node runtime and only rebuilds that native module when it cannot load;
+- `commonsObjectUrl` and `commonsObjectType` fields to bind a root conversation to a durable Civic Commons object;
+- a public `/getcommonsdiscussions` endpoint so civic pages can discover existing discussions;
+- a `commons:object` RSS element so the civic binding survives outside the web client.
+
+The boundary remains deliberate: Civic Commons stores the durable civic record; Commons Chat stores public conversation about it. A chat post does not become reviewed civic knowledge without crossing the Commons review boundary.
+
+Micro.blog is the first verified external publishing integration. It can manually cross-post a blog post into Commons Chat after email verification. Wider bridges to Bluesky, Mastodon and other networks can be explored through open feeds and intermediary services without making those networks dependencies.
+
+See [Commons Chat — architecture and interoperability](./commons-chat-architecture.md).
 
 ## 5. Core civic object model
 
@@ -307,6 +330,7 @@ Deterministic factual ingestion from an authoritative register is different from
 The Commons exposes or is designed to expose:
 
 - main and filtered RSS;
+- Commons Chat user/everyone RSS feeds, HTTP API and websocket updates;
 - personal RSS;
 - source lists/OPML;
 - stable civic item/entity URLs;
@@ -366,6 +390,7 @@ One failing upstream must not break the public Commons.
 6. Automate public entity completeness checks.
 7. Harden source adapters/parser tests/caching without creating one-service dependencies.
 8. Restore town-aware social metadata generation for stable public routes.
+9. Harden Commons Chat moderation/authentication controls and test external feed bridges without making conversation infrastructure a core civic dependency. Runtime startup hardening is now live: config/SQLite/native-module checks run before every service start.
 
 ## 21. Founding architectural principles
 

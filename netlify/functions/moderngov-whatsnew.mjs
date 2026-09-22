@@ -1,3 +1,4 @@
+import { XMLParser } from 'fast-xml-parser';
 const BOROUGH_TOWNS = ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
 const SOURCE = {
   id: 'modern-gov',
@@ -6,6 +7,7 @@ const SOURCE = {
   sourceClass: 'Official record'
 };
 const MODERNGOV_RSS = 'https://ealing.moderngov.co.uk/mgRss.aspx?XXR=0';
+const MODERNGOV_RELAY = process.env.MODERNGOV_RELAY_URL || 'https://chat-dev.ealing.civiccommons.co.uk/_relay/moderngov/rss';
 const MODERNGOV_WHATS_NEW = 'https://ealing.moderngov.co.uk/mgWhatsNew.aspx';
 const PUBLIC_EPETITIONS = 'https://ealing.moderngov.co.uk/mgEPetitionListDisplay.aspx?bcr=1';
 // Ealing's Cloudflare policy blocks Netlify/GitHub server IPs from reading the
@@ -17,6 +19,9 @@ const PUBLIC_EPETITIONS = 'https://ealing.moderngov.co.uk/mgEPetitionListDisplay
 // return HTTP 422 on the public endpoint.
 const RSS_BRIDGE = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(MODERNGOV_RSS)}`;
 const SUPPORTED_EVENT = /^(Agenda published|Minutes published|Decision sheet published|Issue published|Decision published|ePetition|Publication of plan)\s*:\s*(.+)$/i;
+const xmlParser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', textNodeName: '#text' });
+const asArray = value => value == null ? [] : Array.isArray(value) ? value : [value];
+const textValue = value => value?.['#text'] ?? value ?? '';
 
 function cleanText(value = '') {
   return String(value)
@@ -135,6 +140,63 @@ function normaliseBridgeItem(entry) {
   };
 }
 
+async function fetchViaStaticRelay() {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 9000);
+  const started = Date.now();
+
+  try {
+    const response = await fetch(MODERNGOV_RELAY, {
+      signal: controller.signal,
+      redirect: 'follow',
+      headers: {
+        accept: 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.5',
+        'user-agent': 'Ealing-Civic-Commons/1.0'
+      }
+    });
+    const diagnostics = [{
+      mode: 'static-egress-relay',
+      outcome: 'http-response',
+      httpStatus: response.status,
+      elapsedMs: Date.now() - started,
+      cache: response.headers.get('x-civic-commons-relay-cache') || null
+    }];
+
+    if (!response.ok) {
+      return { items: [], error: `Static-egress relay HTTP ${response.status}`, diagnostics };
+    }
+
+    const parsed = xmlParser.parse(await response.text());
+    const rawItems = asArray(parsed?.rss?.channel?.item ?? parsed?.feed?.entry);
+    const items = rawItems.map(entry => normaliseBridgeItem({
+      title: textValue(entry?.title),
+      description: textValue(entry?.description ?? entry?.summary ?? entry?.content),
+      pubDate: textValue(entry?.pubDate ?? entry?.published ?? entry?.updated),
+      link: typeof entry?.link === 'string'
+        ? entry.link
+        : Array.isArray(entry?.link)
+          ? (entry.link.find(link => link?.['@_rel'] === 'alternate')?.['@_href'] || entry.link[0]?.['@_href'])
+          : entry?.link?.['@_href'],
+      guid: textValue(entry?.guid ?? entry?.id)
+    })).filter(Boolean);
+
+    return {
+      items,
+      error: items.length ? null : 'Static-egress relay responded but contained no supported publication updates',
+      diagnostics
+    };
+  } catch (error) {
+    const message = error?.name === 'AbortError' ? 'Static-egress relay timed out' : String(error?.message || error);
+    return {
+      items: [],
+      error: message,
+      diagnostics: [{ mode: 'static-egress-relay', outcome: 'transport-error', error: message, elapsedMs: Date.now() - started }]
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function fetchViaRssBridge() {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 9000);
@@ -233,19 +295,24 @@ async function fetchViaOfficialHtml() {
 }
 
 export async function fetchModernGovWhatsNew() {
+  const relay = await fetchViaStaticRelay();
+  if (relay.items.length) {
+    return { items: relay.items, health: [{ ...SOURCE, ok: true, status: 'ok', error: null, itemCount: relay.items.length, diagnostics: relay.diagnostics }] };
+  }
+
   const bridge = await fetchViaRssBridge();
   if (bridge.items.length) {
-    return { items: bridge.items, health: [{ ...SOURCE, ok: true, status: 'ok', error: null, itemCount: bridge.items.length, diagnostics: bridge.diagnostics }] };
+    return { items: bridge.items, health: [{ ...SOURCE, ok: true, status: 'degraded', error: relay.error || null, itemCount: bridge.items.length, diagnostics: [...(relay.diagnostics || []), ...(bridge.diagnostics || [])] }] };
   }
 
   const fallback = await fetchViaOfficialHtml();
-  const diagnostics = [...(bridge.diagnostics || []), ...(fallback.diagnostics || [])];
+  const diagnostics = [...(relay.diagnostics || []), ...(bridge.diagnostics || []), ...(fallback.diagnostics || [])];
   if (fallback.items.length) {
     return { items: fallback.items, health: [{ ...SOURCE, ok: true, status: 'ok', error: null, itemCount: fallback.items.length, diagnostics }] };
   }
 
   return {
     items: [],
-    health: [{ ...SOURCE, ok: false, status: 'upstream', error: `${bridge.error || 'RSS bridge unavailable'}; ${fallback.error || 'official fallback unavailable'}`, itemCount: 0, diagnostics }]
+    health: [{ ...SOURCE, ok: false, status: 'upstream', error: `${relay.error || 'static-egress relay unavailable'}; ${bridge.error || 'RSS bridge unavailable'}; ${fallback.error || 'official fallback unavailable'}`, itemCount: 0, diagnostics }]
   };
 }

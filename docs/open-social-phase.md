@@ -2,11 +2,26 @@
 ## Open Social Phase — development direction
 
 **Date:** 26 August 2026  
-**Status:** Active development direction
+**Updated:** 20 September 2026  
+**Status:** Implementation history; Commons Chat is now live
 
 The Civic Commons can begin developing its social and participatory layers now, while conversations and integrations with Open Council Network, Ealing Council, RSS.chat and other potential partners continue in parallel.
 
 Those relationships can make the Commons substantially better. They are complementary to the work already under way rather than prerequisites for the next development stage.
+
+## September 2026 update — Commons Chat is live
+
+The proposed open conversation layer now has a working implementation.
+
+Commons Chat uses the open-source RSS.chat client/server as a separate, replaceable conversation service. Civic Commons item pages can start or discover discussions; bound chat roots carry the canonical Civic Commons object URL/type; the same binding is emitted in RSS; replies remain ordinary RSS.chat replies rather than duplicate civic records.
+
+The live implementation preserves RSS.chat's public user/everyone feeds, HTTP API and websocket stream. Local server changes are maintained as a reproducible repository overlay instead of undocumented production edits.
+
+Micro.blog is the first verified external publishing bridge: after connecting an account to the Commons Chat host by email verification, a Micro.blog post can be sent with **Cross-post… → RSS chat**. The canonical blog/article remains the publication of record; Commons Chat carries the conversational copy.
+
+Micro.blog can also cross-post its sources to wider networks including Bluesky and Mastodon, so it gives us a practical bridge to test before attempting native ActivityPub or AT Protocol federation. Native two-way Commons Chat federation with those networks is **not** claimed today.
+
+See [Commons Chat — architecture and interoperability](./commons-chat-architecture.md).
 
 ## Principle
 
@@ -47,9 +62,9 @@ Submissions should retain provenance and moderation state.
 
 ### 5. Conversation threads
 
-Each Commons item can expose a conversation thread keyed to its stable item ID. The storage/interface should be replaceable so that a future RSS.chat, ActivityPub, AT Protocol or other open integration can mirror or participate in the same thread.
+Each Commons item can expose a conversation thread keyed to its stable item ID. RSS.chat now provides that first working conversation layer, while the storage/interface remains replaceable so ActivityPub, AT Protocol or other open integrations can later mirror or participate without owning the civic record.
 
-The first implementation does not need federation to prove the user experience.
+The first implementation has therefore proved the user experience without requiring federation.
 
 ### 6. Portable open outputs
 
@@ -117,10 +132,12 @@ Early participation should therefore be deliberately constrained:
 - town/topic/source following;
 - contributor history and moderation tools.
 
-**Social Phase C**
-- federation/bridges to open conversation systems such as RSS.chat, ActivityPub or AT Protocol where useful;
+**Social Phase C — partly live**
+- RSS.chat / Commons Chat bridge live, including civic-object binding and public open feeds/API;
+- Micro.blog manual cross-posting into Commons Chat verified;
+- test feed-based bridges through Micro.blog to Bluesky/Mastodon before considering native federation;
 - portable identity where practical;
-- external replies/contributions mapped back to Commons item IDs.
+- external replies/contributions mapped back to Commons item IDs only where identity/thread mapping is reliable.
 
 **Parallel democracy integration**
 - continue exploring Open Council Network integration as access and terms are agreed;

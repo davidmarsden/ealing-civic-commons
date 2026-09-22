@@ -1,0 +1,58 @@
+name: Commons Chat server overlay check
+
+on:
+  pull_request:
+    paths:
+      - 'ops/commons-chat-server/**'
+      - '.github/workflows/commons-chat-overlay-check.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/commons-chat-server/**'
+      - '.github/workflows/commons-chat-overlay-check.yml'
+  schedule:
+    - cron: '17 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pinned-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Fetch pinned rss.chat server
+        run: |
+          SHA="$(node -p "require('./ops/commons-chat-server/upstream-baseline.json').upstreamCommit")"
+          curl --fail --silent --show-error --location \
+            "https://raw.githubusercontent.com/scripting/rss.chat/$SHA/server/code/rssnetwork.js" \
+            --output /tmp/rssnetwork.js
+      - name: Apply and verify overlay
+        run: |
+          node ops/commons-chat-server/apply-overlay.mjs /tmp/rssnetwork.js
+          node ops/commons-chat-server/verify-overlay.mjs /tmp/rssnetwork.js
+      - name: Check runtime preflight shell syntax
+        run: bash -n ops/commons-chat-server/preflight.sh
+
+  current-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Fetch current rss.chat main
+        run: |
+          curl --fail --silent --show-error --location \
+            "https://raw.githubusercontent.com/scripting/rss.chat/main/server/code/rssnetwork.js" \
+            --output /tmp/rssnetwork.js
+      - name: Check overlay against current upstream
+        run: |
+          node ops/commons-chat-server/apply-overlay.mjs /tmp/rssnetwork.js
+          node ops/commons-chat-server/verify-overlay.mjs /tmp/rssnetwork.js
+      - name: Check runtime preflight shell syntax
+        run: bash -n ops/commons-chat-server/preflight.sh
