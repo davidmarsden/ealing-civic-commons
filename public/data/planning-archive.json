@@ -1,11 +1,983 @@
 {
   "archive_version": 1,
-  "generated_at": "2026-09-08T20:03:09.929Z",
-  "latest_week": "31 Aug 2026",
+  "generated_at": "2026-09-22T11:39:37.056Z",
+  "latest_week": "14 Sep 2026",
   "source": "Ealing PAM / Civica Public Access",
   "canonical_source": "Ealing Council Planning Register",
   "place_link_rules_version": 1,
   "records": [
+    {
+      "id": "planning:ealing:263508palhe",
+      "reference": "263508PALHE",
+      "address": "80 Middleton Avenue Greenford UB6 8BS",
+      "proposal": "Single storey rear extension (max 6m deep and max 3.9m high) (42 Days Prior Approval Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-20",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLNH5KJMK6500&activeTab=summary",
+      "town": "Greenford",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263508palhe",
+      "place_links": [
+        {
+          "route": "places/greenford",
+          "label": "Greenford",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "14 Sep 2026",
+      "last_seen_week": "14 Sep 2026",
+      "first_seen_at": "2026-09-22T11:39:37.056Z",
+      "last_seen_at": "2026-09-22T11:39:37.056Z",
+      "weeks_seen": [
+        "14 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-22T11:39:37.056Z",
+          "week": "14 Sep 2026",
+          "address": "80 Middleton Avenue Greenford UB6 8BS",
+          "proposal": "Single storey rear extension (max 6m deep and max 3.9m high) (42 Days Prior Approval Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-20",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLNH5KJMK6500&activeTab=summary",
+          "town": "Greenford",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/greenford",
+              "label": "Greenford",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263498ptc",
+      "reference": "263498PTC",
+      "address": "48 Flat 2 Kenilworth Road Ealing W5 3UH",
+      "proposal": "T1 - Holm Oak (Quercus), crown reduce the neighbouring side at no.50, back to approx. 1.0m beyond the front garden fence line. Additionally, clear the house side at no.48, reducing the branches back to previous points of reduction, allowing the guttering approx 1.0m of clearance. **T2, T3 and T4 Are situated in the neighbouring property at no.46 - we have uploaded the written consent from our client at no.48 from her neighbour at no.46.** T2 - Sycamore (Acer), on the lowest limb, remove the branch overhanging the building, back into the first 'V'. T3 - Ash (Fraxinus) situated in the garden of no.46, crown reduce the lateral branches overhanging the garden at no.48 by approx. 3.0m. These works are recommended in order to reduce the weight and ultimate risk of limb failure. T4 - Lime (Tilia), crown lift the 3 lowest limbs to elevate the tree.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-19",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLK8HIJMK4N00&activeTab=summary",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263498ptc",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "14 Sep 2026",
+      "last_seen_week": "14 Sep 2026",
+      "first_seen_at": "2026-09-22T11:39:37.056Z",
+      "last_seen_at": "2026-09-22T11:39:37.056Z",
+      "weeks_seen": [
+        "14 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-22T11:39:37.056Z",
+          "week": "14 Sep 2026",
+          "address": "48 Flat 2 Kenilworth Road Ealing W5 3UH",
+          "proposal": "T1 - Holm Oak (Quercus), crown reduce the neighbouring side at no.50, back to approx. 1.0m beyond the front garden fence line. Additionally, clear the house side at no.48, reducing the branches back to previous points of reduction, allowing the guttering approx 1.0m of clearance. **T2, T3 and T4 Are situated in the neighbouring property at no.46 - we have uploaded the written consent from our client at no.48 from her neighbour at no.46.** T2 - Sycamore (Acer), on the lowest limb, remove the branch overhanging the building, back into the first 'V'. T3 - Ash (Fraxinus) situated in the garden of no.46, crown reduce the lateral branches overhanging the garden at no.48 by approx. 3.0m. These works are recommended in order to reduce the weight and ultimate risk of limb failure. T4 - Lime (Tilia), crown lift the 3 lowest limbs to elevate the tree.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-19",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLK8HIJMK4N00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263476ptt",
+      "reference": "263476PTT",
+      "address": "Holbrook Court 33 Golden Manor Hanwell Ealing W7 3EH",
+      "proposal": "TPO005 T1 & T2 - 2 Lime (Tilia spp.) - Re-pollard both trees back to the established previous pruning points, removing approximately 1.5-2.0m of the current regrowth from the height and lateral spread, subject to the location of the historic pollard heads. Retain the existing pollard framework and avoid cutting beyond the established previous reduction points. Crown lift both trees to provide approximately 2.5m clearance above the adjoining pedestrian footpath, by selectively removing or shortening low secondary branches only. Remove any dead, damaged or crossing branches encountered during the works. Reason: Routine management of previously pollarded Lime trees; to contain crown dimensions, maintain the established pruning regime and provide suitable clearance above the adjoining pedestrian footpath. T3 - Horse Chestnut (Aesculus hippocastanum) Crown reduce the tree by approximately 2.0-2.5m from the height and lateral spread, pruning back to suitable secondary growth points and maintaining a balanced, natural crown form. The finished crown dimensions should be approximately 4-5m smaller in overall diameter than existing. Crown thin by up to 20%, concentrating on selective removal of secondary growth throughout the crown without creating excessive internal voids or removing significant structural limbs. Crown lift to provide approximately 4.0m clearance above ground level, through selective removal or shortening of lower secondary branches. Remove all deadwood throughout the crown. Reason: General crown management to reduce overall crown dimensions and end-weight, improve crown structure and maintain appropriate clearance beneath the tree.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-17",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLHX7NJMK1L00&activeTab=summary",
+      "town": "Hanwell",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263476ptt",
+      "place_links": [
+        {
+          "route": "places/hanwell",
+          "label": "Hanwell",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "14 Sep 2026",
+      "last_seen_week": "14 Sep 2026",
+      "first_seen_at": "2026-09-22T11:39:37.056Z",
+      "last_seen_at": "2026-09-22T11:39:37.056Z",
+      "weeks_seen": [
+        "14 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-22T11:39:37.056Z",
+          "week": "14 Sep 2026",
+          "address": "Holbrook Court 33 Golden Manor Hanwell Ealing W7 3EH",
+          "proposal": "TPO005 T1 & T2 - 2 Lime (Tilia spp.) - Re-pollard both trees back to the established previous pruning points, removing approximately 1.5-2.0m of the current regrowth from the height and lateral spread, subject to the location of the historic pollard heads. Retain the existing pollard framework and avoid cutting beyond the established previous reduction points. Crown lift both trees to provide approximately 2.5m clearance above the adjoining pedestrian footpath, by selectively removing or shortening low secondary branches only. Remove any dead, damaged or crossing branches encountered during the works. Reason: Routine management of previously pollarded Lime trees; to contain crown dimensions, maintain the established pruning regime and provide suitable clearance above the adjoining pedestrian footpath. T3 - Horse Chestnut (Aesculus hippocastanum) Crown reduce the tree by approximately 2.0-2.5m from the height and lateral spread, pruning back to suitable secondary growth points and maintaining a balanced, natural crown form. The finished crown dimensions should be approximately 4-5m smaller in overall diameter than existing. Crown thin by up to 20%, concentrating on selective removal of secondary growth throughout the crown without creating excessive internal voids or removing significant structural limbs. Crown lift to provide approximately 4.0m clearance above ground level, through selective removal or shortening of lower secondary branches. Remove all deadwood throughout the crown. Reason: General crown management to reduce overall crown dimensions and end-weight, improve crown structure and maintain appropriate clearance beneath the tree.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-17",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLHX7NJMK1L00&activeTab=summary",
+          "town": "Hanwell",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/hanwell",
+              "label": "Hanwell",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263482ptc",
+      "reference": "263482PTC",
+      "address": "10 St Margarets Road Hanwell Ealing W7 2PP",
+      "proposal": "5DDD T1 Conifer Fell to ground level. Tree is dead.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-17",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLIGLPJMK3000&activeTab=summary",
+      "town": "Hanwell",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263482ptc",
+      "place_links": [
+        {
+          "route": "places/hanwell",
+          "label": "Hanwell",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "14 Sep 2026",
+      "last_seen_week": "14 Sep 2026",
+      "first_seen_at": "2026-09-22T11:39:37.056Z",
+      "last_seen_at": "2026-09-22T11:39:37.056Z",
+      "weeks_seen": [
+        "14 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-22T11:39:37.056Z",
+          "week": "14 Sep 2026",
+          "address": "10 St Margarets Road Hanwell Ealing W7 2PP",
+          "proposal": "5DDD T1 Conifer Fell to ground level. Tree is dead.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-17",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLIGLPJMK3000&activeTab=summary",
+          "town": "Hanwell",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/hanwell",
+              "label": "Hanwell",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263486ptc",
+      "reference": "263486PTC",
+      "address": "32 Acton Lane Chiswick Ealing W4 5ED",
+      "proposal": "T1- Bay - Reduce in height by approx. 5-6m and trim all other aspects to shape.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-17",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLIJFFJMK3900&activeTab=summary",
+      "town": "Acton",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263486ptc",
+      "place_links": [
+        {
+          "route": "places/acton",
+          "label": "Acton",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "14 Sep 2026",
+      "last_seen_week": "14 Sep 2026",
+      "first_seen_at": "2026-09-22T11:39:37.056Z",
+      "last_seen_at": "2026-09-22T11:39:37.056Z",
+      "weeks_seen": [
+        "14 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-22T11:39:37.056Z",
+          "week": "14 Sep 2026",
+          "address": "32 Acton Lane Chiswick Ealing W4 5ED",
+          "proposal": "T1- Bay - Reduce in height by approx. 5-6m and trim all other aspects to shape.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-17",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLIJFFJMK3900&activeTab=summary",
+          "town": "Acton",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/acton",
+              "label": "Acton",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263489ptc",
+      "reference": "263489PTC",
+      "address": "29 Meadvale Road Ealing W5 1NT",
+      "proposal": "T1 - T2 Lawson Cypress x2 x2 Cypress trees growing close to the property. Concern that the trees have caused cracks in the house. Fell to ground level in sections and remove from site.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-17",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLIM90JMK3I00&activeTab=summary",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263489ptc",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "14 Sep 2026",
+      "last_seen_week": "14 Sep 2026",
+      "first_seen_at": "2026-09-22T11:39:37.056Z",
+      "last_seen_at": "2026-09-22T11:39:37.056Z",
+      "weeks_seen": [
+        "14 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-22T11:39:37.056Z",
+          "week": "14 Sep 2026",
+          "address": "29 Meadvale Road Ealing W5 1NT",
+          "proposal": "T1 - T2 Lawson Cypress x2 x2 Cypress trees growing close to the property. Concern that the trees have caused cracks in the house. Fell to ground level in sections and remove from site.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-17",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLIM90JMK3I00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263458ptc",
+      "reference": "263458PTC",
+      "address": "63 Meadvale Road Ealing W5 1LP",
+      "proposal": "T1 Palm tree Fell to ground and grind stump to approx. 300mm below ground level. T2 Apple Fell to ground and grind stump to approx. 300mm below ground level.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-16",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLGDL6JMK0800&activeTab=summary",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263458ptc",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "14 Sep 2026",
+      "last_seen_week": "14 Sep 2026",
+      "first_seen_at": "2026-09-22T11:39:37.056Z",
+      "last_seen_at": "2026-09-22T11:39:37.056Z",
+      "weeks_seen": [
+        "14 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-22T11:39:37.056Z",
+          "week": "14 Sep 2026",
+          "address": "63 Meadvale Road Ealing W5 1LP",
+          "proposal": "T1 Palm tree Fell to ground and grind stump to approx. 300mm below ground level. T2 Apple Fell to ground and grind stump to approx. 300mm below ground level.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-16",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLGDL6JMK0800&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263460ptt",
+      "reference": "263460PTT",
+      "address": "2 Deena Close Ealing W3 0HR",
+      "proposal": "TPO141 T1 London Plane T2&T3 Mixed Group Tree These three trees have lateral roots up to 3m long which are pushing up paving slabs (in two cases) and tarmac (in one case). It is not practical to raise the level of the surfaces above this lifting because the trees would continue to push up. These roots need to be pruned.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-16",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLGLZRJMK0N00&activeTab=summary",
+      "town": null,
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263460ptt",
+      "place_links": [],
+      "first_seen_week": "14 Sep 2026",
+      "last_seen_week": "14 Sep 2026",
+      "first_seen_at": "2026-09-22T11:39:37.056Z",
+      "last_seen_at": "2026-09-22T11:39:37.056Z",
+      "weeks_seen": [
+        "14 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-22T11:39:37.056Z",
+          "week": "14 Sep 2026",
+          "address": "2 Deena Close Ealing W3 0HR",
+          "proposal": "TPO141 T1 London Plane T2&T3 Mixed Group Tree These three trees have lateral roots up to 3m long which are pushing up paving slabs (in two cases) and tarmac (in one case). It is not practical to raise the level of the surfaces above this lifting because the trees would continue to push up. These roots need to be pruned.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-16",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLGLZRJMK0N00&activeTab=summary",
+          "town": null,
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": []
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263461ptt",
+      "reference": "263461PTT",
+      "address": "Torkington House Creswick Road Acton Ealing W3 9HF",
+      "proposal": "T1-Holly(ilex aquifolia) -reduce crown by 1m (25%) to suitable growth points -prune lateral side to see-shape to rounded 'umbrella' form T3-Hazel(Corylus)-self-set, multi-stems, growing too close to fence -fell to ground level T4-Cherry(Prunus)-newly planted -reduce all 'leggy' stems by up to 1m to formative prune to shape and tidy T5-Cherry(Prunus)-newly planted -light reduction by up to 1m to formative prune to shape and tidy T6-Norway Maple(Acer platanoides) -reduce crown by 2m(30%) to suitable growth points -reduce lateral branches to shape, balance and tidy -lift where necessary to allow greater clearance over paved area T7-Cotoneaster(C.frigidus) -reduce long looping branches back to main canopy line -reduce and thin remaining crown to shape and tidy T8-Cherry(Prunus) -reduce crown by 1.5m(25%) to suitable growth points -reduce inbound lateral branches by 1.3m to shape, balance and tidy T9-Tall Holly(Ilex aquifolia) -reduce crown height by 2m(30%) to suitable growth points -trim all side branch growth by 0.75m -crown lift by 1m by removing all lower branches back to main trunk to reduce shading in shrubbery area T10-Large English Oak(Quercus robur) -reduce crown by 3m(25%) to suitable growth points -reduce inbound lowest hanging branches by up to 3m to allow more light onto patio area G1-5x Sycamore(Acer pseudoplatanus)-creates single crown -reduce ALL crown by 4m(30%) to suitable growth points -reduce all lateral branch lengths to match(3m) ensuring cut back hard over highway T11-White Poplar(popular alba)-although tree appears in good health with full leaf coverage, observed large historic cavity at trunk base caused by heartwood decay; cambium wood around trunk periphery appear 70% intact; RS to investigate further requesting arb consultant carry out extent of decay using micro-drilling techniques and resulting report RECOMMENDED WORK FOR NOW -reduce crown to previous pollard points(7m regrowth) carry out full aerial health inspection to check f",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-16",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLGM0BJMK0P00&activeTab=summary",
+      "town": "Acton",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263461ptt",
+      "place_links": [
+        {
+          "route": "places/acton",
+          "label": "Acton",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "14 Sep 2026",
+      "last_seen_week": "14 Sep 2026",
+      "first_seen_at": "2026-09-22T11:39:37.056Z",
+      "last_seen_at": "2026-09-22T11:39:37.056Z",
+      "weeks_seen": [
+        "14 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-22T11:39:37.056Z",
+          "week": "14 Sep 2026",
+          "address": "Torkington House Creswick Road Acton Ealing W3 9HF",
+          "proposal": "T1-Holly(ilex aquifolia) -reduce crown by 1m (25%) to suitable growth points -prune lateral side to see-shape to rounded 'umbrella' form T3-Hazel(Corylus)-self-set, multi-stems, growing too close to fence -fell to ground level T4-Cherry(Prunus)-newly planted -reduce all 'leggy' stems by up to 1m to formative prune to shape and tidy T5-Cherry(Prunus)-newly planted -light reduction by up to 1m to formative prune to shape and tidy T6-Norway Maple(Acer platanoides) -reduce crown by 2m(30%) to suitable growth points -reduce lateral branches to shape, balance and tidy -lift where necessary to allow greater clearance over paved area T7-Cotoneaster(C.frigidus) -reduce long looping branches back to main canopy line -reduce and thin remaining crown to shape and tidy T8-Cherry(Prunus) -reduce crown by 1.5m(25%) to suitable growth points -reduce inbound lateral branches by 1.3m to shape, balance and tidy T9-Tall Holly(Ilex aquifolia) -reduce crown height by 2m(30%) to suitable growth points -trim all side branch growth by 0.75m -crown lift by 1m by removing all lower branches back to main trunk to reduce shading in shrubbery area T10-Large English Oak(Quercus robur) -reduce crown by 3m(25%) to suitable growth points -reduce inbound lowest hanging branches by up to 3m to allow more light onto patio area G1-5x Sycamore(Acer pseudoplatanus)-creates single crown -reduce ALL crown by 4m(30%) to suitable growth points -reduce all lateral branch lengths to match(3m) ensuring cut back hard over highway T11-White Poplar(popular alba)-although tree appears in good health with full leaf coverage, observed large historic cavity at trunk base caused by heartwood decay; cambium wood around trunk periphery appear 70% intact; RS to investigate further requesting arb consultant carry out extent of decay using micro-drilling techniques and resulting report RECOMMENDED WORK FOR NOW -reduce crown to previous pollard points(7m regrowth) carry out full aerial health inspection to check f",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-16",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLGM0BJMK0P00&activeTab=summary",
+          "town": "Acton",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/acton",
+              "label": "Acton",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263442ptc",
+      "reference": "263442PTC",
+      "address": "28 Park Hill Ealing W5 2JN",
+      "proposal": "T1 Lime - Remove (fell) to near ground level and treat stump to inhibit regrowth.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-15",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLE7TQJMJXX00&activeTab=summary",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263442ptc",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "14 Sep 2026",
+      "last_seen_week": "14 Sep 2026",
+      "first_seen_at": "2026-09-22T11:39:37.056Z",
+      "last_seen_at": "2026-09-22T11:39:37.056Z",
+      "weeks_seen": [
+        "14 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-22T11:39:37.056Z",
+          "week": "14 Sep 2026",
+          "address": "28 Park Hill Ealing W5 2JN",
+          "proposal": "T1 Lime - Remove (fell) to near ground level and treat stump to inhibit regrowth.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-15",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLE7TQJMJXX00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263431palhe",
+      "reference": "263431PALHE",
+      "address": "21 Croyde Avenue Greenford UB6 9LS",
+      "proposal": "Single storey (Max 6m deep and Max 2.85m high) rear extension (42 days Prior Notification Process) following demolition of existing rear addition",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-12",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL8W5AJMJV700&activeTab=summary",
+      "town": "Greenford",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263431palhe",
+      "place_links": [
+        {
+          "route": "places/greenford",
+          "label": "Greenford",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "07 Sep 2026",
+      "last_seen_week": "07 Sep 2026",
+      "first_seen_at": "2026-09-15T11:45:07.007Z",
+      "last_seen_at": "2026-09-15T11:45:07.007Z",
+      "weeks_seen": [
+        "07 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-15T11:45:07.007Z",
+          "week": "07 Sep 2026",
+          "address": "21 Croyde Avenue Greenford UB6 9LS",
+          "proposal": "Single storey (Max 6m deep and Max 2.85m high) rear extension (42 days Prior Notification Process) following demolition of existing rear addition",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-12",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL8W5AJMJV700&activeTab=summary",
+          "town": "Greenford",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/greenford",
+              "label": "Greenford",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263418ptt",
+      "reference": "263418PTT",
+      "address": "62 Coleridge Square West Ealing Ealing W13 0JX",
+      "proposal": "TPO 749 T49 - Oak - Located on land to rear of No 58 - 77 Coleridge Square - Would like to crown lift over highway to statutory height of approx 5m T50 - Field Maple - Located on land to rear of No 58 - 77 Coleridge Square - Would like to crown lift over highway to statutory height of approx 5m T51 - Field Maple - Located on land to rear of No 58 - 77 Coleridge Square - Would like to crown lift over highway to statutory height of approx 5m T52 - Field Maple - Located on land to rear of No 58 - 77 Coleridge Square - Large area of decay - Would like to Fell T53 - Field Maple - Located on land to rear of No 58 - 77 Coleridge Square - Would like to crown reduce removing up to 2.5m T54 - Field Maple - Located on land to rear of No 58 - 77 Coleridge Square - Damaged lower limb - Would like to remove lower limb T55 - Silver Birch - Located on land to rear of No 58 - 77 Coleridge Square - Tree is dead - Would like to fell. Reason - Works required for H&S and routine maintenance purposes.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-11",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL79TEJMJU300&activeTab=summary",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263418ptt",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "07 Sep 2026",
+      "last_seen_week": "07 Sep 2026",
+      "first_seen_at": "2026-09-15T11:45:07.007Z",
+      "last_seen_at": "2026-09-15T11:45:07.007Z",
+      "weeks_seen": [
+        "07 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-15T11:45:07.007Z",
+          "week": "07 Sep 2026",
+          "address": "62 Coleridge Square West Ealing Ealing W13 0JX",
+          "proposal": "TPO 749 T49 - Oak - Located on land to rear of No 58 - 77 Coleridge Square - Would like to crown lift over highway to statutory height of approx 5m T50 - Field Maple - Located on land to rear of No 58 - 77 Coleridge Square - Would like to crown lift over highway to statutory height of approx 5m T51 - Field Maple - Located on land to rear of No 58 - 77 Coleridge Square - Would like to crown lift over highway to statutory height of approx 5m T52 - Field Maple - Located on land to rear of No 58 - 77 Coleridge Square - Large area of decay - Would like to Fell T53 - Field Maple - Located on land to rear of No 58 - 77 Coleridge Square - Would like to crown reduce removing up to 2.5m T54 - Field Maple - Located on land to rear of No 58 - 77 Coleridge Square - Damaged lower limb - Would like to remove lower limb T55 - Silver Birch - Located on land to rear of No 58 - 77 Coleridge Square - Tree is dead - Would like to fell. Reason - Works required for H&S and routine maintenance purposes.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-11",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL79TEJMJU300&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263427palhe",
+      "reference": "263427PALHE",
+      "address": "58 Tring Avenue Ealing W5 3QB",
+      "proposal": "Single storey (Max 6m deep and Max 3m high) rear extension (42 days Prior Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-11",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL7KYDJMJUT00&activeTab=summary",
+      "town": "Ealing",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263427palhe",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "07 Sep 2026",
+      "last_seen_week": "07 Sep 2026",
+      "first_seen_at": "2026-09-15T11:45:07.007Z",
+      "last_seen_at": "2026-09-15T11:45:07.007Z",
+      "weeks_seen": [
+        "07 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-15T11:45:07.007Z",
+          "week": "07 Sep 2026",
+          "address": "58 Tring Avenue Ealing W5 3QB",
+          "proposal": "Single storey (Max 6m deep and Max 3m high) rear extension (42 days Prior Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-11",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL7KYDJMJUT00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263400nma",
+      "reference": "263400NMA",
+      "address": "1 Stirling Road/1-9 Colville Road And 67-81 Stirling Road Acton W3 8DJ",
+      "proposal": "Application for a Non-Material Amendment in (S96a) seeking to allow Amendment to the wording of Condition 22 (Details of materials) of the planning permission to change the trigger point for discharge in relation to planning permission reference 232800FUL dated 08/05/2024 for: Demolition of existing buildings and construction of a mixed use development comprising commercial floorspace, residential units (Use Class C3) and purpose built student housing (Sui Generis), within two buildings, comprising 20 and 11 storeys, with landscaping, and associated ancillary and enabling works",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-10",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL4YI2JMJSU00&activeTab=summary",
+      "town": "Acton",
+      "category": "Planning application",
+      "out_of_borough": false,
+      "commons_path": "/planning/263400nma",
+      "place_links": [
+        {
+          "route": "places/acton",
+          "label": "Acton",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "07 Sep 2026",
+      "last_seen_week": "07 Sep 2026",
+      "first_seen_at": "2026-09-15T11:45:07.007Z",
+      "last_seen_at": "2026-09-15T11:45:07.007Z",
+      "weeks_seen": [
+        "07 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-15T11:45:07.007Z",
+          "week": "07 Sep 2026",
+          "address": "1 Stirling Road/1-9 Colville Road And 67-81 Stirling Road Acton W3 8DJ",
+          "proposal": "Application for a Non-Material Amendment in (S96a) seeking to allow Amendment to the wording of Condition 22 (Details of materials) of the planning permission to change the trigger point for discharge in relation to planning permission reference 232800FUL dated 08/05/2024 for: Demolition of existing buildings and construction of a mixed use development comprising commercial floorspace, residential units (Use Class C3) and purpose built student housing (Sui Generis), within two buildings, comprising 20 and 11 storeys, with landscaping, and associated ancillary and enabling works",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-10",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL4YI2JMJSU00&activeTab=summary",
+          "town": "Acton",
+          "category": "Planning application",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/acton",
+              "label": "Acton",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263392ptc",
+      "reference": "263392PTC",
+      "address": "146 Westcott Crescent Hanwell Ealing W7 1PD",
+      "proposal": "T1 & T2- Lilanda trees - Removal T3 - Palm tree - too large T3. Pruning to a more reasoanble size is not possible as they have not been properly managed. This is to enable redesign of the garden, which is currently entirely patio. After removal of the trees the patio and currently derelict garage will be removed and replaced with a newly designed garden with multiple new species of plant.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-09",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL36KUJMJRK00&activeTab=summary",
+      "town": "Hanwell",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263392ptc",
+      "place_links": [
+        {
+          "route": "places/hanwell",
+          "label": "Hanwell",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "07 Sep 2026",
+      "last_seen_week": "07 Sep 2026",
+      "first_seen_at": "2026-09-15T11:45:07.007Z",
+      "last_seen_at": "2026-09-15T11:45:07.007Z",
+      "weeks_seen": [
+        "07 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-15T11:45:07.007Z",
+          "week": "07 Sep 2026",
+          "address": "146 Westcott Crescent Hanwell Ealing W7 1PD",
+          "proposal": "T1 & T2- Lilanda trees - Removal T3 - Palm tree - too large T3. Pruning to a more reasoanble size is not possible as they have not been properly managed. This is to enable redesign of the garden, which is currently entirely patio. After removal of the trees the patio and currently derelict garage will be removed and replaced with a newly designed garden with multiple new species of plant.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-09",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL36KUJMJRK00&activeTab=summary",
+          "town": "Hanwell",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/hanwell",
+              "label": "Hanwell",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263403opdcob",
+      "reference": "263403OPDCOB",
+      "address": "6 Standard Road Park Royal NW10 6EU",
+      "proposal": "Retrospective change of use of the building from Use Class B8 (storage and distribution) to Use Class B2 (general industrial), for use as a vehicle repair and bodywork workshop and associated works. (Out of Borough)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-09",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL59K4JM0KW00&activeTab=summary",
+      "town": null,
+      "category": "Out of borough",
+      "out_of_borough": true,
+      "commons_path": "/planning/263403opdcob",
+      "place_links": [],
+      "first_seen_week": "07 Sep 2026",
+      "last_seen_week": "07 Sep 2026",
+      "first_seen_at": "2026-09-15T11:45:07.007Z",
+      "last_seen_at": "2026-09-15T11:45:07.007Z",
+      "weeks_seen": [
+        "07 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-15T11:45:07.007Z",
+          "week": "07 Sep 2026",
+          "address": "6 Standard Road Park Royal NW10 6EU",
+          "proposal": "Retrospective change of use of the building from Use Class B8 (storage and distribution) to Use Class B2 (general industrial), for use as a vehicle repair and bodywork workshop and associated works. (Out of Borough)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-09",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL59K4JM0KW00&activeTab=summary",
+          "town": null,
+          "category": "Out of borough",
+          "out_of_borough": true,
+          "place_links": []
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263368palhe",
+      "reference": "263368PALHE",
+      "address": "68 Daryngton Drive Greenford UB6 8BL",
+      "proposal": "Single storey rear extension (max 6m deep and max 3m high) (42 Days Prior Approval Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-08",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL1986JMJP800&activeTab=summary",
+      "town": "Greenford",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263368palhe",
+      "place_links": [
+        {
+          "route": "places/greenford",
+          "label": "Greenford",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "07 Sep 2026",
+      "last_seen_week": "07 Sep 2026",
+      "first_seen_at": "2026-09-15T11:45:07.007Z",
+      "last_seen_at": "2026-09-15T11:45:07.007Z",
+      "weeks_seen": [
+        "07 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-15T11:45:07.007Z",
+          "week": "07 Sep 2026",
+          "address": "68 Daryngton Drive Greenford UB6 8BL",
+          "proposal": "Single storey rear extension (max 6m deep and max 3m high) (42 Days Prior Approval Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-08",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL1986JMJP800&activeTab=summary",
+          "town": "Greenford",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/greenford",
+              "label": "Greenford",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263379ptt",
+      "reference": "263379PTT",
+      "address": "19-21 Western Road Southall Ealing UB2 5JL",
+      "proposal": "TPO 057. T1, T2 and T3 - Prunus spp. (Cherry trees) Proposed works comprise the installation of a root barrier between the trees and the adjacent building at 19-21 Western Road, in accordance with the Root Barrier Installation Methodology contained within Appendix B of Arboricultural Appraisal Ref. 199089_AA001_WESRDUB2. Works will involve careful excavation, identification and pruning of roots where necessary, and installation of the root barrier in accordance with the arboricultural methodology and recommendations.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-08",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL1SMKJMJQT00&activeTab=summary",
+      "town": "Southall",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263379ptt",
+      "place_links": [
+        {
+          "route": "places/southall",
+          "label": "Southall",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "07 Sep 2026",
+      "last_seen_week": "07 Sep 2026",
+      "first_seen_at": "2026-09-15T11:45:07.007Z",
+      "last_seen_at": "2026-09-15T11:45:07.007Z",
+      "weeks_seen": [
+        "07 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-15T11:45:07.007Z",
+          "week": "07 Sep 2026",
+          "address": "19-21 Western Road Southall Ealing UB2 5JL",
+          "proposal": "TPO 057. T1, T2 and T3 - Prunus spp. (Cherry trees) Proposed works comprise the installation of a root barrier between the trees and the adjacent building at 19-21 Western Road, in accordance with the Root Barrier Installation Methodology contained within Appendix B of Arboricultural Appraisal Ref. 199089_AA001_WESRDUB2. Works will involve careful excavation, identification and pruning of roots where necessary, and installation of the root barrier in accordance with the arboricultural methodology and recommendations.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-08",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL1SMKJMJQT00&activeTab=summary",
+          "town": "Southall",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/southall",
+              "label": "Southall",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263386palhe",
+      "reference": "263386PALHE",
+      "address": "188 Hicks Avenue Greenford UB6 8HD",
+      "proposal": "Single storey rear extension (max 6m deep and max 3.95m high) (following demolition of existing rear conservatory) (42 Days Prior Approval Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-08",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL1YABJMJR100&activeTab=summary",
+      "town": "Greenford",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263386palhe",
+      "place_links": [
+        {
+          "route": "places/greenford",
+          "label": "Greenford",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "07 Sep 2026",
+      "last_seen_week": "07 Sep 2026",
+      "first_seen_at": "2026-09-15T11:45:07.007Z",
+      "last_seen_at": "2026-09-15T11:45:07.007Z",
+      "weeks_seen": [
+        "07 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-15T11:45:07.007Z",
+          "week": "07 Sep 2026",
+          "address": "188 Hicks Avenue Greenford UB6 8HD",
+          "proposal": "Single storey rear extension (max 6m deep and max 3.95m high) (following demolition of existing rear conservatory) (42 Days Prior Approval Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-08",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL1YABJMJR100&activeTab=summary",
+          "town": "Greenford",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/greenford",
+              "label": "Greenford",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263366ptt",
+      "reference": "263366PTT",
+      "address": "46 The Ridings Ealing W5 3BU",
+      "proposal": "TPO2068 T2 Turkey Oak (Quercus cerris) Reduce crown to the most recent previous reduction points, removing approx. m of new growth. Final height = 19-20m and final overall spread = 8m.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-07",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL06A6JMJOZ00&activeTab=summary",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263366ptt",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "07 Sep 2026",
+      "last_seen_week": "07 Sep 2026",
+      "first_seen_at": "2026-09-15T11:45:07.007Z",
+      "last_seen_at": "2026-09-15T11:45:07.007Z",
+      "weeks_seen": [
+        "07 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-09-15T11:45:07.007Z",
+          "week": "07 Sep 2026",
+          "address": "46 The Ridings Ealing W5 3BU",
+          "proposal": "TPO2068 T2 Turkey Oak (Quercus cerris) Reduce crown to the most recent previous reduction points, removing approx. m of new growth. Final height = 19-20m and final overall spread = 8m.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-07",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TL06A6JMJOZ00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
     {
       "id": "planning:ealing:263349palhe",
       "reference": "263349PALHE",
