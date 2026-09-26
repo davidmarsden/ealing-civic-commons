@@ -142,6 +142,8 @@ The key rule from now on is simple: **READY/VERIFIED must never be used as a syn
 | Deirdre Costigan MP — personal site | Ealing Southall | Elected representative / political publishing | **REFERENCE** | First-party site confirmed, but it still contains stale 2024 candidate/“next MP” copy. Parliament is authoritative for her current MP status; verify a safely dated current publication surface before live ingestion. |
 | James Murray MP — personal site | Ealing North | Elected representative / political publishing | **REFERENCE** | First-party site confirmed and useful for biography/contact/campaign context; no dependable fresh dated publication listing has yet been verified. |
 | Peter Mason — personal site | Borough-wide / Southall Green | Elected representative / political publishing | **REFERENCE** | First-party personal site confirmed. Current council leadership is verified against Ealing Council/ModernGov; no dependable dated publication stream has yet been verified from the personal site. |
+| Planning-Records.uk — Ealing | Borough-wide | Independent planning data / archive comparator | **REFERENCE** | Searchable Ealing planning records with downloadable CSV/Parquet and UPRN-linked histories. Useful for backfill and cross-checking, but may lag PAM and is not authoritative. |
+| Planning Atlas — Ealing | Borough-wide | Independent planning analysis / reference | **REFERENCE** | Rich application, officer, committee, appeal and site-history context. Useful as an analysis/reference layer; some features are subscription-gated and PAM remains canonical. |
 
 This table is intentionally conservative. A source is not promoted to `INGESTING` merely because a feed exists.
 
