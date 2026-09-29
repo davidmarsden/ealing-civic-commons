@@ -47,6 +47,13 @@ The following named source surfaces are configured in the current live aggregati
 | Ealing Council — YouTube | Borough-wide | Official publishing / video | YouTube Atom | **INGESTING** |
 | Southall Black Sisters — YouTube | Southall | Organisation / campaign / video | YouTube Atom | **INGESTING** |
 | London Assembly — YouTube | Borough-wide relevance | Official publishing / video | YouTube Atom | **INGESTING** |
+| ExposureBox — YouTube | Borough-wide | Independent local journalism / video | YouTube Atom from the ExposureBox channel; videos retain publisher attribution and are surfaced as video items | **INGESTING** |
+| ECI Southall — YouTube | Southall | Political organisation / campaign / video | YouTube Atom from the ECI Southall channel; political claims remain attributable to the publisher | **INGESTING** |
+| ECI Ealing — YouTube | Borough-wide | Political organisation / campaign / video | YouTube Atom from the ECI Ealing channel; political claims remain attributable to the publisher | **INGESTING** |
+| Clean Air for Southall and Hayes — YouTube | Southall / Hayes | Environment / community campaign / video | YouTube Atom using verified channel ID; campaign claims remain attributable to the publisher | **INGESTING** |
+| Southall — YouTube | Southall | Community / local video | YouTube Atom from the Southall channel; retained as a local civic-memory/community-video source | **INGESTING** |
+| Young Ealing Foundation — YouTube | Borough-wide | Voluntary sector / youth / video | YouTube Atom from Young Ealing Foundation; charity and youth-sector material retains publisher attribution | **INGESTING** |
+| Cap The Towers — YouTube | Borough-wide | Planning / housing campaign / video | YouTube Atom from Cap The Towers; campaign claims remain attributable to the publisher | **INGESTING** |
 | Open Council Network — Ealing | Borough-wide | Independent civic data / analysis | Conservative public-page bridge; richer API/partnership remains desirable | **INGESTING** |
 | The View from W5 | Ealing | Independent newsletter | Substack RSS | **INGESTING** |
 | MySouthall | Southall | Newsletter / campaigning | Substack RSS | **INGESTING** |
@@ -135,6 +142,8 @@ The key rule from now on is simple: **READY/VERIFIED must never be used as a syn
 | Deirdre Costigan MP — personal site | Ealing Southall | Elected representative / political publishing | **REFERENCE** | First-party site confirmed, but it still contains stale 2024 candidate/“next MP” copy. Parliament is authoritative for her current MP status; verify a safely dated current publication surface before live ingestion. |
 | James Murray MP — personal site | Ealing North | Elected representative / political publishing | **REFERENCE** | First-party site confirmed and useful for biography/contact/campaign context; no dependable fresh dated publication listing has yet been verified. |
 | Peter Mason — personal site | Borough-wide / Southall Green | Elected representative / political publishing | **REFERENCE** | First-party personal site confirmed. Current council leadership is verified against Ealing Council/ModernGov; no dependable dated publication stream has yet been verified from the personal site. |
+| Planning-Records.uk — Ealing | Borough-wide | Independent planning data / archive comparator | **REFERENCE** | Searchable Ealing planning records with downloadable CSV/Parquet and UPRN-linked histories. Useful for backfill and cross-checking, but may lag PAM and is not authoritative. |
+| Planning Atlas — Ealing | Borough-wide | Independent planning analysis / reference | **REFERENCE** | Rich application, officer, committee, appeal and site-history context. Useful as an analysis/reference layer; some features are subscription-gated and PAM remains canonical. |
 
 This table is intentionally conservative. A source is not promoted to `INGESTING` merely because a feed exists.
 

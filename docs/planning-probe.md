@@ -124,6 +124,18 @@ The national API remains useful as an open structured comparator and possible fu
 
 PlanWire remains an optional comparator only. Civic Commons does not depend on it.
 
+### Planning-Records.uk
+
+- https://planning-records.uk/ealing/
+
+Planning-Records.uk is a useful independent bulk/history comparator. Its Ealing surface exposes searchable application records plus downloadable CSV/Parquet data and UPRN-linked property histories. It is not authoritative and may lag PAM, so Civic Commons must not use absence or status there to override the council register. It is best suited to backfill research, cross-checking and future historical/archive enrichment.
+
+### Planning Atlas
+
+- https://www.planningatlas.co.uk/atlas/ealing
+
+Planning Atlas is a useful independent analysis/reference layer over London planning records. Its Ealing pages connect applications to case officers, agents, developers, committee records, appeals, timelines and related site context. Some analysis is subscriber-only. Civic Commons should treat it as contextual/reference material, not as the canonical record or as a replacement for PAM.
+
 ## Commands
 
 Probe source accessibility/freshness:
