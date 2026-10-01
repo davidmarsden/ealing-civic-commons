@@ -1,0 +1,12 @@
+#!/usr/bin/env node
+import { writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { DEFAULT_BASE_URL,EALING_AUTHORITY_SLUG,normalizeRequestJson,parseAuthorityAtom } from './lib/whatdotheyknow.mjs';
+import { whatDoTheyKnowCommonsItem } from './lib/whatdotheyknow-commons.mjs';
+const arg=n=>process.argv.find(v=>v.startsWith(`--${n}=`))?.split('=').slice(1).join('=');
+const output=resolve(arg('output')||'whatdotheyknow-backfill-preview.json'),limit=Math.max(1,Math.min(250,Number(arg('limit')||100))),baseUrl=process.env.WDTK_BASE_URL||DEFAULT_BASE_URL,authoritySlug=process.env.WDTK_AUTHORITY_SLUG||EALING_AUTHORITY_SLUG,authorityUrl=`${baseUrl}/body/${authoritySlug}`,headers={'user-agent':'EalingCivicCommons/0.1 (+https://ealing.civiccommons.co.uk)',accept:'application/json,application/atom+xml,application/xml;q=0.9,*/*;q=0.8'};
+async function get(url){const r=await fetch(url,{headers,redirect:'follow'}),body=await r.text();if(!r.ok)throw new Error(`${r.status} ${r.statusText}: ${r.url}`);return{r,body}}
+async function feed(){for(const url of [`${authorityUrl}/feed`,`${authorityUrl}.atom`,`${authorityUrl}?format=atom`]){try{const x=await get(url),items=parseAuthorityAtom(x.body,{baseUrl,authoritySlug});if(items.length)return{url,items}}catch{}}throw new Error('No WDTK authority feed parsed')}
+const result={generated_at:new Date().toISOString(),purpose:'bounded historical backfill preview; no archive writes',authority_slug:authoritySlug,limit,feed_url:null,discovered:0,normalized:0,rejected:0,errors:[],records:[]};
+try{const f=await feed();result.feed_url=f.url;result.discovered=f.items.length;for(const summary of f.items.slice(0,limit)){try{const x=await get(`${summary.url}.json`),request=normalizeRequestJson(JSON.parse(x.body),{baseUrl,authoritySlug,fallback:summary});result.records.push({request,commons_item:whatDoTheyKnowCommonsItem(request)})}catch(error){result.rejected++;result.errors.push(`${summary.sourceId}: ${error.message}`)}}result.normalized=result.records.length}catch(error){result.errors.push(error.message)}
+await writeFile(output,`${JSON.stringify(result,null,2)}\n`,'utf8');console.log(`WDTK backfill preview written to ${output}`);console.log(`discovered=${result.discovered} normalized=${result.normalized} rejected=${result.rejected} limit=${limit}`);if(!result.normalized)process.exitCode=2;
