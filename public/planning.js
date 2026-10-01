@@ -2,6 +2,7 @@ const $ = (sel) => document.querySelector(sel);
 const esc = (value) => String(value ?? '').replace(/[&<>'\"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
 const fmtDate = (iso) => iso ? new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(`${iso}T12:00:00Z`)) : 'Date unavailable';
 const placeSlug = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+const FRESHNESS_LIMIT_DAYS = 10;
 
 let snapshot = null;
 
@@ -12,6 +13,12 @@ function populate(select, values) {
     option.textContent = value;
     select.append(option);
   }
+}
+
+function snapshotAgeDays(generatedAt) {
+  const generated = new Date(generatedAt);
+  if (Number.isNaN(generated.getTime())) return null;
+  return Math.floor((Date.now() - generated.getTime()) / 86400000);
 }
 
 function recordCard(record) {
@@ -46,9 +53,19 @@ async function init() {
     snapshot = await response.json();
     populate($('#planningPlace'), [...snapshot.records.map((r) => r.town || 'Unclassified')]);
     populate($('#planningCategory'), snapshot.records.map((r) => r.category));
-    $('#planningStatus').textContent = `Latest completed weekly list: ${snapshot.week}. Snapshot generated ${fmtDate(snapshot.generated_at.slice(0, 10))}.`;
+    const ageDays = snapshotAgeDays(snapshot.generated_at);
+    const status = $('#planningStatus');
+    const base = `Latest completed weekly list: ${snapshot.week}. Snapshot generated ${fmtDate(snapshot.generated_at.slice(0, 10))}.`;
+    if (ageDays !== null && ageDays > FRESHNESS_LIMIT_DAYS) {
+      status.dataset.freshness = 'stale';
+      status.innerHTML = `<strong>Planning data may be out of date.</strong> ${esc(base)} It is ${ageDays} days old; the automated refresh may be awaiting review or merge.`;
+    } else {
+      status.dataset.freshness = 'fresh';
+      status.textContent = base;
+    }
     render();
   } catch (error) {
+    $('#planningStatus').dataset.freshness = 'error';
     $('#planningStatus').textContent = 'Planning snapshot is temporarily unavailable.';
     $('#planningList').innerHTML = '<p class="empty">The last published planning snapshot could not be loaded.</p>';
     console.error(error);
