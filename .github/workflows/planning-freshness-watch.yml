@@ -69,7 +69,7 @@ jobs:
           Thresholds: committed snapshot >10 days old, or continuing refresh PR >7 days old.
           EOF
           )"
-          existing="$(gh issue list --state open --search \"${title} in:title\" --json number --jq '.[0].number // empty')"
+          existing="$(gh issue list --state open --search "${title} in:title" --json number --jq '.[0].number // empty')"
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --body "$body"
           else
@@ -81,7 +81,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           title="Planning data freshness warning"
-          existing="$(gh issue list --state open --search \"${title} in:title\" --json number --jq '.[0].number // empty')"
+          existing="$(gh issue list --state open --search "${title} in:title" --json number --jq '.[0].number // empty')"
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --body "Planning freshness has recovered; closing this warning automatically."
             gh issue close "$existing" --reason completed
