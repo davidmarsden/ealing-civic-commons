@@ -45,9 +45,93 @@ window.CIVIC_COMMONS_DEMO = {
   ]
 };
 
+// Stale-while-revalidate for the combined feed. Returning visitors get the
+// last successful timeline immediately; the real request continues in the
+// background and a normal refresh is triggered as soon as fresher data lands.
+(() => {
+  const CACHE_KEY = 'civic-commons:combined-feed:v1';
+  const originalFetch = window.fetch.bind(window);
+  let servedCachedFeed = false;
+  let backgroundRefresh = null;
+  let pendingLiveResponse = null;
+
+  const isCombinedFeed = input => {
+    const value = typeof input === 'string' ? input : input?.url;
+    if (!value) return false;
+    try { return new URL(value, location.href).pathname === '/.netlify/functions/combined-feed'; }
+    catch { return false; }
+  };
+
+  const readCache = () => {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      const cached = JSON.parse(raw);
+      if (!cached?.body || !cached?.generatedAt) return null;
+      return cached;
+    } catch { return null; }
+  };
+
+  const saveResponse = async response => {
+    if (!response?.ok) return;
+    try {
+      const body = await response.clone().text();
+      const parsed = JSON.parse(body);
+      if (!Array.isArray(parsed?.items)) return;
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ body, generatedAt: parsed.generatedAt || new Date().toISOString() }));
+    } catch {
+      // Storage can be unavailable or full; the live feed still works normally.
+    }
+  };
+
+  const responseFromCache = cached => new Response(cached.body, {
+    status: 200,
+    headers: { 'content-type': 'application/json', 'x-civic-commons-cache': 'stale' }
+  });
+
+  const refreshWhenReady = async (input, init, cached) => {
+    try {
+      const live = await originalFetch(input, init);
+      if (!live.ok) return;
+      const body = await live.clone().text();
+      let parsed;
+      try { parsed = JSON.parse(body); } catch { return; }
+      if (!Array.isArray(parsed?.items)) return;
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify({ body, generatedAt: parsed.generatedAt || new Date().toISOString() })); } catch {}
+      if (body === cached.body) return;
+      pendingLiveResponse = new Response(body, { status: 200, headers: { 'content-type': 'application/json' } });
+      document.querySelector('#refreshButton')?.click();
+    } catch {
+      // Keep showing the last successful timeline if an upstream refresh fails.
+    }
+  };
+
+  window.fetch = (input, init) => {
+    if (!isCombinedFeed(input)) return originalFetch(input, init);
+
+    if (pendingLiveResponse) {
+      const response = pendingLiveResponse;
+      pendingLiveResponse = null;
+      return Promise.resolve(response);
+    }
+
+    const cached = !servedCachedFeed ? readCache() : null;
+    if (cached) {
+      servedCachedFeed = true;
+      if (!backgroundRefresh) backgroundRefresh = refreshWhenReady(input, init, cached).finally(() => { backgroundRefresh = null; });
+      return Promise.resolve(responseFromCache(cached));
+    }
+
+    return originalFetch(input, init).then(response => {
+      saveResponse(response);
+      return response;
+    });
+  };
+})();
+
 // The live combined feed can take several seconds because it checks multiple
-// upstream civic sources. Keep that wait visibly active and never present an
-// intermediate zero-item/empty-feed state as if loading had completed.
+// upstream civic sources. Keep that wait visibly active only when there is no
+// successful cached timeline available to render immediately.
 (() => {
   const timeline = document.querySelector('#timeline');
   const count = document.querySelector('#itemCount');
@@ -81,7 +165,7 @@ window.CIVIC_COMMONS_DEMO = {
   function showLoading() {
     loading = true;
     count.textContent = '';
-    timeline.innerHTML = loadingMarkup;
+    if (!timeline.querySelector('.item')) timeline.innerHTML = loadingMarkup;
     timeline.setAttribute('aria-busy', 'true');
     if (refresh) { refresh.disabled = true; refresh.textContent = 'Refreshing…'; }
   }
@@ -94,8 +178,21 @@ window.CIVIC_COMMONS_DEMO = {
 
   showLoading();
 
+  // Keep observers alive across every manual/background refresh. Completion
+  // status is authoritative, so a legitimate final empty result is preserved.
+  const statusObserver = new MutationObserver(() => {
+    const text = (status.textContent || '').trim();
+    if (/^(Updated|Showing prototype data|Live feeds are unavailable)/i.test(text)) finishLoading();
+  });
+  statusObserver.observe(status, { childList: true, characterData: true, subtree: true });
+
   const timelineObserver = new MutationObserver(() => {
     if (!loading) return;
+    const statusText = (status.textContent || '').trim();
+    if (/^(Updated|Showing prototype data|Live feeds are unavailable)/i.test(statusText)) {
+      finishLoading();
+      return;
+    }
     const text = timeline.textContent || '';
     if (/Nothing matches these filters yet|Nothing in the current feed matches/i.test(text)) {
       timeline.innerHTML = loadingMarkup;
@@ -103,16 +200,6 @@ window.CIVIC_COMMONS_DEMO = {
     }
   });
   timelineObserver.observe(timeline, { childList: true, subtree: true });
-
-  const statusObserver = new MutationObserver(() => {
-    const text = (status.textContent || '').trim();
-    if (/^(Updated|Showing prototype data|Live feeds are unavailable)/i.test(text)) {
-      finishLoading();
-      statusObserver.disconnect();
-      timelineObserver.disconnect();
-    }
-  });
-  statusObserver.observe(status, { childList: true, characterData: true, subtree: true });
 
   refresh?.addEventListener('click', showLoading, { capture: true });
 })();
