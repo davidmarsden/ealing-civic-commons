@@ -1,0 +1,41 @@
+name: Repair planning refresh branch
+
+on:
+  push:
+    branches:
+      - automation/planning-snapshot
+    paths:
+      - '.github/workflows/repair-planning-refresh-branch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Merge current main and keep generated planning data
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          if git merge --no-commit --no-ff origin/main; then
+            echo "Merged main without conflicts."
+          else
+            conflicts="$(git diff --name-only --diff-filter=U)"
+            unexpected="$(printf '%s\n' "$conflicts" | grep -Ev '^(public/data/planning-archive.json|public/data/planning-latest.json)$' || true)"
+            if [ -n "$unexpected" ]; then
+              echo "Unexpected merge conflicts:" >&2
+              printf '%s\n' "$unexpected" >&2
+              exit 2
+            fi
+            git checkout --ours -- public/data/planning-archive.json public/data/planning-latest.json
+            git add public/data/planning-archive.json public/data/planning-latest.json
+          fi
+          git commit -m "Merge main into planning refresh branch"
+          git push origin HEAD:automation/planning-snapshot
