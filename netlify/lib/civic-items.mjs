@@ -4,24 +4,32 @@ import { mergeMutableRecord, sameItem } from '../../scripts/lib/mutable-archive.
 export const STORE_NAME = 'civic-commons-items';
 export const MANIFEST_KEY = 'manifest/recent';
 export const MAX_MANIFEST_KEYS = 5000;
-
 export const store = () => getStore(STORE_NAME);
 export const stableItemKey = id => Buffer.from(String(id ?? ''), 'utf8').toString('base64url');
 export const itemBlobKey = key => `item/${String(key ?? '').trim()}`;
-export function validItemKey(value) { const key=String(value??'').trim(); return key.length>0&&key.length<=512&&/^[A-Za-z0-9_-]+$/.test(key); }
-export function archiveRecord(item, archivedAt=new Date().toISOString()) { const key=stableItemKey(item?.id); return {version:1,key,archivedAt,item:{...item,towns:Array.isArray(item?.towns)?item.towns:[],topics:Array.isArray(item?.topics)?item.topics:[],officialCategories:Array.isArray(item?.officialCategories)?item.officialCategories:[]}}; }
-export async function getArchivedItem(key,options={}) { if(!validItemKey(key))return null; const blobs=options.consistency==='strong'?getStore(STORE_NAME,{consistency:'strong'}):store(); const record=await blobs.get(itemBlobKey(key),{type:'json'}); return record?.item&&record.key===key?record:null; }
+export function validItemKey(value){const key=String(value??'').trim();return key.length>0&&key.length<=512&&/^[A-Za-z0-9_-]+$/.test(key)}
+export function archiveRecord(item,archivedAt=new Date().toISOString()){const key=stableItemKey(item?.id);return{version:1,key,archivedAt,item:{...item,towns:Array.isArray(item?.towns)?item.towns:[],topics:Array.isArray(item?.topics)?item.topics:[],officialCategories:Array.isArray(item?.officialCategories)?item.officialCategories:[]}}}
+export async function getArchivedItem(key,options={}){if(!validItemKey(key))return null;const blobs=options.consistency==='strong'?getStore(STORE_NAME,{consistency:'strong'}):store();const record=await blobs.get(itemBlobKey(key),{type:'json'});return record?.item&&record.key===key?record:null}
 function cleanFilter(value,max=180){return String(value??'').trim().slice(0,max)}
 function archiveMatches(record,{sourceId,town,topic,q}){const item=record?.item;if(!item)return false;if(sourceId&&item.sourceId!==sourceId)return false;if(town&&!(item.towns||[]).includes(town))return false;if(topic&&!(item.topics||[]).includes(topic))return false;if(q){const h=`${item.title||''}\n${item.summary||''}\n${item.source||''}\n${(item.towns||[]).join(' ')}\n${(item.topics||[]).join(' ')}`.toLowerCase();if(!h.includes(q.toLowerCase()))return false}return true}
 function archiveSortTime(record){const p=Date.parse(record?.item?.publishedAt||'');if(Number.isFinite(p))return p;const a=Date.parse(record?.archivedAt||'');return Number.isFinite(a)?a:0}
 async function authoritativeArchiveRecords(blobs){const listed=await blobs.list({prefix:'item/'});const keys=listed.blobs.map(b=>String(b.key||'').replace(/^item\//,'')).filter(validItemKey);const records=[];for(let i=0;i<keys.length;i+=100){const loaded=await Promise.all(keys.slice(i,i+100).map(k=>blobs.get(itemBlobKey(k),{type:'json'}).catch(()=>null)));records.push(...loaded.filter(r=>r?.item&&validItemKey(r.key)))}return records}
 export async function listArchivedItems({limit=40,offset=0,sourceId=null,town=null,topic=null,q=null}={}){const max=Math.max(1,Math.min(Number(limit)||40,100)),skip=Math.max(0,Number(offset)||0),filters={sourceId:cleanFilter(sourceId),town:cleanFilter(town),topic:cleanFilter(topic),q:cleanFilter(q,240)},blobs=getStore(STORE_NAME,{consistency:'strong'}),records=await authoritativeArchiveRecords(blobs),sources=new Map();for(const r of records)if(r.item?.sourceId)sources.set(r.item.sourceId,r.item.source||r.item.sourceId);const matching=records.filter(r=>archiveMatches(r,filters)).sort((a,b)=>archiveSortTime(b)-archiveSortTime(a)),page=matching.slice(skip,skip+max),hasMore=skip+page.length<matching.length;let latest=0,updatedAt=null;for(const r of records){const t=Date.parse(r.archivedAt||'');if(Number.isFinite(t)&&t>latest){latest=t;updatedAt=r.archivedAt}}return{updatedAt,archiveSize:records.length,matchedSize:matching.length,offset:skip,limit:max,hasMore,nextOffset:hasMore?skip+page.length:null,filters,facets:{sources:[...sources.entries()].map(([id,name])=>({id,name})).sort((a,b)=>a.name.localeCompare(b.name))},records:page.map(r=>({key:r.key,archivedAt:r.archivedAt,item:r.item}))}}
+async function updateManifest(blobs,keysToTouch,now){const manifest=await blobs.get(MANIFEST_KEY,{type:'json'}).catch(()=>null);const recent=new Set(Array.isArray(manifest?.keys)?manifest.keys.filter(validItemKey):[]);for(const key of keysToTouch){recent.delete(key);recent.add(key)}const keys=[...recent].slice(-MAX_MANIFEST_KEYS);await blobs.setJSON(MANIFEST_KEY,{version:1,updatedAt:now,keys}).catch(error=>console.error('Civic item manifest update failed',error));return keys.length}
 
-async function updateManifest(blobs, keysToTouch, now) { const manifest=await blobs.get(MANIFEST_KEY,{type:'json'}).catch(()=>null);const recent=new Set(Array.isArray(manifest?.keys)?manifest.keys.filter(validItemKey):[]);for(const key of keysToTouch){recent.delete(key);recent.add(key)}const keys=[...recent].slice(-MAX_MANIFEST_KEYS);await blobs.setJSON(MANIFEST_KEY,{version:1,updatedAt:now,keys}).catch(error=>console.error('Civic item manifest update failed',error));return keys.length; }
-
-export async function upsertMutableItems(items) {
+export async function upsertMutableItems(items){
   const blobs=getStore(STORE_NAME,{consistency:'strong'}),now=new Date().toISOString(),results=[];
-  for(const item of Array.isArray(items)?items:[]){if(!item?.id)continue;const key=stableItemKey(item.id);if(!validItemKey(key))continue;const existing=await blobs.get(itemBlobKey(key),{type:'json'}).catch(()=>null);const base=archiveRecord(item,now);let action='insert',record=base;if(existing?.item){if(sameItem(existing.item,base.item)){action='unchanged';record=existing}else{const merged=mergeMutableRecord(existing,base.item,now);action=merged.action;record={...merged.record,key,archivedAt:now}}}if(action!=='unchanged')await blobs.setJSON(itemBlobKey(key),record,{metadata:{sourceId:String(item.sourceId||'').slice(0,120),publishedAt:item.publishedAt||'',archivedAt:now}});results.push({key,action});}
+  for(const item of Array.isArray(items)?items:[]){
+    if(!item?.id)continue;
+    const key=stableItemKey(item.id);if(!validItemKey(key))continue;
+    // Do not convert read failures into apparent misses: doing so could overwrite
+    // a versioned record and discard its provenance/revision history.
+    const existing=await blobs.get(itemBlobKey(key),{type:'json'});
+    const base=archiveRecord(item,now);let action='insert',record=base;
+    if(existing?.item){if(sameItem(existing.item,base.item)){action='unchanged';record=existing}else{const merged=mergeMutableRecord(existing,base.item,now);action=merged.action;record={...merged.record,key,archivedAt:now}}}
+    if(action!=='unchanged')await blobs.setJSON(itemBlobKey(key),record,{metadata:{sourceId:String(item.sourceId||'').slice(0,120),publishedAt:item.publishedAt||'',archivedAt:now}});
+    results.push({key,action});
+  }
   const touched=results.filter(r=>r.action!=='unchanged').map(r=>r.key),manifestSize=await updateManifest(blobs,touched,now);return{considered:Array.isArray(items)?items.length:0,inserted:results.filter(r=>r.action==='insert').length,updated:results.filter(r=>r.action==='update').length,unchanged:results.filter(r=>r.action==='unchanged').length,manifestSize};
 }
 
