@@ -5,18 +5,11 @@ import { upsertMutableItems } from '../lib/civic-items.mjs';
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});
 const headers={'user-agent':'EalingCivicCommons/0.1 (+https://ealing.civiccommons.co.uk)','accept':'application/json,application/atom+xml,application/xml;q=0.9,*/*;q=0.8'};
 async function get(url){const response=await fetch(url,{headers,redirect:'follow'});const body=await response.text();if(!response.ok)throw new Error(`${response.status} ${response.statusText}: ${response.url}`);return body;}
-async function authorityFeed(baseUrl,authoritySlug){const authorityUrl=`${baseUrl}/body/${authoritySlug}`;for(const url of [`${authorityUrl}/feed`,`${authorityUrl}.atom`,`${authorityUrl}?format=atom`]){try{const body=await get(url);const items=parseAuthorityAtom(body,{baseUrl,authoritySlug});if(items.length)return{url,items};}catch(error){console.warn('WDTK feed candidate failed',url,error.message)}}throw new Error('No WhatDoTheyKnow authority feed parsed.');}
-function isDeployPreview(request){
-  if(process.env.CONTEXT==='deploy-preview')return true;
-  try{return /^deploy-preview-\d+--[a-z0-9-]+\.netlify\.app$/i.test(new URL(request.url).hostname);}catch{return false;}
-}
+async function authorityFeed(baseUrl,authoritySlug){const authorityUrl=`${baseUrl}/body/${authoritySlug}`;for(const url of [`${baseUrl}/feed/body/${authoritySlug}`,`${authorityUrl}/feed`,`${authorityUrl}.atom`,`${authorityUrl}?format=atom`]){try{const body=await get(url);const items=parseAuthorityAtom(body,{baseUrl,authoritySlug});if(items.length)return{url,items};}catch(error){console.warn('WDTK feed candidate failed',url,error.message)}}throw new Error('No WhatDoTheyKnow authority feed parsed.');}
+function isDeployPreview(request){if(process.env.CONTEXT==='deploy-preview')return true;try{return /^deploy-preview-\d+--[a-z0-9-]+\.netlify\.app$/i.test(new URL(request.url).hostname);}catch{return false;}}
 
 export default async request=>{
   if(request.method!=='POST')return json({error:'Method not allowed'},405);
-  // This endpoint exists solely to populate an isolated Deploy Preview blob store
-  // for editorial inspection. Netlify's function runtime does not always expose
-  // CONTEXT, so accept either the environment signal or the canonical immutable
-  // deploy-preview-N--site.netlify.app hostname. Production/custom hosts remain denied.
   if(!isDeployPreview(request))return json({error:'WhatDoTheyKnow preview publishing is only available on Netlify Deploy Previews.'},403);
   const baseUrl=process.env.WDTK_BASE_URL||DEFAULT_BASE_URL,authoritySlug=process.env.WDTK_AUTHORITY_SLUG||EALING_AUTHORITY_SLUG;
   const requested=Number(new URL(request.url).searchParams.get('limit')||100),limit=Math.max(1,Math.min(100,Number.isFinite(requested)?requested:100));
