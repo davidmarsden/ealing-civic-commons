@@ -1,0 +1,71 @@
+name: Planning freshness watch
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '37 7 * * *'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check committed planning snapshot age
+        id: snapshot
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const data = JSON.parse(fs.readFileSync('public/data/planning-latest.json', 'utf8'));
+          const generated = new Date(data.generated_at);
+          if (Number.isNaN(generated.getTime())) throw new Error('planning-latest.json has invalid generated_at');
+          const ageDays = Math.floor((Date.now() - generated.getTime()) / 86400000);
+          console.log(`Snapshot generated ${data.generated_at}; age ${ageDays} days; week ${data.week}.`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `age_days=${ageDays}\nweek=${data.week}\ngenerated_at=${data.generated_at}\n`);
+          NODE
+      - name: Check continuing refresh PR
+        id: refresh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pr_json="$(gh pr list --state open --base main --head automation/planning-snapshot --json number,createdAt,updatedAt,url --limit 1)"
+          node - "$pr_json" <<'NODE'
+          const fs = require('node:fs');
+          const rows = JSON.parse(process.argv[2]);
+          if (!rows.length) {
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'open=false\npr_age_days=0\npr_number=\npr_url=\n');
+            process.exit(0);
+          }
+          const pr = rows[0];
+          const ageDays = Math.floor((Date.now() - new Date(pr.createdAt).getTime()) / 86400000);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `open=true\npr_age_days=${ageDays}\npr_number=${pr.number}\npr_url=${pr.url}\n`);
+          NODE
+      - name: Raise or update stale-planning issue
+        if: ${{ fromJSON(steps.snapshot.outputs.age_days) > 10 || (steps.refresh.outputs.open == 'true' && fromJSON(steps.refresh.outputs.pr_age_days) > 7) }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SNAPSHOT_AGE: ${{ steps.snapshot.outputs.age_days }}
+          SNAPSHOT_WEEK: ${{ steps.snapshot.outputs.week }}
+          SNAPSHOT_GENERATED: ${{ steps.snapshot.outputs.generated_at }}
+          PR_OPEN: ${{ steps.refresh.outputs.open }}
+          PR_AGE: ${{ steps.refresh.outputs.pr_age_days }}
+          PR_NUMBER: ${{ steps.refresh.outputs.pr_number }}
+          PR_URL: ${{ steps.refresh.outputs.pr_url }}
+        run: |
+          title="Planning data freshness warning"
+          body="The committed Ealing planning snapshot may be stale.\n\n- Snapshot week: ${SNAPSHOT_WEEK}\n- Generated: ${SNAPSHOT_GENERATED}\n- Snapshot age: ${SNAPSHOT_AGE} days\n- Continuing refresh PR open: ${PR_OPEN}\n- Refresh PR age: ${PR_AGE} days\n- Refresh PR: ${PR_URL:-none}\n\nThresholds: committed snapshot >10 days old, or continuing refresh PR >7 days old."
+          existing="$(gh issue list --state open --search \"${title} in:title\" --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body"
+          fi
+      - name: Fail when stale
+        if: ${{ fromJSON(steps.snapshot.outputs.age_days) > 10 || (steps.refresh.outputs.open == 'true' && fromJSON(steps.refresh.outputs.pr_age_days) > 7) }}
+        run: |
+          echo "Planning freshness threshold exceeded."
+          exit 1
