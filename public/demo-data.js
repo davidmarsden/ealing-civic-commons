@@ -99,8 +99,12 @@ window.CIVIC_COMMONS_DEMO = {
       if (!Array.isArray(parsed?.items)) return;
       try { localStorage.setItem(CACHE_KEY, JSON.stringify({ body, generatedAt: parsed.generatedAt || new Date().toISOString() })); } catch {}
       if (body === cached.body) return;
+      const refreshButton = document.querySelector('#refreshButton');
+      // If a user-requested refresh is already in flight, its later network
+      // response wins. Do not queue this older background result for a future click.
+      if (refreshButton?.disabled) return;
       pendingLiveResponse = new Response(body, { status: 200, headers: { 'content-type': 'application/json' } });
-      document.querySelector('#refreshButton')?.click();
+      refreshButton?.click();
     } catch {
       // Keep showing the last successful timeline if an upstream refresh fails.
     }
@@ -123,6 +127,9 @@ window.CIVIC_COMMONS_DEMO = {
     }
 
     return originalFetch(input, init).then(response => {
+      // Once a real combined-feed request has completed, this page has already
+      // served its initial result. A later manual Refresh must go to the network.
+      servedCachedFeed = true;
       saveResponse(response);
       return response;
     });
