@@ -243,12 +243,13 @@ for (const [key, record] of byReference.entries()) {
 }
 
 const archive = {
-  archive_version: 1,
+  archive_version: Math.max(Number(previousArchive?.archive_version || 1), 1),
   generated_at: archiveMutated ? snapshot.generated_at : (previousArchive?.generated_at || snapshot.generated_at),
   latest_week: archiveMutated ? snapshot.week : (previousArchive?.latest_week || snapshot.week),
   source: snapshot.source,
   canonical_source: snapshot.canonical_source,
   place_link_rules_version: snapshot.place_link_rules_version,
+  ...(Array.isArray(previousArchive?.bootstrap_sources) ? { bootstrap_sources: previousArchive.bootstrap_sources } : {}),
   records: [...byReference.values()].sort((a, b) => {
     const dateDelta = (Date.parse(b.validated_date || '') || 0) - (Date.parse(a.validated_date || '') || 0);
     return dateDelta || String(a.reference || '').localeCompare(String(b.reference || ''));
