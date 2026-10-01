@@ -43,7 +43,8 @@ The first implementation should:
 - retain authority identity;
 - expose correspondence/attachment metadata when the request JSON makes it available;
 - avoid treating each email in a request thread as an independent Commons item;
-- produce deterministic IDs so repeated ingestion updates rather than duplicates requests.
+- produce deterministic IDs so repeated ingestion updates the same durable request rather than creating duplicates; and
+- use an explicit archive upsert path for mutable requests instead of the existing append-only `archiveItems` behaviour.
 
 ## Proposed Commons model
 
@@ -75,6 +76,22 @@ Suggested fields in the normalised adapter output:
 
 This is an adapter contract, not necessarily the final site schema. Mapping into the existing Commons item/entity model should happen after the probe confirms the real WDTK payloads.
 
+### Mutable request/archive semantics
+
+Deterministic IDs solve identity and deduplication, but they are not sufficient for WDTK because a request remains mutable after first discovery: new correspondence can arrive, attachments can be disclosed, and the request status can change.
+
+The existing Commons `archiveItems` path is append-only: once a stable key is present it is skipped. WDTK ingestion must therefore not rely on that behaviour for refreshed requests. Before scheduled incremental ingestion is enabled, the Commons item/archive layer must expose an explicit upsert/versioning path with these semantics:
+
+- derive the durable item key from the stable WDTK request identity;
+- insert when that key does not yet exist;
+- when it does exist, compare the refreshed normalised request with the archived record and replace/update the current durable record when source data has changed;
+- preserve `createdAt`/first-seen provenance while recording the latest upstream `updatedAt` and a Commons retrieval/update timestamp;
+- replace thread-derived correspondence/attachment metadata from the refreshed canonical request representation rather than blindly appending duplicate events;
+- make unchanged refreshes idempotent; and
+- where historical snapshots are retained, store them as explicit versions/revisions of the same durable request, not as additional Commons items.
+
+This upsert behaviour should be generic enough for other mutable civic sources, but WDTK is the first source that requires it. The live feed may surface a fresher request temporarily, but it must not be treated as the persistence mechanism: once an item leaves the live window, the archive must still contain its latest ingested state.
+
 ## Relationships and enrichment
 
 After ingestion, existing Commons enrichment can propose links from requests to:
@@ -104,6 +121,7 @@ Requirements:
 
 - resumable pagination;
 - deterministic IDs/deduplication;
+- archive upsert semantics for requests already encountered by an earlier run;
 - bounded requests and polite rate limiting;
 - checkpoint/progress output;
 - date-range controls;
@@ -137,10 +155,11 @@ This makes the implementation reusable by future Civic Commons installations usi
 2. Commit a small fixture derived from public structured data, with personal/request message content minimised where possible.
 3. Add parser tests against the fixture.
 4. Implement normalisation and preview ingestion for Ealing.
-5. Map normalised requests into the existing Commons item/source pipeline.
-6. Add the source to the Source Register and document provenance/update behaviour.
-7. Run a bounded historical backfill preview and review the resulting entity/topic links before publishing it.
-8. Add scheduled incremental updates only after the backfill/parser behaviour is understood.
+5. Add/test an explicit archive upsert/versioning path for mutable source items; do not route WDTK refreshes through append-only `archiveItems` unchanged.
+6. Map normalised requests into the existing Commons item/source pipeline using that upsert path.
+7. Add the source to the Source Register and document provenance/update behaviour.
+8. Run a bounded historical backfill preview and review the resulting entity/topic links before publishing it.
+9. Add scheduled incremental updates only after the backfill/parser/upsert behaviour is understood.
 
 ## Acceptance criteria for the first implementation PR
 
@@ -148,6 +167,9 @@ This makes the implementation reusable by future Civic Commons installations usi
 - The Ealing authority is verified against WDTK rather than guessed.
 - At least one real request can be represented from structured upstream data in a deterministic normalised form.
 - Re-running the importer cannot create duplicate items for the same request.
+- Re-ingesting a changed request updates the durable archived item (or creates an explicit revision of that same item), including status/correspondence/attachment changes.
+- Re-ingesting an unchanged request is idempotent.
+- A refreshed request remains current in the archive after it leaves the live-feed window.
 - Request thread/correspondence remains attached to one request item.
 - Requester metadata does not automatically create Person entities.
 - Failures are explicit and do not silently publish empty/stale data.
