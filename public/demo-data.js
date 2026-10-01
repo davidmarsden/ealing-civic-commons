@@ -44,3 +44,75 @@ window.CIVIC_COMMONS_DEMO = {
     }
   ]
 };
+
+// The live combined feed can take several seconds because it checks multiple
+// upstream civic sources. Keep that wait visibly active and never present an
+// intermediate zero-item/empty-feed state as if loading had completed.
+(() => {
+  const timeline = document.querySelector('#timeline');
+  const count = document.querySelector('#itemCount');
+  const status = document.querySelector('#status');
+  const refresh = document.querySelector('#refreshButton');
+  if (!timeline || !count || !status) return;
+
+  const style = document.createElement('style');
+  style.textContent = `
+    .timeline-loading{padding:1.35rem 0 0}.timeline-loading-copy{display:grid;gap:.35rem;margin-bottom:1.25rem;color:var(--ink,#172019)}
+    .timeline-loading-copy strong{font-size:1.05rem}.timeline-loading-copy span{color:var(--muted,#687067);max-width:48rem}
+    .timeline-skeleton{display:grid;gap:1rem}.skeleton-card{border-top:1px solid rgba(23,32,25,.16);padding:1.15rem 0;display:grid;gap:.65rem;overflow:hidden}
+    .skeleton-card span,.skeleton-card b,.skeleton-card i{display:block;border-radius:999px;background:linear-gradient(90deg,rgba(23,32,25,.07) 25%,rgba(23,32,25,.13) 50%,rgba(23,32,25,.07) 75%);background-size:200% 100%;animation:civic-loading 1.4s ease-in-out infinite}
+    .skeleton-card span{width:22%;height:.75rem}.skeleton-card b{width:72%;height:1.35rem}.skeleton-card i{width:94%;height:.8rem}.skeleton-card i:last-child{width:61%}
+    @keyframes civic-loading{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    @media (prefers-reduced-motion:reduce){.skeleton-card span,.skeleton-card b,.skeleton-card i{animation:none}}
+  `;
+  document.head.appendChild(style);
+
+  const loadingMarkup = `
+    <div class="timeline-loading" role="status" aria-live="polite" aria-label="Gathering the latest civic information">
+      <div class="timeline-loading-copy"><strong>Gathering the latest civic information…</strong><span>Checking local reporting, community sources and public records. This can take a few seconds.</span></div>
+      <div class="timeline-skeleton" aria-hidden="true">
+        <div class="skeleton-card"><span></span><b></b><i></i><i></i></div>
+        <div class="skeleton-card"><span></span><b></b><i></i><i></i></div>
+        <div class="skeleton-card"><span></span><b></b><i></i><i></i></div>
+      </div>
+    </div>`;
+
+  let loading = true;
+  function showLoading() {
+    loading = true;
+    count.textContent = '';
+    timeline.innerHTML = loadingMarkup;
+    timeline.setAttribute('aria-busy', 'true');
+    if (refresh) { refresh.disabled = true; refresh.textContent = 'Refreshing…'; }
+  }
+  function finishLoading() {
+    if (!loading) return;
+    loading = false;
+    timeline.removeAttribute('aria-busy');
+    if (refresh) { refresh.disabled = false; refresh.textContent = 'Refresh'; }
+  }
+
+  showLoading();
+
+  const timelineObserver = new MutationObserver(() => {
+    if (!loading) return;
+    const text = timeline.textContent || '';
+    if (/Nothing matches these filters yet|Nothing in the current feed matches/i.test(text)) {
+      timeline.innerHTML = loadingMarkup;
+      count.textContent = '';
+    }
+  });
+  timelineObserver.observe(timeline, { childList: true, subtree: true });
+
+  const statusObserver = new MutationObserver(() => {
+    const text = (status.textContent || '').trim();
+    if (/^(Updated|Showing prototype data|Live feeds are unavailable)/i.test(text)) {
+      finishLoading();
+      statusObserver.disconnect();
+      timelineObserver.disconnect();
+    }
+  });
+  statusObserver.observe(status, { childList: true, characterData: true, subtree: true });
+
+  refresh?.addEventListener('click', showLoading, { capture: true });
+})();
