@@ -52,9 +52,17 @@ assert.equal(old.last_seen_week, '24 Aug 2026');
 assert.deepEqual(fresh.weeks_seen, ['31 Aug 2026']);
 assert.equal(fresh.history.length, 1);
 
+const bootstrappedArchive = {
+  ...firstArchive,
+  archive_version: 2,
+  bootstrap_sources: [{ name:'Planning-Records.uk', url:'https://planning-records.uk/ealing/', imported_at:'2026-09-08T08:30:00Z', rows_checked:11372 }]
+};
+await writeFile(archivePath, JSON.stringify(bootstrappedArchive), 'utf8');
 await publish('2026-09-08T09:00:00Z');
 const secondArchiveText = await readFile(archivePath, 'utf8');
-assert.equal(secondArchiveText, firstArchiveText, 'unchanged same-week rerun must not mutate durable archive');
+const secondArchive = JSON.parse(secondArchiveText);
+assert.equal(secondArchive.archive_version, 2, 'weekly publish must preserve upgraded archive version');
+assert.deepEqual(secondArchive.bootstrap_sources, bootstrappedArchive.bootstrap_sources, 'weekly publish must preserve bootstrap audit metadata');
 
 await writeFile(rulesPath, JSON.stringify({
   version: 2,
@@ -71,10 +79,12 @@ const rulesArchiveText = await readFile(archivePath, 'utf8');
 const rulesArchive = JSON.parse(rulesArchiveText);
 const reEnrichedOld = rulesArchive.records.find(record => record.reference === 'OLD1');
 assert.equal(rulesArchive.place_link_rules_version, 2);
+assert.equal(rulesArchive.archive_version, 2);
+assert.deepEqual(rulesArchive.bootstrap_sources, bootstrappedArchive.bootstrap_sources);
 assert.ok(reEnrichedOld.place_links.some(link => link.route === 'places/old-site' && link.provenance === 'reviewed-rule'), 'retained records must receive newly reviewed place links');
 
 await publish('2026-09-08T11:00:00Z');
 const finalArchiveText = await readFile(archivePath, 'utf8');
 assert.equal(finalArchiveText, rulesArchiveText, 'unchanged rerun after rule enrichment must remain idempotent');
 
-console.log('Planning history retention, rule re-enrichment and idempotence OK.');
+console.log('Planning history retention, bootstrap metadata preservation, rule re-enrichment and idempotence OK.');

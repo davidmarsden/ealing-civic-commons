@@ -5,8 +5,6 @@ on:
   pull_request:
     paths:
       - 'scripts/ingest-ealing-culture.mjs'
-      - 'package.json'
-      - '.github/workflows/ealing-culture-ingest-inspect.yml'
 
 permissions:
   contents: read
