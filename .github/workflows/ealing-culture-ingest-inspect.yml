@@ -5,8 +5,6 @@ on:
   pull_request:
     paths:
       - 'scripts/ingest-ealing-culture.mjs'
-      - 'package.json'
-      - '.github/workflows/ealing-culture-ingest-inspect.yml'
 
 permissions:
   contents: read
@@ -25,20 +23,7 @@ jobs:
           node-version: 22
 
       - name: Run Ealing Culture ingest preview
-        shell: bash
-        run: |
-          set -o pipefail
-          for attempt in 1 2 3; do
-            echo "Ealing Culture ingest attempt ${attempt}/3"
-            if node scripts/ingest-ealing-culture.mjs --output=ealing-culture-ingest.json; then
-              exit 0
-            fi
-            if [ "$attempt" -lt 3 ]; then
-              sleep $((attempt * 10))
-            fi
-          done
-          echo "Ealing Culture ingest failed after 3 attempts"
-          exit 2
+        run: node scripts/ingest-ealing-culture.mjs --output=ealing-culture-ingest.json
 
       - name: Show summary
         if: always()
