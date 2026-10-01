@@ -8,10 +8,17 @@ const array = value => value == null ? [] : Array.isArray(value) ? value : [valu
 const text = value => value == null ? null : typeof value === 'object' ? (value['#text'] ?? null) : String(value);
 const clean = value => text(value)?.replace(/\s+/g, ' ').trim() || null;
 const iso = value => { if (!value) return null; const d = new Date(value); return Number.isNaN(d.valueOf()) ? null : d.toISOString(); };
+const stripHtml = value => clean(String(text(value) || '').replace(/<[^>]*>/g, ' ').replace(/&lt;[^&]*?&gt;/g, ' '));
 
 export function requestSlug(url = '') {
   const match = String(url).match(/\/request\/([^/?#]+)/);
   return match?.[1] || null;
+}
+
+function atomStatus(content) {
+  const raw = String(text(content) || '');
+  const match = raw.match(/icon[_-]([a-z0-9_-]+)/i) || raw.match(/<strong[^>]*>\s*([^<]+?)\s*<\/strong>/i) || raw.match(/&lt;strong&gt;\s*([^&]+?)\s*&lt;\/strong&gt;/i);
+  return match?.[1]?.replaceAll('_', ' ')?.trim() || null;
 }
 
 export function parseAuthorityAtom(atomText, { baseUrl = DEFAULT_BASE_URL, authoritySlug = EALING_AUTHORITY_SLUG } = {}) {
@@ -21,13 +28,18 @@ export function parseAuthorityAtom(atomText, { baseUrl = DEFAULT_BASE_URL, autho
   return array(feed.entry || feed.item).map(entry => {
     const links = array(entry.link);
     const href = links.map(link => typeof link === 'string' ? link : link?.['@_href']).find(Boolean);
-    const url = href ? new URL(href, baseUrl).toString() : null;
-    const slug = requestSlug(url);
+    const eventUrl = href ? new URL(href, baseUrl).toString() : null;
+    const raw = String(text(entry.content || entry.summary || entry.description) || '');
+    const requestHref = raw.match(/https?:\/\/www\.whatdotheyknow\.com\/request\/[^&"'<>\s]+/i)?.[0]?.replace(/&amp;.*$/,'') || raw.match(/href=(?:&quot;|["'])([^"'&]*\/request\/[^"'&<]+)/i)?.[1];
+    const url = requestHref ? new URL(requestHref, baseUrl).toString() : eventUrl;
+    const slug = requestSlug(url) || clean(entry.id)?.match(/InfoRequestEvent\/(\d+)/)?.[1];
     return {
       source: 'whatdotheyknow', sourceType: 'foi-request', sourceId: slug,
-      url, title: clean(entry.title), summary: clean(entry.summary || entry.description || entry.content),
-      createdAt: iso(clean(entry.published || entry.pubDate)), updatedAt: iso(clean(entry.updated)),
+      url, title: clean(entry.title), summary: stripHtml(entry.content || entry.summary || entry.description),
+      status: atomStatus(entry.content || entry.summary || entry.description),
+      createdAt: iso(clean(entry.published || entry.pubDate)), updatedAt: iso(clean(entry.updated || entry.published || entry.pubDate)),
       authority: { name: 'Ealing Borough Council', urlName: authoritySlug, url: `${baseUrl}/body/${authoritySlug}` },
+      correspondence: [], attachments: [], tags: [],
     };
   }).filter(item => item.sourceId && item.url && item.title);
 }
@@ -51,26 +63,10 @@ export function normalizeRequestJson(payload, { baseUrl = DEFAULT_BASE_URL, auth
   const authorityName = authorityRaw.name || request.public_body_name || fallback.authority?.name || 'Ealing Borough Council';
   const authorityUrlName = authorityRaw.url_name || authorityRaw.slug || fallback.authority?.urlName || authoritySlug;
   const messages = array(request.incoming_messages || request.messages || request.correspondence || payload?.incoming_messages || payload?.messages);
-  const correspondence = messages.map((message, index) => ({
-    id: message.id ?? message.message_id ?? index + 1,
-    sentAt: iso(message.sent_at || message.created_at || message.date),
-    from: message.from_name || message.sender_name || message.from || null,
-    subject: message.subject || null,
-    direction: message.direction || (message.incoming === true ? 'incoming' : message.incoming === false ? 'outgoing' : null),
-  }));
+  const correspondence = messages.map((message, index) => ({ id: message.id ?? message.message_id ?? index + 1, sentAt: iso(message.sent_at || message.created_at || message.date), from: message.from_name || message.sender_name || message.from || null, subject: message.subject || null, direction: message.direction || (message.incoming === true ? 'incoming' : message.incoming === false ? 'outgoing' : null) }));
   const attachments = [];
   for (const candidate of array(request.attachments || payload?.attachments)) { const parsed = attachmentFrom(candidate, baseUrl); if (parsed) attachments.push(parsed); }
   for (const message of messages) for (const candidate of array(message.attachments)) { const parsed = attachmentFrom(candidate, baseUrl); if (parsed) attachments.push(parsed); }
   const uniqueAttachments = [...new Map(attachments.map(item => [`${item.url || ''}|${item.name || ''}`, item])).values()];
-  return {
-    source: 'whatdotheyknow', sourceType: 'foi-request', sourceId: slug, url,
-    title: request.title || request.name || fallback.title || slug.replaceAll('_', ' '),
-    authority: { name: authorityName, urlName: authorityUrlName, url: `${baseUrl}/body/${authorityUrlName}` },
-    status: request.described_state || request.state || request.status || payload?.described_state || null,
-    createdAt: iso(request.created_at || request.created || fallback.createdAt),
-    updatedAt: iso(request.updated_at || request.updated || fallback.updatedAt),
-    summary: request.summary || request.description || fallback.summary || null,
-    correspondence, attachments: uniqueAttachments,
-    tags: array(request.tags || payload?.tags).map(tag => typeof tag === 'string' ? tag : tag?.name).filter(Boolean),
-  };
+  return { source: 'whatdotheyknow', sourceType: 'foi-request', sourceId: slug, url, title: request.title || request.name || fallback.title || slug.replaceAll('_', ' '), authority: { name: authorityName, urlName: authorityUrlName, url: `${baseUrl}/body/${authorityUrlName}` }, status: request.described_state || request.state || request.status || payload?.described_state || null, createdAt: iso(request.created_at || request.created || fallback.createdAt), updatedAt: iso(request.updated_at || request.updated || fallback.updatedAt), summary: request.summary || request.description || fallback.summary || null, correspondence, attachments: uniqueAttachments, tags: array(request.tags || payload?.tags).map(tag => typeof tag === 'string' ? tag : tag?.name).filter(Boolean) };
 }
