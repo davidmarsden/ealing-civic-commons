@@ -14,6 +14,7 @@
     "inspect:planning": "node scripts/planning-probe.mjs --verbose",
     "inspect:planning-ingest": "node scripts/ingest-ealing-planning.mjs --output=ealing-planning-ingest.json",
     "publish:planning-snapshot": "node scripts/publish-ealing-planning-snapshot.mjs ealing-planning-ingest.json public/data/planning-latest.json public/data/planning-archive.json",
+    "bootstrap:planning-history": "node scripts/bootstrap-planning-records.mjs --archive=public/data/planning-archive.json",
     "test:planning-history": "node scripts/test-planning-history.mjs",
     "render:social-cards": "node scripts/render-social-cards.mjs",
     "verify:social-cards": "node scripts/verify-social-cards.mjs",
