@@ -1,156 +1,155 @@
 {
-  "generated_at": "2026-09-08T20:03:09.929Z",
-  "week": "31 Aug 2026",
+  "generated_at": "2026-09-29T12:54:10.942Z",
+  "week": "21 Sep 2026",
   "source": "Ealing PAM / Civica Public Access",
   "canonical_source": "Ealing Council Planning Register",
   "place_link_rules_version": 1,
   "records": [
     {
-      "id": "planning:ealing:263349palhe",
-      "reference": "263349PALHE",
-      "address": "71 Gunnersbury Avenue Ealing W5 4LP",
-      "proposal": "Single storey rear extension (max 8m high and max 3m high) (42 Days Prior Approval Notification Process)",
+      "id": "planning:ealing:263568palhe",
+      "reference": "263568PALHE",
+      "address": "1 Greengate Greenford UB6 0QH",
+      "proposal": "Single storey rear extension (max 3.6m deep and max 3.4m high) (42 Days Prior Approval Notification Process)",
       "status": "Pending Consideration",
-      "validated_date": "2026-09-06",
-      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TKY39AJMJMX00&activeTab=summary",
-      "town": "Ealing",
+      "validated_date": "2026-09-26",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLZ4LAJMKDK00&activeTab=summary",
+      "town": "Greenford",
       "category": "Prior approval",
       "out_of_borough": false,
-      "commons_path": "/planning/263349palhe",
+      "commons_path": "/planning/263568palhe",
       "place_links": [
         {
-          "route": "places/ealing",
-          "label": "Ealing",
+          "route": "places/greenford",
+          "label": "Greenford",
           "relationship": "located_in",
           "provenance": "town-classification"
         }
       ]
     },
     {
-      "id": "planning:ealing:263335ptc",
-      "reference": "263335PTC",
-      "address": "50 Beaufort Road Ealing W5 3EA",
-      "proposal": "T1 - Birch (dead tree) - fell to ground level. T2 - Magnolia (dead tree) - fell to ground level T3 Hawthorn (dead tree) - fell to ground level T4 - Cypress - prune branches encroaching on property back to the boundary line T5 - Bay - reduce in heigh by 2 metres and shape",
+      "id": "planning:ealing:263581opdcob",
+      "reference": "263581OPDCOB",
+      "address": "1 Minerva Road Park Royal NW10 6HJ",
+      "proposal": "Energy centre building: 1 Minerva Road, london, NW10 6HJ; Pipework (westernarm): Route alongparts of Minerva Road, Acton Lane, Coronation Road, Abbey Road, Central Way, Gorst Road, Park Royal Road overbridge and adjacent raileway land, Victoria Road and Wales Farm Road: Pipework (eastern arm): Route along parts of - North Acton Road, Chase Road, Minerva Road, Bashley Road, St Leonard's Road and Chandos Road. (Out of Borough)",
       "status": "Pending Consideration",
-      "validated_date": "2026-09-04",
-      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TKU01EJMJKO00&activeTab=summary",
-      "town": "Ealing",
-      "category": "Tree works",
-      "out_of_borough": false,
-      "commons_path": "/planning/263335ptc",
-      "place_links": [
-        {
-          "route": "places/ealing",
-          "label": "Ealing",
-          "relationship": "located_in",
-          "provenance": "town-classification"
-        }
-      ]
-    },
-    {
-      "id": "planning:ealing:263308cnd",
-      "reference": "263308CND",
-      "address": "2 The Straight Southall UB1 1QX",
-      "proposal": "Details of validation/verification report in demonstrating completion of the works set out in the Remediation Strategy together with amendments and longer term monitoring for phase 3 building G and H of Condition 38 of planning permission ref: 171562VAR dated 16/10/2017 for: Section 73 application for minor amendment to vary condition 3 (approved drawings) to amend the outline scheme drawings and removal of condition 41 (details of soakaways) of outline planning permission reference PP/2015/4682 dated 18.02.16 for demolition of 22 houses; the remediation of the land and the redevelopment of the site to deliver a large mixed use development including residential, non-food retail, food retail, restaurants, bars and cafes, hotel, conference and banqueting, cinema, health care facilities, education facilities, office/studio units, car park, sports pavilion, an energy centre, multi-storey car park and associated car and cycle parking, landscaping, public realm, open space and children's play space.",
-      "status": "Pending Consideration",
-      "validated_date": "2026-09-03",
-      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TKS2O2JMJHW00&activeTab=summary",
-      "town": "Southall",
-      "category": "Conditions",
-      "out_of_borough": false,
-      "commons_path": "/planning/263308cnd",
-      "place_links": [
-        {
-          "route": "places/southall",
-          "label": "Southall",
-          "relationship": "located_in",
-          "provenance": "town-classification"
-        },
-        {
-          "route": "places/southall-gasworks",
-          "label": "Southall Gasworks",
-          "relationship": "planning_at",
-          "provenance": "reviewed-rule",
-          "rule_id": "southall-gasworks-2-the-straight",
-          "note": "Reviewed site match for the former Southall Gasworks redevelopment / Green Quarter site."
-        }
-      ]
-    },
-    {
-      "id": "planning:ealing:263311ptc",
-      "reference": "263311PTC",
-      "address": "8 South Parade Chiswick Ealing W4 1JU",
-      "proposal": "T1 Robinia Reduce all aspects of the crown by approx. 1-2m back to previous point of reduction and shape. Carry out and areal tree inspection to assess any cavity or damage.Remove deadwood. T2 Magnolia Cut back from building to create 1-1.5m clearance. T3 Pittosporum Reduce the top of the Pittosporum and Pyracantha at the front by approx. 1m T5 Pyracantha Reduce height by approx. 1m.",
-      "status": "Pending Consideration",
-      "validated_date": "2026-09-03",
-      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TKS898JMJIM00&activeTab=summary",
-      "town": null,
-      "category": "Tree works",
-      "out_of_borough": false,
-      "commons_path": "/planning/263311ptc",
-      "place_links": []
-    },
-    {
-      "id": "planning:ealing:263315ptc",
-      "reference": "263315PTC",
-      "address": "94B The Grove Ealing W5 3SH",
-      "proposal": "T1 Laurel Reduce all aspects of the crown by approx. 1.5-2m to create a tight and tidy shape. T2 Ash Ash tree in the front garden with large amounts of deadwood in the crown and x2-3 dead stems. Fell to ground level. S3 Ash Stump Grind stump to approx. 300mm below ground level.",
-      "status": "Pending Consideration",
-      "validated_date": "2026-09-03",
-      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TKSAYCJMJIT00&activeTab=summary",
-      "town": "Ealing",
-      "category": "Tree works",
-      "out_of_borough": false,
-      "commons_path": "/planning/263315ptc",
-      "place_links": [
-        {
-          "route": "places/ealing",
-          "label": "Ealing",
-          "relationship": "located_in",
-          "provenance": "town-classification"
-        }
-      ]
-    },
-    {
-      "id": "planning:ealing:263292ptc",
-      "reference": "263292PTC",
-      "address": "17 The Avenue Chiswick Ealing W4 1HA",
-      "proposal": "T1 Magnolia x 1 (Magnolia spp) This tree is reducing light in the garden and is due to be maintained in line with its pruning cycle. Suggested work:Reduce all round to the most previous reduction points. Approx 0.5 -1m Rear T2-T3 Paper Bark Birch x 2 (Betula papyrifera) These birch trees have outgrown their pruing cycle and are blocking light from the garden. Suggested work: Reduce to the most previous reduction points by 1 - 2m and cut back from the neighbours side.",
-      "status": "Pending Consideration",
-      "validated_date": "2026-09-02",
-      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TKQLY2JMJH400&activeTab=summary",
-      "town": null,
-      "category": "Tree works",
-      "out_of_borough": false,
-      "commons_path": "/planning/263292ptc",
-      "place_links": []
-    },
-    {
-      "id": "planning:ealing:263302opdcob",
-      "reference": "263302OPDCOB",
-      "address": "Park Royal Road East And West Sites",
-      "proposal": "Discharge of condition 7 (Construction Logistics Plan) (site-wide) and partial discharge of condition 8 (Construction and Environmental Management Plan) in relation to demolition and enabling works for Building A, pursuant to planning permission reference 23/0014/FUMOPDC dated 27/03/2025 for 'Demolition of all existing buildings and structures and the redevelopment of the sites through construction of a building known as Block A (east site) for student accommodation (sui generis) with ancillary facilities including classrooms, flexible space and two auditoriums, and light industrial use (Class E(g)(iii)); construction of a second building known as Block B (west site) comprising residential units (use class C3) with flexible commercial uses (Class E) at ground and lower ground floor; and, associated works of landscaping, public realm improvements and other works associated with the development. The application is accompanied by an Environmental Statement.' (Out of Borough)",
-      "status": "Pending Consideration",
-      "validated_date": "2026-09-02",
-      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TKQTK2JM0KW00&activeTab=summary",
+      "validated_date": "2026-09-24",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM2PN7JM0KW00&activeTab=summary",
       "town": null,
       "category": "Out of borough",
       "out_of_borough": true,
-      "commons_path": "/planning/263302opdcob",
+      "commons_path": "/planning/263581opdcob",
       "place_links": []
     },
     {
-      "id": "planning:ealing:263298ptt",
-      "reference": "263298PTT",
-      "address": "The Bilton Centre, Metropolitan Police Car Pound Unit 16 Walmgate Road Perivale Ealing UB6 7LR",
-      "proposal": "TPO270 T2145 Quercus Robur Low level branches over seating area. Crown lift to a height of 3.0 metres to provide sufficient clearance.",
+      "id": "planning:ealing:263558ptc",
+      "reference": "263558PTC",
+      "address": "14 Flat 2 Florence Road Ealing W5 3TX",
+      "proposal": "T1 Ash x 1(Fraxinus excelsior) This 12m mature ash tree has previously been pollarded, but not for three years, its cyclical prune is now due. Suggested work:- reduce all round back to previous reduction points, equating to an all round reduction of 2-3m (re-pollard). T2 Bay x 1 (Laurus nobilis) This 6m bay tree has outgrown its location. Suggested work:- reduce the height 3m- trim remaining canopy 1-1.5m all round to shape and contain. T3 Eucalyptus spp x 1 This 12m semi-mature eucalyptus has previously been pollarded, its cyclical pruneis now due. Suggested work:- reduce all round back to previous reduction points equating to a reduction of 5m.",
       "status": "Pending Consideration",
-      "validated_date": "2026-09-02",
-      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TKQRH4JMJHC00&activeTab=summary",
-      "town": "Perivale",
+      "validated_date": "2026-09-24",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLV9PMJMKBC00&activeTab=summary",
+      "town": "Ealing",
       "category": "Tree works",
       "out_of_borough": false,
-      "commons_path": "/planning/263298ptt",
+      "commons_path": "/planning/263558ptc",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263556ptc",
+      "reference": "263556PTC",
+      "address": "4 Twyford Crescent Acton Ealing W3 9PP",
+      "proposal": "T1-Sycamore -Fell to ground level and grind stump to approx. 300mm below ground level.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-24",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLV6WUJMKB700&activeTab=summary",
+      "town": "Acton",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263556ptc",
+      "place_links": [
+        {
+          "route": "places/acton",
+          "label": "Acton",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263547palhe",
+      "reference": "263547PALHE",
+      "address": "33 Kingshill Avenue Northolt UB5 6LF",
+      "proposal": "Single storey rear extension (max 6m deep and max 3.11m high) (42 Days Prior Approval Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-23",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLT9LXJM0KW00&activeTab=summary",
+      "town": "Northolt",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263547palhe",
+      "place_links": [
+        {
+          "route": "places/northolt",
+          "label": "Northolt",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263553ptc",
+      "reference": "263553PTC",
+      "address": "26 Upfield Road Hanwell Ealing W7 1AN",
+      "proposal": "T1- Leylandii tree - Complete removal",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-23",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLTSWEJMKAU00&activeTab=summary",
+      "town": "Hanwell",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263553ptc",
+      "place_links": [
+        {
+          "route": "places/hanwell",
+          "label": "Hanwell",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263539ptc",
+      "reference": "263539PTC",
+      "address": "5 Bedford Road Chiswick Ealing W4 1JD",
+      "proposal": "T2 Gleditsia Cut back to neighbours boundary. (works to be carried out at no.7 and cut to their boundary).",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-22",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLRSPZJMK9P00&activeTab=summary",
+      "town": null,
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263539ptc",
+      "place_links": []
+    },
+    {
+      "id": "planning:ealing:263533palhe",
+      "reference": "263533PALHE",
+      "address": "4 Thames Avenue Perivale UB6 8JL",
+      "proposal": "Single storey rear extension (max 6m deep and max 3.5m high) (42 Days Prior Approval Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-22",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLRKFEJMK9C00&activeTab=summary",
+      "town": "Perivale",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263533palhe",
       "place_links": [
         {
           "route": "places/perivale",
@@ -161,38 +160,31 @@
       ]
     },
     {
-      "id": "planning:ealing:263272palhe",
-      "reference": "263272PALHE",
-      "address": "78 Rutland Road Southall UB1 2UR",
-      "proposal": "Single storey rear extension (max 6m deep and max 3m high) (following demolition of existing rear extension) (42 Days Prior Approval Notification Process)",
+      "id": "planning:ealing:263538ptc",
+      "reference": "263538PTC",
+      "address": "7 Bedford Road Chiswick Ealing W4 1JD",
+      "proposal": "T1 Holly Fell to ground and treat remaining stump with herbicide to prevent regrowth.",
       "status": "Pending Consideration",
-      "validated_date": "2026-09-01",
-      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TKOALJJMJEH00&activeTab=summary",
-      "town": "Southall",
-      "category": "Prior approval",
+      "validated_date": "2026-09-22",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLRSPSJMK9N00&activeTab=summary",
+      "town": null,
+      "category": "Tree works",
       "out_of_borough": false,
-      "commons_path": "/planning/263272palhe",
-      "place_links": [
-        {
-          "route": "places/southall",
-          "label": "Southall",
-          "relationship": "located_in",
-          "provenance": "town-classification"
-        }
-      ]
+      "commons_path": "/planning/263538ptc",
+      "place_links": []
     },
     {
-      "id": "planning:ealing:263276ptc",
-      "reference": "263276PTC",
-      "address": "8 Park Hill Court Park Hill Ealing W5 2JP",
-      "proposal": "T1 - Poplar (Populus), fell to a low stump level due to the major rot at the base of the tree - photographs attached. These works are a matter of emergency. T2 - Poplar (Populus), re-pollard by approx. 1.5m to continue the ongoing maintenance after the tree.",
+      "id": "planning:ealing:263524ptc",
+      "reference": "263524PTC",
+      "address": "1 Grange Park Ealing W5 3PL",
+      "proposal": "T1- Polar Tree - reduction on a large poplar located in the back garden of their property in a Westerly direction. This is part of the trees ongoing maintenance, to reduce weight and make it safe/ensure it does not outgrow its position and was last completed January 2021. The client proposes a reduction off the top of 7m and 3m off the sides. The tree is currently 28m high and 9m wide and will be 21m high and 6m wide following the proposed works.",
       "status": "Pending Consideration",
-      "validated_date": "2026-09-01",
-      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TKOLOZJMJFB00&activeTab=summary",
+      "validated_date": "2026-09-21",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLPY2DJMK7I00&activeTab=summary",
       "town": "Ealing",
       "category": "Tree works",
       "out_of_borough": false,
-      "commons_path": "/planning/263276ptc",
+      "commons_path": "/planning/263524ptc",
       "place_links": [
         {
           "route": "places/ealing",
