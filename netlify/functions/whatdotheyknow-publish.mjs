@@ -8,9 +8,9 @@ const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:
 
 export default async request=>{
   if(request.method!=='POST')return json({error:'Method not allowed'},405);
-  // Netlify Scheduled Functions invoke this with their internal scheduled-function
-  // request. Manual public POSTs are intentionally refused in production.
-  if(request.headers.get('x-netlify-event')!=='schedule' && !process.env.NETLIFY_SCHEDULED_FUNCTION)return json({error:'Scheduled invocation required'},403);
+  // Netlify Scheduled Functions identify scheduler invocations with x-nf-event.
+  // Manual public POSTs are intentionally refused in production.
+  if(request.headers.get('x-nf-event')!=='schedule')return json({error:'Scheduled invocation required'},403);
   const baseUrl=process.env.WDTK_BASE_URL||DEFAULT_BASE_URL,authoritySlug=process.env.WDTK_AUTHORITY_SLUG||EALING_AUTHORITY_SLUG,feedUrl=process.env.WDTK_FEED_URL||RELAY;
   try{
     const response=await fetch(feedUrl,{headers,redirect:'follow'}),body=await response.text();
