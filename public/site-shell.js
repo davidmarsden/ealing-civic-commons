@@ -147,6 +147,6 @@
   });
 
   if (path === '/') import('/commons-scope.js?v=20260903-3').catch(error => console.warn('Commons scope module unavailable', error));
-  if (/^\/(people|organisations|places|issues|topics)\//.test(path)) import('/context-reporting.js?v=20260902-1').catch(error => console.warn('Context reporting unavailable', error));
+  if (/^\/(people|organisations|places|issues|topics)\//.test(path)) import('/context-reporting.js?v=20261004-1').catch(error => console.warn('Context reporting unavailable', error));
   if (path === '/explore.html') import('/explore-issue-hubs.js?v=20260902-1').catch(error => console.warn('Explore issue hubs unavailable', error));
 })();
