@@ -215,9 +215,15 @@ const route = routeContext();
 if (route) {
   (async () => {
     try {
+      // Entity routes have a dedicated Current Commons owner:
+      // entity-current-commons.js. Do not fetch or render a competing current
+      // collection here. Issue/topic routes retain the generic current feed.
+      const feedPromise = route.kind === 'entity'
+        ? Promise.resolve(null)
+        : fetch('/.netlify/functions/feed', { cache:'no-store' }).catch(() => null);
       const [data, feedResponse] = await Promise.all([
         fetchContext(route),
-        fetch('/.netlify/functions/feed', { cache:'no-store' }).catch(() => null)
+        feedPromise
       ]);
       if (!data?.matched) return;
 
@@ -231,11 +237,19 @@ if (route) {
 
       const { terms, topics } = termsAndTopics(route, data);
       const feed = feedResponse?.ok ? await feedResponse.json() : { items:[] };
-      const current = selectCurrent(feed.items || [], terms, topics, 8);
+      const current = route.kind === 'entity' ? [] : selectCurrent(feed.items || [], terms, topics, 8);
       const currentUrls = new Set(current.map(item => canonicalUrl(item.url)));
       const archived = await fetchHistorical(terms, topics);
       const reviewed = data.reporting || [];
       const historical = mergeHistorical(reviewed, archived, currentUrls);
+
+      // Entity Current Commons is deliberately excluded: this module owns only
+      // historical reporting there. This also removes the observer feedback loop
+      // that previously replaced place-specific Current Commons after settlement.
+      if (route.kind === 'entity') {
+        renderHistorical(route, historical);
+        return;
+      }
 
       const ids = roots(route);
       const watchRoots = [document.querySelector(ids.current), document.querySelector(ids.reporting)].filter(Boolean);
