@@ -1,4 +1,3 @@
-const SOCIAL_CRAWLER = /(?:facebookexternalhit|facebot|whatsapp|twitterbot|linkedinbot|slackbot|discordbot|telegrambot|pinterestbot|skypeuripreview|vkshare|mastodon|bluesky|bsky|cardyb|embedly|quora link preview|outbrain|rogerbot|showyoubot)/i;
 const LEGACY_HOST = 'commons.southallstories.uk';
 const CANONICAL_ORIGIN = 'https://ealing.civiccommons.co.uk';
 
@@ -26,12 +25,14 @@ export default async (request, context) => {
     return Response.redirect(legacyDestination(url), 302);
   }
 
-  const userAgent = request.headers.get('user-agent') || '';
-  if (!SOCIAL_CRAWLER.test(userAgent)) return context.next();
-
   const meta = routeMetadata(url.pathname);
   if (!meta) return context.next();
 
+  // Item/entity pages are client-rendered, so their static shells cannot expose
+  // item-specific Open Graph metadata. Always serve the metadata-enriched shell,
+  // not just for a crawler allow-list. This makes previews work for crawlers with
+  // unfamiliar user agents and keeps canonical/title/description useful to normal
+  // clients and search engines too.
   const previewUrl = new URL('/.netlify/functions/social-page', url.origin);
   previewUrl.searchParams.set('kind', meta.kind);
   previewUrl.searchParams.set('path', meta.path);
@@ -39,16 +40,20 @@ export default async (request, context) => {
   const response = await fetch(previewUrl, {
     headers: {
       accept: 'text/html',
-      'user-agent': userAgent,
+      'user-agent': request.headers.get('user-agent') || '',
       'x-forwarded-host': url.host,
       'x-forwarded-proto': url.protocol.replace(':', '')
     }
   });
 
   if (!response.ok) return context.next();
+  if (request.method === 'HEAD') {
+    return new Response(null, { status: response.status, headers: response.headers });
+  }
   return response;
 };
 
 export const config = {
-  path: ['/', '/items/*', '/people/*', '/organisations/*', '/places/*']
+  path: ['/', '/items/*', '/people/*', '/organisations/*', '/places/*'],
+  onError: 'bypass'
 };
