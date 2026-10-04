@@ -9,9 +9,9 @@ export const PROVIDERS = {
   'civic-commons': {
     id: 'civic-commons',
     name: 'Civic Commons',
-    label: 'Southall & Ealing Civic Commons',
+    label: 'Ealing Civic Commons',
     role: 'Public civic identity and current-source aggregation',
-    url: 'https://commons.southallstories.uk/'
+    url: 'https://ealing.civiccommons.co.uk/'
   }
 };
 
@@ -101,284 +101,60 @@ export const ENTITY_REGISTRY = [
     providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   },
   {
-    route: 'people/monica-hamidi',
-    id: 'civic:person:monica-hamidi',
-    name: 'Monica Hamidi',
+    route: 'people/kamaljit-dhindsa',
+    id: 'civic:person:kamaljit-dhindsa',
+    name: 'Kamaljit Dhindsa',
     type: 'person',
-    description: 'Ealing councillor and Cabinet Member for Good Growth, covering regeneration and planning policy.',
-    aliases: ['Cllr Monica Hamidi'],
+    aliases: ['Cllr Kamaljit Dhindsa'],
     providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   },
   {
-    route: 'people/dominic-moffitt',
-    id: 'civic:person:dominic-moffitt',
-    name: 'Dominic Moffitt',
-    type: 'person',
-    description: 'Ealing councillor and Cabinet Member for Climate Action, including air quality, transport, waste and environmental policy.',
-    aliases: ['Cllr Dominic Moffitt'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'people/anthony-kelly',
-    id: 'civic:person:anthony-kelly',
-    name: 'Anthony Kelly',
-    type: 'person',
-    description: 'Ealing councillor and Chair of the Overview and Scrutiny Committee for 2026/27.',
-    aliases: ['Cllr Anthony Kelly'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'people/gary-busuttil',
-    id: 'civic:person:gary-busuttil',
-    name: 'Gary Busuttil',
-    type: 'person',
-    description: 'Ealing councillor, Vice Chair of the Overview and Scrutiny Committee for 2026/27 and Liberal Democrat transport spokesperson.',
-    aliases: ['Cllr Gary Busuttil'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'people/miriam-rice',
-    id: 'civic:person:miriam-rice',
-    name: 'Miriam Rice',
-    type: 'person',
-    description: 'Ealing councillor and Chair of the Housing and Environment Scrutiny Panel for 2026/27.',
-    aliases: ['Cllr Miriam Rice'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'people/athena-zissimos',
-    id: 'civic:person:athena-zissimos',
-    name: 'Athena Zissimos',
-    type: 'person',
-    description: 'Ealing councillor, Vice Chair of the Housing and Environment Scrutiny Panel for 2026/27 and Liberal Democrat environment and crime spokesperson.',
-    aliases: ['Cllr Athena Zissimos'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'people/hitesh-tailor',
-    id: 'civic:person:hitesh-tailor',
-    name: 'Hitesh Tailor',
-    type: 'person',
-    description: 'Ealing councillor and Chair of the Economy and Sustainability Scrutiny Panel for 2026/27.',
-    aliases: ['Cllr Hitesh Tailor'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'people/dee-martin',
-    id: 'civic:person:dee-martin',
-    name: 'Dee Martin',
-    type: 'person',
-    description: 'Ealing councillor and Chair of the Planning Committee for 2026/27.',
-    aliases: ['Cllr Dee Martin'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'people/katie-douglas',
-    id: 'civic:person:katie-douglas',
-    name: 'Katie Douglas',
-    type: 'person',
-    description: 'Ealing councillor and Vice Chair of the Planning Committee for 2026/27.',
-    aliases: ['Cllr Katie Douglas'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'people/gary-malcolm',
-    id: 'civic:person:gary-malcolm',
-    name: 'Gary Malcolm',
-    type: 'person',
-    description: 'Ealing councillor and Leader of the Opposition for 2026/27.',
-    aliases: ['Cllr Gary Malcolm'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'people/jon-ball',
-    id: 'civic:person:jon-ball',
-    name: 'Jon Ball',
-    type: 'person',
-    description: 'Ealing councillor and Liberal Democrat opposition spokesperson for planning, licensing and regeneration.',
-    aliases: ['Cllr Jon Ball'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'people/jonathan-oxley',
-    id: 'civic:person:jonathan-oxley',
-    name: 'Jonathan Oxley',
-    type: 'person',
-    description: 'Ealing councillor and Liberal Democrat opposition spokesperson for finance.',
-    aliases: ['Cllr Jonathan Oxley'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'people/mark-sanders',
-    id: 'civic:person:mark-sanders',
-    name: 'Mark Sanders',
-    type: 'person',
-    description: 'Ealing councillor and Liberal Democrat opposition spokesperson for honesty and accountability.',
-    aliases: ['Cllr Mark Sanders'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'people/adam-keenan',
-    id: 'civic:person:adam-keenan',
-    name: 'Adam Keenan',
-    type: 'person',
-    description: 'Ealing councillor and Liberal Democrat opposition spokesperson for children’s services.',
-    aliases: ['Cllr Adam Keenan'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'people/andrew-steed',
-    id: 'civic:person:andrew-steed',
-    name: 'Andrew Steed',
-    type: 'person',
-    description: 'Ealing councillor and Liberal Democrat opposition spokesperson for adult services.',
-    aliases: ['Cllr Andrew Steed'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'people/connie-hersch',
-    id: 'civic:person:connie-hersch',
-    name: 'Connie Hersch',
-    type: 'person',
-    description: 'Ealing councillor and Deputy Leader of the Ealing Liberal Democrat group after the May 2026 election.',
-    aliases: ['Cllr Connie Hersch'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'organisations/overview-and-scrutiny-committee',
-    id: 'civic:organisation:overview-and-scrutiny-committee',
-    name: 'Overview and Scrutiny Committee',
-    type: 'organisation',
-    description: 'Ealing Council committee responsible for overview and scrutiny across the council and for considering called-in executive decisions.',
-    aliases: ['OSC'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'organisations/housing-and-environment-scrutiny-panel',
-    id: 'civic:organisation:housing-and-environment-scrutiny-panel',
-    name: 'Housing and Environment Scrutiny Panel',
-    type: 'organisation',
-    description: 'Ealing Council scrutiny panel covering housing and environmental matters.',
-    aliases: ['Housing & Environment Scrutiny Panel'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'organisations/economy-and-sustainability-scrutiny-panel',
-    id: 'civic:organisation:economy-and-sustainability-scrutiny-panel',
-    name: 'Economy and Sustainability Scrutiny Panel',
-    type: 'organisation',
-    description: 'Ealing Council scrutiny panel covering economy and sustainability matters.',
-    aliases: ['Economy & Sustainability Scrutiny Panel'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'organisations/planning-committee',
-    id: 'civic:organisation:planning-committee',
-    name: 'Planning Committee',
-    type: 'organisation',
-    description: 'Ealing Council committee that determines planning applications and related planning matters within its remit.',
-    aliases: ['Ealing Planning Committee'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'places/acton',
-    id: 'civic:place:acton',
-    name: 'Acton',
+    route: 'places/walpole-park',
+    id: 'civic:place:walpole-park',
+    name: 'Walpole Park',
     type: 'place',
-    description: 'One of the seven towns of the London Borough of Ealing.',
-    aliases: ['Acton'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'places/greenford',
-    id: 'civic:place:greenford',
-    name: 'Greenford',
-    type: 'place',
-    description: 'One of the seven towns of the London Borough of Ealing.',
-    aliases: ['Greenford'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'places/hanwell',
-    id: 'civic:place:hanwell',
-    name: 'Hanwell',
-    type: 'place',
-    description: 'One of the seven towns of the London Borough of Ealing.',
-    aliases: ['Hanwell'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'places/northolt',
-    id: 'civic:place:northolt',
-    name: 'Northolt',
-    type: 'place',
-    description: 'One of the seven towns of the London Borough of Ealing.',
-    aliases: ['Northolt'],
-    providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
-  },
-  {
-    route: 'places/perivale',
-    id: 'civic:place:perivale',
-    name: 'Perivale',
-    type: 'place',
-    description: 'One of the seven towns of the London Borough of Ealing.',
-    aliases: ['Perivale'],
+    description: 'A major public park in central Ealing and a recurring site of civic, cultural and planning interest.',
+    aliases: ['Walpole Park, Ealing'],
     providers: [{ provider: 'civic-commons', role: 'canonical-public-identity' }]
   }
 ];
 
-export const ROUTE_TO_TYPE = new Map([
-  ['people', 'person'],
-  ['organisations', 'organisation'],
-  ['places', 'place']
-]);
-
-export const TYPE_TO_ROUTE = new Map([
-  ['person', 'people'],
-  ['organisation', 'organisations'],
-  ['place', 'places']
-]);
-
-export function normaliseEntityRoute(value) {
-  return String(value || '').trim().replace(/^\/+|\/+$/g, '').replace(/\.html$/i, '');
+export function parseEntityRoute(route = '') {
+  const match = String(route).match(/^(people|organisations|places)\/([a-z0-9-]+)$/);
+  if (!match) return null;
+  return { segment: match[1], slug: match[2], type: match[1] === 'people' ? 'person' : match[1] === 'organisations' ? 'organisation' : 'place' };
 }
 
-export function parseEntityRoute(value) {
-  const route = normaliseEntityRoute(value);
-  const [segment, slug, ...rest] = route.split('/');
-  if (!segment || !slug || rest.length || !ROUTE_TO_TYPE.has(segment)) return null;
-  if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) return null;
-  return { route, segment, slug, type: ROUTE_TO_TYPE.get(segment) };
-}
-
-export function findEntityByRoute(value) {
-  const route = normaliseEntityRoute(value);
+export function findEntityByRoute(route) {
   return ENTITY_REGISTRY.find(entity => entity.route === route) || null;
 }
 
 export function findEntityByProviderId(provider, entityId) {
-  return ENTITY_REGISTRY.find(entity => entity.providers.some(item => item.provider === provider && item.entityId === entityId)) || null;
-}
-
-export function makeZettelRegistryEntity(entity) {
-  if (!entity?.id?.startsWith('entity:') || !TYPE_TO_ROUTE.has(entity.type)) return null;
-  const slug = entity.id.slice('entity:'.length);
-  if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) return null;
-  const segment = TYPE_TO_ROUTE.get(entity.type);
-  return {
-    route: `${segment}/${slug}`,
-    id: `civic:${entity.type}:${slug}`,
-    name: entity.name,
-    type: entity.type,
-    description: entity.description || null,
-    aliases: entity.aliases || [],
-    providers: [
-      { provider: 'civic-commons', role: 'canonical-public-identity' },
-      { provider: 'southall-zettel', entityId: entity.id, role: 'reviewed-civic-memory' }
-    ]
-  };
+  return ENTITY_REGISTRY.find(entity => entity.providers.some(binding => binding.provider === provider && binding.entityId === entityId)) || null;
 }
 
 export function providerViews(entity) {
-  return (entity?.providers || []).map(binding => ({ ...PROVIDERS[binding.provider], bindingRole: binding.role, entityId: binding.entityId || null })).filter(provider => provider.id);
+  return (entity?.providers || []).map(binding => {
+    const provider = PROVIDERS[binding.provider] || { id: binding.provider, name: binding.provider, label: binding.provider, role: 'External provider', url: null };
+    return { ...provider, bindingRole: binding.role || null, entityId: binding.entityId || null };
+  });
+}
+
+export function makeZettelRegistryEntity(providerEntity) {
+  if (!providerEntity?.id || !providerEntity?.name || !providerEntity?.type) return null;
+  const slug = providerEntity.id.replace(/^entity:/, '');
+  const segment = providerEntity.type === 'person' ? 'people' : providerEntity.type === 'organisation' ? 'organisations' : 'places';
+  return {
+    route: `${segment}/${slug}`,
+    id: `civic:${providerEntity.type}:${slug}`,
+    name: providerEntity.name,
+    type: providerEntity.type,
+    aliases: providerEntity.aliases || [],
+    description: providerEntity.description || null,
+    website: providerEntity.website || null,
+    providers: [
+      { provider: 'civic-commons', role: 'canonical-public-identity' },
+      { provider: 'southall-zettel', entityId: providerEntity.id, role: 'reviewed-civic-memory' }
+    ]
+  };
 }
