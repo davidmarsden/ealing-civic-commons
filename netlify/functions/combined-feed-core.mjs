@@ -15,6 +15,7 @@ import { fetchFilteredVideoFeed } from './filtered-video-feed.mjs';
 import { fetchFaithCommunityFeed } from './faith-community-feed.mjs';
 import { fetchLocalPoliticalEnvironmentFeed } from './local-political-environment-feed.mjs';
 import { fetchModernGovWhatsNew } from './moderngov-whatsnew.mjs';
+import { fetchEalingPetitions } from './ealing-petitions.mjs';
 import { listPublishedContributions } from '../lib/public-contributions.mjs';
 import { getArchivedItem, stableItemKey } from '../lib/civic-items.mjs';
 
@@ -125,9 +126,10 @@ async function reviewedContextActivity() {
 }
 
 export default async request => {
-  const [localResponse, modernGov, gla, community, living, rich, stopTowers, victoriaHall, southallExtras, boroughTown, met, citizens, ealingNews, ealingCulture, videos, faith, localPoliticalEnvironment, contextActivity] = await Promise.all([
+  const [localResponse, modernGov, petitions, gla, community, living, rich, stopTowers, victoriaHall, southallExtras, boroughTown, met, citizens, ealingNews, ealingCulture, videos, faith, localPoliticalEnvironment, contextActivity] = await Promise.all([
     localFeedHandler(request),
     fetchModernGovWhatsNew().catch(error => ({ items: [], health: [{ id: 'modern-gov', name: 'Ealing Council — ModernGov', homepage: 'https://ealing.moderngov.co.uk/', ok: false, status: 'upstream', error: String(error?.message || error), itemCount: 0 }] })),
+    fetchEalingPetitions().catch(error => ({ items: [], health: [{ id: 'ealing-council-petitions', name: 'Ealing Council — Petitions', homepage: 'https://ealing.moderngov.co.uk/mgEPetitionListDisplay.aspx?bcr=1', ok: false, status: 'upstream', error: String(error?.message || error), itemCount: 0 }] })),
     fetchGlaFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'gla-filtered', name: 'London City Hall / Assembly', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchCommunityPageFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'community-page-watch', name: 'Community page watch', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
     fetchLivingPageFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'living-page-watch', name: 'Living publication pages', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
@@ -149,12 +151,12 @@ export default async request => {
   const localRaw = localResponse?.ok ? await localResponse.json() : { items: [], health: [], enrichment: {} };
   const local = {
     ...localRaw,
-    items: (localRaw.items || []).filter(item => item.sourceId !== 'modern-gov'),
-    health: (localRaw.health || []).filter(entry => entry.id !== 'modern-gov')
+    items: (localRaw.items || []).filter(item => item.sourceId !== 'modern-gov' && item.sourceId !== 'ealing-council-petitions'),
+    health: (localRaw.health || []).filter(entry => entry.id !== 'modern-gov' && entry.id !== 'ealing-council-petitions')
   };
-  const combined = dedupe([...(contextActivity || []), ...(modernGov.items || []), ...(local.items || []), ...(rich.items || []), ...(stopTowers.items || []), ...(victoriaHall.items || []), ...(southallExtras.items || []), ...(boroughTown.items || []), ...(gla.items || []), ...(community.items || []), ...(living.items || []), ...(met.items || []), ...(citizens.items || []), ...(ealingNews.items || []), ...(ealingCulture.items || []), ...(videos.items || []), ...(faith.items || []), ...(localPoliticalEnvironment.items || [])]);
+  const combined = dedupe([...(contextActivity || []), ...(modernGov.items || []), ...(petitions.items || []), ...(local.items || []), ...(rich.items || []), ...(stopTowers.items || []), ...(victoriaHall.items || []), ...(southallExtras.items || []), ...(boroughTown.items || []), ...(gla.items || []), ...(community.items || []), ...(living.items || []), ...(met.items || []), ...(citizens.items || []), ...(ealingNews.items || []), ...(ealingCulture.items || []), ...(videos.items || []), ...(faith.items || []), ...(localPoliticalEnvironment.items || [])]);
   const items = coveragePreservingSlice(combined);
-  const health = alphabetiseHealth([...(modernGov.health || []), ...(local.health || []), ...(rich.health || []), ...(stopTowers.health || []), ...(victoriaHall.health || []), ...(southallExtras.health || []), ...(boroughTown.health || []), ...(gla.health || []), ...(community.health || []), ...(living.health || []), ...(met.health || []), ...(citizens.health || []), ...(ealingNews.health || []), ...(ealingCulture.health || []), ...(videos.health || []), ...(faith.health || []), ...(localPoliticalEnvironment.health || [])]);
+  const health = alphabetiseHealth([...(modernGov.health || []), ...(petitions.health || []), ...(local.health || []), ...(rich.health || []), ...(stopTowers.health || []), ...(victoriaHall.health || []), ...(southallExtras.health || []), ...(boroughTown.health || []), ...(gla.health || []), ...(community.health || []), ...(living.health || []), ...(met.health || []), ...(citizens.health || []), ...(ealingNews.health || []), ...(ealingCulture.health || []), ...(videos.health || []), ...(faith.health || []), ...(localPoliticalEnvironment.health || [])]);
 
   return new Response(JSON.stringify({
     generatedAt: new Date().toISOString(),
@@ -166,6 +168,7 @@ export default async request => {
     enrichment: {
       ...(local.enrichment || {}),
       modernGovPublishing: { included: modernGov.items?.length || 0, method: 'Official Ealing ModernGov RSS publication events are fetched through the Civic Commons static-egress relay on the DigitalOcean server, with the existing public RSS-reader bridge and official What’s New page retained as resilience fallbacks. Original ModernGov publisher links are retained and event GUIDs/dedupe keys preserve separate agenda, minutes and decision publications even when they share a destination.' },
+      ealingCouncilPetitions: { included: petitions.items?.length || 0, method: 'Official Ealing Council petition entries are fetched from the dedicated ModernGov petitions RSS feed through the Civic Commons static-egress relay and surfaced as a distinct official source.' },
       reviewedCivicContext: { included: contextActivity.length, method: 'Human-approved contributions resurface their stable archived civic item as new Commons activity without changing the original publisher or publication date.' },
       liveSourceCoverage: { method: 'Chronological live feed capped at 220 items while reserving the newest item from each non-official source published in the last 90 days, preventing high-volume official feeds from crowding quieter civic sources out entirely.' },
       richSourceSites: { included: rich.items?.length || 0, archiveCandidates: rich.archiveItems?.length || 0, method: 'Dated first-party archive/listing surfaces from evidence-rich civic sites are extracted separately from the live-feed cutoff so their older material can become durable civic memory.' },
