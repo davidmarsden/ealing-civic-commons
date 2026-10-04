@@ -72,8 +72,8 @@ All people, organisation and place routes use the same canonical civic-entity te
 
 - Ingests Ealing Council's main website news RSS.
 - Uses council category feeds as enrichment signals without duplicating stories.
-- Registers 47 Ealing Council document-download RSS feeds.
-- Runs a dedicated **Document Watch** section with collection/topic filtering and freshness diagnostics.
+- Discovers the current Ealing Council document-download category registry from the council's downloads index at runtime, with a curated fallback set if discovery is temporarily unavailable.
+- Runs a dedicated **Document Watch** section with collection/topic filtering and per-feed freshness diagnostics.
 - Keeps routine council documents out of the main attention timeline while retaining the complete Document Watch stream in persistent civic memory.
 - Enriches generic council download entries with the council's own human-readable document descriptions where available.
 - Imports ModernGov publication events through a Civic Commons static-egress relay using a DigitalOcean Reserved IP that can be allow-listed upstream; the existing public feed-reader bridge remains as a resilience fallback.
