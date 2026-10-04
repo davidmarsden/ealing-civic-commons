@@ -9,8 +9,8 @@ function placeRoute() {
 }
 function existingUrls(root) { return new Set([...root.querySelectorAll('a[href]')].map(link=>canonical(link.href))); }
 function linked(item, route) { return (item?.placeLinks||[]).some(link=>link?.route===route); }
-function currentCard(item) {
-  const link=(item.placeLinks||[]).find(candidate=>candidate.route===placeRoute());
+function currentCard(item, route) {
+  const link=(item.placeLinks||[]).find(candidate=>candidate.route===route);
   const note=link ? `<p class="entity-current-note">Linked to this place${link.provenance==='inferred-place-candidate'?' by a narrow contextual discovery rule':''}.</p>` : '';
   return `<article class="item" data-place-linked="true"><div class="item-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass||'Civic record')}</span><strong>${esc(item.source||'Publisher')}</strong><span>${esc(fmtDate(item.publishedAt))}</span></div><div><h3><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title)}</a></h3>${item.summary?`<p class="item-summary">${esc(item.summary)}</p>`:''}${note}</div></article>`;
 }
@@ -26,13 +26,14 @@ async function waitForEntity() {
 function reconcileCurrent(feed, route) {
   const root=document.querySelector('#currentItems');
   const section=document.querySelector('#currentSection');
-  if(!feed||!root||!section) return;
+  if(!feed||!root||!section) return false;
   const seen=existingUrls(root);
   const additions=(feed.items||[])
     .filter(item=>linked(item,route)&&item.url&&!seen.has(canonical(item.url)))
     .sort((a,b)=>(Date.parse(b.publishedAt||'')||0)-(Date.parse(a.publishedAt||'')||0));
-  if(additions.length) root.insertAdjacentHTML('beforeend',additions.map(currentCard).join(''));
+  if(additions.length) root.insertAdjacentHTML('beforeend',additions.map(item=>currentCard(item,route)).join(''));
   if(root.children.length) section.hidden=false;
+  return additions.length>0;
 }
 
 async function enhance() {
@@ -43,22 +44,13 @@ async function enhance() {
     fetch(`/.netlify/functions/historical-reporting?place=${encodeURIComponent(route)}&limit=100`,{cache:'no-store'}).then(response=>response.ok?response.json():null)
   ]);
   const feed=feedResult.status==='fulfilled'?feedResult.value:null;
-  reconcileCurrent(feed,route);
 
-  // entity.js also renders Current Commons asynchronously. If it finishes after this
-  // enhancer it replaces #currentItems wholesale. Watch that short startup race and
-  // restore any explicit/inferred place-linked records instead of letting them flash
-  // briefly and disappear.
-  const currentRoot=document.querySelector('#currentItems');
-  if(feed&&currentRoot){
-    let reconciling=false;
-    const observer=new MutationObserver(()=>{
-      if(reconciling) return;
-      reconciling=true;
-      queueMicrotask(()=>{ reconcileCurrent(feed,route); reconciling=false; });
-    });
-    observer.observe(currentRoot,{childList:true});
-    setTimeout(()=>observer.disconnect(),10000);
+  // The base entity renderer can finish after this enhancer. Reconcile a few times
+  // during startup instead of observing our own DOM writes: a MutationObserver here
+  // caused a self-triggering microtask loop and could freeze the page.
+  reconcileCurrent(feed,route);
+  if(feed){
+    [250,750,1500,3000].forEach(delay=>setTimeout(()=>reconcileCurrent(feed,route),delay));
   }
 
   const archive=archiveResult.status==='fulfilled'?archiveResult.value:null;
