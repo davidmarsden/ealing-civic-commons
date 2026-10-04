@@ -7,14 +7,13 @@ const fmtDate = iso => {
 const pillClass = type => type === 'Official record' ? 'official' : type === 'Journalism / publishing' ? 'journalism' : type === 'Independent civic data / analysis' ? 'analysis' : 'organisation';
 
 function routeInfo() {
-  if (document.body.dataset.entityId) {
-    const id = document.body.dataset.entityId.replace(/^entity:/, '');
-    const type = document.body.dataset.entityType || null;
-    const segment = type === 'person' ? 'people' : type === 'organisation' ? 'organisations' : 'places';
-    return { route: `${segment}/${id}`, type };
-  }
+  // The URL is the canonical Commons route. body.dataset.entityId contains civic IDs
+  // such as civic:place:walpole-park, not route slugs.
   const parts = location.pathname.split('/').filter(Boolean);
-  return { route: parts.length >= 2 ? `${parts[0]}/${parts[1].replace(/\.html$/, '')}` : null, type: parts[0] === 'places' ? 'place' : null };
+  const segment = parts[0];
+  const slug = parts[1]?.replace(/\.html$/, '');
+  if (!slug || !['places','people','organisations'].includes(segment)) return { route:null, type:null };
+  return { route:`${segment}/${slug}`, type:segment === 'places' ? 'place' : segment === 'people' ? 'person' : 'organisation' };
 }
 
 function linkedToRoute(item, route) {
@@ -26,12 +25,16 @@ function literalMatch(item, terms) {
   return terms.some(term => term.length >= 5 && text.includes(term.toLowerCase()));
 }
 
-function render(items) {
+function render(items, route) {
   const section = document.querySelector('#currentSection');
   const root = document.querySelector('#currentItems');
   if (!section || !root || !items.length) return;
   section.hidden = false;
-  root.innerHTML = items.map(item => `<article class="item"><div class="item-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass)}</span><strong>${esc(item.source)}</strong><span>${esc(fmtDate(item.publishedAt))}</span></div><div><h3><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title)}</a></h3>${item.summary ? `<p class="item-summary">${esc(item.summary)}</p>` : ''}${linkedToRoute(item, routeInfo().route) ? `<p class="entity-current-note">Linked to this place${(item.placeLinks || []).find(link => link.route === routeInfo().route)?.provenance === 'inferred-place-candidate' ? ' by a narrow contextual discovery rule' : ''}.</p>` : ''}</div></article>`).join('');
+  root.innerHTML = items.map(item => {
+    const placeLink=(item.placeLinks || []).find(link => link.route === route);
+    const note=placeLink ? `<p class="entity-current-note">Linked to this place${placeLink.provenance === 'inferred-place-candidate' ? ' by a narrow contextual discovery rule' : ''}.</p>` : '';
+    return `<article class="item"><div class="item-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass || 'Civic record')}</span><strong>${esc(item.source || 'Publisher')}</strong><span>${esc(fmtDate(item.publishedAt))}</span></div><div><h3><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title)}</a></h3>${item.summary ? `<p class="item-summary">${esc(item.summary)}</p>` : ''}${note}</div></article>`;
+  }).join('');
 }
 
 async function loadCurrentCommons() {
@@ -51,7 +54,7 @@ async function loadCurrentCommons() {
       .filter(item => linkedToRoute(item, route.route) || literalMatch(item, terms))
       .sort((a,b) => (Date.parse(b.publishedAt || '') || 0) - (Date.parse(a.publishedAt || '') || 0))
       .slice(0, 20);
-    render(matches);
+    render(matches, route.route);
   } catch (error) {
     console.warn('Combined Current Commons unavailable', error);
   }
