@@ -1,0 +1,72 @@
+[
+  {
+    "route": "issues/southall-gasworks-redevelopment",
+    "id": "civic:issue:southall-gasworks-redevelopment",
+    "name": "Southall Gasworks redevelopment",
+    "status": "ongoing",
+    "description": "The long-running redevelopment of the former Southall Gasworks site, including planning, remediation, air-quality, public-health and accountability questions around the scheme.",
+    "primaryEntityId": "entity:southall-gasworks",
+    "primaryPlaceRoute": "places/southall-gasworks",
+    "entityIds": ["entity:southall-gasworks", "entity:berkeley-group", "entity:ealing-council", "entity:environment-agency", "entity:public-health-england", "entity:greater-london-authority"],
+    "topicIds": ["topic:air-pollution", "topic:planning-development", "topic:public-health", "topic:council-accountability", "topic:housing"],
+    "aliases": ["Southall Gasworks", "Southall Waterside", "former Southall Gasworks"],
+    "providers": [{"provider":"civic-commons","role":"canonical-public-issue"},{"provider":"southall-zettel","role":"reviewed-civic-memory"}]
+  },
+  {
+    "route": "issues/walpole-park-theatre",
+    "id": "civic:issue:walpole-park-theatre",
+    "name": "Walpole Park theatre",
+    "status": "ongoing",
+    "description": "Proposals for a temporary commercial theatre in Walpole Park, including the use of public parkland, planning and council decision-making, petitions and community response.",
+    "primaryCivicEntityId": "civic:place:walpole-park",
+    "primaryPlaceRoute": "places/walpole-park",
+    "entityIds": ["entity:ealing-council"],
+    "topicIds": ["topic:planning-development", "topic:council-accountability"],
+    "aliases": ["Walpole Park theatre", "Troubadour Walpole Park", "Walpole Park Troubadour theatre", "temporary theatre Walpole Park"],
+    "providers": [{"provider":"civic-commons","role":"canonical-public-issue"}]
+  },
+  {
+    "route": "issues/southall-data-centres",
+    "id": "civic:issue:southall-data-centres",
+    "name": "Southall data centres",
+    "status": "ongoing",
+    "description": "Data-centre development in and around Southall, including planning, energy and infrastructure demands, environmental effects and impacts on neighbouring communities.",
+    "entityIds": ["entity:ealing-council"],
+    "topicIds": ["topic:planning-development"],
+    "aliases": ["Southall data centres", "Southall data center", "Hayes data centres", "HLE data centre", "HLE datacentre"],
+    "providers": [{"provider":"civic-commons","role":"canonical-public-issue"}]
+  },
+  {
+    "route": "issues/fly-tipping",
+    "id": "civic:issue:fly-tipping",
+    "name": "Fly-tipping and waste enforcement",
+    "status": "ongoing",
+    "description": "Fly-tipping across the borough and the public response to it, including cleansing, enforcement, reporting, waste services, expenditure and accountability.",
+    "entityIds": ["entity:ealing-council"],
+    "topicIds": ["topic:council-accountability"],
+    "aliases": ["fly-tipping", "fly tipping", "illegal dumping", "waste enforcement"],
+    "providers": [{"provider":"civic-commons","role":"canonical-public-issue"}]
+  },
+  {
+    "route": "issues/ealing-local-elections-2026",
+    "id": "civic:issue:ealing-local-elections-2026",
+    "name": "Ealing local elections 2026",
+    "status": "historical",
+    "description": "The May 2026 Ealing Council elections: candidates, campaigns, results, representation and the resulting political composition of the council.",
+    "entityIds": ["entity:ealing-council"],
+    "topicIds": ["topic:council-accountability"],
+    "aliases": ["Ealing local elections 2026", "Ealing election 2026", "2026 council elections"],
+    "providers": [{"provider":"civic-commons","role":"canonical-public-issue"}]
+  },
+  {
+    "route": "issues/southall-rise-protests",
+    "id": "civic:issue:southall-rise-protests",
+    "name": "Southall RISE protests",
+    "status": "historical",
+    "description": "Community protests and public debate concerning Southall RISE, including the decisions and organisations involved and the local response.",
+    "entityIds": ["entity:ealing-council"],
+    "topicIds": ["topic:council-accountability"],
+    "aliases": ["Southall RISE", "Southall RISE protest", "Southall RISE protests"],
+    "providers": [{"provider":"civic-commons","role":"canonical-public-issue"}]
+  }
+]
