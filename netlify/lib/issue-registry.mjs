@@ -1,33 +1,12 @@
-export const ISSUE_REGISTRY = [
-  {
-    route: 'issues/southall-gasworks-redevelopment',
-    id: 'civic:issue:southall-gasworks-redevelopment',
-    name: 'Southall Gasworks redevelopment',
-    status: 'ongoing',
-    description: 'The long-running redevelopment of the former Southall Gasworks site, including planning, remediation, air-quality, public-health and accountability questions around the scheme.',
-    primaryEntityId: 'entity:southall-gasworks',
-    entityIds: [
-      'entity:southall-gasworks',
-      'entity:berkeley-group',
-      'entity:ealing-council',
-      'entity:environment-agency',
-      'entity:public-health-england',
-      'entity:greater-london-authority'
-    ],
-    topicIds: [
-      'topic:air-pollution',
-      'topic:planning-development',
-      'topic:public-health',
-      'topic:council-accountability',
-      'topic:housing'
-    ],
-    aliases: ['Southall Gasworks', 'Southall Waterside', 'former Southall Gasworks'],
-    providers: [
-      { provider: 'civic-commons', role: 'canonical-public-issue' },
-      { provider: 'southall-zettel', role: 'reviewed-civic-memory' }
-    ]
-  }
-];
+import issueData from './issues.json' with { type: 'json' };
+
+export const ISSUE_REGISTRY = Object.freeze(issueData.map(issue => Object.freeze({
+  ...issue,
+  entityIds: Object.freeze([...(issue.entityIds || [])]),
+  topicIds: Object.freeze([...(issue.topicIds || [])]),
+  aliases: Object.freeze([...(issue.aliases || [])]),
+  providers: Object.freeze([...(issue.providers || [])])
+})));
 
 export function normaliseIssueRoute(value) {
   return String(value || '').trim().replace(/^\/+|\/+$/g, '').replace(/\.html$/i, '');
@@ -39,13 +18,15 @@ export function findIssueByRoute(value) {
 }
 
 export function issuesForProviderEntity(entityId) {
-  return ISSUE_REGISTRY.filter(issue => issue.entityIds.includes(entityId)).map(issue => ({
+  return ISSUE_REGISTRY.filter(issue => issue.entityIds.includes(entityId) || issue.primaryCivicEntityId === entityId).map(issue => ({
     id: issue.id,
     route: issue.route,
     name: issue.name,
     status: issue.status,
     description: issue.description,
-    primaryEntityId: issue.primaryEntityId,
-    isPrimaryForEntity: issue.primaryEntityId === entityId
+    primaryEntityId: issue.primaryEntityId || null,
+    primaryCivicEntityId: issue.primaryCivicEntityId || null,
+    primaryPlaceRoute: issue.primaryPlaceRoute || null,
+    isPrimaryForEntity: issue.primaryEntityId === entityId || issue.primaryCivicEntityId === entityId
   }));
 }
