@@ -4,11 +4,16 @@ import { getEalingDocumentMetadata, EALING_DOCUMENT_METADATA_TIMEOUT_MS } from '
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', textNodeName: '#text' });
 const arr = value => value == null ? [] : Array.isArray(value) ? value : [value];
 const textValue = value => value?.['#text'] ?? value ?? '';
-const DOCUMENT_TIMEOUT_MS = 1000;
+const DOCUMENT_TIMEOUT_MS = 2500;
+const DISCOVERY_TIMEOUT_MS = 3000;
 const METADATA_ENRICH_LIMIT = 20;
+const DOCUMENT_INDEX_URL = 'https://www.ealing.gov.uk/downloads';
 const knownTowns = ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
 
-const feeds = [
+// These feeds are a resilient baseline, not the complete registry. Ealing adds and
+// removes download categories over time, so the live registry is discovered from
+// the council's downloads index on each invocation and merged with this fallback.
+const fallbackFeeds = [
   ['201033','Council and local decisions',['Council & democracy']],
   ['201041','Council budgets and spending',['Council & democracy']],
   ['201072','Strategies, plans and policies',['Council & democracy']],
@@ -25,10 +30,83 @@ const feeds = [
   ['201283','Our neighbourhoods',['Planning & development','Environment','Community']],
   ['201167','Rubbish and recycling',['Environment']],
   ['201182','Transport strategies and plans',['Transport']]
-].map(([categoryId,label,topics]) => ({ categoryId, label, topics, url:`https://www.ealing.gov.uk/rss/${categoryId}/downloads` }));
+].map(([categoryId,label,topics]) => makeFeed(categoryId, label, topics, 'fallback'));
 
 function strip(value='') {
   return String(value).replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/&nbsp;/gi,' ').replace(/&amp;/gi,'&').replace(/&#39;/g,"'").replace(/&quot;/gi,'"').replace(/\s+/g,' ').trim();
+}
+
+function topicsForLabel(label='') {
+  const value = label.toLowerCase();
+  const topics = [];
+  if (/council|decision|budget|spend|councillor|election|consult|data protection|localism|grant|emergenc|strategy|polic|contract|tender|pension/.test(value)) topics.push('Council & democracy');
+  if (/planning|building|heritage|regeneration|neighbourhood|local plan/.test(value)) topics.push('Planning & development');
+  if (/housing|home|tenant|landlord|homeless|leasehold/.test(value)) topics.push('Housing');
+  if (/pollution|air quality|climate|environment|tree|waste|recycl|rubbish|garden/.test(value)) topics.push('Environment');
+  if (/transport|parking|road|highway|pavement|cycling|traffic/.test(value)) topics.push('Transport');
+  if (/school|education|learning|admission|child|young|youth/.test(value)) topics.push('Education');
+  if (/health|social care|safeguard|carer/.test(value)) topics.push('Health & social care');
+  if (/park|leisure|sport|librar|culture|arts|history/.test(value)) topics.push('Culture & leisure');
+  if (/community|crime|neighbourhood/.test(value)) topics.push('Community');
+  return topics.length ? [...new Set(topics)].slice(0,3) : ['Council & democracy'];
+}
+
+function makeFeed(categoryId, label, topics=topicsForLabel(label), registry='discovered') {
+  return { categoryId:String(categoryId), label:strip(label) || `Council documents ${categoryId}`, topics, registry, url:`https://www.ealing.gov.uk/rss/${categoryId}/downloads` };
+}
+
+function decodeHtml(value='') {
+  return String(value).replace(/&amp;/gi,'&').replace(/&#39;/g,"'").replace(/&quot;/gi,'"').replace(/&lt;/gi,'<').replace(/&gt;/gi,'>');
+}
+
+function discoveredCategoryId(href='') {
+  const decoded = decodeHtml(href);
+  return decoded.match(/\/downloads\/(20\d{4})(?:\/|\b|$)/i)?.[1]
+    || decoded.match(/[?&]categoryID=(20\d{4})(?:&|$)/i)?.[1]
+    || null;
+}
+
+export function discoverDocumentFeedsFromHtml(html='') {
+  const found = new Map();
+  const anchorRx = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let match;
+  while ((match = anchorRx.exec(String(html)))) {
+    const categoryId = discoveredCategoryId(match[1]);
+    if (!categoryId) continue;
+    const label = strip(match[2]);
+    if (!label || /rss feed/i.test(label)) continue;
+    if (!found.has(categoryId)) found.set(categoryId, makeFeed(categoryId, label));
+  }
+  return [...found.values()];
+}
+
+async function discoverFeeds() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DISCOVERY_TIMEOUT_MS);
+  try {
+    const response = await fetch(DOCUMENT_INDEX_URL, {
+      signal: controller.signal,
+      redirect:'follow',
+      headers: { accept:'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5', 'accept-language':'en-GB,en;q=0.9', 'user-agent':'Southall-Ealing-Civic-Commons/0.1 (+public-interest prototype)' }
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const discovered = discoverDocumentFeedsFromHtml(await response.text());
+    if (!discovered.length) throw new Error('No document categories discovered');
+    return { ok:true, feeds:discovered, error:null };
+  } catch (error) {
+    return { ok:false, feeds:[], error:error?.name === 'AbortError' ? 'Timed out' : String(error?.message || error) };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function mergeFeedRegistry(discovered=[]) {
+  const merged = new Map(fallbackFeeds.map(feed => [feed.categoryId, feed]));
+  for (const feed of discovered) {
+    const fallback = merged.get(feed.categoryId);
+    merged.set(feed.categoryId, fallback ? { ...feed, topics:fallback.topics, registry:'discovered+fallback' } : feed);
+  }
+  return [...merged.values()];
 }
 
 function itemLink(item) {
@@ -75,10 +153,7 @@ function displayTitle(feed, rawTitle) {
 }
 
 function inferTowns(value) {
-  const text = String(value || '')
-    .replace(/\b(?:the\s+)?London Borough of Ealing(?: Council)?\b/gi, ' ')
-    .replace(/\bEaling Council\b/gi, ' ')
-    .replace(/\bEaling LBC\b/gi, ' ');
+  const text = String(value || '').replace(/\b(?:the\s+)?London Borough of Ealing(?: Council)?\b/gi, ' ').replace(/\bEaling Council\b/gi, ' ').replace(/\bEaling LBC\b/gi, ' ');
   return knownTowns.filter(town => new RegExp(`\\b${town.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(text));
 }
 
@@ -92,15 +167,7 @@ async function fetchFeed(feed) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), DOCUMENT_TIMEOUT_MS);
   try {
-    const response = await fetch(feed.url, {
-      signal: controller.signal,
-      redirect: 'follow',
-      headers: {
-        accept: 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.5',
-        'accept-language': 'en-GB,en;q=0.9',
-        'user-agent': 'Southall-Ealing-Civic-Commons/0.1 (+public-interest prototype)'
-      }
-    });
+    const response = await fetch(feed.url, { signal:controller.signal, redirect:'follow', headers:{ accept:'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.5', 'accept-language':'en-GB,en;q=0.9', 'user-agent':'Southall-Ealing-Civic-Commons/0.1 (+public-interest prototype)' } });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const parsed = parser.parse(await response.text());
     const channel = parsed?.rss?.channel;
@@ -114,26 +181,7 @@ async function fetchFeed(feed) {
       const title = displayTitle(feed, rawTitle);
       const guid = textValue(item.guid) || link || `${feed.categoryId}:${rawTitle}`;
       const towns = inferTowns(`${rawTitle} ${description}`);
-      return {
-        id: `ealing-council-documents:${guid}`,
-        sourceId: 'ealing-council-documents',
-        source: 'Ealing Council — Document Watch',
-        sourceClass: 'Official record',
-        sourceHomepage: 'https://www.ealing.gov.uk/',
-        title,
-        rawSourceTitle: rawTitle,
-        url: link || 'https://www.ealing.gov.uk/',
-        canonicalUrl: link,
-        summary: displaySummary(feed, rawTitle, description),
-        publishedAt,
-        towns,
-        boroughWide: towns.length === 0,
-        topics: [...new Set(feed.topics)].slice(0,3),
-        officialCategories: [feed.label],
-        documentCategory: feed.label,
-        topicProvenance: 'Ealing Council document RSS',
-        documentFeedCategoryId: feed.categoryId
-      };
+      return { id:`ealing-council-documents:${guid}`, sourceId:'ealing-council-documents', source:'Ealing Council — Document Watch', sourceClass:'Official record', sourceHomepage:'https://www.ealing.gov.uk/', title, rawSourceTitle:rawTitle, url:link || 'https://www.ealing.gov.uk/', canonicalUrl:link, summary:displaySummary(feed, rawTitle, description), publishedAt, towns, boroughWide:towns.length === 0, topics:[...new Set(feed.topics)].slice(0,3), officialCategories:[feed.label], documentCategory:feed.label, topicProvenance:'Ealing Council document RSS', documentFeedCategoryId:feed.categoryId };
     });
     const dates = items.map(x => x.publishedAt).filter(Boolean).sort();
     const lastPublishedAt = dates.length ? dates[dates.length - 1] : null;
@@ -142,11 +190,7 @@ async function fetchFeed(feed) {
 }
 
 async function enrichDocumentMetadata(items) {
-  const candidates = [...items]
-    .filter(item => item.canonicalUrl && rawPeriod(item.rawSourceTitle))
-    .sort((a, b) => Date.parse(b.publishedAt || 0) - Date.parse(a.publishedAt || 0))
-    .slice(0, METADATA_ENRICH_LIMIT);
-
+  const candidates = [...items].filter(item => item.canonicalUrl && rawPeriod(item.rawSourceTitle)).sort((a,b) => Date.parse(b.publishedAt || 0) - Date.parse(a.publishedAt || 0)).slice(0, METADATA_ENRICH_LIMIT);
   const settled = await Promise.allSettled(candidates.map(async item => {
     const metadata = await getEalingDocumentMetadata(item.canonicalUrl, item.rawSourceTitle);
     if (!metadata?.description) return false;
@@ -160,11 +204,12 @@ async function enrichDocumentMetadata(items) {
     item.metadataEnriched = true;
     return true;
   }));
-
   return settled.filter(result => result.status === 'fulfilled' && result.value).length;
 }
 
 export async function fetchEalingCouncilDocuments() {
+  const discovery = await discoverFeeds();
+  const feeds = mergeFeedRegistry(discovery.feeds);
   const settled = await Promise.allSettled(feeds.map(fetchFeed));
   const items = [];
   const feedHealth = [];
@@ -173,26 +218,22 @@ export async function fetchEalingCouncilDocuments() {
     const feed = feeds[i];
     if (result.status === 'fulfilled') {
       items.push(...result.value.items);
-      feedHealth.push({ categoryId:feed.categoryId, label:feed.label, ok:true, itemCount:result.value.itemCount, lastPublishedAt:result.value.lastPublishedAt, freshness:result.value.freshness });
+      feedHealth.push({ categoryId:feed.categoryId, label:feed.label, registry:feed.registry, ok:true, itemCount:result.value.itemCount, lastPublishedAt:result.value.lastPublishedAt, freshness:result.value.freshness });
     } else {
-      feedHealth.push({ categoryId:feed.categoryId, label:feed.label, ok:false, itemCount:0, lastPublishedAt:null, freshness:'unavailable', error:result.reason?.name === 'AbortError' ? 'Timed out' : String(result.reason?.message || result.reason) });
+      feedHealth.push({ categoryId:feed.categoryId, label:feed.label, registry:feed.registry, ok:false, itemCount:0, lastPublishedAt:null, freshness:'unavailable', error:result.reason?.name === 'AbortError' ? 'Timed out' : String(result.reason?.message || result.reason) });
     }
   }
   const seen = new Set();
-  const deduped = items.filter(item => {
-    const key = item.canonicalUrl || item.id;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  const deduped = items.filter(item => { const key=item.canonicalUrl || item.id; if (seen.has(key)) return false; seen.add(key); return true; });
   const metadataEnriched = await enrichDocumentMetadata(deduped);
   const responding = feedHealth.filter(x => x.ok).length;
+  const latestPublishedAt = deduped.map(item => item.publishedAt).filter(Boolean).sort().at(-1) || null;
   return {
-    source: { id:'ealing-council-documents', name:'Ealing Council — Document Watch', homepage:'https://www.ealing.gov.uk/', sourceClass:'Official record' },
-    ok: responding > 0,
-    status: responding > 0 ? 'ok' : 'error',
-    error: responding > 0 ? null : 'All enabled Ealing Council document feeds unavailable',
-    items: deduped,
-    diagnostics: { enabledFeeds:feeds.length, respondingFeeds:responding, timeoutMs:DOCUMENT_TIMEOUT_MS, metadataEnrichLimit:METADATA_ENRICH_LIMIT, metadataTimeoutMs:EALING_DOCUMENT_METADATA_TIMEOUT_MS, metadataEnriched, feeds:feedHealth }
+    source:{ id:'ealing-council-documents', name:'Ealing Council — Document Watch', homepage:'https://www.ealing.gov.uk/', sourceClass:'Official record' },
+    ok:responding > 0,
+    status:responding > 0 ? 'ok' : 'error',
+    error:responding > 0 ? null : 'All enabled Ealing Council document feeds unavailable',
+    items:deduped,
+    diagnostics:{ enabledFeeds:feeds.length, respondingFeeds:responding, latestPublishedAt, timeoutMs:DOCUMENT_TIMEOUT_MS, discovery:{ ok:discovery.ok, indexUrl:DOCUMENT_INDEX_URL, discoveredFeeds:discovery.feeds.length, fallbackFeeds:fallbackFeeds.length, timeoutMs:DISCOVERY_TIMEOUT_MS, error:discovery.error }, metadataEnrichLimit:METADATA_ENRICH_LIMIT, metadataTimeoutMs:EALING_DOCUMENT_METADATA_TIMEOUT_MS, metadataEnriched, feeds:feedHealth }
   };
 }
