@@ -41,21 +41,21 @@ In addition, `site-shell.js` dynamically imports `context-reporting.js` on the s
 
 That means an entity page is not bootstrapped by one page controller. It is assembled by a collection of self-starting scripts, several of which wait for, inspect, mutate or repair DOM created by another script.
 
-There is also template drift: `entity.html` and `civic-entity.html` are near-duplicate entity shells with different script/version combinations. In particular the former explicitly loads `entity-current-commons.js`; the latter currently does not. This makes route/template behaviour harder to reason about and easier to regress.
+There is also template drift: `entity.html` and `civic-entity.html` are near-duplicate entity shells with different script/version combinations. In particular the former explicitly loads `entity-current-commons.js`; the latter currently does not. The fallback matters operationally: `social-preview.js` can bypass on error and the Netlify redirects can then serve `civic-entity.html`. Current Commons ownership therefore cannot be removed from `context-reporting.js` until the authoritative renderer is also present in that fallback shell, or the two shells have been consolidated. This makes route/template behaviour harder to reason about and easier to regress.
 
 ## MutationObserver inventory
 
-Not every observer is bad. The audit distinguishes **one-shot enhancement observers** from **persistent ownership/repair observers**.
+Not every observer is bad. The audit distinguishes **one-shot or idempotent enhancement observers** from **persistent ownership/repair observers**.
 
 ### High risk
 
 - `context-reporting.js`: persistent observers re-render Current Commons / historical reporting after child-list changes. This is a state-ownership mechanism disguised as DOM observation and should be removed.
 - `explore-issue-hubs.js`: observer re-applies a transformed directory after mutations. Review during Explore refactor; likely another competing-render smell.
-- `memory-columns.js`: continuously rearranges content after subtree changes. Review whether layout can run from an explicit render-complete event instead.
 - `demo-data.js`: multiple observers coordinate loading/timeline state. Review separately; this is another area where explicit state would be safer.
 
-### Lower risk / one-shot compatibility
+### Lower risk / one-shot or idempotent compatibility
 
+- `memory-columns.js`: the observer remains connected, but column arrangement is guarded by `grid.dataset.columnsArranged` and becomes a no-op after the first successful arrangement; later mutations can still enhance newly inserted entity tags. This is lifecycle coupling worth simplifying eventually, not evidence of a competing layout-repair loop.
 - `place-brand.js`: waits until hero content exists, applies the place mark, then disconnects.
 - `election-history.js`: waits for entity hero readiness, renders once, then disconnects.
 - `item-connections.js`: waits for the item view to become renderable, then disconnects.
@@ -141,19 +141,21 @@ Where enhancements genuinely need rendered content, the controller should call t
 
 ### 5. One entity template
 
-Choose `entity.html` or `civic-entity.html` as canonical and remove/redirect/generate the duplicate. Script composition and cache versions must not diverge between two hand-maintained shells.
+Choose `entity.html` or `civic-entity.html` as canonical and remove/redirect/generate the duplicate. Script composition and cache versions must not diverge between two hand-maintained shells. Until consolidation is complete, both shells must load the same authoritative Current Commons renderer before the legacy owner is disabled.
 
 ## Refactor plan
 
 ### Phase 0 — stop the bleeding
 
 - Do not add new Current Commons patches.
-- Prevent `context-reporting.js` from owning Current Commons on entity/place routes where `entity-current-commons.js` is authoritative.
+- First ensure `entity-current-commons.js` is loaded by both `entity.html` and the `civic-entity.html` fallback path (or consolidate those shells immediately).
+- Only then prevent `context-reporting.js` from owning Current Commons on entity/place routes.
 - Remove the persistent Current Commons MutationObserver path.
 - Preserve historical reporting behaviour temporarily, but do not let it rewrite Current Commons.
 - Add a regression test for Walpole Park: the canonical place endpoint result must remain the displayed result after page settlement.
+- Add a fallback-shell regression test so a `social-preview.js` bypass still produces Current Commons rather than an empty section.
 
-Success criterion: Walpole Park no longer flashes the correct set and then reverts, and the page does not enter observer-driven DOM churn.
+Success criterion: Walpole Park no longer flashes the correct set and then reverts, fallback entity pages still have Current Commons, and the page does not enter observer-driven DOM churn.
 
 ### Phase 1 — establish ownership
 
@@ -165,7 +167,7 @@ Success criterion: Walpole Park no longer flashes the correct set and then rever
 
 ### Phase 2 — unify page lifecycle
 
-- Replace polling (`waitForEntity`) and one-shot MutationObservers with explicit controller sequencing.
+- Replace polling (`waitForEntity`) and one-shot MutationObservers with explicit controller sequencing where they are actually lifecycle workarounds.
 - Convert dossier/nav/evidence/issue modules into functions called from the page controller.
 - Ensure section navigation derives from the final page model rather than racing section visibility changes.
 
@@ -177,7 +179,7 @@ Success criterion: Walpole Park no longer flashes the correct set and then rever
 
 ### Phase 4 — audit the rest of the app
 
-Apply the same ownership test to Explore, demo/timeline, item pages and the main feed. In particular inspect persistent MutationObservers and any script that fetches data merely to overwrite markup rendered by another script.
+Apply the same ownership test to Explore, demo/timeline, item pages and the main feed. In particular inspect persistent MutationObservers and any script that fetches data merely to overwrite markup rendered by another script. Idempotent enhancement observers such as the current `memory-columns.js` pattern should be treated separately from competing render ownership.
 
 ## Architectural guardrails
 
@@ -189,10 +191,11 @@ New code should satisfy all of these:
 4. Page bootstrap is explicit and inspectable from one controller.
 5. A new feature should normally add data/state or a renderer, not another autonomous page-wide script.
 6. Regression tests cover settled page state, not only the first successful render.
-7. Refactors should reduce autonomous scripts, duplicate fetches and DOM writers. A fix that increases any of those needs explicit justification.
+7. Fallback shells/routes must preserve the same authoritative renderer before a legacy owner is removed.
+8. Refactors should reduce autonomous scripts, duplicate fetches and DOM writers. A fix that increases any of those needs explicit justification.
 
 ## First implementation PR
 
-The first implementation should be deliberately small: enforce single ownership of Current Commons without attempting the entire rewrite at once. Specifically, stop `context-reporting.js` from rendering/observing `#currentItems` on entity routes and leave `entity-current-commons.js` as the temporary sole owner. Then verify Walpole Park and representative person/organisation/place pages before proceeding to the controller refactor.
+The first implementation should be deliberately small: enforce single ownership of Current Commons without attempting the entire rewrite at once. The safe order is important: first load `entity-current-commons.js` in the `civic-entity.html` fallback (or consolidate the shells), then stop `context-reporting.js` from rendering/observing `#currentItems`. `entity-current-commons.js` can then be the temporary sole owner across both normal and fallback entity paths. Verify Walpole Park, the fallback path, and representative person/organisation/place pages before proceeding to the controller refactor.
 
 This is an architectural repair programme, not another sequence of Walpole-specific patches.
