@@ -1,36 +1,42 @@
-export const ISSUE_REGISTRY = [
-  {
-    route: 'issues/southall-gasworks-redevelopment',
-    id: 'civic:issue:southall-gasworks-redevelopment',
-    name: 'Southall Gasworks redevelopment',
-    status: 'ongoing',
-    description: 'The long-running redevelopment of the former Southall Gasworks site, including planning, remediation, air-quality, public-health and accountability questions around the scheme.',
-    primaryEntityId: 'entity:southall-gasworks',
-    entityIds: [
-      'entity:southall-gasworks',
-      'entity:berkeley-group',
-      'entity:ealing-council',
-      'entity:environment-agency',
-      'entity:public-health-england',
-      'entity:greater-london-authority'
-    ],
-    topicIds: [
-      'topic:air-pollution',
-      'topic:planning-development',
-      'topic:public-health',
-      'topic:council-accountability',
-      'topic:housing'
-    ],
-    aliases: ['Southall Gasworks', 'Southall Waterside', 'former Southall Gasworks'],
-    providers: [
-      { provider: 'civic-commons', role: 'canonical-public-issue' },
-      { provider: 'southall-zettel', role: 'reviewed-civic-memory' }
-    ]
-  }
-];
+import issueData from './issues.json' with { type: 'json' };
+
+function freezeIssue(issue) {
+  return Object.freeze({
+    ...issue,
+    entityIds: Object.freeze([...(issue.entityIds || [])]),
+    topicIds: Object.freeze([...(issue.topicIds || [])]),
+    aliases: Object.freeze([...(issue.aliases || [])]),
+    providers: Object.freeze([...(issue.providers || [])])
+  });
+}
+
+// All reviewed definitions, including Commons-native candidates that are not yet
+// safe to expose through the legacy Zettel-only issue assembler.
+export const ISSUE_DEFINITIONS = Object.freeze(issueData.map(freezeIssue));
+
+// Until civic-issue.mjs can assemble issue-specific Commons evidence, only
+// definitions with the established published-memory provider enter live routes
+// and entity backlinks. This prevents generic council relationships/sources from
+// being misrepresented as evidence for a newly defined issue.
+export const ISSUE_REGISTRY = Object.freeze(ISSUE_DEFINITIONS.filter(issue =>
+  issue.providers.some(binding => binding.provider === 'southall-zettel')
+));
 
 export function normaliseIssueRoute(value) {
   return String(value || '').trim().replace(/^\/+|\/+$/g, '').replace(/\.html$/i, '');
+}
+
+function providerStyleId(civicEntityId) {
+  const parts = String(civicEntityId || '').split(':');
+  const slug = parts.length >= 3 && parts[0] === 'civic' ? parts.slice(2).join(':') : null;
+  return slug ? `entity:${slug}` : null;
+}
+
+function issueMatchesEntity(issue, entityId) {
+  return issue.entityIds.includes(entityId)
+    || issue.primaryEntityId === entityId
+    || issue.primaryCivicEntityId === entityId
+    || providerStyleId(issue.primaryCivicEntityId) === entityId;
 }
 
 export function findIssueByRoute(value) {
@@ -39,13 +45,17 @@ export function findIssueByRoute(value) {
 }
 
 export function issuesForProviderEntity(entityId) {
-  return ISSUE_REGISTRY.filter(issue => issue.entityIds.includes(entityId)).map(issue => ({
+  return ISSUE_REGISTRY.filter(issue => issueMatchesEntity(issue, entityId)).map(issue => ({
     id: issue.id,
     route: issue.route,
     name: issue.name,
     status: issue.status,
     description: issue.description,
-    primaryEntityId: issue.primaryEntityId,
+    primaryEntityId: issue.primaryEntityId || null,
+    primaryCivicEntityId: issue.primaryCivicEntityId || null,
+    primaryPlaceRoute: issue.primaryPlaceRoute || null,
     isPrimaryForEntity: issue.primaryEntityId === entityId
+      || issue.primaryCivicEntityId === entityId
+      || providerStyleId(issue.primaryCivicEntityId) === entityId
   }));
 }
