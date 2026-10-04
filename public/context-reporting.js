@@ -127,6 +127,19 @@ async function fetchHistorical(terms, topics) {
   return (await response.json()).records || [];
 }
 
+function currentCommonsUrls(route) {
+  const published = window.__civicCurrentCommons;
+  if (published?.route === route) return Promise.resolve(new Set((published.urls || []).map(canonicalUrl)));
+  return new Promise(resolve => {
+    const onReady = event => {
+      if (event.detail?.route !== route) return;
+      window.removeEventListener('civic-current-commons:ready', onReady);
+      resolve(new Set((event.detail.urls || []).map(canonicalUrl)));
+    };
+    window.addEventListener('civic-current-commons:ready', onReady);
+  });
+}
+
 function roots(route) {
   if (route.kind === 'entity') return { current:'#currentItems', currentSection:'#currentSection', reporting:'#reporting', reportingSection:'#reportingSection', stats:'#entityStats .entity-stat:first-child strong' };
   if (route.kind === 'issue') return { current:'#currentItems', currentSection:'#currentSection', reporting:'#issueReporting', reportingSection:'#reportingSection', stats:'#issueStats .entity-stat:last-child strong' };
@@ -238,14 +251,16 @@ if (route) {
       const { terms, topics } = termsAndTopics(route, data);
       const feed = feedResponse?.ok ? await feedResponse.json() : { items:[] };
       const current = route.kind === 'entity' ? [] : selectCurrent(feed.items || [], terms, topics, 8);
-      const currentUrls = new Set(current.map(item => canonicalUrl(item.url)));
       const archived = await fetchHistorical(terms, topics);
       const reviewed = data.reporting || [];
+      const currentUrls = route.kind === 'entity'
+        ? await currentCommonsUrls(route.route)
+        : new Set(current.map(item => canonicalUrl(item.url)));
       const historical = mergeHistorical(reviewed, archived, currentUrls);
 
       // Entity Current Commons is deliberately excluded: this module owns only
-      // historical reporting there. This also removes the observer feedback loop
-      // that previously replaced place-specific Current Commons after settlement.
+      // historical reporting there. It consumes the authoritative renderer's
+      // published URL set solely to preserve cross-section deduplication.
       if (route.kind === 'entity') {
         renderHistorical(route, historical);
         return;
