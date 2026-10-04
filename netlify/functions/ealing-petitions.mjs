@@ -39,7 +39,10 @@ function safeUrl(value) {
 }
 
 function placeFor(text) {
-  const value = String(text);
+  const value = String(text)
+    .replace(/\bEaling(?:\s+(?:Borough|Council|Council's|Council’s|Council’s|Council's))?\b(?=\s+(?:Council|borough|council))/gi, ' ')
+    .replace(/\bLondon Borough of Ealing\b/gi, ' ')
+    .replace(/\bEaling Council\b/gi, ' ');
   const patterns = {
     Ealing: /\b(?:Ealing Broadway|West Ealing|North Ealing|South Ealing|Ealing)\b/i,
     Acton: /\bActon\b/i,
