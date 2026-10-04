@@ -28,10 +28,13 @@ curl -fsSL https://raw.githubusercontent.com/davidmarsden/ealing-civic-commons/m
 
 node --check /opt/ealing-moderngov-relay/server.mjs
 systemctl daemon-reload
+systemctl enable --now ealing-moderngov-relay.service
 systemctl restart ealing-moderngov-relay.service
 curl -fsS http://127.0.0.1:8788/health
 curl -fsS http://127.0.0.1:8788/petitions | head
 ```
+
+`enable --now` makes a fresh installation survive reboots; the explicit restart also ensures an already-running installation picks up an updated server file immediately.
 
 Inside the existing `chat-dev.ealing.civiccommons.co.uk` Caddy site block, the existing wildcard relay route covers both feeds:
 
