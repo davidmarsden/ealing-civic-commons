@@ -17,6 +17,7 @@ const SECTIONS = [
 ];
 const ACTION_ORDER = SECTIONS.map(section => section.href).filter(Boolean);
 let planningReady = false;
+let initialised = false;
 
 async function loadPlanningStore(queryKey) {
   for (const path of ['/data/planning-archive.json', '/data/planning-latest.json']) {
@@ -175,31 +176,16 @@ async function renderPlacePlanning() {
   }
 }
 
-async function renderPlanningWithRetry() {
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    if (await renderPlacePlanning()) return true;
-    await new Promise(resolve => setTimeout(resolve, 200 * (attempt + 1)));
-  }
-  return false;
-}
-
-async function syncActionsForAWhile() {
-  for (let attempt = 0; attempt < 50; attempt += 1) {
-    syncPlanningAction();
-    reorderActions();
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
-}
-
 async function initialise() {
+  if (initialised) return;
+  initialised = true;
   ensureCardStyles();
   document.documentElement.classList.add('entity-dossier-ready');
   reorderSections();
   SECTIONS.forEach(prepareCard);
-  const planningPromise = renderPlanningWithRetry();
-  const actionPromise = syncActionsForAWhile();
-  await planningPromise;
-  await actionPromise;
+  syncPlanningAction();
+  reorderActions();
+  await renderPlacePlanning();
   syncPlanningAction();
   reorderActions();
   window.addEventListener('hashchange', () => {
@@ -209,4 +195,8 @@ async function initialise() {
   });
 }
 
-initialise();
+// entity.js publishes the canonical shell only after the entity route, hero,
+// stats, reviewed relationships/sources and assertions have finished rendering.
+// Consume that lifecycle explicitly instead of retrying DOM reads for seconds.
+if (window.__civicEntityReady) initialise();
+else window.addEventListener('civic-entity:ready', initialise, { once: true });
