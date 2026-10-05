@@ -10,9 +10,6 @@
 /entity.html
   Cache-Control: public, max-age=0, must-revalidate
 
-/civic-entity.html
-  Cache-Control: public, max-age=0, must-revalidate
-
 /issue.html
   Cache-Control: public, max-age=0, must-revalidate
 
