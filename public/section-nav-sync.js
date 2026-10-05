@@ -45,13 +45,26 @@ function syncSectionNavigation() {
   return true;
 }
 
-// Section navigation is the sole owner of standard hero section links. Observe
-// only section visibility: content renderers own their sections and simply
-// toggle `hidden`; navigation reacts without polling or rewriting their DOM.
+// Section navigation is the sole owner of standard hero section links. Content
+// renderers own their sections and toggle `hidden`; navigation reacts to those
+// visibility changes. The short-lived hero observer handles initial creation of
+// the actions container without a timed retry loop.
 const sections = SECTIONS.map(([href]) => document.querySelector(href)).filter(Boolean);
-const observer = new MutationObserver(syncSectionNavigation);
-sections.forEach(section => observer.observe(section, { attributes: true, attributeFilter: ['hidden'] }));
+const sectionObserver = new MutationObserver(syncSectionNavigation);
+sections.forEach(section => sectionObserver.observe(section, { attributes: true, attributeFilter: ['hidden'] }));
+
+const hero = document.querySelector(isIssue ? '#issueHero' : '#entityHero');
+let heroObserver = null;
+if (hero && !actionRoot()) {
+  heroObserver = new MutationObserver(() => {
+    if (!actionRoot()) return;
+    heroObserver.disconnect();
+    heroObserver = null;
+    syncSectionNavigation();
+  });
+  heroObserver.observe(hero, { childList: true, subtree: true });
+}
 
 syncSectionNavigation();
-window.addEventListener(isIssue ? 'civic-issue:ready' : 'civic-entity:ready', syncSectionNavigation);
+window.addEventListener('civic-entity:ready', syncSectionNavigation);
 window.addEventListener('hashchange', syncSectionNavigation);
