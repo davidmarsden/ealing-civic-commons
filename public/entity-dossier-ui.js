@@ -15,8 +15,6 @@ const SECTIONS = [
   { id: 'reportingSection', href: '#reportingSection', label: 'Historical reporting', open: false },
   { id: 'relationshipsSection', href: '#relationshipsSection', label: 'Reviewed connections', open: false }
 ];
-const ACTION_ORDER = SECTIONS.map(section => section.href).filter(Boolean);
-let planningReady = false;
 let initialised = false;
 
 async function loadPlanningStore(queryKey) {
@@ -49,40 +47,6 @@ function reorderSections() {
     const section = document.getElementById(id);
     if (section) stack.append(section);
   });
-}
-
-function actionRoot() {
-  return document.querySelector('#entityHero .entity-actions, .entity-actions');
-}
-
-function reorderActions() {
-  const actions = actionRoot();
-  if (!actions) return false;
-  const byHref = new Map([...actions.querySelectorAll('a')].map(link => [link.getAttribute('href'), link]));
-  ACTION_ORDER.forEach(href => {
-    const link = byHref.get(href);
-    if (link) actions.append(link);
-  });
-  return true;
-}
-
-function syncPlanningAction() {
-  const actions = actionRoot();
-  if (!actions) return false;
-  let link = actions.querySelector('a[href="#planningSection"]');
-  if (!planningReady) {
-    link?.remove();
-    reorderActions();
-    return true;
-  }
-  if (!link) {
-    link = document.createElement('a');
-    link.href = '#planningSection';
-    link.textContent = 'Planning register ↓';
-    actions.append(link);
-  }
-  reorderActions();
-  return true;
 }
 
 function setCardExpanded(section, expanded) {
@@ -165,9 +129,7 @@ async function renderPlacePlanning() {
       return `<li><span class="relationship-type">${esc(record.category || 'Planning application')}</span><h3><a href="${esc(record.commons_path)}">${esc(record.reference)} · ${esc(record.address)}</a></h3><p>${esc(record.proposal)}</p><span class="entity-meta">Validated ${esc(fmtDate(record.validated_date))} · ${esc(record.status || 'Status unavailable')}</span><span class="entity-meta">${esc(provenance)} · <a href="${esc(record.authoritative_url)}" target="_blank" rel="noopener noreferrer">Ealing Council planning record ↗</a></span></li>`;
     }).join('')}</ul>`;
     section.hidden = false;
-    planningReady = true;
     setCardExpanded(section, true);
-    syncPlanningAction();
     if (location.hash === '#planningSection') requestAnimationFrame(() => section.scrollIntoView({ block: 'start' }));
     return true;
   } catch (error) {
@@ -183,11 +145,7 @@ async function initialise() {
   document.documentElement.classList.add('entity-dossier-ready');
   reorderSections();
   SECTIONS.forEach(prepareCard);
-  syncPlanningAction();
-  reorderActions();
   await renderPlacePlanning();
-  syncPlanningAction();
-  reorderActions();
   window.addEventListener('hashchange', () => {
     expandHashTarget();
     const target = document.getElementById(location.hash.replace(/^#/, ''));
@@ -195,8 +153,7 @@ async function initialise() {
   });
 }
 
-// entity.js publishes the canonical shell only after the entity route, hero,
-// stats, reviewed relationships/sources and assertions have finished rendering.
-// Consume that lifecycle explicitly instead of retrying DOM reads for seconds.
+// entity.js publishes the canonical shell after the core entity render. The
+// dossier UI owns cards/planning only; section-nav-sync.js owns hero navigation.
 if (window.__civicEntityReady) initialise();
 else window.addEventListener('civic-entity:ready', initialise, { once: true });
