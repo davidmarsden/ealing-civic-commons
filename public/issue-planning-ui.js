@@ -6,15 +6,13 @@ const fmtDate = iso => {
 };
 
 const SECTIONS = [
-  { id: 'currentSection', href: '#currentSection', label: 'Current Commons', open: true },
-  { id: 'planningSection', href: '#planningSection', label: 'Planning register', open: true },
-  { id: 'sourcesSection', href: '#sourcesSection', label: 'Primary evidence', open: false },
-  { id: 'reportingSection', href: '#reportingSection', label: 'Historical reporting', open: false },
-  { id: 'relationshipsSection', href: '#relationshipsSection', label: 'Reviewed connections', open: false },
-  { id: 'actorsSection', href: '#actorsSection', label: 'Who & what', open: false }
+  { id: 'currentSection', label: 'Current Commons', open: true },
+  { id: 'planningSection', label: 'Planning register', open: true },
+  { id: 'sourcesSection', label: 'Primary evidence', open: false },
+  { id: 'reportingSection', label: 'Historical reporting', open: false },
+  { id: 'relationshipsSection', label: 'Reviewed connections', open: false },
+  { id: 'actorsSection', label: 'Who & what', open: false }
 ];
-const ACTION_ORDER = SECTIONS.map(section => section.href);
-let planningReady = false;
 
 async function loadPlanningStore(queryKey) {
   for (const path of ['/data/planning-archive.json', '/data/planning-latest.json']) {
@@ -39,10 +37,6 @@ function issueRoute() {
   return parts[0] === 'issues' && parts[1] ? `issues/${parts[1].replace(/\.html$/i, '')}` : null;
 }
 
-function actionRoot() {
-  return document.querySelector('#issueHero .entity-actions');
-}
-
 function reorderSections() {
   const stack = document.querySelector('.entity-stack');
   if (!stack) return;
@@ -50,44 +44,6 @@ function reorderSections() {
     const section = document.getElementById(id);
     if (section) stack.append(section);
   });
-}
-
-function reorderActions() {
-  const actions = actionRoot();
-  if (!actions) return false;
-  const byHref = new Map([...actions.querySelectorAll('a')].map(link => [link.getAttribute('href'), link]));
-  ACTION_ORDER.forEach(href => {
-    const link = byHref.get(href);
-    if (link) actions.append(link);
-  });
-  return true;
-}
-
-function ensureAction(href, label) {
-  const actions = actionRoot();
-  if (!actions) return false;
-  if (!actions.querySelector(`a[href="${href}"]`)) {
-    const link = document.createElement('a');
-    link.href = href;
-    link.textContent = `${label} ↓`;
-    actions.append(link);
-  }
-  return true;
-}
-
-function syncActions() {
-  const actions = actionRoot();
-  if (!actions) return false;
-  ensureAction('#currentSection', 'Current Commons');
-  const planningLink = actions.querySelector('a[href="#planningSection"]');
-  if (planningReady) ensureAction('#planningSection', 'Planning register');
-  else planningLink?.remove();
-  ensureAction('#sourcesSection', 'Primary evidence');
-  ensureAction('#reportingSection', 'Historical reporting');
-  ensureAction('#relationshipsSection', 'Reviewed connections');
-  ensureAction('#actorsSection', 'Who & what');
-  reorderActions();
-  return true;
 }
 
 function setCardExpanded(section, expanded) {
@@ -159,9 +115,7 @@ function renderPlanning(records, primaryRoute) {
     return `<li><span class="relationship-type">${esc(record.category || 'Planning application')}</span><h3><a href="${esc(record.commons_path)}">${esc(record.reference)} · ${esc(record.address)}</a></h3><p>${esc(record.proposal)}</p><span class="entity-meta">Validated ${esc(fmtDate(record.validated_date))} · ${esc(record.status || 'Status unavailable')}</span><span class="entity-meta">${esc(provenance)} · <a href="${esc(record.authoritative_url)}" target="_blank" rel="noopener noreferrer">Ealing Council planning record ↗</a></span></li>`;
   }).join('')}</ul>`;
   section.hidden = false;
-  planningReady = true;
   setCardExpanded(section, true);
-  syncActions();
   if (location.hash === '#planningSection') requestAnimationFrame(() => section.scrollIntoView({ block: 'start' }));
   return true;
 }
@@ -192,23 +146,12 @@ async function loadIssuePlanning() {
   }
 }
 
-async function syncActionsForAWhile() {
-  for (let attempt = 0; attempt < 50; attempt += 1) {
-    syncActions();
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
-}
-
 async function initialise() {
   ensureCardStyles();
   document.documentElement.classList.add('entity-dossier-ready');
   reorderSections();
   SECTIONS.forEach(prepareCard);
-  const planningPromise = loadIssuePlanning();
-  const actionPromise = syncActionsForAWhile();
-  await planningPromise;
-  await actionPromise;
-  syncActions();
+  await loadIssuePlanning();
   window.addEventListener('hashchange', () => {
     expandHashTarget();
     const target = document.getElementById(location.hash.replace(/^#/, ''));
@@ -216,4 +159,6 @@ async function initialise() {
   });
 }
 
+// This module owns issue dossier cards and planning content only. Hero section
+// navigation is owned exclusively by section-nav-sync.js.
 initialise();

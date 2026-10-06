@@ -43,32 +43,6 @@ function evidenceCard(collection) {
   </article>`;
 }
 
-function syncHeroActions() {
-  if (routePlace() !== 'southall') return false;
-  const actions = document.querySelector('.entity-actions');
-  if (!actions) return false;
-  const labels = [
-    ['#commonsAssertionsSection','Current civic facts ↓'],
-    ['#localEvidenceSection','Local evidence ↓'],
-    ['#relationshipsSection','Reviewed connections ↓'],
-    ['#sourcesSection','Primary evidence ↓'],
-    ['#currentSection','Current Commons ↓'],
-    ['#reportingSection','Historical reporting ↓']
-  ];
-  actions.innerHTML = labels.map(([href,label]) => `<a href="${href}">${label}</a>`).join('');
-  return true;
-}
-
-function watchHeroActions() {
-  if (syncHeroActions()) return;
-  const hero = $('#entityHero');
-  if (!hero) return;
-  const observer = new MutationObserver(() => {
-    if (syncHeroActions()) observer.disconnect();
-  });
-  observer.observe(hero, { childList:true, subtree:true });
-}
-
 async function fetchPlaceEvidence(place) {
   const url = new URL('/api/evidence/place', location.origin);
   url.searchParams.set('place', place);
@@ -139,5 +113,4 @@ async function loadPlaceEvidence() {
   }
 }
 
-watchHeroActions();
 loadPlaceEvidence();
