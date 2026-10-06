@@ -4,23 +4,20 @@ function freezeIssue(issue) {
   return Object.freeze({
     ...issue,
     entityIds: Object.freeze([...(issue.entityIds || [])]),
+    entityRoutes: Object.freeze([...(issue.entityRoutes || [])]),
     topicIds: Object.freeze([...(issue.topicIds || [])]),
     aliases: Object.freeze([...(issue.aliases || [])]),
-    providers: Object.freeze([...(issue.providers || [])])
+    providers: Object.freeze([...(issue.providers || [])]),
+    evidence: Object.freeze([...(issue.evidence || [])].map(item => Object.freeze({ ...item })))
   });
 }
 
-// All reviewed definitions, including Commons-native candidates that are not yet
-// safe to expose through the legacy Zettel-only issue assembler.
+// Issue definitions are reviewed Commons records. A definition may use
+// published civic memory, Commons-native evidence, or both. Public routing is
+// controlled here rather than by whether a legacy research provider happens to
+// contain the issue.
 export const ISSUE_DEFINITIONS = Object.freeze(issueData.map(freezeIssue));
-
-// Until civic-issue.mjs can assemble issue-specific Commons evidence, only
-// definitions with the established published-memory provider enter live routes
-// and entity backlinks. This prevents generic council relationships/sources from
-// being misrepresented as evidence for a newly defined issue.
-export const ISSUE_REGISTRY = Object.freeze(ISSUE_DEFINITIONS.filter(issue =>
-  issue.providers.some(binding => binding.provider === 'southall-zettel')
-));
+export const ISSUE_REGISTRY = ISSUE_DEFINITIONS;
 
 export function normaliseIssueRoute(value) {
   return String(value || '').trim().replace(/^\/+|\/+$/g, '').replace(/\.html$/i, '');
