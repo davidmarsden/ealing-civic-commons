@@ -76,8 +76,6 @@ export default async request => {
   const legacyEntity = legacyId ? (findEntityByProviderId('southall-zettel', legacyId) || findPublicPersonByProviderId('southall-zettel', legacyId)) : null;
   let registryEntity = route ? registryEntityForRoute(route) : mergeKnownCouncillor(legacyEntity);
 
-  if (registryEntity && !registryEntity.providers.some(provider => provider.provider === 'southall-zettel' && provider.entityId)) return nativeEntityResponse(registryEntity);
-
   try {
     const response = await fetch(EXPORT_URL, { headers: { accept: 'application/json' } });
     if (!response.ok) throw new Error(`Research archive export HTTP ${response.status}`);
@@ -106,10 +104,15 @@ export default async request => {
     if (!registryEntity) return json({ matched: false, reason: 'entity-not-in-commons-registry' }, 404, 300);
 
     const zettelBinding = registryEntity.providers.find(provider => provider.provider === 'southall-zettel' && provider.entityId);
-    if (!zettelBinding) return nativeEntityResponse(registryEntity);
+    const parsedRoute = parseEntityRoute(registryEntity.route);
+    const discoveredEntity = !zettelBinding && parsedRoute ? entitiesById.get(`entity:${parsedRoute.slug}`) : null;
+    const exactPublishedEntity = discoveredEntity?.type === registryEntity.type ? discoveredEntity : null;
+    if (!zettelBinding && !exactPublishedEntity) return nativeEntityResponse(registryEntity);
 
-    const providers = providerViews(registryEntity);
-    const id = zettelBinding.entityId;
+    const providers = zettelBinding
+      ? providerViews(registryEntity)
+      : [...providerViews(registryEntity), { provider: 'southall-zettel', entityId: exactPublishedEntity.id, role: 'published-civic-memory' }];
+    const id = zettelBinding?.entityId || exactPublishedEntity.id;
     const entity = entitiesById.get(id);
     if (!entity) return json({ matched: false, reason: 'provider-entity-not-found' }, 404, 300);
 

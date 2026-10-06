@@ -8,6 +8,7 @@ const cleanList = (values, max = 180) => [...new Set((values || []).map(value =>
 const escapeRegex = value => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function sortTime(record) { const published = Date.parse(record?.item?.publishedAt || ''); if (Number.isFinite(published)) return published; const archived = Date.parse(record?.archivedAt || ''); return Number.isFinite(archived) ? archived : 0; }
 function termMatches(text, term) { if (term.length > 4) return text.includes(term); return new RegExp(`\\b${escapeRegex(term)}\\b`, 'i').test(text); }
+function preciseTerm(term) { return term.includes(' ') || term.length >= 12; }
 
 function relevanceScore(record, terms, topics, placeRoute) {
   const item = record?.item;
@@ -19,8 +20,11 @@ function relevanceScore(record, terms, topics, placeRoute) {
   if (topics.some(topic => itemTopics.includes(topic))) score += 5;
   for (const term of terms) {
     if (termMatches(title, term)) { score += 4; continue; }
-    const usefulPhrase = term.includes(' ') || term.length >= 12;
-    if (usefulPhrase && termMatches(summary, term)) score += 2;
+    // A full name or similarly precise phrase in the archived summary is a
+    // deterministic entity mention, not merely weak topical similarity. Give
+    // it the same minimum match strength as a title mention so people whose
+    // role is discussed inside an article are not silently omitted.
+    if (preciseTerm(term) && termMatches(summary, term)) score += 4;
   }
   return score;
 }
