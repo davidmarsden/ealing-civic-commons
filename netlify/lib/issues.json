@@ -21,8 +21,9 @@
     "primaryCivicEntityId": "civic:place:walpole-park",
     "primaryPlaceRoute": "places/walpole-park",
     "entityIds": ["entity:ealing-council"],
+    "entityRoutes": ["places/walpole-park", "organisations/ealing-council", "people/peter-mason"],
     "topicIds": ["topic:planning-development", "topic:council-accountability"],
-    "aliases": ["Walpole Park theatre", "Troubadour Walpole Park", "Walpole Park Troubadour theatre", "temporary theatre Walpole Park"],
+    "aliases": ["Walpole Park theatre", "Troubadour Walpole Park", "Walpole Park Troubadour theatre", "temporary theatre Walpole Park", "Troubadour theatre", "Walpole Park petition"],
     "providers": [{"provider":"civic-commons","role":"canonical-public-issue"}]
   },
   {
