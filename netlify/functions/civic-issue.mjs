@@ -1,5 +1,5 @@
 import { findIssueByRoute } from '../lib/issue-registry.mjs';
-import { findEntityByProviderId, makeZettelRegistryEntity } from '../lib/entity-registry.mjs';
+import { findEntityByProviderId, findEntityByRoute, makeZettelRegistryEntity } from '../lib/entity-registry.mjs';
 
 const EXPORT_URL = 'https://raw.githubusercontent.com/davidmarsden/Southall-Zettel/main/generated/commons.json';
 const EXPECTED_SCHEMA = 1;
@@ -9,11 +9,39 @@ function json(body, status = 200, maxAge = 300) {
 }
 function byId(items = []) { return new Map(items.map(item => [item.id, item])); }
 function dateValue(value) { const n = Date.parse(value || ''); return Number.isFinite(n) ? n : 0; }
+function topicName(id) { return String(id || '').replace(/^topic:/, '').split('-').map(word => word ? word[0].toUpperCase() + word.slice(1) : '').join(' '); }
+function publicEntity(entity) { return entity ? { id: entity.id, name: entity.name, type: entity.type, description: entity.description || null, commonsRoute: entity.route } : null; }
+function nativeEntities(issue) {
+  const out = [], seen = new Set();
+  const add = entity => { if (!entity || seen.has(entity.id)) return; seen.add(entity.id); out.push(publicEntity(entity)); };
+  for (const route of issue.entityRoutes || []) add(findEntityByRoute(route));
+  for (const id of issue.entityIds || []) add(findEntityByProviderId('southall-zettel', id));
+  return out;
+}
+function issueView(issue) {
+  return { id: issue.id, route: issue.route, name: issue.name, status: issue.status, description: issue.description, aliases: issue.aliases || [], primaryEntityId: issue.primaryEntityId || null, primaryCivicEntityId: issue.primaryCivicEntityId || null, primaryPlaceRoute: issue.primaryPlaceRoute || null };
+}
+function nativeIssueResponse(issue) {
+  const entities = nativeEntities(issue);
+  const topics = (issue.topicIds || []).map(id => ({ id, name: topicName(id) }));
+  const sources = (issue.evidence || []).map(source => ({ ...source, provider: 'civic-commons' }));
+  return {
+    matched: true,
+    issue: issueView(issue),
+    providers: [{ id: 'civic-commons', name: 'Ealing Civic Commons', label: 'Ealing Civic Commons', role: 'Reviewed public issue definition and live civic source network', url: 'https://ealing.civiccommons.co.uk/' }],
+    counts: { entities: entities.length, topics: topics.length, reporting: 0, relationships: 0, sources: sources.length },
+    entities, topics, relationships: [], sources, reporting: [],
+    provenance: { label: 'Civic issue', source: 'Ealing Civic Commons', method: 'Ealing Civic Commons defines the reviewed public issue, stable route, actors and search vocabulary. Current material and Civic Archive reporting are discovered separately from public sources; no unpublished research is exposed as evidence.' }
+  };
+}
 
 export default async request => {
   const url = new URL(request.url);
   const issue = findIssueByRoute(url.searchParams.get('route'));
   if (!issue) return json({ matched: false, reason: 'issue-not-in-commons-registry' }, 404, 300);
+
+  const hasPublishedMemory = issue.providers.some(binding => binding.provider === 'southall-zettel');
+  if (!hasPublishedMemory) return json(nativeIssueResponse(issue), 200, 300);
 
   try {
     const response = await fetch(EXPORT_URL, { headers: { accept: 'application/json' } });
@@ -85,7 +113,7 @@ export default async request => {
     return json({
       matched: true,
       schemaVersion: data.schema_version,
-      issue: { id: issue.id, route: issue.route, name: issue.name, status: issue.status, description: issue.description, aliases: issue.aliases || [], primaryEntityId: issue.primaryEntityId },
+      issue: issueView(issue),
       providers: [
         { id: 'civic-commons', name: 'Ealing Civic Commons', label: 'Ealing Civic Commons', role: 'Live civic source network and canonical public issue', url: 'https://ealing.civiccommons.co.uk/' },
         { id: 'reviewed-archive', name: 'Reviewed research archive', label: 'Reviewed research archive', role: 'Historical evidence and reviewed civic memory', url: null }
