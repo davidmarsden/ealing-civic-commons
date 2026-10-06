@@ -7,6 +7,7 @@ function freezeIssue(issue) {
     entityRoutes: Object.freeze([...(issue.entityRoutes || [])]),
     topicIds: Object.freeze([...(issue.topicIds || [])]),
     aliases: Object.freeze([...(issue.aliases || [])]),
+    planningReferences: Object.freeze([...(issue.planningReferences || [])]),
     providers: Object.freeze([...(issue.providers || [])]),
     evidence: Object.freeze([...(issue.evidence || [])].map(item => Object.freeze({ ...item })))
   });
