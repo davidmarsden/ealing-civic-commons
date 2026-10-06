@@ -1,11 +1,469 @@
 {
   "archive_version": 1,
-  "generated_at": "2026-09-29T12:54:10.942Z",
-  "latest_week": "21 Sep 2026",
+  "generated_at": "2026-10-06T13:19:12.500Z",
+  "latest_week": "28 Sep 2026",
   "source": "Ealing PAM / Civica Public Access",
   "canonical_source": "Ealing Council Planning Register",
   "place_link_rules_version": 1,
   "records": [
+    {
+      "id": "planning:ealing:263636palhe",
+      "reference": "263636PALHE",
+      "address": "19 Iveagh Avenue Park Royal NW10 7DL",
+      "proposal": "Single storey rear extension (max 6m deep and max 3m high) (42 Days Prior Approval Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-02",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM8GOQJMKJN00&activeTab=summary",
+      "town": null,
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263636palhe",
+      "place_links": [],
+      "first_seen_week": "28 Sep 2026",
+      "last_seen_week": "28 Sep 2026",
+      "first_seen_at": "2026-10-06T13:19:12.500Z",
+      "last_seen_at": "2026-10-06T13:19:12.500Z",
+      "weeks_seen": [
+        "28 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-06T13:19:12.500Z",
+          "week": "28 Sep 2026",
+          "address": "19 Iveagh Avenue Park Royal NW10 7DL",
+          "proposal": "Single storey rear extension (max 6m deep and max 3m high) (42 Days Prior Approval Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-02",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM8GOQJMKJN00&activeTab=summary",
+          "town": null,
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": []
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263648ptt",
+      "reference": "263648PTT",
+      "address": "2 Castlebar Hill Ealing W5 1TD",
+      "proposal": "TPO/2007/0739 T1- London plane - Reduce all aspects of the crown back to previous points of reduction by approx 2-3m. T2 - Plum- Reduce all aspects of the crown by approx 1m to create a tight and tidy shape.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-02",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMA33YJMKKL00&activeTab=summary",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263648ptt",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "28 Sep 2026",
+      "last_seen_week": "28 Sep 2026",
+      "first_seen_at": "2026-10-06T13:19:12.500Z",
+      "last_seen_at": "2026-10-06T13:19:12.500Z",
+      "weeks_seen": [
+        "28 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-06T13:19:12.500Z",
+          "week": "28 Sep 2026",
+          "address": "2 Castlebar Hill Ealing W5 1TD",
+          "proposal": "TPO/2007/0739 T1- London plane - Reduce all aspects of the crown back to previous points of reduction by approx 2-3m. T2 - Plum- Reduce all aspects of the crown by approx 1m to create a tight and tidy shape.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-02",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMA33YJMKKL00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263623opdcob",
+      "reference": "263623OPDCOB",
+      "address": "North Acton Square Victoria Road Acton W3 6UP",
+      "proposal": "Installation of digital display in self supported structure over existing containers ( out of borough)",
+      "status": "Awaiting decision",
+      "validated_date": "2026-10-01",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM845EJM0KK00&activeTab=summary",
+      "town": "Acton",
+      "category": "Out of borough",
+      "out_of_borough": true,
+      "commons_path": "/planning/263623opdcob",
+      "place_links": [
+        {
+          "route": "places/acton",
+          "label": "Acton",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "28 Sep 2026",
+      "last_seen_week": "28 Sep 2026",
+      "first_seen_at": "2026-10-06T13:19:12.500Z",
+      "last_seen_at": "2026-10-06T13:19:12.500Z",
+      "weeks_seen": [
+        "28 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-06T13:19:12.500Z",
+          "week": "28 Sep 2026",
+          "address": "North Acton Square Victoria Road Acton W3 6UP",
+          "proposal": "Installation of digital display in self supported structure over existing containers ( out of borough)",
+          "status": "Awaiting decision",
+          "validated_date": "2026-10-01",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM845EJM0KK00&activeTab=summary",
+          "town": "Acton",
+          "category": "Out of borough",
+          "out_of_borough": true,
+          "place_links": [
+            {
+              "route": "places/acton",
+              "label": "Acton",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263625ptc",
+      "reference": "263625PTC",
+      "address": "27 Bishops Road Hanwell W7 2NZ",
+      "proposal": "Fell to ground T1 Juniper T2 Tamarisk T3 Common Ivy",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-01",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM862RJM0KK00&activeTab=summary",
+      "town": "Hanwell",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263625ptc",
+      "place_links": [
+        {
+          "route": "places/hanwell",
+          "label": "Hanwell",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "28 Sep 2026",
+      "last_seen_week": "28 Sep 2026",
+      "first_seen_at": "2026-10-06T13:19:12.500Z",
+      "last_seen_at": "2026-10-06T13:19:12.500Z",
+      "weeks_seen": [
+        "28 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-06T13:19:12.500Z",
+          "week": "28 Sep 2026",
+          "address": "27 Bishops Road Hanwell W7 2NZ",
+          "proposal": "Fell to ground T1 Juniper T2 Tamarisk T3 Common Ivy",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-01",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM862RJM0KK00&activeTab=summary",
+          "town": "Hanwell",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/hanwell",
+              "label": "Hanwell",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263630ptc",
+      "reference": "263630PTC",
+      "address": "7-11 Armstrong Road Ealing W3 7JL",
+      "proposal": "T1- 3 No. London Plane Trees Maintenance- Pollard back to previous points",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-01",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM88DQJMKJ400&activeTab=summary",
+      "town": null,
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263630ptc",
+      "place_links": [],
+      "first_seen_week": "28 Sep 2026",
+      "last_seen_week": "28 Sep 2026",
+      "first_seen_at": "2026-10-06T13:19:12.500Z",
+      "last_seen_at": "2026-10-06T13:19:12.500Z",
+      "weeks_seen": [
+        "28 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-06T13:19:12.500Z",
+          "week": "28 Sep 2026",
+          "address": "7-11 Armstrong Road Ealing W3 7JL",
+          "proposal": "T1- 3 No. London Plane Trees Maintenance- Pollard back to previous points",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-01",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM88DQJMKJ400&activeTab=summary",
+          "town": null,
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": []
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263638ptc",
+      "reference": "263638PTC",
+      "address": "12 North Avenue West Ealing W13 8AP",
+      "proposal": "T1 Birch tree to fell- 5DDD",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-01",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM8H5TJM0KK00&activeTab=summary",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263638ptc",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "28 Sep 2026",
+      "last_seen_week": "28 Sep 2026",
+      "first_seen_at": "2026-10-06T13:19:12.500Z",
+      "last_seen_at": "2026-10-06T13:19:12.500Z",
+      "weeks_seen": [
+        "28 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-06T13:19:12.500Z",
+          "week": "28 Sep 2026",
+          "address": "12 North Avenue West Ealing W13 8AP",
+          "proposal": "T1 Birch tree to fell- 5DDD",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-01",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM8H5TJM0KK00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263686opdcob",
+      "reference": "263686OPDCOB",
+      "address": "Energy Centre Building, Pipework (western Arm) Pipework (eastern Arm) 1 Minerva Road Park Royal NW10 6HJ",
+      "proposal": "Partial details of part (i) of condition 7 (Construction Logistics Plans) and part (i) of condition 8 (Construction and Environmental Management Plans), in relation to the demolition and piling mat works at 1 Minerva Road only; Partial details of parts (ii) and (iii) of condition 7 (Construction Logistics Plans) and parts (ii) and (iii) of condition 8 (Construction and Environmental Management Plans), in relation to the installation of the buried pipework along Minerva Road and North Acton Road only; and Partial details of condition 11 (HS2 Safeguarding), in relation to 1 Minerva Road and works along Minerva Road and North Acton Road only; pursuant to planning permission reference 25/0184/FUMOPDC dated 25/03/2026, for 'Development associated with the Old Oak and Park Royal Energy Network (OPEN) district heating network, comprising: Demolition of a warehouse building at 1 Minerva Road, London, NW10 6HJ, and erection of a purposebuilt energy centre building; Laying of a network of underground heat pipes; Erection of a crossover gantry to carry the pipework over existing railway tracks, running parallel to the Park Royal Road Overbridge; and Other associated works.' (Out of Borough)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-01",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMHGLYJM0KW00&activeTab=summary",
+      "town": null,
+      "category": "Out of borough",
+      "out_of_borough": true,
+      "commons_path": "/planning/263686opdcob",
+      "place_links": [],
+      "first_seen_week": "28 Sep 2026",
+      "last_seen_week": "28 Sep 2026",
+      "first_seen_at": "2026-10-06T13:19:12.500Z",
+      "last_seen_at": "2026-10-06T13:19:12.500Z",
+      "weeks_seen": [
+        "28 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-06T13:19:12.500Z",
+          "week": "28 Sep 2026",
+          "address": "Energy Centre Building, Pipework (western Arm) Pipework (eastern Arm) 1 Minerva Road Park Royal NW10 6HJ",
+          "proposal": "Partial details of part (i) of condition 7 (Construction Logistics Plans) and part (i) of condition 8 (Construction and Environmental Management Plans), in relation to the demolition and piling mat works at 1 Minerva Road only; Partial details of parts (ii) and (iii) of condition 7 (Construction Logistics Plans) and parts (ii) and (iii) of condition 8 (Construction and Environmental Management Plans), in relation to the installation of the buried pipework along Minerva Road and North Acton Road only; and Partial details of condition 11 (HS2 Safeguarding), in relation to 1 Minerva Road and works along Minerva Road and North Acton Road only; pursuant to planning permission reference 25/0184/FUMOPDC dated 25/03/2026, for 'Development associated with the Old Oak and Park Royal Energy Network (OPEN) district heating network, comprising: Demolition of a warehouse building at 1 Minerva Road, London, NW10 6HJ, and erection of a purposebuilt energy centre building; Laying of a network of underground heat pipes; Erection of a crossover gantry to carry the pipework over existing railway tracks, running parallel to the Park Royal Road Overbridge; and Other associated works.' (Out of Borough)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-01",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMHGLYJM0KW00&activeTab=summary",
+          "town": null,
+          "category": "Out of borough",
+          "out_of_borough": true,
+          "place_links": []
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263616pnt",
+      "reference": "263616PNT",
+      "address": "Junction Of Colville Road, South Acton, London W3 8BL",
+      "proposal": "Installation of a 20-metre-high street works monopole which will support 9no. radio antennas, 2no. transmission dishes, 4no equipment cabinets and ancillary equipment (56 Day Prior Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-30",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM6DRAJMKHV00&activeTab=summary",
+      "town": "Acton",
+      "category": "Planning application",
+      "out_of_borough": false,
+      "commons_path": "/planning/263616pnt",
+      "place_links": [
+        {
+          "route": "places/acton",
+          "label": "Acton",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "28 Sep 2026",
+      "last_seen_week": "28 Sep 2026",
+      "first_seen_at": "2026-10-06T13:19:12.500Z",
+      "last_seen_at": "2026-10-06T13:19:12.500Z",
+      "weeks_seen": [
+        "28 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-06T13:19:12.500Z",
+          "week": "28 Sep 2026",
+          "address": "Junction Of Colville Road, South Acton, London W3 8BL",
+          "proposal": "Installation of a 20-metre-high street works monopole which will support 9no. radio antennas, 2no. transmission dishes, 4no equipment cabinets and ancillary equipment (56 Day Prior Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-30",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM6DRAJMKHV00&activeTab=summary",
+          "town": "Acton",
+          "category": "Planning application",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/acton",
+              "label": "Acton",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263618ptc",
+      "reference": "263618PTC",
+      "address": "13 Culmington Road West Ealing W13 9NJ",
+      "proposal": "T2 - Purple leaf Plum (Prunus ssp.) T3 - Sycamore (Acer ssp.) T4 - Lime (Tilia ssp.) T5 - Ash (Fraxinus ssp.) T6 - Lime (Tilia ssp.) Crown reduce all trees back to the most recent previous points of reduction to continue the ongoing maintenance of the trees.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-30",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM6GHKJMKI000&activeTab=summary",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263618ptc",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "28 Sep 2026",
+      "last_seen_week": "28 Sep 2026",
+      "first_seen_at": "2026-10-06T13:19:12.500Z",
+      "last_seen_at": "2026-10-06T13:19:12.500Z",
+      "weeks_seen": [
+        "28 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-06T13:19:12.500Z",
+          "week": "28 Sep 2026",
+          "address": "13 Culmington Road West Ealing W13 9NJ",
+          "proposal": "T2 - Purple leaf Plum (Prunus ssp.) T3 - Sycamore (Acer ssp.) T4 - Lime (Tilia ssp.) T5 - Ash (Fraxinus ssp.) T6 - Lime (Tilia ssp.) Crown reduce all trees back to the most recent previous points of reduction to continue the ongoing maintenance of the trees.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-30",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM6GHKJMKI000&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263619ptt",
+      "reference": "263619PTT",
+      "address": "St Stephens Church Centre St Stephens Road West Ealing W13 8HD",
+      "proposal": "T1 Black dot Robinia - Crown reduction, height & lateral spread by 3.0-4.0 m leaving tree at a height of approx. 15m and spread of 12 metres",
+      "status": "Pending Consideration",
+      "validated_date": "2026-09-30",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM6GI0JMKI200&activeTab=summary",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263619ptt",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "28 Sep 2026",
+      "last_seen_week": "28 Sep 2026",
+      "first_seen_at": "2026-10-06T13:19:12.500Z",
+      "last_seen_at": "2026-10-06T13:19:12.500Z",
+      "weeks_seen": [
+        "28 Sep 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-06T13:19:12.500Z",
+          "week": "28 Sep 2026",
+          "address": "St Stephens Church Centre St Stephens Road West Ealing W13 8HD",
+          "proposal": "T1 Black dot Robinia - Crown reduction, height & lateral spread by 3.0-4.0 m leaving tree at a height of approx. 15m and spread of 12 metres",
+          "status": "Pending Consideration",
+          "validated_date": "2026-09-30",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TM6GI0JMKI200&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
     {
       "id": "planning:ealing:263568palhe",
       "reference": "263568PALHE",
