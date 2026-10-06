@@ -2,127 +2,14 @@ import { loadPlanningStore } from './planning-store.js';
 
 const esc = s => String(s ?? '').replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt',"'":'&#39;','\"':'&quot;'}[c]));
 const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date(iso); return new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'long',year:'numeric'}).format(d); };
-
 const SECTIONS = ['currentSection','planningSection','actorsSection','relationshipsSection','sourcesSection','reportingSection'];
-
-function issueRoute() {
-  const parts = location.pathname.split('/').filter(Boolean);
-  const slug = parts[0] === 'issues' ? parts[1]?.replace(/\.html$/,'') : null;
-  return slug ? `issues/${slug}` : null;
-}
-
-function ensureCardStyles() {
-  if (document.getElementById('issueDossierStyles')) return;
-  const style = document.createElement('style');
-  style.id = 'issueDossierStyles';
-  style.textContent = `
-    .entity-dossier-ready .entity-section { border:1px solid var(--line,#d9d4c7); border-radius:14px; padding:0; margin:0 0 1rem; overflow:hidden; background:var(--paper,#fff); }
-    .entity-dossier-ready .entity-section > h2 { margin:0; }
-    .entity-dossier-ready .entity-section > h2 button { width:100%; display:flex; justify-content:space-between; align-items:center; gap:1rem; border:0; background:transparent; color:inherit; font:inherit; text-align:left; padding:1rem 1.1rem; cursor:pointer; }
-    .entity-dossier-ready .entity-section > h2 button::after { content:'+'; font-size:1.35rem; font-weight:400; }
-    .entity-dossier-ready .entity-section[data-expanded='true'] > h2 button::after { content:'−'; }
-    .entity-dossier-ready .entity-section > :not(h2) { display:none; }
-    .entity-dossier-ready .entity-section[data-expanded='true'] > :not(h2) { display:block; }
-    .entity-dossier-ready .entity-section[data-expanded='true'] > .entity-list,
-    .entity-dossier-ready .entity-section[data-expanded='true'] > .issue-actor-grid { margin:0 1.1rem 1.1rem; }
-  `;
-  document.head.appendChild(style);
-}
-
-function setCardExpanded(section, expanded) {
-  if (!section) return;
-  section.dataset.expanded = expanded ? 'true' : 'false';
-  const button = section.querySelector(':scope > h2 button');
-  if (button) button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-}
-
-function prepareCard(sectionId) {
-  const section = document.getElementById(sectionId);
-  if (!section) return;
-  const heading = section.querySelector(':scope > h2');
-  if (!heading || heading.querySelector('button')) return;
-  const label = heading.textContent;
-  heading.textContent = '';
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.textContent = label;
-  button.setAttribute('aria-expanded','false');
-  button.addEventListener('click', () => setCardExpanded(section, section.dataset.expanded !== 'true'));
-  heading.appendChild(button);
-  setCardExpanded(section, false);
-}
-
-function reorderSections() {
-  const first = document.getElementById('currentSection');
-  const parent = first?.parentElement;
-  if (!parent) return;
-  SECTIONS.map(id => document.getElementById(id)).filter(Boolean).forEach(section => parent.appendChild(section));
-}
-
-function expandHashTarget() {
-  const id = location.hash.replace(/^#/, '');
-  if (SECTIONS.includes(id)) setCardExpanded(document.getElementById(id), true);
-}
-
-function renderPlanning(records, primaryRoute) {
-  const section = document.getElementById('planningSection');
-  const list = document.getElementById('issuePlanning');
-  if (!section || !list || !records.length) return false;
-  list.innerHTML = `<ul class="entity-list">${records.slice(0,24).map(record => {
-    const provenance = record.place_link_provenance?.[primaryRoute] || 'reviewed place link';
-    return `<li><span class="relationship-type">${esc(record.category || 'Planning application')}</span><h3><a href="${esc(record.commons_path)}">${esc(record.reference)} · ${esc(record.address)}</a></h3><p>${esc(record.proposal)}</p><span class="entity-meta">Validated ${esc(fmtDate(record.validated_date))} · ${esc(record.status || 'Status unavailable')}</span><span class="entity-meta">${esc(provenance)} · <a href="${esc(record.authoritative_url)}" target="_blank" rel="noopener noreferrer">Ealing Council planning record ↗</a></span></li>`;
-  }).join('')}</ul>`;
-  section.hidden = false;
-  setCardExpanded(section, true);
-  if (location.hash === '#planningSection') requestAnimationFrame(() => section.scrollIntoView({ block: 'start' }));
-  return true;
-}
-
-async function loadIssuePlanning() {
-  const route = issueRoute();
-  if (!route) return false;
-  try {
-    const issueEndpoint = new URL('/.netlify/functions/civic-issue', location.origin);
-    issueEndpoint.searchParams.set('route', route);
-    const [issueResponse, snapshot] = await Promise.all([
-      fetch(issueEndpoint, { cache: 'no-store' }),
-      loadPlanningStore('issue')
-    ]);
-    if (!issueResponse.ok) return false;
-    const issueData = await issueResponse.json();
-    if (!issueData.matched) return false;
-
-    // Commons-native issues already expose their canonical place route. Legacy
-    // published-memory issues can continue deriving it from primaryEntityId.
-    let primaryRoute = issueData.issue?.primaryPlaceRoute || null;
-    if (!primaryRoute && issueData.issue?.primaryEntityId) {
-      const primary = (issueData.entities || []).find(entity => entity.id === issueData.issue.primaryEntityId);
-      primaryRoute = primary?.commonsRoute || null;
-    }
-    if (!primaryRoute) return false;
-
-    const records = (snapshot.records || [])
-      .filter(record => !record.out_of_borough && (record.place_links || []).some(link => link.route === primaryRoute))
-      .sort((a,b) => (Date.parse(b.validated_date || '') || 0) - (Date.parse(a.validated_date || '') || 0));
-    return renderPlanning(records, primaryRoute);
-  } catch (error) {
-    console.warn('Issue planning unavailable', error);
-    return false;
-  }
-}
-
-async function initialise() {
-  ensureCardStyles();
-  document.documentElement.classList.add('entity-dossier-ready');
-  reorderSections();
-  SECTIONS.forEach(prepareCard);
-  await loadIssuePlanning();
-  window.addEventListener('hashchange', () => {
-    expandHashTarget();
-    const target = document.getElementById(location.hash.replace(/^#/, ''));
-    if (target) requestAnimationFrame(() => target.scrollIntoView({ block: 'start' }));
-  });
-  expandHashTarget();
-}
-
+function issueRoute(){const parts=location.pathname.split('/').filter(Boolean);const slug=parts[0]==='issues'?parts[1]?.replace(/\.html$/,''):null;return slug?`issues/${slug}`:null;}
+function ensureCardStyles(){if(document.getElementById('issueDossierStyles'))return;const style=document.createElement('style');style.id='issueDossierStyles';style.textContent=`.entity-dossier-ready .entity-section{border:1px solid var(--line,#d9d4c7);border-radius:14px;padding:0;margin:0 0 1rem;overflow:hidden;background:var(--paper,#fff)}.entity-dossier-ready .entity-section>h2{margin:0}.entity-dossier-ready .entity-section>h2 button{width:100%;display:flex;justify-content:space-between;align-items:center;gap:1rem;border:0;background:transparent;color:inherit;font:inherit;text-align:left;padding:1rem 1.1rem;cursor:pointer}.entity-dossier-ready .entity-section>h2 button::after{content:'+';font-size:1.35rem;font-weight:400}.entity-dossier-ready .entity-section[data-expanded='true']>h2 button::after{content:'−'}.entity-dossier-ready .entity-section>:not(h2){display:none}.entity-dossier-ready .entity-section[data-expanded='true']>:not(h2){display:block}.entity-dossier-ready .entity-section[data-expanded='true']>.entity-list,.entity-dossier-ready .entity-section[data-expanded='true']>.issue-actor-grid{margin:0 1.1rem 1.1rem}`;document.head.appendChild(style);}
+function setCardExpanded(section,expanded){if(!section)return;section.dataset.expanded=expanded?'true':'false';const button=section.querySelector(':scope > h2 button');if(button)button.setAttribute('aria-expanded',expanded?'true':'false');}
+function prepareCard(sectionId){const section=document.getElementById(sectionId);if(!section)return;const heading=section.querySelector(':scope > h2');if(!heading||heading.querySelector('button'))return;const label=heading.textContent;heading.textContent='';const button=document.createElement('button');button.type='button';button.textContent=label;button.setAttribute('aria-expanded','false');button.addEventListener('click',()=>setCardExpanded(section,section.dataset.expanded!=='true'));heading.appendChild(button);setCardExpanded(section,false);}
+function reorderSections(){const first=document.getElementById('currentSection');const parent=first?.parentElement;if(!parent)return;SECTIONS.map(id=>document.getElementById(id)).filter(Boolean).forEach(section=>parent.appendChild(section));}
+function expandHashTarget(){const id=location.hash.replace(/^#/,'');if(SECTIONS.includes(id))setCardExpanded(document.getElementById(id),true);}
+function renderPlanning(records,primaryRoute){const section=document.getElementById('planningSection'),list=document.getElementById('issuePlanning');if(!section||!list||!records.length)return false;list.innerHTML=`<ul class="entity-list">${records.slice(0,24).map(record=>{const provenance=primaryRoute?record.place_link_provenance?.[primaryRoute]||'reviewed issue link':'reviewed issue planning reference';return `<li><span class="relationship-type">${esc(record.category||'Planning application')}</span><h3><a href="${esc(record.commons_path)}">${esc(record.reference)} · ${esc(record.address)}</a></h3><p>${esc(record.proposal)}</p><span class="entity-meta">Validated ${esc(fmtDate(record.validated_date))} · ${esc(record.status||'Status unavailable')}</span><span class="entity-meta">${esc(provenance)} · <a href="${esc(record.authoritative_url)}" target="_blank" rel="noopener noreferrer">Ealing Council planning record ↗</a></span></li>`;}).join('')}</ul>`;section.hidden=false;setCardExpanded(section,true);if(location.hash==='#planningSection')requestAnimationFrame(()=>section.scrollIntoView({block:'start'}));return true;}
+async function loadIssuePlanning(){const route=issueRoute();if(!route)return false;try{const issueEndpoint=new URL('/.netlify/functions/civic-issue',location.origin);issueEndpoint.searchParams.set('route',route);const[issueResponse,snapshot]=await Promise.all([fetch(issueEndpoint,{cache:'no-store'}),loadPlanningStore('issue')]);if(!issueResponse.ok)return false;const issueData=await issueResponse.json();if(!issueData.matched)return false;const refs=new Set((issueData.issue?.planningReferences||[]).map(value=>String(value).toUpperCase()));let primaryRoute=issueData.issue?.primaryPlaceRoute||null;if(!primaryRoute&&issueData.issue?.primaryEntityId){const primary=(issueData.entities||[]).find(entity=>entity.id===issueData.issue.primaryEntityId);primaryRoute=primary?.commonsRoute||null;}if(!primaryRoute&&!refs.size)return false;const records=(snapshot.records||[]).filter(record=>{if(record.out_of_borough)return false;if(refs.has(String(record.reference||'').toUpperCase()))return true;return primaryRoute&&(record.place_links||[]).some(link=>link.route===primaryRoute);}).sort((a,b)=>(Date.parse(b.validated_date||'')||0)-(Date.parse(a.validated_date||'')||0));return renderPlanning(records,primaryRoute);}catch(error){console.warn('Issue planning unavailable',error);return false;}}
+async function initialise(){ensureCardStyles();document.documentElement.classList.add('entity-dossier-ready');reorderSections();SECTIONS.forEach(prepareCard);await loadIssuePlanning();window.addEventListener('hashchange',()=>{expandHashTarget();const target=document.getElementById(location.hash.replace(/^#/,''));if(target)requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));});expandHashTarget();}
 initialise();
