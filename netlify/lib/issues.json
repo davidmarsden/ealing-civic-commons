@@ -33,11 +33,31 @@
     "id": "civic:issue:southall-data-centres",
     "name": "Southall data centres",
     "status": "ongoing",
-    "maturity": "developing",
-    "description": "Data-centre development in and around Southall, including planning, energy and infrastructure demands, environmental effects and impacts on neighbouring communities.",
+    "maturity": "issue-hub",
+    "description": "Major data-centre development in Southall, including the International Trading Estate and former Honey Monster factory schemes, their power and infrastructure demands, planning impacts, employment claims and effects on neighbouring communities.",
     "entityIds": ["entity:ealing-council"],
-    "topicIds": ["topic:planning-development"],
-    "aliases": ["Southall data centres", "Southall data center", "Hayes data centres", "HLE data centre", "HLE datacentre"],
+    "entityRoutes": ["organisations/ealing-council"],
+    "topicIds": ["topic:planning-development", "topic:council-accountability"],
+    "aliases": ["Southall data centres", "Southall data center", "Southall data centre", "data centre campus", "International Trading Estate", "Trident Way Southall", "250949FUL", "former Honey Monster Food Factory", "Honey Monster Factory", "253874FUL", "hyperscale data centre"],
+    "planningReferences": ["250949FUL", "253874FUL"],
+    "evidence": [
+      {
+        "id": "civic-source:data-centres:250949ful-committee",
+        "title": "Planning Application 250949FUL — International Trading Estate, Trident Way, Southall",
+        "publisher": "Ealing Council",
+        "sourceType": "planning committee decision",
+        "date": "2025-10-22",
+        "url": "https://ealing.moderngov.co.uk/mgAi.aspx?ID=7082"
+      },
+      {
+        "id": "civic-source:data-centres:253874ful-committee",
+        "title": "Planning Application 253874FUL — Former Honey Monster Food Factory, Southall",
+        "publisher": "Ealing Council",
+        "sourceType": "planning committee decision",
+        "date": "2026-07-15",
+        "url": "https://ealing.moderngov.co.uk/mgAi.aspx?ID=8346"
+      }
+    ],
     "providers": [{"provider":"civic-commons","role":"canonical-public-issue"}]
   },
   {
