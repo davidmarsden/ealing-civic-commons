@@ -1,117 +1,75 @@
-const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char]));
-const fmtDate = iso => {
-  if (!iso) return 'Date unavailable';
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? String(iso) : new Intl.DateTimeFormat('en-GB', { day:'numeric', month:'long', year:'numeric' }).format(date);
-};
+import { loadPlanningStore } from './planning-store.js';
 
-const SECTIONS = [
-  { id: 'currentSection', label: 'Current Commons', open: true },
-  { id: 'planningSection', label: 'Planning register', open: true },
-  { id: 'sourcesSection', label: 'Primary evidence', open: false },
-  { id: 'reportingSection', label: 'Historical reporting', open: false },
-  { id: 'relationshipsSection', label: 'Reviewed connections', open: false },
-  { id: 'actorsSection', label: 'Who & what', open: false }
-];
+const esc = s => String(s ?? '').replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt',"'":'&#39;','\"':'&quot;'}[c]));
+const fmtDate = iso => { if (!iso) return 'Date unavailable'; const d = new Date(iso); return new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'long',year:'numeric'}).format(d); };
 
-async function loadPlanningStore(queryKey) {
-  for (const path of ['/data/planning-archive.json', '/data/planning-latest.json']) {
-    const response = await fetch(`${path}?${queryKey}=${Date.now()}`, { cache: 'no-store' });
-    if (response.ok) return response.json();
-    if (response.status !== 404) throw new Error(`Planning store HTTP ${response.status}: ${path}`);
-  }
-  throw new Error('No published planning store available');
-}
-
-function ensureCardStyles() {
-  if (document.querySelector('link[data-dossier-cards]')) return;
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = '/dossier-cards.css?v=20260908-1';
-  link.dataset.dossierCards = 'true';
-  document.head.append(link);
-}
+const SECTIONS = ['currentSection','planningSection','actorsSection','relationshipsSection','sourcesSection','reportingSection'];
 
 function issueRoute() {
   const parts = location.pathname.split('/').filter(Boolean);
-  return parts[0] === 'issues' && parts[1] ? `issues/${parts[1].replace(/\.html$/i, '')}` : null;
+  const slug = parts[0] === 'issues' ? parts[1]?.replace(/\.html$/,'') : null;
+  return slug ? `issues/${slug}` : null;
 }
 
-function reorderSections() {
-  const stack = document.querySelector('.entity-stack');
-  if (!stack) return;
-  SECTIONS.forEach(({ id }) => {
-    const section = document.getElementById(id);
-    if (section) stack.append(section);
-  });
+function ensureCardStyles() {
+  if (document.getElementById('issueDossierStyles')) return;
+  const style = document.createElement('style');
+  style.id = 'issueDossierStyles';
+  style.textContent = `
+    .entity-dossier-ready .entity-section { border:1px solid var(--line,#d9d4c7); border-radius:14px; padding:0; margin:0 0 1rem; overflow:hidden; background:var(--paper,#fff); }
+    .entity-dossier-ready .entity-section > h2 { margin:0; }
+    .entity-dossier-ready .entity-section > h2 button { width:100%; display:flex; justify-content:space-between; align-items:center; gap:1rem; border:0; background:transparent; color:inherit; font:inherit; text-align:left; padding:1rem 1.1rem; cursor:pointer; }
+    .entity-dossier-ready .entity-section > h2 button::after { content:'+'; font-size:1.35rem; font-weight:400; }
+    .entity-dossier-ready .entity-section[data-expanded='true'] > h2 button::after { content:'−'; }
+    .entity-dossier-ready .entity-section > :not(h2) { display:none; }
+    .entity-dossier-ready .entity-section[data-expanded='true'] > :not(h2) { display:block; }
+    .entity-dossier-ready .entity-section[data-expanded='true'] > .entity-list,
+    .entity-dossier-ready .entity-section[data-expanded='true'] > .issue-actor-grid { margin:0 1.1rem 1.1rem; }
+  `;
+  document.head.appendChild(style);
 }
 
 function setCardExpanded(section, expanded) {
-  const header = section.querySelector('.dossier-card-header');
-  const body = section.querySelector('.dossier-card-body');
-  if (!header || !body) return;
-  header.setAttribute('aria-expanded', String(expanded));
-  body.hidden = !expanded;
-  section.classList.toggle('dossier-card-collapsed', !expanded);
-  const state = header.querySelector('.dossier-card-state');
-  if (state) state.textContent = expanded ? 'Hide' : 'Show';
-  const chevron = header.querySelector('.dossier-card-chevron');
-  if (chevron) chevron.textContent = expanded ? '−' : '+';
+  if (!section) return;
+  section.dataset.expanded = expanded ? 'true' : 'false';
+  const button = section.querySelector(':scope > h2 button');
+  if (button) button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
 }
 
-function prepareCard(config) {
-  const section = document.getElementById(config.id);
-  if (!section || section.dataset.dossierCardReady === 'true') return;
-  section.dataset.dossierCardReady = 'true';
-  section.classList.add('dossier-card');
-
-  const eyebrow = section.querySelector(':scope > .eyebrow');
+function prepareCard(sectionId) {
+  const section = document.getElementById(sectionId);
+  if (!section) return;
   const heading = section.querySelector(':scope > h2');
-  if (!heading) return;
+  if (!heading || heading.querySelector('button')) return;
+  const label = heading.textContent;
+  heading.textContent = '';
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = label;
+  button.setAttribute('aria-expanded','false');
+  button.addEventListener('click', () => setCardExpanded(section, section.dataset.expanded !== 'true'));
+  heading.appendChild(button);
+  setCardExpanded(section, false);
+}
 
-  const header = document.createElement('div');
-  header.className = 'dossier-card-header';
-  header.setAttribute('role', 'button');
-  header.tabIndex = 0;
-  header.setAttribute('aria-controls', `${config.id}Body`);
-  header.innerHTML = `<div class="dossier-card-heading"><span class="dossier-card-eyebrow">${esc(eyebrow?.textContent || config.label)}</span><span class="dossier-card-title">${esc(heading.textContent)}</span></div><span class="dossier-card-control"><span class="dossier-card-state"></span><span class="dossier-card-chevron" aria-hidden="true"></span></span>`;
-
-  const body = document.createElement('div');
-  body.className = 'dossier-card-body';
-  body.id = `${config.id}Body`;
-  eyebrow?.remove();
-  heading.remove();
-  while (section.firstChild) body.append(section.firstChild);
-  section.append(header, body);
-
-  const toggle = () => setCardExpanded(section, header.getAttribute('aria-expanded') !== 'true');
-  header.addEventListener('click', toggle);
-  header.addEventListener('keydown', event => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      toggle();
-    }
-  });
-
-  setCardExpanded(section, location.hash === `#${config.id}` || config.open);
+function reorderSections() {
+  const first = document.getElementById('currentSection');
+  const parent = first?.parentElement;
+  if (!parent) return;
+  SECTIONS.map(id => document.getElementById(id)).filter(Boolean).forEach(section => parent.appendChild(section));
 }
 
 function expandHashTarget() {
   const id = location.hash.replace(/^#/, '');
-  const section = document.getElementById(id);
-  if (!section?.classList.contains('dossier-card')) return;
-  setCardExpanded(section, true);
+  if (SECTIONS.includes(id)) setCardExpanded(document.getElementById(id), true);
 }
 
 function renderPlanning(records, primaryRoute) {
   const section = document.getElementById('planningSection');
-  const root = document.getElementById('issuePlanning');
-  if (!section || !root || !records.length) return false;
-  root.innerHTML = `<ul class="entity-list">${records.map(record => {
-    const link = (record.place_links || []).find(item => item.route === primaryRoute);
-    const provenance = link?.provenance === 'reviewed-rule'
-      ? `Reviewed site link${link.note ? ` · ${link.note}` : ''}`
-      : 'Linked from conservative town classification';
+  const list = document.getElementById('issuePlanning');
+  if (!section || !list || !records.length) return false;
+  list.innerHTML = `<ul class="entity-list">${records.slice(0,24).map(record => {
+    const provenance = record.place_link_provenance?.[primaryRoute] || 'reviewed place link';
     return `<li><span class="relationship-type">${esc(record.category || 'Planning application')}</span><h3><a href="${esc(record.commons_path)}">${esc(record.reference)} · ${esc(record.address)}</a></h3><p>${esc(record.proposal)}</p><span class="entity-meta">Validated ${esc(fmtDate(record.validated_date))} · ${esc(record.status || 'Status unavailable')}</span><span class="entity-meta">${esc(provenance)} · <a href="${esc(record.authoritative_url)}" target="_blank" rel="noopener noreferrer">Ealing Council planning record ↗</a></span></li>`;
   }).join('')}</ul>`;
   section.hidden = false;
@@ -132,10 +90,17 @@ async function loadIssuePlanning() {
     ]);
     if (!issueResponse.ok) return false;
     const issueData = await issueResponse.json();
-    if (!issueData.matched || !issueData.issue?.primaryEntityId) return false;
-    const primary = (issueData.entities || []).find(entity => entity.id === issueData.issue.primaryEntityId);
-    const primaryRoute = primary?.commonsRoute;
+    if (!issueData.matched) return false;
+
+    // Commons-native issues already expose their canonical place route. Legacy
+    // published-memory issues can continue deriving it from primaryEntityId.
+    let primaryRoute = issueData.issue?.primaryPlaceRoute || null;
+    if (!primaryRoute && issueData.issue?.primaryEntityId) {
+      const primary = (issueData.entities || []).find(entity => entity.id === issueData.issue.primaryEntityId);
+      primaryRoute = primary?.commonsRoute || null;
+    }
     if (!primaryRoute) return false;
+
     const records = (snapshot.records || [])
       .filter(record => !record.out_of_borough && (record.place_links || []).some(link => link.route === primaryRoute))
       .sort((a,b) => (Date.parse(b.validated_date || '') || 0) - (Date.parse(a.validated_date || '') || 0));
@@ -157,8 +122,7 @@ async function initialise() {
     const target = document.getElementById(location.hash.replace(/^#/, ''));
     if (target) requestAnimationFrame(() => target.scrollIntoView({ block: 'start' }));
   });
+  expandHashTarget();
 }
 
-// This module owns issue dossier cards and planning content only. Hero section
-// navigation is owned exclusively by section-nav-sync.js.
 initialise();
