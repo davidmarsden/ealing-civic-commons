@@ -197,6 +197,9 @@
         "date": "2026",
         "url": "https://www.ealing.gov.uk/download/downloads/id/21306/full_report_progress_with_unity_report_2022-2026.pdf"
       }
+    ],
+    "requiredTopicIds": [
+      "topic:waste-flytipping"
     ]
   },
   {
