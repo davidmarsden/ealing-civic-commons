@@ -256,9 +256,11 @@
         "title": "Elections and voting",
         "publisher": "Ealing Council",
         "sourceType": "electoral administration record",
-        "url": "https://www.ealing.gov.uk/info/201276/elections_and_voting"
+        "url": "https://www.ealing.gov.uk/elections"
       }
-    ]
+    ],
+    "dateFrom": "2026-01-01",
+    "dateTo": "2026-12-31T23:59:59Z"
   },
   {
     "route": "issues/southall-rise-protests",
