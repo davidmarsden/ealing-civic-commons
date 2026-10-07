@@ -139,25 +139,67 @@
     "id": "civic:issue:fly-tipping",
     "name": "Fly-tipping and waste enforcement",
     "status": "historical",
-    "maturity": "developing",
-    "description": "The borough's fly-tipping and waste-enforcement crisis, including cleansing, enforcement, reporting, waste services, expenditure and accountability.",
+    "maturity": "issue-hub",
+    "description": "Ealing’s long-running fly-tipping and waste-enforcement problem, including the 2016 move from weekly refuse collections to fortnightly wheelie-bin collections, incident trends, cleansing and clearance, enforcement and fines, bulky-waste disposal, expenditure and the continuing debate over causes and policy responses.",
     "entityIds": [
       "entity:ealing-council"
     ],
     "topicIds": [
+      "topic:waste-flytipping",
       "topic:council-accountability"
     ],
     "aliases": [
       "fly-tipping",
       "fly tipping",
-      "illegal dumping",
-      "waste enforcement"
+      "Ealing fly-tipping",
+      "Southall fly-tipping",
+      "waste enforcement",
+      "fly-tipping enforcement",
+      "fortnightly collections",
+      "fortnightly bin collections",
+      "weekly rubbish collections",
+      "wheelie bin collections",
+      "illegal dumping"
     ],
     "providers": [
       {
         "provider": "civic-commons",
         "role": "canonical-public-issue"
+      },
+      {
+        "provider": "southall-zettel",
+        "role": "reviewed-civic-memory"
       }
+    ],
+    "entityRoutes": [
+      "organisations/ealing-council"
+    ],
+    "evidence": [
+      {
+        "id": "civic-source:fly-tipping:defra-statistics",
+        "title": "Fly-tipping statistics for England",
+        "publisher": "Department for Environment, Food & Rural Affairs",
+        "sourceType": "official statistics",
+        "url": "https://www.gov.uk/government/statistics/fly-tipping-statistics-for-england"
+      },
+      {
+        "id": "civic-source:fly-tipping:ealing-enforcement",
+        "title": "Environmental enforcement",
+        "publisher": "Ealing Council",
+        "sourceType": "council service and enforcement record",
+        "url": "https://www.ealing.gov.uk/info/201153/street_care_and_cleaning/2274/"
+      },
+      {
+        "id": "civic-source:fly-tipping:progress-with-unity",
+        "title": "Progress with Unity 2022–2026",
+        "publisher": "Ealing Council",
+        "sourceType": "council performance report",
+        "date": "2026",
+        "url": "https://www.ealing.gov.uk/download/downloads/id/21306/full_report_progress_with_unity_report_2022-2026.pdf"
+      }
+    ],
+    "requiredTopicIds": [
+      "topic:waste-flytipping"
     ]
   },
   {
