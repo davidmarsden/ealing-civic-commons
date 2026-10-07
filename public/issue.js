@@ -96,7 +96,7 @@ async function load() {
     const data = await issueResponse.json(); if (!data.matched) throw new Error(data.reason || 'Issue not found');
     renderHero(data); renderStats(data); renderProviders(data.providers); renderActors(visibleActors(data)); renderRelationships(data.relationships); renderSources(data.sources);
     const [archiveResult,feedResponse] = await Promise.all([
-      archivedReporting(data.issue.requiredTopicIds?.length ? [] : [data.issue.name,...(data.issue.aliases||[])], data.issue.requiredTopicIds || []).catch(()=>[]),
+      archivedReporting([data.issue.name,...(data.issue.aliases||[])], []).catch(()=>[]),
       fetch('/.netlify/functions/combined-feed',{cache:'no-store'}).catch(()=>null)
     ]);
     if (feedResponse?.ok) { const feed = await feedResponse.json(); renderCurrent(currentMatches(feed,data.issue)); }
