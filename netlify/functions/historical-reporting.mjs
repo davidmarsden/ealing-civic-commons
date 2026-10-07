@@ -1,5 +1,5 @@
 import { getStore } from '@netlify/blobs';
-import { STORE_NAME, itemBlobKey, validItemKey } from '../lib/civic-items.mjs';
+import { MANIFEST_KEY, STORE_NAME, itemBlobKey, validItemKey } from '../lib/civic-items.mjs';
 import { itemLinksToPlace, withPlaceLinks } from '../lib/civic-place-links.mjs';
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=60, stale-while-revalidate=300' } });
@@ -39,8 +39,12 @@ export default async request => {
   if (!terms.length && !topics.length && !placeRoute) return json({ version: 1, count: 0, records: [] });
   try {
     const blobs = getStore(STORE_NAME, { consistency: 'strong' });
-    const listed = await blobs.list({ prefix: 'item/' });
-    const keys = listed.blobs.map(blob => String(blob.key || '').replace(/^item\//, '')).filter(validItemKey);
+    const manifest = await blobs.get(MANIFEST_KEY, { type: 'json' }).catch(() => null);
+    let keys = Array.isArray(manifest?.keys) ? manifest.keys.filter(validItemKey) : [];
+    if (!keys.length) {
+      const listed = await blobs.list({ prefix: 'item/' });
+      keys = listed.blobs.map(blob => String(blob.key || '').replace(/^item\//, '')).filter(validItemKey);
+    }
     const records = [];
     const batchSize = 100;
     for (let cursor = 0; cursor < keys.length; cursor += batchSize) {
