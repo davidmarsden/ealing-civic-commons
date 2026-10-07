@@ -1,5 +1,5 @@
 import { getStore } from '@netlify/blobs';
-import { MANIFEST_KEY, STORE_NAME, itemBlobKey, validItemKey } from '../lib/civic-items.mjs';
+import { MANIFEST_KEY, SEARCH_INDEX_KEY, STORE_NAME, itemBlobKey, validItemKey } from '../lib/civic-items.mjs';
 import { itemLinksToPlace, withPlaceLinks } from '../lib/civic-place-links.mjs';
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=60, stale-while-revalidate=300' } });
@@ -39,6 +39,11 @@ export default async request => {
   if (!terms.length && !topics.length && !placeRoute) return json({ version: 1, count: 0, records: [] });
   try {
     const blobs = getStore(STORE_NAME, { consistency: 'strong' });
+    const searchIndex = await blobs.get(SEARCH_INDEX_KEY, { type: 'json' }).catch(() => null);
+    if (Array.isArray(searchIndex?.records) && searchIndex.records.length) {
+      const matching = searchIndex.records.map(record => ({ record, score: relevanceScore(record, terms, topics, placeRoute) })).filter(entry => entry.score >= 4).sort((a, b) => b.score - a.score || sortTime(b.record) - sortTime(a.record));
+      return json({ version: 1, count: matching.length, records: matching.slice(0, limit).map(({ record, score }) => ({ key: record.key, archivedAt: record.archivedAt, matchScore: score, item: withPlaceLinks(record.item) })) });
+    }
     const manifest = await blobs.get(MANIFEST_KEY, { type: 'json' }).catch(() => null);
     let keys = Array.isArray(manifest?.keys) ? manifest.keys.filter(validItemKey) : [];
     if (!keys.length) {
