@@ -21,7 +21,7 @@ function topicLink(topic) {
 }
 function canonicalUrl(value) { try { const url=new URL(value,location.origin); url.hash=''; if(url.pathname!=='/')url.pathname=url.pathname.replace(/\/+$/,''); return url.toString(); } catch { return String(value||'').trim(); } }
 function mergeReporting(reviewed=[],archived=[]) { const out=[],seen=new Set(); const add=item=>{const key=canonicalUrl(item.url); if(!key||seen.has(key))return; seen.add(key); out.push(item);}; reviewed.forEach(post=>add({...post,source:post.source||'Southall Stories',date:post.date||post.publishedAt||null,reviewedMatch:true})); archived.forEach(record=>{const item=record?.item;if(item?.url)add({title:item.title,url:item.url,summary:item.summary,date:item.publishedAt||record.archivedAt,source:item.source||'Archived publisher',archivedMatch:true});}); return out.sort((a,b)=>(Date.parse(b.date||'')||0)-(Date.parse(a.date||'')||0)); }
-async function archivedReporting(terms=[]) { const endpoint=new URL('/.netlify/functions/historical-reporting',location.origin); [...new Set(terms.filter(term=>String(term||'').trim().length>=3))].slice(0,20).forEach(term=>endpoint.searchParams.append('term',term)); endpoint.searchParams.set('limit','100'); const response=await fetch(endpoint,{cache:'no-store'}); if(!response.ok)throw new Error(`Historical reporting HTTP ${response.status}`); return (await response.json()).records||[]; }
+async function archivedReporting(terms=[], topics=[]) { const endpoint=new URL('/.netlify/functions/historical-reporting',location.origin); [...new Set(terms.filter(term=>String(term||'').trim().length>=3))].slice(0,20).forEach(term=>endpoint.searchParams.append('term',term)); topics.forEach(topic=>endpoint.searchParams.append('topic',topic)); endpoint.searchParams.set('limit','100'); const response=await fetch(endpoint,{cache:'no-store'}); if(!response.ok)throw new Error(`Historical reporting HTTP ${response.status}`); return (await response.json()).records||[]; }
 
 function normaliseName(value) {
   return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -96,7 +96,7 @@ async function load() {
     const data = await issueResponse.json(); if (!data.matched) throw new Error(data.reason || 'Issue not found');
     renderHero(data); renderStats(data); renderProviders(data.providers); renderActors(visibleActors(data)); renderRelationships(data.relationships); renderSources(data.sources);
     const [archiveResult,feedResponse] = await Promise.all([
-      archivedReporting([data.issue.name,...(data.issue.aliases||[])]).catch(()=>[]),
+      archivedReporting(data.issue.requiredTopicIds?.length ? [] : [data.issue.name,...(data.issue.aliases||[])], data.issue.requiredTopicIds || []).catch(()=>[]),
       fetch('/.netlify/functions/combined-feed',{cache:'no-store'}).catch(()=>null)
     ]);
     if (feedResponse?.ok) { const feed = await feedResponse.json(); renderCurrent(currentMatches(feed,data.issue)); }
