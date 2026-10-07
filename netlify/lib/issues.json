@@ -207,23 +207,56 @@
     "id": "civic:issue:ealing-local-elections-2026",
     "name": "Ealing local elections 2026",
     "status": "historical",
-    "maturity": "developing",
-    "description": "The May 2026 Ealing Council elections: candidates, campaigns, results, representation and the resulting political composition of the council.",
+    "maturity": "issue-hub",
+    "description": "The 7 May 2026 Ealing Council elections: ward results, candidates and campaigns, changes in representation, the resulting political composition of the council and the democratic context recorded before and after polling day.",
     "entityIds": [
       "entity:ealing-council"
     ],
     "topicIds": [
+      "topic:local-democracy",
+      "topic:governance",
       "topic:council-accountability"
     ],
     "aliases": [
       "Ealing local elections 2026",
       "Ealing election 2026",
-      "2026 council elections"
+      "Ealing council election 2026",
+      "Ealing council elections 2026",
+      "7 May 2026 election",
+      "7 May 2026 elections",
+      "Ealing election results 2026"
     ],
     "providers": [
       {
         "provider": "civic-commons",
         "role": "canonical-public-issue"
+      },
+      {
+        "provider": "southall-zettel",
+        "role": "reviewed-civic-memory"
+      }
+    ],
+    "entityRoutes": [
+      "organisations/ealing-council"
+    ],
+    "requiredTopicIds": [
+      "topic:local-democracy"
+    ],
+    "evidence": [
+      {
+        "id": "civic-source:elections-2026:ealing-results",
+        "title": "Council elections results — 7 May 2026",
+        "publisher": "Ealing Council",
+        "sourceType": "official election results",
+        "date": "2026-05-07",
+        "url": "https://www.ealing.gov.uk/info/201276/council_elections/3595/council_elections_results_7_may_2026"
+      },
+      {
+        "id": "civic-source:elections-2026:electoral-services",
+        "title": "Elections and voting",
+        "publisher": "Ealing Council",
+        "sourceType": "electoral administration record",
+        "url": "https://www.ealing.gov.uk/info/201276/elections_and_voting"
       }
     ]
   },
