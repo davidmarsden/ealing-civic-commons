@@ -1,11 +1,485 @@
 {
   "archive_version": 1,
-  "generated_at": "2026-10-06T13:19:12.500Z",
-  "latest_week": "28 Sep 2026",
+  "generated_at": "2026-10-13T14:12:40.942Z",
+  "latest_week": "05 Oct 2026",
   "source": "Ealing PAM / Civica Public Access",
   "canonical_source": "Ealing Council Planning Register",
   "place_link_rules_version": 1,
   "records": [
+    {
+      "id": "planning:ealing:263749nma",
+      "reference": "263749NMA",
+      "address": "2 The Straight Southall UB1 1QX",
+      "proposal": "Application for a Non-Material Amendment in (S96a) seeking to allow to alter the exterior appearance in relation to planning permission reference 253558FUL dated 28/01/2026 for: Construction of temporary building to be used as a food store (Use Class E) for up to 15 years",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-09",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMNFLXJMKW300&activeTab=summary",
+      "town": "Southall",
+      "category": "Planning application",
+      "out_of_borough": false,
+      "commons_path": "/planning/263749nma",
+      "place_links": [
+        {
+          "route": "places/southall",
+          "label": "Southall",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        },
+        {
+          "route": "places/southall-gasworks",
+          "label": "Southall Gasworks",
+          "relationship": "planning_at",
+          "provenance": "reviewed-rule",
+          "rule_id": "southall-gasworks-2-the-straight",
+          "note": "Reviewed site match for the former Southall Gasworks redevelopment / Green Quarter site."
+        }
+      ],
+      "first_seen_week": "05 Oct 2026",
+      "last_seen_week": "05 Oct 2026",
+      "first_seen_at": "2026-10-13T14:12:40.942Z",
+      "last_seen_at": "2026-10-13T14:12:40.942Z",
+      "weeks_seen": [
+        "05 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-13T14:12:40.942Z",
+          "week": "05 Oct 2026",
+          "address": "2 The Straight Southall UB1 1QX",
+          "proposal": "Application for a Non-Material Amendment in (S96a) seeking to allow to alter the exterior appearance in relation to planning permission reference 253558FUL dated 28/01/2026 for: Construction of temporary building to be used as a food store (Use Class E) for up to 15 years",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-09",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMNFLXJMKW300&activeTab=summary",
+          "town": "Southall",
+          "category": "Planning application",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/southall",
+              "label": "Southall",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            },
+            {
+              "route": "places/southall-gasworks",
+              "label": "Southall Gasworks",
+              "relationship": "planning_at",
+              "provenance": "reviewed-rule",
+              "rule_id": "southall-gasworks-2-the-straight",
+              "note": "Reviewed site match for the former Southall Gasworks redevelopment / Green Quarter site."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263717palhe",
+      "reference": "263717PALHE",
+      "address": "17 Worcester Gardens Greenford UB6 0BH",
+      "proposal": "Single storey (Max 6m deep and Max 2.80m high) rear extension (42 days Prior Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-08",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TML49YJMKSY00&activeTab=summary",
+      "town": "Greenford",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263717palhe",
+      "place_links": [
+        {
+          "route": "places/greenford",
+          "label": "Greenford",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "05 Oct 2026",
+      "last_seen_week": "05 Oct 2026",
+      "first_seen_at": "2026-10-13T14:12:40.942Z",
+      "last_seen_at": "2026-10-13T14:12:40.942Z",
+      "weeks_seen": [
+        "05 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-13T14:12:40.942Z",
+          "week": "05 Oct 2026",
+          "address": "17 Worcester Gardens Greenford UB6 0BH",
+          "proposal": "Single storey (Max 6m deep and Max 2.80m high) rear extension (42 days Prior Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-08",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TML49YJMKSY00&activeTab=summary",
+          "town": "Greenford",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/greenford",
+              "label": "Greenford",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263729palhe",
+      "reference": "263729PALHE",
+      "address": "51 Waverley Gardens North Circular Road Park Royal NW10 7EE",
+      "proposal": "Single storey (Max 5m deep and Max 3m high) rear extension (42 days Prior Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-08",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMLI7FJMKUF00&activeTab=summary",
+      "town": null,
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263729palhe",
+      "place_links": [],
+      "first_seen_week": "05 Oct 2026",
+      "last_seen_week": "05 Oct 2026",
+      "first_seen_at": "2026-10-13T14:12:40.942Z",
+      "last_seen_at": "2026-10-13T14:12:40.942Z",
+      "weeks_seen": [
+        "05 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-13T14:12:40.942Z",
+          "week": "05 Oct 2026",
+          "address": "51 Waverley Gardens North Circular Road Park Royal NW10 7EE",
+          "proposal": "Single storey (Max 5m deep and Max 3m high) rear extension (42 days Prior Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-08",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMLI7FJMKUF00&activeTab=summary",
+          "town": null,
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": []
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263768opdcob",
+      "reference": "263768OPDCOB",
+      "address": "Unit 21 Victoria Industrial Estate Victoria Road Acton W3 6UU",
+      "proposal": "Minor external alterations and the change of use from Class B8 to B2 and B8.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-08",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMU6G5JM0KW00&activeTab=summary",
+      "town": "Acton",
+      "category": "Out of borough",
+      "out_of_borough": true,
+      "commons_path": "/planning/263768opdcob",
+      "place_links": [
+        {
+          "route": "places/acton",
+          "label": "Acton",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "05 Oct 2026",
+      "last_seen_week": "05 Oct 2026",
+      "first_seen_at": "2026-10-13T14:12:40.942Z",
+      "last_seen_at": "2026-10-13T14:12:40.942Z",
+      "weeks_seen": [
+        "05 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-13T14:12:40.942Z",
+          "week": "05 Oct 2026",
+          "address": "Unit 21 Victoria Industrial Estate Victoria Road Acton W3 6UU",
+          "proposal": "Minor external alterations and the change of use from Class B8 to B2 and B8.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-08",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMU6G5JM0KW00&activeTab=summary",
+          "town": "Acton",
+          "category": "Out of borough",
+          "out_of_borough": true,
+          "place_links": [
+            {
+              "route": "places/acton",
+              "label": "Acton",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263775cons",
+      "reference": "263775CONS",
+      "address": "Gunnersbury Park, Popes Lane Ealing W3 8LQ",
+      "proposal": "Installation of two non illuminated wall mounted fascia sign to entrance and two freestanding signs to the Sports Club.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-08",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMUEBJJM0KW00&activeTab=summary",
+      "town": null,
+      "category": "Planning application",
+      "out_of_borough": false,
+      "commons_path": "/planning/263775cons",
+      "place_links": [],
+      "first_seen_week": "05 Oct 2026",
+      "last_seen_week": "05 Oct 2026",
+      "first_seen_at": "2026-10-13T14:12:40.942Z",
+      "last_seen_at": "2026-10-13T14:12:40.942Z",
+      "weeks_seen": [
+        "05 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-13T14:12:40.942Z",
+          "week": "05 Oct 2026",
+          "address": "Gunnersbury Park, Popes Lane Ealing W3 8LQ",
+          "proposal": "Installation of two non illuminated wall mounted fascia sign to entrance and two freestanding signs to the Sports Club.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-08",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMUEBJJM0KW00&activeTab=summary",
+          "town": null,
+          "category": "Planning application",
+          "out_of_borough": false,
+          "place_links": []
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263708nma",
+      "reference": "263708NMA",
+      "address": "73 Woodstock Road Chiswick W4 1EE",
+      "proposal": "Application for a Non-Material Amendment in (S96a) seeking to allow increase in depth of rear dormer to align with the first floor rear wall below in relation to planning permission reference 241856HH dated 24/07/2024 for: Roof extension to rear (main) roofslope and part rear roof extension to rear outrigger roof slope",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-07",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMJ9LLJMKRJ00&activeTab=summary",
+      "town": null,
+      "category": "Planning application",
+      "out_of_borough": false,
+      "commons_path": "/planning/263708nma",
+      "place_links": [],
+      "first_seen_week": "05 Oct 2026",
+      "last_seen_week": "05 Oct 2026",
+      "first_seen_at": "2026-10-13T14:12:40.942Z",
+      "last_seen_at": "2026-10-13T14:12:40.942Z",
+      "weeks_seen": [
+        "05 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-13T14:12:40.942Z",
+          "week": "05 Oct 2026",
+          "address": "73 Woodstock Road Chiswick W4 1EE",
+          "proposal": "Application for a Non-Material Amendment in (S96a) seeking to allow increase in depth of rear dormer to align with the first floor rear wall below in relation to planning permission reference 241856HH dated 24/07/2024 for: Roof extension to rear (main) roofslope and part rear roof extension to rear outrigger roof slope",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-07",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMJ9LLJMKRJ00&activeTab=summary",
+          "town": null,
+          "category": "Planning application",
+          "out_of_borough": false,
+          "place_links": []
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263709palhe",
+      "reference": "263709PALHE",
+      "address": "72 George V Way Perivale UB6 7HT",
+      "proposal": "Single storey (Max 6m deep and Max 3.30m high) rear extension (42 days Prior Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-07",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMJCDLJMKRM00&activeTab=summary",
+      "town": "Perivale",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263709palhe",
+      "place_links": [
+        {
+          "route": "places/perivale",
+          "label": "Perivale",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "05 Oct 2026",
+      "last_seen_week": "05 Oct 2026",
+      "first_seen_at": "2026-10-13T14:12:40.942Z",
+      "last_seen_at": "2026-10-13T14:12:40.942Z",
+      "weeks_seen": [
+        "05 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-13T14:12:40.942Z",
+          "week": "05 Oct 2026",
+          "address": "72 George V Way Perivale UB6 7HT",
+          "proposal": "Single storey (Max 6m deep and Max 3.30m high) rear extension (42 days Prior Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-07",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMJCDLJMKRM00&activeTab=summary",
+          "town": "Perivale",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/perivale",
+              "label": "Perivale",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263678palhe",
+      "reference": "263678PALHE",
+      "address": "71 Kings Avenue Greenford UB6 9DD",
+      "proposal": "Single storey (Max 6m deep and Max 3m high) rear extension (42 days Prior Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-06",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMHCF1JMKOX00&activeTab=summary",
+      "town": "Greenford",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263678palhe",
+      "place_links": [
+        {
+          "route": "places/greenford",
+          "label": "Greenford",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "05 Oct 2026",
+      "last_seen_week": "05 Oct 2026",
+      "first_seen_at": "2026-10-13T14:12:40.942Z",
+      "last_seen_at": "2026-10-13T14:12:40.942Z",
+      "weeks_seen": [
+        "05 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-13T14:12:40.942Z",
+          "week": "05 Oct 2026",
+          "address": "71 Kings Avenue Greenford UB6 9DD",
+          "proposal": "Single storey (Max 6m deep and Max 3m high) rear extension (42 days Prior Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-06",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMHCF1JMKOX00&activeTab=summary",
+          "town": "Greenford",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/greenford",
+              "label": "Greenford",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263697palhe",
+      "reference": "263697PALHE",
+      "address": "51 West Avenue Southall UB1 2AP",
+      "proposal": "Single storey (Max 6m deep and Max 2.93m high) rear extension (42 days Prior Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-06",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMHST0JMKQD00&activeTab=summary",
+      "town": "Southall",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263697palhe",
+      "place_links": [
+        {
+          "route": "places/southall",
+          "label": "Southall",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "05 Oct 2026",
+      "last_seen_week": "05 Oct 2026",
+      "first_seen_at": "2026-10-13T14:12:40.942Z",
+      "last_seen_at": "2026-10-13T14:12:40.942Z",
+      "weeks_seen": [
+        "05 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-13T14:12:40.942Z",
+          "week": "05 Oct 2026",
+          "address": "51 West Avenue Southall UB1 2AP",
+          "proposal": "Single storey (Max 6m deep and Max 2.93m high) rear extension (42 days Prior Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-06",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMHST0JMKQD00&activeTab=summary",
+          "town": "Southall",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/southall",
+              "label": "Southall",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263699palhe",
+      "reference": "263699PALHE",
+      "address": "182 Kingshill Avenue Northolt UB5 6NZ",
+      "proposal": "Single storey (Max 6m deep and Max 3m high) rear extension (42 days Prior Notification Process) following demolition of existing rear addition",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-06",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMHYDEJMKQL00&activeTab=summary",
+      "town": "Northolt",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263699palhe",
+      "place_links": [
+        {
+          "route": "places/northolt",
+          "label": "Northolt",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "05 Oct 2026",
+      "last_seen_week": "05 Oct 2026",
+      "first_seen_at": "2026-10-13T14:12:40.942Z",
+      "last_seen_at": "2026-10-13T14:12:40.942Z",
+      "weeks_seen": [
+        "05 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-13T14:12:40.942Z",
+          "week": "05 Oct 2026",
+          "address": "182 Kingshill Avenue Northolt UB5 6NZ",
+          "proposal": "Single storey (Max 6m deep and Max 3m high) rear extension (42 days Prior Notification Process) following demolition of existing rear addition",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-06",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TMHYDEJMKQL00&activeTab=summary",
+          "town": "Northolt",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/northolt",
+              "label": "Northolt",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
     {
       "id": "planning:ealing:263636palhe",
       "reference": "263636PALHE",
