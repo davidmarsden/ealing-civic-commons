@@ -1,3 +1,5 @@
+import { loadPlanningStore } from './planning-store.js';
+
 const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char]));
 const fmtDate = iso => {
   if (!iso) return 'Date unavailable';
@@ -16,15 +18,6 @@ const SECTIONS = [
   { id: 'relationshipsSection', href: '#relationshipsSection', label: 'Reviewed connections', open: false }
 ];
 let initialised = false;
-
-async function loadPlanningStore(queryKey) {
-  for (const path of ['/data/planning-archive.json', '/data/planning-latest.json']) {
-    const response = await fetch(`${path}?${queryKey}=${Date.now()}`, { cache: 'no-store' });
-    if (response.ok) return response.json();
-    if (response.status !== 404) throw new Error(`Planning store HTTP ${response.status}: ${path}`);
-  }
-  throw new Error('No published planning store available');
-}
 
 function ensureCardStyles() {
   if (document.querySelector('link[data-dossier-cards]')) return;
