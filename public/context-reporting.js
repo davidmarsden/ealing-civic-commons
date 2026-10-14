@@ -1,11 +1,9 @@
 const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char]));
-const pillClass = type => type === 'Official record' ? 'official' : type === 'Journalism / publishing' ? 'journalism' : type === 'Independent civic data / analysis' ? 'analysis' : 'organisation';
 const fmtDate = iso => {
   if (!iso) return 'Date unavailable';
   const date = new Date(iso);
   return new Intl.DateTimeFormat('en-GB', { day:'numeric', month:'long', year:'numeric' }).format(date);
 };
-const escapeRegex = value => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 function canonicalUrl(value) {
   try {
@@ -18,46 +16,7 @@ function canonicalUrl(value) {
   }
 }
 
-function termMatches(text, term) {
-  const haystack = String(text || '').toLowerCase();
-  const needle = String(term || '').trim().toLowerCase();
-  if (!needle) return false;
-  if (needle.length > 4) return haystack.includes(needle);
-  return new RegExp(`\\b${escapeRegex(needle)}\\b`, 'i').test(haystack);
-}
-
-function scoreItem(item, terms, topics) {
-  let score = 0;
-  const title = String(item?.title || '').toLowerCase();
-  const summary = String(item?.summary || '').toLowerCase();
-  const itemTopics = (item?.topics || []).map(topic => String(topic).toLowerCase());
-  const wantedTopics = topics.map(topic => String(topic).toLowerCase());
-
-  if (wantedTopics.some(topic => itemTopics.includes(topic))) score += 5;
-
-  for (const rawTerm of terms) {
-    const term = String(rawTerm || '').trim().toLowerCase();
-    if (term.length < 3) continue;
-    if (termMatches(title, term)) {
-      score += 4;
-      continue;
-    }
-    const usefulPhrase = term.includes(' ') || term.length >= 12;
-    if (usefulPhrase && termMatches(summary, term)) score += 2;
-  }
-  return score;
-}
-
-function selectCurrent(items, terms, topics, limit = 8) {
-  return (items || [])
-    .map(item => ({ item, score: scoreItem(item, terms, topics) }))
-    .filter(entry => entry.score >= 4)
-    .sort((a, b) => b.score - a.score || (Date.parse(b.item.publishedAt || '') || 0) - (Date.parse(a.item.publishedAt || '') || 0))
-    .slice(0, limit)
-    .map(entry => entry.item);
-}
-
-function mergeHistorical(reviewed, archived, currentUrls) {
+function mergeHistorical(reviewed, archived, currentUrls, placeLinked = []) {
   const seen = new Set(currentUrls);
   const combined = [];
   const add = item => {
@@ -88,6 +47,19 @@ function mergeHistorical(reviewed, archived, currentUrls) {
     });
   });
 
+  (placeLinked || []).forEach(record => {
+    const item = record?.item;
+    if (!item?.url) return;
+    add({
+      title: item.title,
+      url: item.url,
+      summary: item.summary,
+      date: item.publishedAt || record.archivedAt,
+      source: item.source || 'Publisher',
+      placeLinkedMatch: true
+    });
+  });
+
   return combined.sort((a, b) => (Date.parse(b.date || '') || 0) - (Date.parse(a.date || '') || 0));
 }
 
@@ -95,35 +67,37 @@ function routeContext() {
   const parts = location.pathname.split('/').filter(Boolean);
   const segment = parts[0];
   const slug = parts[1]?.replace(/\.html$/, '');
-  if (!slug) return null;
-  if (['people','organisations','places'].includes(segment)) return { kind:'entity', route:`${segment}/${slug}`, segment, slug };
-  if (segment === 'issues') return { kind:'issue', route:`issues/${slug}`, segment, slug };
-  if (segment === 'topics') return { kind:'topic', route:`topics/${slug}`, segment, slug };
-  return null;
+  if (!slug || !['people','organisations','places'].includes(segment)) return null;
+  return { kind:'entity', route:`${segment}/${slug}`, segment, slug };
 }
 
-async function fetchContext(route) {
-  const endpointName = route.kind === 'entity' ? 'civic-entity' : route.kind === 'issue' ? 'civic-issue' : 'civic-topic';
-  const endpoint = new URL(`/.netlify/functions/${endpointName}`, location.origin);
-  endpoint.searchParams.set('route', route.route);
-  const response = await fetch(endpoint, { cache:'no-store' });
-  if (!response.ok) throw new Error(`${endpointName} HTTP ${response.status}`);
-  return response.json();
+function entityReady() {
+  if (window.__civicEntityReady) return Promise.resolve(window.__civicEntityReady);
+  return new Promise(resolve => window.addEventListener('civic-entity:ready', event => resolve(event.detail), { once: true }));
 }
 
-function termsAndTopics(route, data) {
-  if (route.kind === 'entity') return { terms:[data.entity?.name, ...(data.entity?.aliases || [])].filter(Boolean), topics:[] };
-  if (route.kind === 'issue') return { terms:[data.issue?.name, ...(data.issue?.aliases || [])].filter(Boolean), topics:[] };
-  return { terms:[data.topic?.name, ...(data.topic?.aliases || [])].filter(Boolean), topics:data.feedTopics || [] };
+function termsFor(entity) {
+  return [entity?.name, ...(entity?.aliases || [])].filter(Boolean);
 }
 
-async function fetchHistorical(terms, topics) {
+async function fetchHistorical(terms) {
   const endpoint = new URL('/.netlify/functions/historical-reporting', location.origin);
   [...new Set(terms)].slice(0, 20).forEach(term => endpoint.searchParams.append('term', term));
-  [...new Set(topics)].slice(0, 20).forEach(topic => endpoint.searchParams.append('topic', topic));
   endpoint.searchParams.set('limit', '20');
   const response = await fetch(endpoint, { cache:'no-store' });
   if (!response.ok) return [];
+  return (await response.json()).records || [];
+}
+
+// Archive records explicitly linked to a place (formerly appended to the list by
+// place-records-ui.js after this module had rendered it).
+async function fetchPlaceLinked(route) {
+  if (route.segment !== 'places') return [];
+  const endpoint = new URL('/.netlify/functions/historical-reporting', location.origin);
+  endpoint.searchParams.set('place', route.route);
+  endpoint.searchParams.set('limit', '100');
+  const response = await fetch(endpoint, { cache:'no-store' }).catch(() => null);
+  if (!response?.ok) return [];
   return (await response.json()).records || [];
 }
 
@@ -140,32 +114,11 @@ function currentCommonsUrls(route) {
   });
 }
 
-function roots(route) {
-  if (route.kind === 'entity') return { current:'#currentItems', currentSection:'#currentSection', reporting:'#reporting', reportingSection:'#reportingSection', stats:'#entityStats .entity-stat:first-child strong' };
-  if (route.kind === 'issue') return { current:'#currentItems', currentSection:'#currentSection', reporting:'#issueReporting', reportingSection:'#reportingSection', stats:'#issueStats .entity-stat:last-child strong' };
-  return { current:'#currentItems', currentSection:'#currentSection', reporting:'#topicReporting', reportingSection:'#reportingSection', stats:'#topicStats .entity-stat:first-child strong' };
-}
-
-function renderCurrent(route, items) {
-  const ids = roots(route);
-  const root = document.querySelector(ids.current);
-  const section = document.querySelector(ids.currentSection);
+function renderHistorical(items) {
+  const root = document.querySelector('#reporting');
+  const section = document.querySelector('#reportingSection');
   if (!root || !section) return;
-  if (!items.length) {
-    section.hidden = true;
-    root.innerHTML = '';
-    return;
-  }
-  section.hidden = false;
-  root.innerHTML = items.map(item => `<article class="item"><div class="item-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass)}</span><strong>${esc(item.source)}</strong><span>${esc(fmtDate(item.publishedAt))}</span></div><div><h3><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title)}</a></h3>${item.summary ? `<p class="item-summary">${esc(item.summary)}</p>` : ''}</div></article>`).join('');
-}
-
-function renderHistorical(route, items) {
-  const ids = roots(route);
-  const root = document.querySelector(ids.reporting);
-  const section = document.querySelector(ids.reportingSection);
-  if (!root || !section) return;
-  const stat = document.querySelector(ids.stats);
+  const stat = document.querySelector('#entityStats [data-reporting-count]');
   if (stat) stat.textContent = String(items.length);
   if (!items.length) {
     section.hidden = true;
@@ -173,25 +126,25 @@ function renderHistorical(route, items) {
     return;
   }
   section.hidden = false;
-  root.innerHTML = `<ul class="entity-list">${items.map(post => `<li><h3><a href="${esc(post.url)}" target="_blank" rel="noopener noreferrer">${esc(post.title)}</a></h3>${post.summary ? `<p>${esc(post.summary)}</p>` : ''}<span class="entity-meta">${esc(post.source || 'Publisher')} · ${esc(fmtDate(post.date))}${post.reviewedMatch ? ' · reviewed match' : ' · Civic Archive match'}</span></li>`).join('')}</ul>`;
+  root.innerHTML = `<ul class="entity-list">${items.map(post => `<li><h3><a href="${esc(post.url)}" target="_blank" rel="noopener noreferrer">${esc(post.title)}</a></h3>${post.summary ? `<p>${esc(post.summary)}</p>` : ''}<span class="entity-meta">${esc(post.source || 'Publisher')} · ${esc(fmtDate(post.date))}${post.reviewedMatch ? ' · reviewed match' : post.placeLinkedMatch ? ' · place-linked Civic Archive match' : ' · Civic Archive match'}</span></li>`).join('')}</ul>`;
 }
 
+// A place whose reporting lives on a curated issue page shows a hub instead of its
+// own Current Commons and historical reporting. The decision is page state, set
+// once on <html> (data-primary-issue): CSS hides those sections whatever other
+// renderers do with `hidden`, and section-nav-sync.js leaves their links out.
+// This replaces a MutationObserver that re-applied the hub on every change and,
+// together with section navigation, kept place pages busy indefinitely.
 function renderPrimaryIssueHub(issue) {
-  const current = document.querySelector('#currentSection');
-  const reporting = document.querySelector('#reportingSection');
-  // Write only on change: section navigation observes `hidden`, and repeated
-  // identical writes still produce mutation records that wake it.
-  if (current && !current.hidden) current.hidden = true;
-  if (reporting && !reporting.hidden) reporting.hidden = true;
+  document.documentElement.dataset.primaryIssue = issue.route;
+  window.dispatchEvent(new CustomEvent('civic-entity:primary-issue', { detail: { route: issue.route } }));
 
   const stats = document.querySelector('#entityStats .entity-stat:first-child');
-  const statsMarkup = '<strong>1</strong><span>main civic issue</span>';
-  if (stats && stats.innerHTML !== statsMarkup) stats.innerHTML = statsMarkup;
+  if (stats) stats.innerHTML = '<strong>1</strong><span>main civic issue</span>';
 
-  document.querySelectorAll('#entityHero .entity-actions a[href="#currentSection"], #entityHero .entity-actions a[href="#reportingSection"]').forEach(link => link.remove());
   const actions = document.querySelector('#entityHero .entity-actions');
   if (actions && !actions.querySelector('[data-primary-issue-link]')) {
-    actions.insertAdjacentHTML('beforeend', `<a data-primary-issue-link href="/${esc(issue.route)}">Main civic issue →</a>`);
+    actions.insertAdjacentHTML('afterbegin', `<a data-primary-issue-link href="/${esc(issue.route)}">Main civic issue →</a>`);
   }
 
   if (document.querySelector('#primaryIssueHub')) return;
@@ -204,20 +157,8 @@ function renderPrimaryIssueHub(issue) {
   if (stack) stack.insertBefore(section, relationships || stack.firstChild);
 }
 
-function keepPrimaryIssueHub(issue) {
-  const watched = ['#entityHero', '#currentSection', '#reportingSection', '#entityStats'].map(selector => document.querySelector(selector)).filter(Boolean);
-  let observer = null;
-  const apply = () => {
-    if (observer) observer.disconnect();
-    renderPrimaryIssueHub(issue);
-    if (observer) watched.forEach(root => observer.observe(root, { childList:true, subtree:true, attributes:true, attributeFilter:['hidden'] }));
-  };
-  observer = new MutationObserver(() => apply());
-  apply();
-}
-
-async function primaryIssueForEntity(data) {
-  const entityId = data.entity?.id;
+async function primaryIssueForEntity(entity) {
+  const entityId = entity?.id;
   if (!entityId) return null;
   const endpoint = new URL('/.netlify/functions/civic-issues', location.origin);
   endpoint.searchParams.set('entityId', entityId);
@@ -227,61 +168,31 @@ async function primaryIssueForEntity(data) {
   return (result.issues || []).find(issue => issue.isPrimaryForEntity) || null;
 }
 
+// Entity pages only. This module owns historical reporting (#reporting) and the
+// primary-issue hub. Current Commons belongs to entity-current-commons.js; issue
+// and topic pages render their own sections in issue.js and topic.js.
 const route = routeContext();
 if (route) {
   (async () => {
     try {
-      // Entity routes have a dedicated Current Commons owner:
-      // entity-current-commons.js. Do not fetch or render a competing current
-      // collection here. Issue/topic routes retain the generic current feed.
-      const feedPromise = route.kind === 'entity'
-        ? Promise.resolve(null)
-        : fetch('/.netlify/functions/feed').catch(() => null);
-      const [data, feedResponse] = await Promise.all([
-        fetchContext(route),
-        feedPromise
-      ]);
-      if (!data?.matched) return;
-
-      if (route.kind === 'entity') {
-        const primaryIssue = await primaryIssueForEntity(data).catch(() => null);
-        if (primaryIssue) {
-          keepPrimaryIssueHub(primaryIssue);
-          return;
-        }
-      }
-
-      const { terms, topics } = termsAndTopics(route, data);
-      const feed = feedResponse?.ok ? await feedResponse.json() : { items:[] };
-      const current = route.kind === 'entity' ? [] : selectCurrent(feed.items || [], terms, topics, 8);
-      const archived = await fetchHistorical(terms, topics);
-      const reviewed = data.reporting || [];
-      const currentUrls = route.kind === 'entity'
-        ? await currentCommonsUrls(route.route)
-        : new Set(current.map(item => canonicalUrl(item.url)));
-      const historical = mergeHistorical(reviewed, archived, currentUrls);
-
-      // Entity Current Commons is deliberately excluded: this module owns only
-      // historical reporting there. It consumes the authoritative renderer's
-      // published URL set solely to preserve cross-section deduplication.
-      if (route.kind === 'entity') {
-        renderHistorical(route, historical);
+      const ready = await entityReady();
+      const entity = ready?.entity;
+      if (!entity) return;
+      const primaryIssue = await primaryIssueForEntity(entity).catch(() => null);
+      if (primaryIssue) {
+        renderPrimaryIssueHub(primaryIssue);
         return;
       }
-
-      const ids = roots(route);
-      const watchRoots = [document.querySelector(ids.current), document.querySelector(ids.reporting)].filter(Boolean);
-      let observer = null;
-      const apply = () => {
-        if (observer) observer.disconnect();
-        renderCurrent(route, current);
-        renderHistorical(route, historical);
-        if (observer) watchRoots.forEach(root => observer.observe(root, { childList:true, subtree:true }));
-      };
-      observer = new MutationObserver(() => apply());
-      apply();
+      const [archived, placeLinked, currentUrls] = await Promise.all([
+        fetchHistorical(termsFor(entity)),
+        fetchPlaceLinked(route),
+        currentCommonsUrls(route.route)
+      ]);
+      // Reviewed reporting comes with entity.js's ready event; Current Commons URLs are left out
+      // so the same record is not listed in both sections.
+      renderHistorical(mergeHistorical(ready.reporting || [], archived, currentUrls, placeLinked));
     } catch (error) {
-      console.warn('Context reporting refinement unavailable', error);
+      console.warn('Historical reporting unavailable', error);
     }
   })();
 }

@@ -1,6 +1,6 @@
 # Client-side rendering architecture audit
 
-Status: initial audit, 4 October 2026
+Status: initial audit, 4 October 2026. Updated 14 October 2026: one writer per region on entity, issue and topic pages, and no persistent MutationObservers there (see "Progress" at the end).
 
 ## Why this audit exists
 
@@ -199,3 +199,30 @@ New code should satisfy all of these:
 The first implementation should be deliberately small: enforce single ownership of Current Commons without attempting the entire rewrite at once. The safe order is important: first load `entity-current-commons.js` in the `civic-entity.html` fallback (or consolidate the shells), then stop `context-reporting.js` from rendering/observing `#currentItems`. `entity-current-commons.js` can then be the temporary sole owner across both normal and fallback entity paths. Verify Walpole Park, the fallback path, and representative person/organisation/place pages before proceeding to the controller refactor.
 
 This is an architectural repair programme, not another sequence of Walpole-specific patches.
+## Progress
+
+### 14 October 2026: a freeze and a disappearing section
+
+Two production failures came from the conflicts described above.
+
+- **`/places/southall-gasworks` froze the browser** about 2 s after load. The primary-issue observer in `context-reporting.js` and the section observer in `section-nav-sync.js` each rewrote DOM the other watched, forever. #168 made both write only on change.
+- **Issue and topic pages lost their Current Commons.** `issue.js` and `topic.js` rendered Current Commons from `combined-feed` (232 items); `context-reporting.js` then re-selected from the smaller legacy `/feed` (80 items) and overwrote the section, and its observer kept the overwrite. On `/issues/southall-gasworks-redevelopment` that hid all 16 matching records; `/issues/walpole-park-theatre` showed 2 of 12.
+
+### Ownership after this change
+
+| Page | Region | Owner | Notes |
+| --- | --- | --- | --- |
+| entity | `#currentItems`, `#currentSection` | `entity-current-commons.js` | unchanged |
+| entity | `#reporting`, `#reportingSection`, reporting count | `context-reporting.js` | now also merges place-linked archive records; `place-records-ui.js` (which appended after it) is removed |
+| entity (place with a main issue) | hub, hero link, first stat | `context-reporting.js`, once, after `civic-entity:ready` | visibility is page state: `html[data-primary-issue]` hides the current and reporting sections in CSS, and `section-nav-sync.js` leaves their links out; no observer |
+| issue | `#currentItems`, `#issueReporting` and their sections | `issue.js` | `context-reporting.js` no longer runs on issue pages |
+| topic | `#currentItems`, `#topicReporting` and their sections | `topic.js` | as above |
+
+`context-reporting.js` is now entity-only and loaded by `entity.html` itself rather than injected by `site-shell.js`. It reuses the reviewed reporting that `entity.js` publishes with `civic-entity:ready` instead of fetching the entity again. Issue and topic pages leave records shown as current out of the historical list, as `context-reporting.js` did.
+
+`scripts/check-render-ownership.mjs` compares production with local files substituted: settled state per page and DOM writes per region.
+
+### Still open
+- Explore (`explore-issue-hubs.js`) and the homepage (`demo-data.js`) observers, Phase 4 above.
+- Current-record selection still differs by page type (place links on the server; term matching in `issue.js`, `topic.js` and `entity-current-commons.js`). Moving it server-side (Phase 1) would make it consistent.
+- A page controller per route (Phase 2) and per-page bundles depend on the modules above becoming functions rather than self-starting scripts.
