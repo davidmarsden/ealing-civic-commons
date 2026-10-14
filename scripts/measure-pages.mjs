@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Page-load measurement for Phase 4: loads pages in Chromium with a mid-range
-// phone profile (throttled network and CPU), cold and then as a repeat visit,
-// and reports requests, transferred bytes, cache use, and LCP.
+// phone profile (throttled network and CPU): cold, as a repeat visit, and a third
+// time (steady state, once the service worker has cached what the second visit
+// fetched). Reports requests, bytes, cache use and LCP.
 //
 //   npm i --no-save playwright && BASE_URL=https://ealing.civiccommons.co.uk \
 //     node scripts/measure-pages.mjs [/ /places/southall-gasworks …]
@@ -81,7 +82,7 @@ async function load(page, cdp, url) {
 const median = values => { const sorted = values.filter(v => v != null).sort((a, b) => a - b); return sorted.length ? sorted[Math.floor(sorted.length / 2)] : null; };
 const report = { base, profile: { ...NETWORK, cpuSlowdown: 4 }, runs, pages: {} };
 for (const path of paths) {
-  const cold = [], warm = [];
+  const cold = [], warm = [], steady = [];
   for (let i = 0; i < runs; i += 1) {
     const context = await browser.newContext({ viewport: { width: 412, height: 915 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     const page = await context.newPage();
@@ -92,7 +93,11 @@ for (const path of paths) {
     const url = `${base}${path}`;
     cold.push(await load(page, cdp, url));
     // A frozen page cannot be navigated reliably; skip its repeat visit.
-    if (!cold.at(-1).frozen) warm.push(await load(page, cdp, url));
+    if (!cold.at(-1).frozen) {
+      warm.push(await load(page, cdp, url));
+      // Third visit: the service worker has now cached what the second visit fetched.
+      if (!warm.at(-1).frozen) steady.push(await load(page, cdp, url));
+    }
     await context.close();
   }
   const summarise = set => set.some(r => r.frozen) ? { frozen: set.filter(r => r.frozen).length } : ({
@@ -105,7 +110,7 @@ for (const path of paths) {
     kb: Math.round(median(set.map(r => r.sameOriginBytes)) / 1024),
     scripts: set[0].byType.script, css: set[0].byType.css
   });
-  report.pages[path] = { cold: summarise(cold), repeat: warm.length ? summarise(warm) : null };
+  report.pages[path] = { cold: summarise(cold), repeat: warm.length ? summarise(warm) : null, steady: steady.length ? summarise(steady) : null };
   console.log(path, JSON.stringify(report.pages[path]));
 }
 await browser.close();
