@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { XMLParser } from 'fast-xml-parser';
 
 const TOWNS = ['Acton', 'Ealing', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
 
@@ -11,7 +12,12 @@ const sources = [
     sourceClass: 'Organisation / campaign',
     contentLabel: 'Environmental community organisation',
     type: 'lager',
-    articlePattern: /^\/\d{4}\/\d{2}\/\d{2}\/[a-z0-9-]+\/?$/i,
+    // Permalinks changed from /YYYY/MM/DD/slug/ to /slug/ (Oct 2026). The listing is
+    // scoped to the posts container so menu pages such as /meet-the-team/ are excluded;
+    // posts carry <time datetime>.
+    articlePattern: /^\/[a-z0-9][a-z0-9-]+\/?$/i,
+    startMarker: 'posts-wrapper',
+    endMarker: '</main>',
     defaultTopics: ['Environment', 'Community']
   },
   {
@@ -56,6 +62,9 @@ const sources = [
     contentLabel: 'Party political publishing',
     type: 'political',
     articlePattern: /^\/news\/article\/[a-z0-9-]+\/?$/i,
+    // Article pages have no <article>/<main> or date metadata; the publication date is
+    // the only `text-aux` element, directly under the headline.
+    articleDateClass: 'text-aux',
     defaultTopics: ['Council & democracy']
   },
   {
@@ -92,22 +101,13 @@ const sources = [
     type: 'community',
     towns: ['Southall'],
     articlePattern: /^\/[a-z0-9][a-z0-9-]+\/?$/i,
-    startMarker: 'Our News Page',
-    endMarker: 'SCA Resource Centre',
+    // Articles carry no date of their own (only a sidebar widget does), so the
+    // WordPress RSS feed is the dated source. IDs keep the page-scrape scheme.
+    feedUrl: 'https://southallcommunityalliance.com/feed/',
     defaultTopics: ['Community']
   },
-  {
-    id: 'norwood-green-residents',
-    name: 'Norwood Green Residents’ Association',
-    url: 'https://norwoodgreenresidents.org/',
-    homepage: 'https://norwoodgreenresidents.org/',
-    sourceClass: 'Organisation / campaign',
-    contentLabel: 'Residents’ association',
-    type: 'community',
-    towns: ['Southall'],
-    articlePattern: /^\/[a-z0-9][a-z0-9-]+\/?$/i,
-    defaultTopics: ['Community', 'Planning & development']
-  },
+  // Norwood Green Residents' Association retired (Oct 2026): the homepage no longer
+  // links to any news, and its feed's only post dates from February 2021.
   {
     id: 'bedford-park-society',
     name: 'Bedford Park Society',
@@ -234,6 +234,31 @@ function structuredPublishedDate(html = '') {
   return null;
 }
 
+// Date from the first element carrying a source-specific class.
+function classDate(html = '', className) {
+  if (!className) return null;
+  const escaped = className.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = String(html).match(new RegExp(`class=["'][^"']*\\b${escaped}\\b[^"']*["'][^>]*>([\\s\\S]{0,300}?)<\\/(?:div|span|p|time|li)>`, 'i'));
+  return match ? parseDate(strip(match[1])) : null;
+}
+
+const xmlParser = new XMLParser({ ignoreAttributes: true, cdataPropName: false, textNodeName: '#text' });
+const xmlText = value => typeof value === 'object' && value !== null ? value['#text'] ?? '' : value ?? '';
+
+// RSS entries are already dated and summarised, so they skip the article fetch.
+async function feedEntries(source) {
+  const parsed = xmlParser.parse(await fetchHtml(source.feedUrl));
+  const items = parsed?.rss?.channel?.item;
+  return (Array.isArray(items) ? items : items ? [items] : []).map(item => {
+    const url = absoluteUrl(xmlText(item.link), source.url);
+    if (!url || !sameHost(url.hostname, new URL(source.url).hostname)) return null;
+    const title = strip(xmlText(item.title));
+    const description = strip(xmlText(item.description)).replace(/\s*\[(?:…|&#8230;|\.\.\.)\]\s*$/, '');
+    const content = strip(xmlText(item['content:encoded']));
+    return title ? { url: url.href, title, nearby: description, publishedAt: normaliseDate(xmlText(item.pubDate)), fromFeed: true, feedText: content || description, feedSummary: description } : null;
+  }).filter(Boolean).slice(0, 24);
+}
+
 function articleContent(html = '') {
   const description = metaContent(html, 'description') || metaContent(html, 'og:description');
   const article = String(html).match(/<article\b[^>]*>([\s\S]*?)<\/article>/i)?.[1];
@@ -306,15 +331,20 @@ async function enrich(source, entry) {
   let summary = '';
   let publishedAt = entry.publishedAt;
 
-  try {
-    const html = await fetchHtml(entry.url);
-    const scoped = articleContent(html);
-    articleText = scoped.text;
-    summary = scoped.summary;
-    publishedAt = structuredPublishedDate(html) || parseDate(articleText) || publishedAt;
-  } catch {
-    articleText = entry.nearby;
-    summary = entry.nearby;
+  if (entry.fromFeed) {
+    articleText = entry.feedText;
+    summary = entry.feedSummary;
+  } else {
+    try {
+      const html = await fetchHtml(entry.url);
+      const scoped = articleContent(html);
+      articleText = scoped.text;
+      summary = scoped.summary;
+      publishedAt = structuredPublishedDate(html) || classDate(html, source.articleDateClass) || parseDate(articleText) || publishedAt;
+    } catch {
+      articleText = entry.nearby;
+      summary = entry.nearby;
+    }
   }
 
   if (!publishedAt) return null;
@@ -356,8 +386,7 @@ async function enrich(source, entry) {
 }
 
 async function fetchSource(source) {
-  const html = await fetchHtml(source.url);
-  const entries = extractListing(source, html);
+  const entries = source.feedUrl ? await feedEntries(source) : extractListing(source, await fetchHtml(source.url));
   const items = (await Promise.all(entries.map(entry => enrich(source, entry)))).filter(Boolean);
   return items.sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)).slice(0, 12);
 }

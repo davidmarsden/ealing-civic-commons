@@ -33,6 +33,22 @@ Each needs a source-specific fix or retirement. That is content maintenance, out
 
 A Blobs `400` from listing contributions (`Reviewed civic context activity unavailable`) appears only on deploy previews and deploy permalinks, including deploys from before this work. It is caught, and it does not occur on production.
 
+### Source fixes (14 Oct 2026)
+
+These follow from the failing-source list above. Each cause was diagnosed from the live pages, and fixtures trimmed from those pages back `scripts/test-source-adapters.mjs`.
+
+| Source | Cause | Fix |
+|--------|-------|-----|
+| 5 YouTube channels (Cap the Towers, ECI Ealing, ECI Southall, Southall, Young Ealing Foundation) | `videos.xml?user=<handle>` only works for legacy usernames, and these are @handles (404) | Sources name a `youtubeHandle`. The ingest resolves it to a channel ID from the channel page, caches it in Blobs for 30 days, and keeps using a cached ID if the page is briefly unreachable |
+| LAGER Can | Permalinks changed from `/YYYY/MM/DD/slug/` to `/slug/` | New pattern, with the listing scoped to `posts-wrapper` … `</main>` so menu pages are excluded; posts are dated from `<time datetime>` |
+| Ealing Lib Dems | Articles have no `<article>`/`<main>` and no date metadata, so every one was dropped as undated | Per-source `articleDateClass: 'text-aux'`: the date is the only element with that class, directly under the headline |
+| Southall Community Alliance | Articles carry no date of their own | Switched to its WordPress RSS feed, keeping the existing item ID scheme so archived items are not duplicated |
+| Norwood Green Residents' Association | Homepage no longer links any news; the feed's only post is from 2021 | Retired |
+| Neighbours' Paper | RSS fetch timed out at 7.5 s | RSS timeout raised to 12 s, matching the other adapters (fetching now happens in the background ingest) |
+| Ealing Community Independents, Ealing Synagogue | 403 to our crawler user-agent | Left as `unavailable`. We do not disguise the crawler; ask the publishers to allow it, or retire the sources |
+| Ealing Culture | HTML returned where JSON was expected (likely a firewall page) | Left as `unavailable`; needs the publisher's API access or a different endpoint |
+| Hanwell Community Forum | Site unreachable, including from a third-party fetcher | Left as `unavailable`; retire if it stays down |
+
 ### Production finding: the archiver runs two or three times per slot (pre-existing)
 
 The production logs show each 15-minute `item-archive` slot invoked 2–3 times within about a minute, e.g. 10:15:27, 10:16:00 and 10:16:21. Each invocation returns 499 at about 15 s while the function keeps running for 15–25 s, which is consistent with the scheduler timing out and retrying. This happened before #165 as well (09:15:15, 09:15:35, 09:16:05).
