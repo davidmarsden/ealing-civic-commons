@@ -38,7 +38,8 @@ export default async request => {
   const limit = Math.max(1, Math.min(Number(url.searchParams.get('limit')) || 20, 100));
   if (!terms.length && !topics.length && !placeRoute) return json({ version: 1, count: 0, records: [] });
   try {
-    const blobs = getStore(STORE_NAME, { consistency: 'strong' });
+    // Read-only: eventual consistency, as for other public archive reads.
+    const blobs = getStore(STORE_NAME);
     const searchIndex = await blobs.get(SEARCH_INDEX_KEY, { type: 'json' }).catch(() => null);
     if (Array.isArray(searchIndex?.records) && searchIndex.records.length) {
       const matching = searchIndex.records.map(record => ({ record, score: relevanceScore(record, terms, topics, placeRoute) })).filter(entry => entry.score >= 4).sort((a, b) => b.score - a.score || sortTime(b.record) - sortTime(a.record));

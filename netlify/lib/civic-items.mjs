@@ -174,7 +174,12 @@ async function indexBackfillRecords(blobs, etags, limit = INDEX_BACKFILL_LIMIT) 
   return loadRecords(blobs, stale, { strict: false, etags });
 }
 
-export async function listArchivedItems({ limit = 40, offset = 0, sourceId = null, town = null, topic = null, q = null } = {}, { blobs = store({ consistency: 'strong' }), useIndex = true } = {}) {
+// Public reads use eventual consistency: measured against production (2,275
+// items), four archive queries took ~500 ms instead of ~750 ms strong. A record
+// written in the last minute may be missing, and an index entry whose blob is not
+// yet visible sends that request to the full scan, so results are never wrong,
+// only briefly behind. Writers (archiveItems, upsertMutableItems) stay strong.
+export async function listArchivedItems({ limit = 40, offset = 0, sourceId = null, town = null, topic = null, q = null } = {}, { blobs = store(), useIndex = true } = {}) {
   const max = Math.max(1, Math.min(Number(limit) || 40, 100));
   const skip = Math.max(0, Number(offset) || 0);
   const filters = { sourceId: cleanFilter(sourceId), town: cleanFilter(town), topic: cleanFilter(topic), q: cleanFilter(q, 240) };
