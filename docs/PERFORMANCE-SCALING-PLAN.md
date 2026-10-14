@@ -8,16 +8,30 @@ Three separate states, updated as evidence arrives. *Implemented* = merged-ready
 
 | Change | PR | Implemented | Verified on preview | Verified in production |
 |--------|----|-------------|---------------------|------------------------|
-| Archive metadata index + index-backed `listArchivedItems` | #165 | Yes: unit tests (stub store) and end-to-end tests against the real `@netlify/blobs` client with its local server | Pending: `npm run check:archive-index-preview` | Pending: `item-archive` log shows `complete: true`; `civic-archive` timings |
-| Etag reconciliation, pruning, explicit read failures | #165 | Yes (tests above) | Pending | Pending |
-| Single feed build per email dispatch | #165 | Yes (smoke test) | n/a (needs subscribers + mail config) | Pending: dispatch log duration |
-| Durable CDN headers; errors `no-store` | #165 | Yes | Pending: header check in preview script | Pending |
-| `social-preview` edge caching | #165 | Yes | Pending | Pending |
-| Browser feed fetches without `no-store` | #165 | Yes | Pending | Pending |
+| Archive metadata index + index-backed `listArchivedItems` | #165 | Yes: unit tests (stub store) and end-to-end tests against the real `@netlify/blobs` client with its local server | **Yes** (14 Oct 2026): 2,260 production items copied to the preview store; all 13 comparison cases identical to the full scan; full 23-page walk with 0 duplicates and 0 missing, newest first | Pending: `item-archive` log shows `complete: true`; `civic-archive` timings |
+| Etag reconciliation, pruning, explicit read failures | #165 | Yes (tests above) | **Yes**: index completed in 2 passes (2,000 + 260); steady state 2 listings, 2 index reads, 0 writes, ~0.4 s | Pending: steady-state archiver timings in the log |
+| Single feed build per email dispatch | #165 | Yes (smoke test) | n/a (needs subscribers and mail config) | Pending: dispatch log duration |
+| Durable CDN caching; errors not cached | #165 | Yes | **Yes**: `Cache-Status: "Netlify Durable"; … stored` on the preview vs `fwd=bypass` on production; a 405 error is `no-store` and not stored | Pending |
+| `social-preview` edge caching | #165 | Yes | **Yes**: entity page stored in the durable cache; repeat request is an edge hit | Pending |
+| Browser feed fetches without `no-store` | #165 | Yes | Not measured (browser-side) | Pending |
 | Phase 2 snapshot serving | — | No | — | — |
 | Phase 4 frontend build | — | No | — | — |
 
-### Evidence so far (local, relative only)
+### Preview measurements (14 Oct 2026, real Netlify Blobs, 2,260 items)
+
+| Measure | Production (`main`) | Preview (#165) |
+|---------|---------------------|----------------|
+| `civic-archive?limit=40` median, cache-busted (7 samples) | 2,810 ms | 382 ms |
+| `civic-archive?limit=40&offset=40` median | 2,437 ms | 367 ms |
+| `civic-archive?limit=40&q=council` median | 2,597 ms | 394 ms |
+| In-function page read, median of 13 cases (same data, same deploy) | full scan ≈2,300 ms | index ≈135 ms |
+| `historical-reporting?term=southall` median | 171 ms | 178 ms (unchanged; it already used an index) |
+| `combined-feed` (cache-busted) | 8–32 s, highly variable | 8–31 s, same range when interleaved with production |
+
+- **Index size:** 2.0 MB for 2,260 items (≈890 bytes per item). Readers load it whole and still answer in under 0.4 s, but at the current growth it passes 4 MB around 5,000 items. Shard it by year or source, or move it to Postgres, before then.
+- **`combined-feed` is the next bottleneck.** It takes 8–32 s on both production and preview, with several samples near 31 s that look like an upstream timeout. The time is the live fan-out to outside sources, which this PR doesn't change. That is Phase 2's job, and it now has a measured baseline.
+
+### Local measurements (relative only)
 
 `scripts/test-archive-index-blobs.mjs` with the real Blobs client against its local server, 3,000 items:
 

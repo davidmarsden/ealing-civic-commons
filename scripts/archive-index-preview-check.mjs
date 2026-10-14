@@ -105,7 +105,7 @@ for (const path of endpoints) {
 
 // Error responses must not be cached.
 const errorResponse = await fetch(`${preview}/.netlify/functions/civic-archive`, { method: 'POST' });
-report.steps.errorHeaders = { status: errorResponse.status, 'cache-control': errorResponse.headers.get('cache-control'), 'netlify-cdn-cache-control': errorResponse.headers.get('netlify-cdn-cache-control') };
+report.steps.errorHeaders = { status: errorResponse.status, 'cache-control': errorResponse.headers.get('cache-control'), 'cache-status': errorResponse.headers.get('cache-status') };
 
 const failures = [];
 if (!passes.at(-1)?.complete) failures.push('index did not complete');
@@ -115,9 +115,11 @@ const walk = report.steps.walk;
 if (walk.error || walk.duplicates || walk.missing || walk.unexpected || !walk.newestFirst) failures.push(`pagination walk: ${JSON.stringify(walk)}`);
 for (const entry of report.steps.endpoints) {
   if (entry.preview.status !== 200) failures.push(`${entry.path} HTTP ${entry.preview.status}`);
-  if (!/durable/.test(entry.preview.headers['netlify-cdn-cache-control'] || '')) failures.push(`${entry.path} missing durable CDN header`);
+  // Netlify consumes Netlify-CDN-Cache-Control and strips it from responses; the
+  // Cache-Status header shows whether the durable cache stored the response.
+  if (!/"Netlify Durable";[^,]*stored/.test(entry.preview.headers['cache-status'] || '')) failures.push(`${entry.path} not stored in the durable cache: ${entry.preview.headers['cache-status']}`);
 }
-if (report.steps.errorHeaders['cache-control'] !== 'no-store' || report.steps.errorHeaders['netlify-cdn-cache-control'] !== 'no-store') failures.push(`error response cacheable: ${JSON.stringify(report.steps.errorHeaders)}`);
+if (report.steps.errorHeaders['cache-control'] !== 'no-store' || /stored/.test(report.steps.errorHeaders['cache-status'] || '')) failures.push(`error response cacheable: ${JSON.stringify(report.steps.errorHeaders)}`);
 report.failures = failures;
 report.finishedAt = new Date().toISOString();
 await writeFile('archive-index-preview-report.json', JSON.stringify(report, null, 2));
