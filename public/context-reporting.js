@@ -179,11 +179,14 @@ function renderHistorical(route, items) {
 function renderPrimaryIssueHub(issue) {
   const current = document.querySelector('#currentSection');
   const reporting = document.querySelector('#reportingSection');
-  if (current) current.hidden = true;
-  if (reporting) reporting.hidden = true;
+  // Write only on change: section navigation observes `hidden`, and repeated
+  // identical writes still produce mutation records that wake it.
+  if (current && !current.hidden) current.hidden = true;
+  if (reporting && !reporting.hidden) reporting.hidden = true;
 
   const stats = document.querySelector('#entityStats .entity-stat:first-child');
-  if (stats) stats.innerHTML = '<strong>1</strong><span>main civic issue</span>';
+  const statsMarkup = '<strong>1</strong><span>main civic issue</span>';
+  if (stats && stats.innerHTML !== statsMarkup) stats.innerHTML = statsMarkup;
 
   document.querySelectorAll('#entityHero .entity-actions a[href="#currentSection"], #entityHero .entity-actions a[href="#reportingSection"]').forEach(link => link.remove());
   const actions = document.querySelector('#entityHero .entity-actions');

@@ -22,7 +22,7 @@ const runs = Number(process.env.RUNS || 3);
 const NETWORK = { offline: false, latency: 150, downloadThroughput: 1.6 * 1024 * 1024 / 8, uploadThroughput: 750 * 1024 / 8 };
 
 const proxy = process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY } : undefined;
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, proxy });
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, proxy, args: ['--disable-dev-shm-usage'] });
 
 async function load(page, cdp, url) {
   const started = Date.now();
