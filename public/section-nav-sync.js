@@ -30,7 +30,10 @@ function syncSectionNavigation() {
 
   const known = new Set(SECTIONS.map(([href]) => href));
   const existing = [...actions.querySelectorAll('a')].filter(link => known.has(link.getAttribute('href')));
-  const wanted = SECTIONS.filter(([href]) => { const section = document.querySelector(href); return section && !section.hidden; });
+  // A primary-issue place hides its own current and reporting sections (see
+  // context-reporting.js), so their links are left out too.
+  const suppressed = document.documentElement.dataset.primaryIssue ? new Set(['#currentSection', '#reportingSection']) : new Set();
+  const wanted = SECTIONS.filter(([href]) => { const section = document.querySelector(href); return section && !section.hidden && !suppressed.has(href); });
   // Leave the DOM alone when the links already match. Other renderers observe the
   // hero, so rewriting identical links would wake them, and their writes wake this
   // observer again: a loop that froze place pages with a primary issue.
@@ -71,3 +74,4 @@ if (hero && !actionRoot()) {
 syncSectionNavigation();
 window.addEventListener('civic-entity:ready', syncSectionNavigation);
 window.addEventListener('hashchange', syncSectionNavigation);
+window.addEventListener('civic-entity:primary-issue', syncSectionNavigation);
