@@ -49,6 +49,10 @@ These follow from the failing-source list above. Each cause was diagnosed from t
 | Ealing Culture | HTML returned where JSON was expected (likely a firewall page) | Left as `unavailable`; needs the publisher's API access or a different endpoint |
 | Hanwell Community Forum | Site unreachable, including from a third-party fetcher | Left as `unavailable`; retire if it stays down |
 
+**Verified on preview (#167, 14 Oct 2026):** after one ingest, all eight targeted sources are `current`: the five YouTube channels (7–15 items each), LAGER Can (10), Ealing Lib Dems (6) and Southall Community Alliance (2). Norwood Green no longer appears. States went from 45 current / 9 ingestion failed to 53 current / 12 no new records / 4 unavailable / 1 ingestion failed. Still open:
+- Neighbours' Paper times out even at 12 s.
+- **New:** Ealing Green Party (`/news/` returns 404, and the homepage HTML now has no links, which suggests a rebuilt or script-rendered site). This is follow-up work, surfaced by the source states as intended.
+
 ### Production finding: the archiver runs two or three times per slot (pre-existing)
 
 The production logs show each 15-minute `item-archive` slot invoked 2–3 times within about a minute, e.g. 10:15:27, 10:16:00 and 10:16:21. Each invocation returns 499 at about 15 s while the function keeps running for 15–25 s, which is consistent with the scheduler timing out and retrying. This happened before #165 as well (09:15:15, 09:15:35, 09:16:05).
