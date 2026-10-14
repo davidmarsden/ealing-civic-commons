@@ -70,4 +70,9 @@ await assert.rejects(resolveYoutubeHandle('gone-channel', { fetchImpl: async () 
 store.set('youtube/handle/flaky', { channelId: 'UCzzzzzzzzzzzzzzzzzzzzzz', resolvedAt: new Date(0).toISOString() });
 assert.equal(await resolveYoutubeHandle('flaky', { cache, fetchImpl: async () => new Response('', { status: 503 }) }), 'UCzzzzzzzzzzzzzzzzzzzzzz');
 
+// …including when the page fetch rejects outright (network error or timeout).
+store.set('youtube/handle/offline', { channelId: 'UCyyyyyyyyyyyyyyyyyyyyyy', resolvedAt: new Date(0).toISOString() });
+assert.equal(await resolveYoutubeHandle('offline', { cache, fetchImpl: async () => { throw new TypeError('fetch failed'); } }), 'UCyyyyyyyyyyyyyyyyyyyyyy');
+await assert.rejects(resolveYoutubeHandle('never-seen', { cache, fetchImpl: async () => { throw new TypeError('fetch failed'); } }), /fetch failed/);
+
 console.log('Source adapters: LAGER Can, Lib Dems, Southall Community Alliance RSS, Norwood retirement and YouTube handles OK.');

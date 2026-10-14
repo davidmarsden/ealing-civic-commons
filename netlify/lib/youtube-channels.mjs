@@ -37,6 +37,7 @@ export async function resolveYoutubeHandle(handle, { cache = null, fetchImpl = f
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
+  const usableCached = cached?.channelId && CHANNEL_ID.test(cached.channelId) ? cached.channelId : null;
   let response;
   try {
     response = await fetchImpl(`https://www.youtube.com/@${encodeURIComponent(clean)}`, {
@@ -44,17 +45,21 @@ export async function resolveYoutubeHandle(handle, { cache = null, fetchImpl = f
       redirect: 'follow',
       headers: { accept: 'text/html', 'accept-language': 'en-GB,en;q=0.9', cookie: 'CONSENT=YES+1', 'user-agent': 'Southall-Ealing-Civic-Commons/0.1 (+public-interest prototype)' }
     });
+  } catch (error) {
+    // A cached ID stays usable while the channel page is unreachable (network
+    // error or timeout) as well as when it returns an error status.
+    if (usableCached) return usableCached;
+    throw error;
   } finally {
     clearTimeout(timeout);
   }
-  // A cached ID stays usable if the channel page is temporarily unreachable.
   if (!response.ok) {
-    if (cached?.channelId && CHANNEL_ID.test(cached.channelId)) return cached.channelId;
+    if (usableCached) return usableCached;
     throw new Error(`YouTube handle @${clean} could not be resolved: HTTP ${response.status}`);
   }
   const channelId = channelIdFromPage(await response.text());
   if (!channelId) {
-    if (cached?.channelId && CHANNEL_ID.test(cached.channelId)) return cached.channelId;
+    if (usableCached) return usableCached;
     throw new Error(`YouTube handle @${clean} page fetched but no channel ID was found`);
   }
   memory.set(key, { channelId, resolvedAt: now });
