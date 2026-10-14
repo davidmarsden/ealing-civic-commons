@@ -47,7 +47,8 @@ async function load(page, cdp, url) {
   cdp.off('Network.responseReceived', onPageResponse);
   cdp.off('Network.requestServedFromCache', onServed);
   for (const [requestId, pathname] of pageRequests) if (!cached.has(requestId)) network.push(pathname);
-  const timing = await page.evaluate(started => new Promise(resolve => {
+  // A page whose main thread never yields would hang evaluate(); report it instead.
+  const timing = await Promise.race([new Promise(resolve => setTimeout(() => resolve({ frozen: true }), 20000)), page.evaluate(started => new Promise(resolve => {
     let lcp = null;
     new PerformanceObserver(list => { const entries = list.getEntries(); lcp = entries[entries.length - 1]?.startTime ?? lcp; }).observe({ type: 'largest-contentful-paint', buffered: true });
     setTimeout(() => {
@@ -72,7 +73,8 @@ async function load(page, cdp, url) {
         byType
       });
     }, 300);
-  }), started);
+  }), started)]);
+  if (timing.frozen) return { frozen: true, roundTrips: network.length };
   return { ...timing, roundTrips: network.filter(path => !path.startsWith('/.netlify/')).length, functionCalls: network.filter(path => path.startsWith('/.netlify/')).length };
 }
 
@@ -89,10 +91,11 @@ for (const path of paths) {
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
     const url = `${base}${path}`;
     cold.push(await load(page, cdp, url));
-    warm.push(await load(page, cdp, url));
+    // A frozen page cannot be navigated reliably; skip its repeat visit.
+    if (!cold.at(-1).frozen) warm.push(await load(page, cdp, url));
     await context.close();
   }
-  const summarise = set => ({
+  const summarise = set => set.some(r => r.frozen) ? { frozen: set.filter(r => r.frozen).length } : ({
     lcpMs: median(set.map(r => r.lcpMs)),
     loadMs: median(set.map(r => r.loadMs)),
     sameOriginRequests: median(set.map(r => r.sameOriginRequests)),
@@ -102,7 +105,7 @@ for (const path of paths) {
     kb: Math.round(median(set.map(r => r.sameOriginBytes)) / 1024),
     scripts: set[0].byType.script, css: set[0].byType.css
   });
-  report.pages[path] = { cold: summarise(cold), repeat: summarise(warm) };
+  report.pages[path] = { cold: summarise(cold), repeat: warm.length ? summarise(warm) : null };
   console.log(path, JSON.stringify(report.pages[path]));
 }
 await browser.close();
