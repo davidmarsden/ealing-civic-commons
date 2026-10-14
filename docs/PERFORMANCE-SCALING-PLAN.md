@@ -8,14 +8,22 @@ Three separate states, updated as evidence arrives. *Implemented* = merged-ready
 
 | Change | PR | Implemented | Verified on preview | Verified in production |
 |--------|----|-------------|---------------------|------------------------|
-| Archive metadata index + index-backed `listArchivedItems` | #165 | Yes: unit tests (stub store) and end-to-end tests against the real `@netlify/blobs` client with its local server | **Yes** (14 Oct 2026): 2,260 production items copied to the preview store; all 13 comparison cases identical to the full scan; full 23-page walk with 0 duplicates and 0 missing, newest first | Pending: `item-archive` log shows `complete: true`; `civic-archive` timings |
-| Etag reconciliation, pruning, explicit read failures | #165 | Yes (tests above) | **Yes**: index completed in 2 passes (2,000 + 260); steady state 2 listings, 2 index reads, 0 writes, ~0.4 s | Pending: steady-state archiver timings in the log |
-| Single feed build per email dispatch | #165 | Yes (smoke test) | n/a (needs subscribers and mail config) | Pending: dispatch log duration |
-| Durable CDN caching; errors not cached | #165 | Yes | **Yes**: `Cache-Status: "Netlify Durable"; … stored` on the preview vs `fwd=bypass` on production; a 405 error is `no-store` and not stored | Pending |
-| `social-preview` edge caching | #165 | Yes | **Yes**: entity page stored in the durable cache; repeat request is an edge hit | Pending |
+| Archive metadata index + index-backed `listArchivedItems` | #165 | Yes: unit tests (stub store) and end-to-end tests against the real `@netlify/blobs` client with its local server | **Yes** (14 Oct 2026): 2,260 production items copied to the preview store; all 13 comparison cases identical to the full scan; full 23-page walk with 0 duplicates and 0 missing, newest first | **Yes** (14 Oct 2026): index completed by the second scheduled run (10:15–10:16 UTC: 2,000 + 260 backfilled); `civic-archive` medians 0.54–0.62 s, down from 2.4–2.8 s; the last page (offset 2,200) is correct |
+| Etag reconciliation, pruning, explicit read failures | #165 | Yes (tests above) | **Yes**: index completed in 2 passes (2,000 + 260); steady state 2 listings, 2 index reads, 0 writes, ~0.4 s | **Yes**: steady state 0.48 s with no writes; a run with one new item took 0.84 s (stored, indexed, still complete); overlapping duplicate runs (below) left the index correct |
+| Single feed build per email dispatch | #165 | Yes (smoke test) | n/a (needs subscribers and mail config) | Pending: next dispatch with active subscribers |
+| Durable CDN caching; errors not cached | #165 | Yes | **Yes**: `Cache-Status: "Netlify Durable"; … stored` on the preview vs `fwd=bypass` on production; a 405 error is `no-store` and not stored | **Yes**: production now shows `"Netlify Durable"; … stored`; the 405 error stays `no-store` and is not stored |
+| `social-preview` edge caching | #165 | Yes | **Yes**: entity page stored in the durable cache; repeat request is an edge hit | **Yes**: `/places/walpole-park` is stored in the durable cache and a repeat request is an edge hit |
 | Browser feed fetches without `no-store` | #165 | Yes | Not measured (browser-side) | Pending |
 | Phase 2 snapshot serving | — | No | — | — |
 | Phase 4 frontend build | — | No | — | — |
+
+### Production finding: the archiver runs two or three times per slot (pre-existing)
+
+The production logs show each 15-minute `item-archive` slot invoked 2–3 times within about a minute, e.g. 10:15:27, 10:16:00 and 10:16:21. Each invocation returns 499 at about 15 s while the function keeps running for 15–25 s, which is consistent with the scheduler timing out and retrying. This happened before #165 as well (09:15:15, 09:15:35, 09:16:05).
+
+- **Effect:** every slot repeats the whole upstream fan-out and deep fetch two or three times, multiplying load on outside sites and function time. Runs also overlap.
+- **Index safety:** overlapping runs are exactly the case the index's conditional writes and newer-revision guard handle, and production confirms it: the overlapping runs at 10:15–10:16 left a complete, correct index.
+- **Fix (Phase 2):** make ingestion a background function, or split it so the scheduled entry point returns well within the limit, and add a run lock in Blobs so duplicate invocations exit early.
 
 ### Preview measurements (14 Oct 2026, real Netlify Blobs, 2,260 items)
 
