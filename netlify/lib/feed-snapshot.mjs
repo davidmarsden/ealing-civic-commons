@@ -35,12 +35,18 @@ export const writeSourceState = (blobs, state) => blobs.setJSON(SOURCE_STATE_KEY
 //                     moved or its structure changed)
 const UNAVAILABLE = /time(d)?\s?out|abort|fetch failed|network|socket|ENOTFOUND|ECONN|ETIMEDOUT|EAI_AGAIN|EHOSTUNREACH|certificate|TLS|HTTP\s*(5\d\d|403|408|429)|\b(5\d\d|403|408|429)\b|unavailable|upstream|blocked|rate.?limit/i;
 
+const FILTERED_EMPTY = /\bfilter\b|source rules|contained no supported/i;
+
 export function sourceStateFor(entry) {
   if (entry?.ok) {
     if (Number(entry.itemCount) > 0) return 'current';
-    // Page watchers report a missing page structure as an empty success with an
-    // explanation; that is a broken extraction, not an empty source.
-    return entry.error ? 'ingestion-failed' : 'no-new-records';
+    // Adapters explain an empty success. A relevance filter that excluded
+    // everything ("…matched the civic/local filter") is a genuinely empty source;
+    // anything else ("…matched the expected structure", "…section was not found")
+    // is a broken extraction. Unrecognised explanations count as failures, so a
+    // new kind of breakage is never reported as an empty source.
+    if (!entry.error || FILTERED_EMPTY.test(String(entry.error))) return 'no-new-records';
+    return 'ingestion-failed';
   }
   if (['upstream', 'blocked'].includes(entry?.status)) return 'unavailable';
   return UNAVAILABLE.test(String(entry?.error || '')) ? 'unavailable' : 'ingestion-failed';

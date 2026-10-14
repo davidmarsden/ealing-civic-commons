@@ -73,6 +73,12 @@ try {
   const quiet = applySourceStates({ generatedAt: 'w3', items: [], health: [{ id: 'page', ok: true, itemCount: 0 }] }, watched.state, '2026-10-06T10:00:00.000Z');
   assert.deepEqual(quiet.state.sources.page.lastItems.map(i => i.id), ['p1']);
 
+  // Every empty-success explanation the adapters emit today, by meaning.
+  const structural = ['Campaign page responded but no dated news entries matched the expected structure', 'Chronology page responded but no dated entries matched the expected structure', 'Feed responded but no dated entries were parsed', 'News page responded but no dated story links matched the expected structure', 'Official What’s New page responded but no supported publication updates were parsed', 'Page fetched but no dated article cards matched the current extraction rules', 'Page fetched but the configured living-publication section was not found', 'Page responded but no reliably dated entries were parsed', 'Pages fetched but no dated rich-source entries matched the configured structure', 'Source page fetched but no safely dated article links matched the configured publication pattern', 'Something new and unrecognised went wrong'];
+  const filtered = ['Archive fetched but no current entries matched the Ealing-area filter', 'Feed fetched but no current entries passed the civic-interest filter', 'Feed fetched but no current videos matched the civic/local filter', 'Page fetched but no current civic/community material matched the source rules', 'ModernGov feed responded but contained no supported publication updates', 'Static-egress relay responded but contained no supported publication updates'];
+  for (const error of structural) assert.equal(sourceStateFor({ ok: true, itemCount: 0, status: 'empty', error }), 'ingestion-failed', error);
+  for (const error of filtered) assert.equal(sourceStateFor({ ok: true, itemCount: 0, status: 'empty', error }), 'no-new-records', error);
+
   // --- Health IDs that differ from item sourceIds (Codex P2) -------------------
   const { linkHealthToItems } = await import('../netlify/functions/combined-feed-core.mjs');
   const metHealth = linkHealthToItems({ items: [item('m1', 'met-ealing-news', 7), item('m2', 'met-ealing-southall', 6)], health: [{ id: 'met-ealing', ok: true, itemCount: 2 }] }, 'met');

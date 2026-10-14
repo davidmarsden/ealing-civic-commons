@@ -14,11 +14,24 @@ Three separate states, updated as evidence arrives. *Implemented* = merged-ready
 | Durable CDN caching; errors not cached | #165 | Yes | **Yes**: `Cache-Status: "Netlify Durable"; … stored` on the preview vs `fwd=bypass` on production; a 405 error is `no-store` and not stored | **Yes**: production now shows `"Netlify Durable"; … stored`; the 405 error stays `no-store` and is not stored |
 | `social-preview` edge caching | #165 | Yes | **Yes**: entity page stored in the durable cache; repeat request is an edge hit | **Yes**: `/places/walpole-park` is stored in the durable cache and a repeat request is an edge hit |
 | Browser feed fetches without `no-store` | #165 | Yes | Not measured (browser-side) | Pending |
-| Phase 2: background ingest (`feed-ingest`), scheduled trigger returns at once, run lock and minimum interval | Phase 2 PR | Yes: `scripts/test-feed-snapshot.mjs` (real Blobs client) | Pending | Pending: one ingest per slot in the logs; no 499 retries |
-| Phase 2: `combined-feed` serves the snapshot (live fallback if missing or older than 60 min) | Phase 2 PR | Yes (tests above) | Pending | Pending: `combined-feed` timings vs the 8–32 s baseline |
-| Phase 2: source states (current / no new records / unavailable / ingestion failed), last-good items served and labelled stale | Phase 2 PR | Yes (tests above) | Pending | Pending |
-| Phase 2: source registry with per-source timing | Phase 2 PR | Yes | Pending | Pending: slowest sources in the ingest log |
+| Phase 2: background ingest (`feed-ingest`), scheduled trigger returns at once, run lock and minimum interval | #166 | Yes: `scripts/test-feed-snapshot.mjs` (real Blobs client) | **Yes** (14 Oct 2026): POST returned 202 in 0.5 s; the background run built the feed in 17.3 s, wrote the snapshot and archived 1,572 items into the preview store in 11 s; a second POST two minutes later did no work (the snapshot kept the first run's `runId`) | Pending: one ingest per slot in the logs; no 499 retries |
+| Phase 2: `combined-feed` serves the snapshot (live fallback if missing or older than 60 min) | #166 | Yes (tests above) | **Yes**: before the first ingest it built live (`reason: no snapshot`); afterwards it served the snapshot in **0.52–0.85 s, vs 10.2–29.2 s on production**, interleaved, 5 samples each | Pending: `combined-feed` timings vs the 8–32 s baseline |
+| Phase 2: source states (current / no new records / unavailable / ingestion failed), last-good items served and labelled stale | #166 | Yes (tests above) | **Yes**: 71 entries classified (45 current, 8 no new records, 5 unavailable, 13 ingestion failed). Real data showed relevance-filter empties being counted as failures; fixed, with every adapter message under test | Pending |
+| Phase 2: source registry with per-source timing | #166 | Yes | **Yes**: the slowest group (faith/community pages) takes ~17 s and sets the ingest's build time | Pending: slowest sources in the ingest log |
 | Phase 4 frontend build | — | No | — | — |
+
+### Preview finding: sources currently failing (14 Oct 2026)
+
+The first ingest on the #166 preview reported these real problems, previously hidden as unavailable or empty:
+
+- **Ingestion failed:**
+  - YouTube feeds returning 404: `cap-the-towers`, `eci-ealing`, `eci-southall`, `southall`, `young-ealing-foundation`.
+  - Pages whose dated-link pattern no longer matches: `ealing-libdems-news`, `lager-can-blog`, `norwood-green-residents`, `southall-community-alliance`.
+- **Unavailable:** `ealing-community-independents-current` (403), `ealing-synagogue-civic` (403), `ealing-culture` (HTML instead of JSON), `hanwell-community-forum` (fetch failed), `neighbours-paper` (timed out).
+
+Each needs a source-specific fix or retirement. That is content maintenance, outside this plan.
+
+A Blobs `400` from listing contributions (`Reviewed civic context activity unavailable`) appears only on deploy previews and deploy permalinks, including deploys from before this work. It is caught, and it does not occur on production.
 
 ### Production finding: the archiver runs two or three times per slot (pre-existing)
 
