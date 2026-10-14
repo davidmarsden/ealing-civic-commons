@@ -26,3 +26,4 @@ jobs:
       - run: npm run test:social-page
       - run: npm run test:civic-place-links
       - run: npm run test:build-assets
+      - run: npm run test:feed-alerts

@@ -15,13 +15,14 @@ import { archiveItems, archiveSortTime, listArchivedItems, SEARCH_INDEX_KEY, STO
 //   ?action=cases                      list the comparison cases for this data
 //   ?action=compare&case=N             one case: indexed vs full-scan results, timings, store ops
 //   ?action=walk                       page through the whole index: count, order, gaps, duplicates
+//   ?action=consistency&samples=7      archive page reads against production, strong vs eventual (read-only)
 //
 // scripts/archive-index-preview-check.mjs drives these steps end to end.
 
 const json = (body, status = 200) => new Response(JSON.stringify(body, null, 2), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 
-const productionReadOnly = () => {
-  const blobs = getStore(STORE_NAME, { consistency: 'strong' });
+const productionReadOnly = (consistency = 'strong') => {
+  const blobs = getStore(STORE_NAME, { consistency });
   return { list: options => blobs.list(options), get: (key, options) => blobs.get(key, options) };
 };
 
@@ -149,6 +150,29 @@ async function walk(local) {
   };
 }
 
+// Production is read through the read-only wrapper with each consistency level,
+// alternating, so both see the same data and network conditions. Nothing is written.
+async function consistency(samples) {
+  const queries = [{ limit: 40 }, { limit: 40, offset: 40 }, { limit: 40, q: 'council' }, { limit: 250 }];
+  const results = { strong: [], eventual: [] };
+  for (let i = 0; i < samples; i += 1) {
+    for (const level of i % 2 ? ['eventual', 'strong'] : ['strong', 'eventual']) {
+      const reads = counted(productionReadOnly(level));
+      const run = await timed(async () => { for (const query of queries) await listArchivedItems(query, { blobs: reads }); });
+      results[level].push({ ms: run.ms, error: run.error, ops: reads.ops });
+    }
+  }
+  const median = list => { const sorted = list.map(r => r.ms).sort((a, b) => a - b); return sorted[Math.floor(sorted.length / 2)]; };
+  // What the archiver's full key listing costs on each run (it reconciles against it).
+  const listings = [];
+  for (let i = 0; i < Math.min(samples, 5); i += 1) {
+    const reads = counted(productionReadOnly('strong'));
+    const run = await timed(() => reads.list({ prefix: 'item/' }));
+    listings.push({ ms: run.ms, keys: run.value?.blobs?.length ?? null, error: run.error });
+  }
+  return { itemListing: { medianMs: median(listings), keys: listings[0]?.keys, runs: listings }, queries, samples, strong: { medianMs: median(results.strong), runs: results.strong }, eventual: { medianMs: median(results.eventual), runs: results.eventual } };
+}
+
 export default async request => {
   const context = Netlify.context?.deploy?.context;
   const token = process.env.ARCHIVE_CHECK_TOKEN;
@@ -179,6 +203,7 @@ export default async request => {
       return json(await compare(local, all[index]));
     }
     if (action === 'walk') return json(await walk(local));
+    if (action === 'consistency') return json(await consistency(Math.max(1, Math.min(Number(url.searchParams.get('samples')) || 7, 15))));
     return json({ error: 'Unknown action' }, 400);
   } catch (error) {
     console.error('Archive index check failed', error);
