@@ -23,7 +23,7 @@ const json = (body, status = 200) => new Response(JSON.stringify(body, null, 2),
 
 const productionReadOnly = (consistency = 'strong') => {
   const blobs = getStore(STORE_NAME, { consistency });
-  return { list: options => blobs.list(options), get: (key, options) => blobs.get(key, options) };
+  return { list: options => blobs.list(options), get: (key, options) => blobs.get(key, options), getWithMetadata: (key, options) => blobs.getWithMetadata(key, options) };
 };
 
 // Counts store operations so each step reports its real Blobs workload.
