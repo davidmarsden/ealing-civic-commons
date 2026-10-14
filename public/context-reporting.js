@@ -233,7 +233,7 @@ if (route) {
       // collection here. Issue/topic routes retain the generic current feed.
       const feedPromise = route.kind === 'entity'
         ? Promise.resolve(null)
-        : fetch('/.netlify/functions/feed', { cache:'no-store' }).catch(() => null);
+        : fetch('/.netlify/functions/feed').catch(() => null);
       const [data, feedResponse] = await Promise.all([
         fetchContext(route),
         feedPromise

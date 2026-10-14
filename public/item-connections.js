@@ -77,7 +77,7 @@ async function renderConnections() {
   if (!section || !content || !title) return false;
 
   try {
-    const response = await fetch('/.netlify/functions/civic-entities', { cache: 'no-store' });
+    const response = await fetch('/.netlify/functions/civic-entities');
     if (!response.ok) return true;
     const data = await response.json();
     const text = normalizedText(`${title.textContent || ''}\n${summary?.textContent || ''}`);

@@ -97,7 +97,7 @@ async function load() {
     renderHero(data); renderStats(data); renderProviders(data.providers); renderActors(visibleActors(data)); renderRelationships(data.relationships); renderSources(data.sources);
     const [archiveResult,feedResponse] = await Promise.all([
       archivedReporting([data.issue.name,...(data.issue.aliases||[])], []).catch(()=>[]),
-      fetch('/.netlify/functions/combined-feed',{cache:'no-store'}).catch(()=>null)
+      fetch('/.netlify/functions/combined-feed').catch(()=>null)
     ]);
     if (feedResponse?.ok) { const feed = await feedResponse.json(); renderCurrent(currentMatches(feed,data.issue)); }
     const historical=mergeReporting(data.reporting,archiveResult); renderReporting(historical); renderStats(data,historical.length);

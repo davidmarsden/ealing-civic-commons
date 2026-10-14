@@ -225,7 +225,7 @@ async function load() {
   status.textContent = 'Loading live sources…';
   loadContributions();
   try {
-    const res = await fetch('/.netlify/functions/combined-feed', { cache: 'no-store' });
+    const res = await fetch('/.netlify/functions/combined-feed');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     state.data = await res.json();
     const good = state.data.health.filter(h => h.ok).length;

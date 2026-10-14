@@ -61,7 +61,7 @@ export default async request => {
     });
     const result = await archiveItems(items);
     const campaignCandidates = (stopTowers.archiveItems?.length || 0) + (victoriaHall.archiveItems?.length || 0);
-    console.log(`Civic item archive complete: ${result.stored} stored; ${result.newCandidates} candidates; ${result.failed} failed; manifest ${result.manifestSize}; rich-source candidates ${rich.archiveItems?.length || 0}; campaign candidates ${campaignCandidates}; additional Southall candidates ${southallExtras.archiveItems?.length || 0}; borough/town candidates ${boroughTown.archiveItems?.length || 0}`);
+    console.log(`Civic item archive complete: ${result.stored} stored; ${result.newCandidates} candidates; ${result.failed} failed; manifest ${result.manifestSize}; search index ${result.searchIndexSize} (complete: ${result.searchIndexComplete}, backfilled ${result.indexBackfilled}, written: ${result.searchIndexWritten}, bytes: ${result.searchIndexBytes ?? 'unchanged'}); archive timings ${JSON.stringify(result.timings)}; rich-source candidates ${rich.archiveItems?.length || 0}; campaign candidates ${campaignCandidates}; additional Southall candidates ${southallExtras.archiveItems?.length || 0}; borough/town candidates ${boroughTown.archiveItems?.length || 0}`);
   } catch (error) {
     console.error('Civic item archive failed', error);
   }

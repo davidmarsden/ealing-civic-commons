@@ -194,7 +194,7 @@ async function fetchReferences(query) {
 
 async function load() {
   try {
-    const response = await fetch('/.netlify/functions/civic-entities', { cache: 'no-store' });
+    const response = await fetch('/.netlify/functions/civic-entities');
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
     allEntities = data.entities || [];

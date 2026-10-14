@@ -154,7 +154,9 @@ async function loadArchivedFollowedItems(keys, liveItems) {
     .map(result => result.value.item);
 }
 
-export default async request => {
+// `feedData` / `contributions` let a caller that renders many personal feeds in one
+// run (email-dispatch) build the combined feed once instead of once per subscriber.
+export async function renderPersonalFeed(request, { feedData = null, contributions = null } = {}) {
   const requestUrl = new URL(request.url);
   const { targets, overflow } = readTargets(requestUrl);
 
@@ -172,26 +174,29 @@ export default async request => {
     });
   }
 
-  let upstream;
-  const contributionsPromise = loadPublishedContributions(request.url);
-  try {
-    upstream = await feedHandler(request);
-  } catch (error) {
-    console.error('Personal RSS upstream feed failed', error);
-    return new Response('Civic Commons feed is temporarily unavailable.', {
-      status: 503,
-      headers: { 'content-type': 'text/plain; charset=utf-8' }
-    });
+  const contributionsPromise = contributions ? Promise.resolve(contributions) : loadPublishedContributions(request.url);
+  let data = feedData;
+  if (!data) {
+    let upstream;
+    try {
+      upstream = await feedHandler(request);
+    } catch (error) {
+      console.error('Personal RSS upstream feed failed', error);
+      return new Response('Civic Commons feed is temporarily unavailable.', {
+        status: 503,
+        headers: { 'content-type': 'text/plain; charset=utf-8' }
+      });
+    }
+
+    if (!upstream.ok) {
+      return new Response('Civic Commons feed is temporarily unavailable.', {
+        status: 503,
+        headers: { 'content-type': 'text/plain; charset=utf-8' }
+      });
+    }
+    data = await upstream.json();
   }
 
-  if (!upstream.ok) {
-    return new Response('Civic Commons feed is temporarily unavailable.', {
-      status: 503,
-      headers: { 'content-type': 'text/plain; charset=utf-8' }
-    });
-  }
-
-  const data = await upstream.json();
   const liveItems = data.items || [];
   const archivedFollowedItems = await loadArchivedFollowedItems(targets.items, liveItems);
   const combinedItems = [...liveItems, ...archivedFollowedItems];
@@ -202,8 +207,8 @@ export default async request => {
   const followedThreads = new Set(targets.items.map(key => `civic-item:${key}`));
   matchedItems.forEach(item => followedThreads.add(`civic-item:${stableItemKey(item.id)}`));
 
-  const contributions = await contributionsPromise;
-  const matchedContributions = contributions.filter(entry => followedThreads.has(entry.threadId));
+  const publishedContributions = await contributionsPromise;
+  const matchedContributions = publishedContributions.filter(entry => followedThreads.has(entry.threadId));
   const entries = [
     ...matchedItems.map(item => sourceEntry(item, siteOrigin)),
     ...matchedContributions.map(entry => contributionEntry(entry, siteOrigin, titleByThread))
@@ -219,8 +224,12 @@ export default async request => {
   return new Response(body, {
     headers: {
       'content-type': 'application/rss+xml; charset=utf-8',
-      'cache-control': 'public, max-age=300, stale-while-revalidate=900',
+      'cache-control': 'public, max-age=300, stale-while-revalidate=900', 'netlify-cdn-cache-control': 'public, durable, s-maxage=300, stale-while-revalidate=900',
       'access-control-allow-origin': '*'
     }
   });
-};
+}
+
+export { loadPublishedContributions };
+
+export default request => renderPersonalFeed(request);

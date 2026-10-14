@@ -211,7 +211,7 @@ export default async () => {
   return new Response(JSON.stringify(data), {
     headers: {
       'content-type': 'application/json; charset=utf-8',
-      'cache-control': 'public, max-age=300, stale-while-revalidate=900',
+      'cache-control': 'public, max-age=300, stale-while-revalidate=900', 'netlify-cdn-cache-control': 'public, durable, s-maxage=300, stale-while-revalidate=900',
       'access-control-allow-origin': '*'
     }
   });

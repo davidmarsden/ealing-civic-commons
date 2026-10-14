@@ -398,7 +398,7 @@ export default async () => {
       status: 200,
       headers: {
         'content-type': 'application/json; charset=utf-8',
-        'cache-control': 'public, max-age=900, stale-while-revalidate=3600'
+        'cache-control': 'public, max-age=900, stale-while-revalidate=3600', 'netlify-cdn-cache-control': 'public, durable, s-maxage=900, stale-while-revalidate=3600'
       }
     });
   } catch (error) {

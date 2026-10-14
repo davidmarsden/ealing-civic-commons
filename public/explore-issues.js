@@ -16,7 +16,7 @@ async function loadOngoingIssues() {
   const root = document.getElementById('ongoingIssues');
   if (!root) return;
   try {
-    const response = await fetch('/.netlify/functions/civic-issues', { cache: 'no-store' });
+    const response = await fetch('/.netlify/functions/civic-issues');
     if (!response.ok) throw new Error(`Issue directory HTTP ${response.status}`);
     const data = await response.json();
     const issues = (data.issues || []).filter(issue => issue.status === 'ongoing');

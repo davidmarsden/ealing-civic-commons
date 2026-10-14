@@ -21,7 +21,7 @@ export default async request => {
     if (!record) {
       return new Response(JSON.stringify({ status: 'not-found', kind, id }), {
         status: 404,
-        headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=300' }
+        headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=300', 'netlify-cdn-cache-control': 'public, durable, s-maxage=300' }
       });
     }
     return new Response(JSON.stringify({
@@ -36,7 +36,7 @@ export default async request => {
       value: record.value
     }), {
       status: 200,
-      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=900, stale-while-revalidate=3600' }
+      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=900, stale-while-revalidate=3600', 'netlify-cdn-cache-control': 'public, durable, s-maxage=900, stale-while-revalidate=3600' }
     });
   } catch (error) {
     return new Response(JSON.stringify({ status: 'error', error: String(error?.message || error) }), {
