@@ -18,7 +18,8 @@ Three separate states, updated as evidence arrives. *Implemented* = merged-ready
 | Phase 2: `combined-feed` serves the snapshot (live fallback if missing or older than 60 min) | #166 | Yes (tests above) | **Yes**: before the first ingest it built live (`reason: no snapshot`); afterwards it served the snapshot in **0.52–0.85 s, vs 10.2–29.2 s on production**, interleaved, 5 samples each | **Yes**: production `combined-feed` is served from the snapshot (`servedFrom: snapshot`). Cache-busted median 0.62 s over 6 samples (0.46–2.44 s), against 10–29 s before |
 | Phase 2: source states (current / no new records / unavailable / ingestion failed), last-good items served and labelled stale | #166 | Yes (tests above) | **Yes**: 71 entries classified (45 current, 8 no new records, 5 unavailable, 13 ingestion failed). Real data showed relevance-filter empties being counted as failures; fixed, with every adapter message under test | **Yes**: production states 46 current, 11 no new records, 5 unavailable, 9 ingestion failed. The same failing sources as on the preview |
 | Phase 2: source registry with per-source timing | #166 | Yes | **Yes**: the slowest group (faith/community pages) takes ~17 s and sets the ingest's build time | **Yes**: the faith/community page group sets the build time (16–27 s) |
-| Phase 4 frontend build | — | No | — | — |
+| Phase 4: fingerprinted, minified JS/CSS (`/assets/<name>.<hash>.<ext>`), references rewritten, `modulepreload` for each page's static imports | #168 | Yes: `scripts/test-build-assets.mjs` (fixture site and the real `public/` tree); all 22 pages behave identically before and after in Chromium (same console errors, same rendered text) | Pending | Pending |
+| Phase 4: one-year `immutable` cache on `/assets/*`; service worker serves hashed assets cache-first, keeps one copy per asset, never caches HTML there | #168 | Yes | Pending | Pending |
 
 ### Preview finding: sources currently failing (14 Oct 2026)
 
@@ -52,6 +53,8 @@ These follow from the failing-source list above. Each cause was diagnosed from t
 **Verified on preview (#167, 14 Oct 2026):** after one ingest, all eight targeted sources are `current`: the five YouTube channels (7–15 items each), LAGER Can (10), Ealing Lib Dems (6) and Southall Community Alliance (2). Norwood Green no longer appears. States went from 45 current / 9 ingestion failed to 53 current / 12 no new records / 4 unavailable / 1 ingestion failed. Still open:
 - Neighbours' Paper times out even at 12 s.
 - **New:** Ealing Green Party (`/news/` returns 404, and the homepage HTML now has no links, which suggests a rebuilt or script-rendered site). This is follow-up work, surfaced by the source states as intended.
+
+**Verified in production (#167, 14 Oct 2026):** after the first production ingest, 55 current / 11 no new records / 3 unavailable / 1 ingestion failed. The eight targeted sources are all `current`. The three `unavailable` are Ealing Community Independents and Ealing Synagogue (403) and Hanwell Community Forum (down). The one failure is Ealing Green Party, whose whole site currently shows "Down for maintenance. Back soon."; no adapter change is needed until it returns.
 
 ### Production finding: the archiver runs two or three times per slot (pre-existing)
 
@@ -188,6 +191,9 @@ request path
 5. Use strong consistency only where read-after-write matters (review/moderation), eventual elsewhere.
 
 ### Phase 4 — frontend delivery (~1 week, aligns with render audit)
+
+**Implemented (#168):** items 1–3 in a narrower form. `scripts/build-assets.mjs` runs after the `public/` copy: every JS/CSS file a page loads (directly, through imports, dynamic imports or injected stylesheets) is minified with esbuild and written to `/assets/<path>.<hash>.<ext>`; references are rewritten dependencies-first, so a change cascades to the hashes of everything that imports it, and the hand-kept `?v=` strings no longer matter. Originals stay in place for old cached pages, the service worker and external links. Pages are **not** merged into per-page bundles: each page's module scripts run independently today (an error in one does not stop the others), and the render audit shows several rely on that, so bundling waits for item 4. Stale-while-revalidate for feed JSON is left out: the feed is already served from the snapshot in under a second, and an offline copy would need its own staleness labelling. Measure with `scripts/measure-pages.mjs` (Playwright, mobile network and CPU profile, cold and repeat visits, counting network round trips including 304 revalidations).
+
 1. Add an **esbuild step** to `npm run build`: one entry per page (`index`, `entity`, `issue`, `topic`, `explore`, …), minified, content-hashed filenames, code-split shared modules. Rewrite `<script>` tags at build time; remove manual `?v=` strings.
 2. `_headers`: hashed assets `Cache-Control: public, max-age=31536000, immutable`; HTML stays revalidating.
 3. Service worker: cache-first for hashed assets, stale-while-revalidate for feed JSON (offline reading of the last feed), versioned cache name from the build.
