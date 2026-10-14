@@ -95,16 +95,18 @@ async function load() {
     if (!issueResponse.ok) throw new Error(`Issue HTTP ${issueResponse.status}`);
     const data = await issueResponse.json(); if (!data.matched) throw new Error(data.reason || 'Issue not found');
     renderHero(data); renderStats(data); renderProviders(data.providers); renderActors(visibleActors(data)); renderRelationships(data.relationships); renderSources(data.sources);
-    const [archiveResult,feedResponse] = await Promise.all([
-      archivedReporting([data.issue.name,...(data.issue.aliases||[])], []).catch(()=>[]),
-      fetch('/.netlify/functions/combined-feed').catch(()=>null)
-    ]);
     // Sole owner of this page's Current Commons and historical reporting (the
-    // generic context-reporting.js no longer runs here). Records shown as current
-    // are left out of the historical list.
-    const current = feedResponse?.ok ? currentMatches(await feedResponse.json(), data.issue) : [];
+    // generic context-reporting.js no longer runs here). Historical reporting is
+    // shown as soon as the archive answers, without waiting for the feed (a live
+    // build when the snapshot is stale can take 10-30 s); once the feed arrives,
+    // records shown as current are taken out of the historical list.
+    const feedPromise = fetch('/.netlify/functions/combined-feed').then(response => response.ok ? response.json() : null).catch(()=>null);
+    const archiveResult = await archivedReporting([data.issue.name,...(data.issue.aliases||[])], []).catch(()=>[]);
+    let historical=mergeReporting(data.reporting,archiveResult); renderReporting(historical); renderStats(data,historical.length);
+    const feed = await feedPromise;
+    const current = feed ? currentMatches(feed, data.issue) : [];
     renderCurrent(current);
-    const historical=mergeReporting(data.reporting,archiveResult,current.map(item=>item.url)); renderReporting(historical); renderStats(data,historical.length);
+    if (current.length) { historical=mergeReporting(data.reporting,archiveResult,current.map(item=>item.url)); if (historical.length) renderReporting(historical); else { $('#reportingSection').hidden = true; $('#issueReporting').innerHTML = ''; } renderStats(data,historical.length); }
   } catch (error) {
     $('#issueStatus').innerHTML = '<h1>Civic issue temporarily unavailable.</h1><p>The issue graph could not be loaded. The rest of Civic Commons is unaffected.</p><p><a href="/explore.html">Explore the civic graph →</a></p>';
     console.error('Civic issue page failed', error);

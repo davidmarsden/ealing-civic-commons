@@ -21,10 +21,14 @@ async function load(){ const route=routeInfo(); if(!route){$('#topicStatus').inn
 renderList('#issuesSection','#topicIssues',data.issues,i=>`<li><h3><a href="/${esc(i.route)}">${esc(i.name)}</a></h3><p>${esc(i.description||'')}</p><span class="entity-meta">${esc(i.status||'ongoing')}</span></li>`);
 renderList('#entitiesSection','#topicEntities',data.entities,e=>`<li><h3>${e.commonsRoute?`<a href="/${esc(e.commonsRoute)}">${esc(e.name)}</a>`:esc(e.name)}</h3><span class="entity-meta">${esc(e.type)} · ${e.count} reviewed archive post${e.count===1?'':'s'}</span></li>`);
 renderList('#sourcesSection','#topicSources',data.sources,s=>`<li><h3>${s.url?`<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title)}</a>`:esc(s.title)}</h3><span class="entity-meta">${esc(s.publisher||'Source')}${s.date?` · ${esc(fmtDate(s.date))}`:''}</span></li>`);
-const [archiveResult,fr]=await Promise.all([archivedReporting([data.topic.name,...(data.topic.aliases||[])],data.feedTopics||[]).catch(()=>[]),fetch('/.netlify/functions/combined-feed').catch(()=>null)]);
-// Sole owner of this page's Current Commons and historical reporting; records
-// shown as current are left out of the historical list.
-const current=fr?.ok?currentMatches(await fr.json(),data):[]; renderCurrent(current);
-const historical=mergeReporting(data.reporting,archiveResult,current.map(item=>item.url)); renderList('#reportingSection','#topicReporting',historical,p=>`<li><h3><a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">${esc(p.title)}</a></h3>${p.summary?`<p>${esc(p.summary)}</p>`:''}<span class="entity-meta">${esc(p.source||'Publisher')} · ${esc(fmtDate(p.date))}${p.reviewedMatch?' · reviewed match':' · Civic Archive match'}</span></li>`); renderStats(data,historical.length);
+// Sole owner of this page's Current Commons and historical reporting. Historical
+// reporting is shown as soon as the archive answers, without waiting for the feed;
+// once it arrives, records shown as current are taken out of the historical list.
+const feedPromise=fetch('/.netlify/functions/combined-feed').then(r=>r.ok?r.json():null).catch(()=>null);
+const archiveResult=await archivedReporting([data.topic.name,...(data.topic.aliases||[])],data.feedTopics||[]).catch(()=>[]);
+const renderHistorical=(excluded=[])=>{const historical=mergeReporting(data.reporting,archiveResult,excluded); if(!historical.length){$('#reportingSection').hidden=true;$('#topicReporting').innerHTML='';} renderList('#reportingSection','#topicReporting',historical,p=>`<li><h3><a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">${esc(p.title)}</a></h3>${p.summary?`<p>${esc(p.summary)}</p>`:''}<span class="entity-meta">${esc(p.source||'Publisher')} · ${esc(fmtDate(p.date))}${p.reviewedMatch?' · reviewed match':' · Civic Archive match'}</span></li>`); renderStats(data,historical.length);};
+renderHistorical();
+const feed=await feedPromise; const current=feed?currentMatches(feed,data):[]; renderCurrent(current);
+if(current.length)renderHistorical(current.map(item=>item.url));
 } catch(error){$('#topicStatus').innerHTML='<h1>Civic topic temporarily unavailable.</h1><p>The topic service could not load this page.</p>';console.error(error);} }
 load();

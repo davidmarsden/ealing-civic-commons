@@ -218,7 +218,7 @@ Two production failures came from the conflicts described above.
 | issue | `#currentItems`, `#issueReporting` and their sections | `issue.js` | `context-reporting.js` no longer runs on issue pages |
 | topic | `#currentItems`, `#topicReporting` and their sections | `topic.js` | as above |
 
-`context-reporting.js` is now entity-only and loaded by `entity.html` itself rather than injected by `site-shell.js`. It reuses the reviewed reporting that `entity.js` publishes with `civic-entity:ready` instead of fetching the entity again. Issue and topic pages leave records shown as current out of the historical list, as `context-reporting.js` did.
+`context-reporting.js` is now entity-only and loaded by `entity.html` itself rather than injected by `site-shell.js`. It reuses the reviewed reporting that `entity.js` publishes with `civic-entity:ready` instead of fetching the entity again. Issue and topic pages leave records shown as current out of the historical list, as `context-reporting.js` did. They render historical reporting as soon as the archive answers and remove the current records from it once the feed arrives, so a slow live feed build (when the snapshot is stale) does not hold back the historical list.
 
 `scripts/check-render-ownership.mjs` compares production with local files substituted: settled state per page and DOM writes per region.
 
