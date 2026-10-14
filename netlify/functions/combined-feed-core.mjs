@@ -125,30 +125,70 @@ async function reviewedContextActivity() {
   }
 }
 
+// Every upstream fetcher, in one table: its result key, how to fetch it, and the
+// placeholder used when the whole fetcher fails. Health entries record how long
+// each fetcher took, and `fetcherFailed` marks a failure of the fetcher itself.
+export const SOURCES = [
+  { key: 'modernGov', fetch: () => fetchModernGovWhatsNew(), fallback: error => ({ items: [], health: [{ id: 'modern-gov', name: 'Ealing Council — ModernGov', homepage: 'https://ealing.moderngov.co.uk/', ok: false, status: 'upstream', error: String(error?.message || error), itemCount: 0 }] }) },
+  { key: 'petitions', fetch: () => fetchEalingPetitions(), fallback: error => ({ items: [], health: [{ id: 'ealing-council-petitions', name: 'Ealing Council — Petitions', homepage: 'https://ealing.moderngov.co.uk/mgEPetitionListDisplay.aspx?bcr=1', ok: false, status: 'upstream', error: String(error?.message || error), itemCount: 0 }] }) },
+  { key: 'gla', fetch: () => fetchGlaFeed(), fallback: error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'gla-filtered', name: 'London City Hall / Assembly', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }) },
+  { key: 'community', fetch: () => fetchCommunityPageFeed(), fallback: error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'community-page-watch', name: 'Community page watch', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }) },
+  { key: 'living', fetch: () => fetchLivingPageFeed(), fallback: error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'living-page-watch', name: 'Living publication pages', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }) },
+  { key: 'rich', fetch: () => fetchRichSourceFeed(), fallback: error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'rich-source-watch', name: 'Rich civic source sites', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }) },
+  { key: 'stopTowers', fetch: () => fetchStopTowersFeed(), fallback: error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'stop-the-towers-news', name: 'Stop The Towers — Campaign News', homepage: 'https://stopthetowers.info/', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }) },
+  { key: 'victoriaHall', fetch: () => fetchVictoriaHallChronology(), fallback: error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'friends-victoria-hall-chronology', name: 'Friends of the Victoria Hall — Chronology', homepage: 'https://savethevictoriahall.weebly.com/', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }) },
+  { key: 'southallExtras', fetch: () => fetchSouthallExtraSources(), fallback: error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'southall-extra-sources', name: 'Additional Southall sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }) },
+  { key: 'boroughTown', fetch: () => fetchBoroughTownSources(), fallback: error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'borough-town-sources', name: 'Additional borough town sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }) },
+  { key: 'met', fetch: () => fetchMetEalingFeed(), fallback: error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'met-ealing', name: 'Metropolitan Police — Ealing', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }) },
+  { key: 'citizens', fetch: () => fetchEalingCitizensFeed(), fallback: error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'ealing-citizens', name: 'Ealing Citizens / Citizens UK', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }) },
+  { key: 'ealingNews', fetch: () => fetchEalingNewsFeed(), fallback: error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'ealing-news', name: 'EALING.NEWS', homepage: 'https://www.ealing.news/', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }) },
+  { key: 'ealingCulture', fetch: () => fetchEalingCultureFeed(), fallback: error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], references: { venues: [], creatives: [] }, health: [{ id: 'ealing-culture', name: 'Ealing Culture — Ealing Council', homepage: 'https://ealingculture.org/', ok: false, status: 'upstream', error: String(error?.message || error), itemCount: 0 }] }) },
+  { key: 'videos', fetch: () => fetchFilteredVideoFeed(), fallback: error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'filtered-video', name: 'Filtered civic video sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }) },
+  { key: 'faith', fetch: () => fetchFaithCommunityFeed(), fallback: error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'faith-community', name: 'Faith and community sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }) },
+  { key: 'localPoliticalEnvironment', fetch: () => fetchLocalPoliticalEnvironmentFeed(), fallback: error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'local-political-environment', name: 'Local political and environmental sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }) }
+];
+
+// Health entries and item sourceIds do not always share an ID (the Met adapter
+// reports one `met-ealing` entry for `met-ealing-news` and per-ward items), so each
+// entry records which item sourceIds it covers and which fetcher group it belongs
+// to. Source states use this to keep and restore the right last-good items.
+export function linkHealthToItems(value, group, extra = {}) {
+  const ids = [...new Set((value?.items || []).map(item => item?.sourceId).filter(Boolean))];
+  const health = value?.health || [];
+  return health.map(entry => {
+    const own = health.length === 1 ? ids : ids.filter(id => id === entry.id || id.startsWith(`${entry.id}-`) || id.startsWith(`${entry.id}:`));
+    return { ...entry, ...extra, group, itemSourceIds: own.length ? own : [entry.id] };
+  });
+}
+
+async function runSource(source) {
+  const started = Date.now();
+  let value, fetcherFailed = false;
+  try { value = await source.fetch(); }
+  catch (error) { value = source.fallback(error); fetcherFailed = true; }
+  const durationMs = Date.now() - started;
+  return [source.key, { ...value, health: linkHealthToItems(value, source.key, { durationMs, ...(fetcherFailed ? { fetcherFailed: true } : {}) }) }];
+}
+
+async function fetchLocalFeeds(request) {
+  const started = Date.now();
+  try {
+    const response = await localFeedHandler(request);
+    const data = response?.ok ? await response.json() : { items: [], health: [], enrichment: {} };
+    return { ...data, health: linkHealthToItems(data, 'local', { durationMs: Date.now() - started }) };
+  } catch (error) {
+    return { items: [], enrichment: {}, health: [{ id: 'local-feeds', name: 'Local RSS feeds', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0, durationMs: Date.now() - started, fetcherFailed: true, group: 'local', itemSourceIds: ['local-feeds'] }] };
+  }
+}
+
 export default async request => {
-  const [localResponse, modernGov, petitions, gla, community, living, rich, stopTowers, victoriaHall, southallExtras, boroughTown, met, citizens, ealingNews, ealingCulture, videos, faith, localPoliticalEnvironment, contextActivity] = await Promise.all([
-    localFeedHandler(request),
-    fetchModernGovWhatsNew().catch(error => ({ items: [], health: [{ id: 'modern-gov', name: 'Ealing Council — ModernGov', homepage: 'https://ealing.moderngov.co.uk/', ok: false, status: 'upstream', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchEalingPetitions().catch(error => ({ items: [], health: [{ id: 'ealing-council-petitions', name: 'Ealing Council — Petitions', homepage: 'https://ealing.moderngov.co.uk/mgEPetitionListDisplay.aspx?bcr=1', ok: false, status: 'upstream', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchGlaFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'gla-filtered', name: 'London City Hall / Assembly', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchCommunityPageFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'community-page-watch', name: 'Community page watch', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchLivingPageFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'living-page-watch', name: 'Living publication pages', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchRichSourceFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'rich-source-watch', name: 'Rich civic source sites', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchStopTowersFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'stop-the-towers-news', name: 'Stop The Towers — Campaign News', homepage: 'https://stopthetowers.info/', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchVictoriaHallChronology().catch(error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'friends-victoria-hall-chronology', name: 'Friends of the Victoria Hall — Chronology', homepage: 'https://savethevictoriahall.weebly.com/', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchSouthallExtraSources().catch(error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'southall-extra-sources', name: 'Additional Southall sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchBoroughTownSources().catch(error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'borough-town-sources', name: 'Additional borough town sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchMetEalingFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'met-ealing', name: 'Metropolitan Police — Ealing', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchEalingCitizensFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'ealing-citizens', name: 'Ealing Citizens / Citizens UK', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchEalingNewsFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], health: [{ id: 'ealing-news', name: 'EALING.NEWS', homepage: 'https://www.ealing.news/', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchEalingCultureFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], archiveItems: [], references: { venues: [], creatives: [] }, health: [{ id: 'ealing-culture', name: 'Ealing Culture — Ealing Council', homepage: 'https://ealingculture.org/', ok: false, status: 'upstream', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchFilteredVideoFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'filtered-video', name: 'Filtered civic video sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchFaithCommunityFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'faith-community', name: 'Faith and community sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
-    fetchLocalPoliticalEnvironmentFeed().catch(error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'local-political-environment', name: 'Local political and environmental sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] })),
+  const [localRaw, sourceResults, contextActivity] = await Promise.all([
+    fetchLocalFeeds(request),
+    Promise.all(SOURCES.map(runSource)),
     reviewedContextActivity()
   ]);
+  const { modernGov, petitions, gla, community, living, rich, stopTowers, victoriaHall, southallExtras, boroughTown, met, citizens, ealingNews, ealingCulture, videos, faith, localPoliticalEnvironment } = Object.fromEntries(sourceResults);
 
-  const localRaw = localResponse?.ok ? await localResponse.json() : { items: [], health: [], enrichment: {} };
   const local = {
     ...localRaw,
     items: (localRaw.items || []).filter(item => item.sourceId !== 'modern-gov' && item.sourceId !== 'ealing-council-petitions'),

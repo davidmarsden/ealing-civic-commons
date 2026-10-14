@@ -21,5 +21,6 @@ jobs:
       - run: npm run test:whatdotheyknow
       - run: npm run test:civic-items
       - run: npm run test:archive-index-blobs
+      - run: npm run test:feed-snapshot
       - run: npm run test:social-page
       - run: npm run test:civic-place-links
