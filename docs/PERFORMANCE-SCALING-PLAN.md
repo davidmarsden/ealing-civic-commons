@@ -14,7 +14,10 @@ Three separate states, updated as evidence arrives. *Implemented* = merged-ready
 | Durable CDN caching; errors not cached | #165 | Yes | **Yes**: `Cache-Status: "Netlify Durable"; … stored` on the preview vs `fwd=bypass` on production; a 405 error is `no-store` and not stored | **Yes**: production now shows `"Netlify Durable"; … stored`; the 405 error stays `no-store` and is not stored |
 | `social-preview` edge caching | #165 | Yes | **Yes**: entity page stored in the durable cache; repeat request is an edge hit | **Yes**: `/places/walpole-park` is stored in the durable cache and a repeat request is an edge hit |
 | Browser feed fetches without `no-store` | #165 | Yes | Not measured (browser-side) | Pending |
-| Phase 2 snapshot serving | — | No | — | — |
+| Phase 2: background ingest (`feed-ingest`), scheduled trigger returns at once, run lock and minimum interval | Phase 2 PR | Yes: `scripts/test-feed-snapshot.mjs` (real Blobs client) | Pending | Pending: one ingest per slot in the logs; no 499 retries |
+| Phase 2: `combined-feed` serves the snapshot (live fallback if missing or older than 60 min) | Phase 2 PR | Yes (tests above) | Pending | Pending: `combined-feed` timings vs the 8–32 s baseline |
+| Phase 2: source states (current / no new records / unavailable / ingestion failed), last-good items served and labelled stale | Phase 2 PR | Yes (tests above) | Pending | Pending |
+| Phase 2: source registry with per-source timing | Phase 2 PR | Yes | Pending | Pending: slowest sources in the ingest log |
 | Phase 4 frontend build | — | No | — | — |
 
 ### Production finding: the archiver runs two or three times per slot (pre-existing)
@@ -131,12 +134,18 @@ request path
 4. **Email dispatch**: build the combined feed **once** per run and filter per subscriber in-process (extract `personal-feed`'s filtering into `lib/`); process subscribers with bounded concurrency (e.g. 5).
 5. **Batch `reviewedContextActivity`**: default (eventual) consistency is fine here; it runs on every feed miss.
 
-### Phase 2 — snapshot serving (the main scaling fix, ~1–2 weeks)
-1. Convert `item-archive` into a **background/scheduled ingest** that, after archiving, writes `snapshot/combined-feed.json` and `snapshot/health.json`.
-2. `combined-feed` and `personal-feed` read the snapshot; fall back to live fan-out only if the snapshot is missing or older than ~1 h (and log it).
-3. **Source registry**: replace the 18 hand-written `fetchX().catch(...)` blocks with a table (`id, name, homepage, fetcher, ttl, timeoutMs`). Gives one place for per-source TTLs (e.g. police 15 min, culture 6 h), timeouts, retry/backoff and a simple circuit breaker (skip a source for N runs after repeated failures, serving its last good items from blob).
-4. Store **per-source last-good results** so a failing upstream degrades to stale data, not empty.
-5. **A failed source must never look like an absent one.** Each source's health records one of three states: *no new records* (fetched fine, nothing new), *temporarily unavailable* (fetch failed; last-good items served and marked stale with their age), or *ingestion failed* (fetched but parsing or validation failed, e.g. the page structure changed). The feed and source pages show the state, and this matters most for planning, petitions and FOI.
+### Phase 2 — snapshot serving (implemented in the Phase 2 PR)
+- **Ingest:** the scheduled `item-archive` function only POSTs to `feed-ingest` (a background function, 15-minute limit) and returns. `feed-ingest` takes a Blobs lock (15-minute expiry) and enforces a 5-minute minimum interval. Its URL is public, so this also bounds how often anyone can make it run. It then builds the feed live once, applies source states, writes `snapshot/combined-feed` and `sources/state` to the `civic-commons-feed` store, and archives from the same build (`runArchive`). The upstream fan-out runs once per slot instead of 2–3 times, plus once per CDN miss.
+- **Serve:** `combined-feed` returns the snapshot while it is under 60 minutes old, with `snapshot.servedFrom` and `ageSeconds`. Otherwise it builds live and says why (`snapshot.reason`). `personal-feed`, `place-current-records`, `civic-item` and `email-dispatch` all go through it.
+- **A failed source never looks like an absent one.** Every health entry has a `state`:
+  - `current`: fetched, with records.
+  - `no-new-records`: fetched fine, nothing to show.
+  - `unavailable`: network, timeout, 403/408/429/5xx or upstream errors.
+  - `ingestion-failed`: reached, but the response could not be used, e.g. a 404 or a parse failure.
+  - Failing sources keep their last good items (up to 20), marked `stale` with `staleSince`. Health records `failingSince`, `lastSuccessAt` and `consecutiveFailures`. The homepage health panel and timeline show all of this.
+- **Registry:** `SOURCES` in `combined-feed-core.mjs` replaces the 18 hand-written fetch/fallback blocks; each health entry records `durationMs`, and the ingest log lists the five slowest sources. A failure of the local RSS handler now degrades to an error health entry instead of failing the whole feed.
+- **Verify on preview:** POST `/.netlify/functions/feed-ingest` (scheduled functions do not run on previews), then check that `combined-feed` reports `snapshot.servedFrom: "snapshot"` and its response time.
+- **Later:** per-source TTLs (refresh slow-moving sources less often) and conditional requests (`If-None-Match`/`If-Modified-Since`).
 
 ### Phase 3 — archive indexing (~1 week, before archive passes a few thousand items)
 1. Maintain **index blobs** at write time in `archiveItems`: `index/recent` (key, publishedAt, sourceId, towns, topics, title), plus per-source/town/topic shards. The existing `manifest/recent` and `manifest/search-index` are a start — make them the read path.

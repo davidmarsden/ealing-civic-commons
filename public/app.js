@@ -202,12 +202,24 @@ function render() {
     const placeTags = place.boroughWide
       ? '<span class="tag">Borough-wide</span>'
       : place.towns.map(t => `<span class="tag">${esc(t)}</span>`).join('');
-    return `<article class="item"><div class="item-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass)}</span><div class="item-source">${esc(item.source)}</div><div>${esc(fmtDate(item.publishedAt))}</div></div><div><h3><a href="${esc(itemPath(item))}">${esc(item.title)}</a></h3>${item.summary ? `<p class="item-summary">${esc(item.summary)}</p>` : ''}<div class="item-actions"><a href="${esc(itemPath(item))}">Add context →</a>${additions}<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Read original ↗</a></div><div class="tags">${placeTags}${item.topics.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div></div></article>`;
+    return `<article class="item"><div class="item-meta"><span class="source-pill ${pillClass(item.sourceClass)}">${esc(item.sourceClass)}</span><div class="item-source">${esc(item.source)}</div><div>${esc(fmtDate(item.publishedAt))}</div>${item.stale ? `<div class="item-stale" title="This source could not be fetched in the latest update; this is the last copy the Commons confirmed.">Source unavailable · last confirmed ${esc(ago(item.staleSince) || 'earlier')}</div>` : ''}</div><div><h3><a href="${esc(itemPath(item))}">${esc(item.title)}</a></h3>${item.summary ? `<p class="item-summary">${esc(item.summary)}</p>` : ''}<div class="item-actions"><a href="${esc(itemPath(item))}">Add context →</a>${additions}<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Read original ↗</a></div><div class="tags">${placeTags}${item.topics.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div></div></article>`;
   }).join('');
 }
 
 function diagnosticLabel(diagnostic) { const mode = diagnostic.mode === 'browser-compatible' ? 'Retry' : 'Initial request'; const elapsed = Number.isFinite(diagnostic.elapsedMs) ? ` · ${diagnostic.elapsedMs} ms` : ''; return diagnostic.outcome === 'http-response' ? `${mode}: HTTP ${diagnostic.httpStatus}${elapsed}` : `${mode}: ${diagnostic.error || 'transport error'}${elapsed}`; }
-function renderHealth() { const health = state.data?.health ?? []; healthList.innerHTML = health.map(h => { const healthStatus = h.status || (h.ok ? 'ok' : 'error'); const label = h.ok ? h.itemCount : 'currently unavailable'; const dotClass = h.ok ? 'ok' : (healthStatus === 'blocked' || healthStatus === 'upstream') ? 'blocked' : 'bad'; const sourceName = h.homepage ? `<a class="health-source" href="${esc(h.homepage)}" target="_blank" rel="noopener noreferrer">${esc(h.name)}</a>` : esc(h.name); const diagnostics = showDiagnostics && Array.isArray(h.diagnostics) && h.diagnostics.length ? `<div class="health-diagnostics"><strong>Fetch diagnostics</strong>${h.diagnostics.map(d => `<span>${esc(diagnosticLabel(d))}</span>`).join('')}${h.error ? `<span>Result: ${esc(h.error)}</span>` : ''}</div>` : ''; const title = showDiagnostics ? esc(h.error || 'Feed fetched successfully') : ''; return `<div class="health-entry"><div class="health-row"${title ? ` title="${title}"` : ''}><span class="health-dot ${dotClass}"></span><span>${sourceName}</span><span class="health-count">${esc(label)}</span></div>${diagnostics}</div>`; }).join(''); }
+function ago(iso) { const ms = Date.now() - Date.parse(iso || ''); if (!Number.isFinite(ms)) return null; const minutes = Math.round(ms / 60000); if (minutes < 60) return `${Math.max(1, minutes)} min ago`; const hours = Math.round(minutes / 60); return hours < 48 ? `${hours} h ago` : `${Math.round(hours / 24)} days ago`; }
+// A failed source is shown as failed, never as merely empty.
+function healthLabel(h) {
+  if (h.state === 'no-new-records') return 'no new records';
+  if (h.state === 'unavailable' || h.state === 'ingestion-failed') {
+    const what = h.state === 'unavailable' ? 'unavailable' : 'ingestion failed';
+    const since = h.failingSince ? ` since ${ago(h.failingSince)}` : '';
+    const lastGood = h.servingLastGood ? ` · showing ${h.servingLastGood} earlier items from ${ago(h.lastSuccessAt) || 'before'}` : (h.lastSuccessAt ? ` · last fetched ${ago(h.lastSuccessAt)}` : '');
+    return `${what}${since}${lastGood}`;
+  }
+  return h.ok ? h.itemCount : 'currently unavailable';
+}
+function renderHealth() { const health = state.data?.health ?? []; healthList.innerHTML = health.map(h => { const healthStatus = h.status || (h.ok ? 'ok' : 'error'); const label = healthLabel(h); const dotClass = h.state === 'no-new-records' ? 'idle' : h.ok ? 'ok' : (h.state === 'unavailable' || healthStatus === 'blocked' || healthStatus === 'upstream') ? 'blocked' : 'bad'; const sourceName = h.homepage ? `<a class="health-source" href="${esc(h.homepage)}" target="_blank" rel="noopener noreferrer">${esc(h.name)}</a>` : esc(h.name); const diagnostics = showDiagnostics && Array.isArray(h.diagnostics) && h.diagnostics.length ? `<div class="health-diagnostics"><strong>Fetch diagnostics</strong>${h.diagnostics.map(d => `<span>${esc(diagnosticLabel(d))}</span>`).join('')}${h.error ? `<span>Result: ${esc(h.error)}</span>` : ''}</div>` : ''; const title = showDiagnostics ? esc(h.error || 'Feed fetched successfully') : ''; return `<div class="health-entry"><div class="health-row"${title ? ` title="${title}"` : ''}><span class="health-dot ${dotClass}"></span><span>${sourceName}</span><span class="health-count">${esc(label)}</span></div>${diagnostics}</div>`; }).join(''); }
 
 async function loadContributions() {
   try {
@@ -230,7 +242,8 @@ async function load() {
     state.data = await res.json();
     const good = state.data.health.filter(h => h.ok).length;
     const unavailable = state.data.health.filter(h => !h.ok).length;
-    status.textContent = `Updated ${new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date(state.data.generatedAt))} · ${good}/${state.data.health.length} feeds responding${unavailable ? ` · ${unavailable} currently unavailable` : ''}`;
+    const failedIngest = state.data.health.filter(h => h.state === 'ingestion-failed').length;
+    status.textContent = `Updated ${new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date(state.data.generatedAt))} · ${good}/${state.data.health.length} feeds responding${unavailable - failedIngest > 0 ? ` · ${unavailable - failedIngest} currently unavailable` : ''}${failedIngest ? ` · ${failedIngest} ingestion failed` : ''}`;
     renderHealth(); render();
   } catch {
     if (window.CIVIC_COMMONS_DEMO) { state.data = window.CIVIC_COMMONS_DEMO; status.textContent = 'Showing prototype data · live RSS activates when deployed with the server-side feed function'; renderHealth(); render(); }
