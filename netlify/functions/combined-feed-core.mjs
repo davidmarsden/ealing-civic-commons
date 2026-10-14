@@ -148,13 +148,26 @@ export const SOURCES = [
   { key: 'localPoliticalEnvironment', fetch: () => fetchLocalPoliticalEnvironmentFeed(), fallback: error => ({ generatedAt: new Date().toISOString(), items: [], health: [{ id: 'local-political-environment', name: 'Local political and environmental sources', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0 }] }) }
 ];
 
+// Health entries and item sourceIds do not always share an ID (the Met adapter
+// reports one `met-ealing` entry for `met-ealing-news` and per-ward items), so each
+// entry records which item sourceIds it covers and which fetcher group it belongs
+// to. Source states use this to keep and restore the right last-good items.
+export function linkHealthToItems(value, group, extra = {}) {
+  const ids = [...new Set((value?.items || []).map(item => item?.sourceId).filter(Boolean))];
+  const health = value?.health || [];
+  return health.map(entry => {
+    const own = health.length === 1 ? ids : ids.filter(id => id === entry.id || id.startsWith(`${entry.id}-`) || id.startsWith(`${entry.id}:`));
+    return { ...entry, ...extra, group, itemSourceIds: own.length ? own : [entry.id] };
+  });
+}
+
 async function runSource(source) {
   const started = Date.now();
   let value, fetcherFailed = false;
   try { value = await source.fetch(); }
   catch (error) { value = source.fallback(error); fetcherFailed = true; }
   const durationMs = Date.now() - started;
-  return [source.key, { ...value, health: (value?.health || []).map(entry => ({ ...entry, durationMs, ...(fetcherFailed ? { fetcherFailed: true } : {}) })) }];
+  return [source.key, { ...value, health: linkHealthToItems(value, source.key, { durationMs, ...(fetcherFailed ? { fetcherFailed: true } : {}) }) }];
 }
 
 async function fetchLocalFeeds(request) {
@@ -162,10 +175,9 @@ async function fetchLocalFeeds(request) {
   try {
     const response = await localFeedHandler(request);
     const data = response?.ok ? await response.json() : { items: [], health: [], enrichment: {} };
-    const durationMs = Date.now() - started;
-    return { ...data, health: (data.health || []).map(entry => ({ ...entry, durationMs })) };
+    return { ...data, health: linkHealthToItems(data, 'local', { durationMs: Date.now() - started }) };
   } catch (error) {
-    return { items: [], enrichment: {}, health: [{ id: 'local-feeds', name: 'Local RSS feeds', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0, durationMs: Date.now() - started, fetcherFailed: true }] };
+    return { items: [], enrichment: {}, health: [{ id: 'local-feeds', name: 'Local RSS feeds', ok: false, status: 'error', error: String(error?.message || error), itemCount: 0, durationMs: Date.now() - started, fetcherFailed: true, group: 'local', itemSourceIds: ['local-feeds'] }] };
   }
 }
 

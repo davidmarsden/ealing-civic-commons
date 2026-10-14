@@ -63,6 +63,36 @@ try {
   assert.equal(recovered.state.sources.b.failingSince, null);
   assert.equal(recovered.feed.items.some(i => i.stale), false);
 
+  // --- Extraction failures are not empty successes (Codex P1) -----------------
+  assert.equal(sourceStateFor({ ok: true, itemCount: 0, status: 'empty', error: 'Page fetched but no dated article cards matched the current extraction rules' }), 'ingestion-failed');
+  const watched = applySourceStates({ generatedAt: 'w1', items: [item('p1', 'page', 5)], health: [{ id: 'page', ok: true, itemCount: 1 }] }, undefined, '2026-10-05T10:00:00.000Z');
+  const brokenPage = applySourceStates({ generatedAt: 'w2', items: [], health: [{ id: 'page', ok: true, status: 'empty', itemCount: 0, error: 'Page fetched but the configured living-publication section was not found' }] }, watched.state, '2026-10-06T10:00:00.000Z');
+  assert.deepEqual([brokenPage.feed.health[0].state, brokenPage.feed.health[0].servingLastGood], ['ingestion-failed', 1], 'a broken page keeps its last good item');
+  assert.equal(brokenPage.feed.items[0].stale, true);
+  // A genuinely empty source keeps its saved items for a later failure.
+  const quiet = applySourceStates({ generatedAt: 'w3', items: [], health: [{ id: 'page', ok: true, itemCount: 0 }] }, watched.state, '2026-10-06T10:00:00.000Z');
+  assert.deepEqual(quiet.state.sources.page.lastItems.map(i => i.id), ['p1']);
+
+  // --- Health IDs that differ from item sourceIds (Codex P2) -------------------
+  const { linkHealthToItems } = await import('../netlify/functions/combined-feed-core.mjs');
+  const metHealth = linkHealthToItems({ items: [item('m1', 'met-ealing-news', 7), item('m2', 'met-ealing-southall', 6)], health: [{ id: 'met-ealing', ok: true, itemCount: 2 }] }, 'met');
+  assert.deepEqual(metHealth[0].itemSourceIds.sort(), ['met-ealing-news', 'met-ealing-southall']);
+  const multi = linkHealthToItems({ items: [item('g1', 'greenford-news', 7), item('w1', 'wildlife', 6)], health: [{ id: 'greenford-news', ok: true, itemCount: 1 }, { id: 'wildlife', ok: true, itemCount: 1 }] }, 'borough');
+  assert.deepEqual(multi.map(h => h.itemSourceIds), [['greenford-news'], ['wildlife']]);
+  const metOk = applySourceStates({ generatedAt: 'm1', items: [item('m1', 'met-ealing-news', 7), item('m2', 'met-ealing-southall', 6)], health: metHealth }, undefined, '2026-10-07T10:00:00.000Z');
+  assert.equal(metOk.state.sources['met-ealing'].lastItems.length, 2, 'Met items are saved under the Met health entry');
+  const metDown = applySourceStates({ generatedAt: 'm2', items: [], health: [{ id: 'met-ealing', ok: false, status: 'upstream', error: 'endpoints unavailable', group: 'met', itemSourceIds: ['met-ealing'] }] }, metOk.state, '2026-10-08T10:00:00.000Z');
+  assert.deepEqual([metDown.feed.health[0].servingLastGood, metDown.feed.items.length], [2, 2], 'a total Met outage restores its items');
+
+  // A whole-fetcher failure reports a synthetic group ID; the group's items return.
+  const groupOk = applySourceStates({ generatedAt: 'g1', items: [item('g1', 'greenford-news', 7), item('w1', 'wildlife', 6)], health: multi }, undefined, '2026-10-07T10:00:00.000Z');
+  const groupDown = applySourceStates({ generatedAt: 'g2', items: [], health: [{ id: 'borough-town-sources', ok: false, status: 'error', error: 'Timed out', fetcherFailed: true, group: 'borough', itemSourceIds: ['borough-town-sources'] }] }, groupOk.state, '2026-10-08T10:00:00.000Z');
+  assert.deepEqual(groupDown.feed.items.map(i => i.id).sort(), ['g1', 'w1']);
+  assert.equal(groupDown.feed.health[0].lastSuccessAt, '2026-10-07T10:00:00.000Z');
+  // A group with a failing entry does not overwrite its saved items with a partial set.
+  const partial = applySourceStates({ generatedAt: 'g3', items: [item('g2', 'greenford-news', 8)], health: [{ ...multi[0] }, { ...multi[1], ok: false, error: 'Timed out' }] }, groupOk.state, '2026-10-09T10:00:00.000Z');
+  assert.deepEqual(partial.state.groups.borough.lastItems.map(i => i.id).sort(), ['g1', 'w1']);
+
   // --- Lock and minimum interval ---------------------------------------------
   const blobs = getDeployStore({ name: 'lock-test', consistency: 'strong' });
   const t0 = Date.parse('2026-10-14T10:00:00.000Z');

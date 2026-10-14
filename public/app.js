@@ -219,7 +219,7 @@ function healthLabel(h) {
   }
   return h.ok ? h.itemCount : 'currently unavailable';
 }
-function renderHealth() { const health = state.data?.health ?? []; healthList.innerHTML = health.map(h => { const healthStatus = h.status || (h.ok ? 'ok' : 'error'); const label = healthLabel(h); const dotClass = h.state === 'no-new-records' ? 'idle' : h.ok ? 'ok' : (h.state === 'unavailable' || healthStatus === 'blocked' || healthStatus === 'upstream') ? 'blocked' : 'bad'; const sourceName = h.homepage ? `<a class="health-source" href="${esc(h.homepage)}" target="_blank" rel="noopener noreferrer">${esc(h.name)}</a>` : esc(h.name); const diagnostics = showDiagnostics && Array.isArray(h.diagnostics) && h.diagnostics.length ? `<div class="health-diagnostics"><strong>Fetch diagnostics</strong>${h.diagnostics.map(d => `<span>${esc(diagnosticLabel(d))}</span>`).join('')}${h.error ? `<span>Result: ${esc(h.error)}</span>` : ''}</div>` : ''; const title = showDiagnostics ? esc(h.error || 'Feed fetched successfully') : ''; return `<div class="health-entry"><div class="health-row"${title ? ` title="${title}"` : ''}><span class="health-dot ${dotClass}"></span><span>${sourceName}</span><span class="health-count">${esc(label)}</span></div>${diagnostics}</div>`; }).join(''); }
+function renderHealth() { const health = state.data?.health ?? []; healthList.innerHTML = health.map(h => { const healthStatus = h.status || (h.ok ? 'ok' : 'error'); const label = healthLabel(h); const dotClass = h.state === 'no-new-records' ? 'idle' : h.state === 'ingestion-failed' ? 'bad' : h.ok ? 'ok' : (h.state === 'unavailable' || healthStatus === 'blocked' || healthStatus === 'upstream') ? 'blocked' : 'bad'; const sourceName = h.homepage ? `<a class="health-source" href="${esc(h.homepage)}" target="_blank" rel="noopener noreferrer">${esc(h.name)}</a>` : esc(h.name); const diagnostics = showDiagnostics && Array.isArray(h.diagnostics) && h.diagnostics.length ? `<div class="health-diagnostics"><strong>Fetch diagnostics</strong>${h.diagnostics.map(d => `<span>${esc(diagnosticLabel(d))}</span>`).join('')}${h.error ? `<span>Result: ${esc(h.error)}</span>` : ''}</div>` : ''; const title = showDiagnostics ? esc(h.error || 'Feed fetched successfully') : ''; return `<div class="health-entry"><div class="health-row"${title ? ` title="${title}"` : ''}><span class="health-dot ${dotClass}"></span><span>${sourceName}</span><span class="health-count">${esc(label)}</span></div>${diagnostics}</div>`; }).join(''); }
 
 async function loadContributions() {
   try {
@@ -240,10 +240,10 @@ async function load() {
     const res = await fetch('/.netlify/functions/combined-feed');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     state.data = await res.json();
-    const good = state.data.health.filter(h => h.ok).length;
-    const unavailable = state.data.health.filter(h => !h.ok).length;
     const failedIngest = state.data.health.filter(h => h.state === 'ingestion-failed').length;
-    status.textContent = `Updated ${new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date(state.data.generatedAt))} · ${good}/${state.data.health.length} feeds responding${unavailable - failedIngest > 0 ? ` · ${unavailable - failedIngest} currently unavailable` : ''}${failedIngest ? ` · ${failedIngest} ingestion failed` : ''}`;
+    const good = state.data.health.filter(h => h.ok && h.state !== 'ingestion-failed').length;
+    const unavailable = state.data.health.filter(h => !h.ok && h.state !== 'ingestion-failed').length;
+    status.textContent = `Updated ${new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date(state.data.generatedAt))} · ${good}/${state.data.health.length} feeds responding${unavailable ? ` · ${unavailable} currently unavailable` : ''}${failedIngest ? ` · ${failedIngest} ingestion failed` : ''}`;
     renderHealth(); render();
   } catch {
     if (window.CIVIC_COMMONS_DEMO) { state.data = window.CIVIC_COMMONS_DEMO; status.textContent = 'Showing prototype data · live RSS activates when deployed with the server-side feed function'; renderHealth(); render(); }

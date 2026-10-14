@@ -36,35 +36,65 @@ export const writeSourceState = (blobs, state) => blobs.setJSON(SOURCE_STATE_KEY
 const UNAVAILABLE = /time(d)?\s?out|abort|fetch failed|network|socket|ENOTFOUND|ECONN|ETIMEDOUT|EAI_AGAIN|EHOSTUNREACH|certificate|TLS|HTTP\s*(5\d\d|403|408|429)|\b(5\d\d|403|408|429)\b|unavailable|upstream|blocked|rate.?limit/i;
 
 export function sourceStateFor(entry) {
-  if (entry?.ok) return Number(entry.itemCount) > 0 ? 'current' : 'no-new-records';
+  if (entry?.ok) {
+    if (Number(entry.itemCount) > 0) return 'current';
+    // Page watchers report a missing page structure as an empty success with an
+    // explanation; that is a broken extraction, not an empty source.
+    return entry.error ? 'ingestion-failed' : 'no-new-records';
+  }
   if (['upstream', 'blocked'].includes(entry?.status)) return 'unavailable';
   return UNAVAILABLE.test(String(entry?.error || '')) ? 'unavailable' : 'ingestion-failed';
 }
 
 // Annotates every health entry with its state and history. A failing source's
 // last good items are served again, marked stale with the time they were last
-// confirmed, so its records do not silently vanish from the feed.
-export function applySourceStates(feed, previous = { sources: {} }, now = new Date().toISOString()) {
+// confirmed, so its records do not silently vanish from the feed. Items are
+// matched to entries by `itemSourceIds`, and kept per fetcher `group` too, so a
+// whole-fetcher failure (reported under a synthetic group ID) can restore them.
+export function applySourceStates(feed, previous = { sources: {}, groups: {} }, now = new Date().toISOString()) {
   const sources = { ...(previous?.sources || {}) };
+  const groups = { ...(previous?.groups || {}) };
   const items = Array.isArray(feed?.items) ? [...feed.items] : [];
   const present = new Set(items.map(item => item?.id).filter(Boolean));
+  const idsFor = entry => new Set(Array.isArray(entry.itemSourceIds) && entry.itemSourceIds.length ? entry.itemSourceIds : [entry.id]);
+  const liveItemsFor = ids => items.filter(item => !item?.stale && ids.has(item?.sourceId));
+  const failedGroups = new Set();
+  const groupIds = new Map();
+
   const health = (feed?.health || []).map(entry => {
     const state = sourceStateFor(entry);
+    const failed = state === 'unavailable' || state === 'ingestion-failed';
     const before = sources[entry.id] || {};
-    if (entry.ok) {
-      const lastItems = items.filter(item => item?.sourceId === entry.id && !item.stale).slice(0, LAST_GOOD_ITEMS_PER_SOURCE);
-      sources[entry.id] = { lastSuccessAt: now, lastAttemptAt: now, failingSince: null, consecutiveFailures: 0, lastItems: lastItems.length || state === 'no-new-records' ? lastItems : (before.lastItems || []) };
+    const ids = idsFor(entry);
+    if (entry.group) {
+      if (!groupIds.has(entry.group)) groupIds.set(entry.group, new Set());
+      for (const id of ids) groupIds.get(entry.group).add(id);
+      if (failed) failedGroups.add(entry.group);
+    }
+    if (!failed) {
+      const lastItems = liveItemsFor(ids).slice(0, LAST_GOOD_ITEMS_PER_SOURCE);
+      sources[entry.id] = { lastSuccessAt: now, lastAttemptAt: now, failingSince: null, consecutiveFailures: 0, lastItems: lastItems.length ? lastItems : (before.lastItems || []) };
       return { ...entry, state, lastSuccessAt: now };
     }
     const failingSince = before.failingSince || now;
     sources[entry.id] = { ...before, lastAttemptAt: now, failingSince, consecutiveFailures: (before.consecutiveFailures || 0) + 1, lastState: state };
-    const restored = (before.lastItems || []).filter(item => item?.id && !present.has(item.id));
-    for (const item of restored) { present.add(item.id); items.push({ ...item, stale: true, staleSince: before.lastSuccessAt || null }); }
-    return { ...entry, state, lastSuccessAt: before.lastSuccessAt || null, failingSince, consecutiveFailures: sources[entry.id].consecutiveFailures, servingLastGood: restored.length };
+    const fallback = entry.fetcherFailed && entry.group ? groups[entry.group] : null;
+    const candidates = [...(before.lastItems || []), ...(fallback?.lastItems || [])];
+    const restored = candidates.filter(item => item?.id && !present.has(item.id));
+    for (const item of restored) { present.add(item.id); items.push({ ...item, stale: true, staleSince: (fallback && !(before.lastItems || []).includes(item) ? fallback.lastSuccessAt : before.lastSuccessAt) || null }); }
+    return { ...entry, state, lastSuccessAt: before.lastSuccessAt || fallback?.lastSuccessAt || null, failingSince, consecutiveFailures: sources[entry.id].consecutiveFailures, servingLastGood: restored.length };
   });
+
+  // A fetcher group's items are refreshed only when none of its entries failed.
+  for (const [group, ids] of groupIds) {
+    if (failedGroups.has(group)) continue;
+    const lastItems = liveItemsFor(ids).slice(0, LAST_GOOD_ITEMS_PER_SOURCE * 3);
+    if (lastItems.length) groups[group] = { lastSuccessAt: now, lastItems };
+  }
+
   items.sort((a, b) => timeOf(b?.publishedAt) - timeOf(a?.publishedAt));
   const counts = health.reduce((total, entry) => ({ ...total, [entry.state]: (total[entry.state] || 0) + 1 }), {});
-  return { feed: { ...feed, items, health, sourceStates: counts }, state: { version: 1, updatedAt: now, sources } };
+  return { feed: { ...feed, items, health, sourceStates: counts }, state: { version: 1, updatedAt: now, sources, groups } };
 }
 
 // Single-runner lock for the ingest, plus a minimum interval between runs. The
