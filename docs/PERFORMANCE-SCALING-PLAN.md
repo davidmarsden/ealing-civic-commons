@@ -10,14 +10,14 @@ Three separate states, updated as evidence arrives. *Implemented* = merged-ready
 |--------|----|-------------|---------------------|------------------------|
 | Archive metadata index + index-backed `listArchivedItems` | #165 | Yes: unit tests (stub store) and end-to-end tests against the real `@netlify/blobs` client with its local server | **Yes** (14 Oct 2026): 2,260 production items copied to the preview store; all 13 comparison cases identical to the full scan; full 23-page walk with 0 duplicates and 0 missing, newest first | **Yes** (14 Oct 2026): index completed by the second scheduled run (10:15–10:16 UTC: 2,000 + 260 backfilled); `civic-archive` medians 0.54–0.62 s, down from 2.4–2.8 s; the last page (offset 2,200) is correct |
 | Etag reconciliation, pruning, explicit read failures | #165 | Yes (tests above) | **Yes**: index completed in 2 passes (2,000 + 260); steady state 2 listings, 2 index reads, 0 writes, ~0.4 s | **Yes**: steady state 0.48 s with no writes; a run with one new item took 0.84 s (stored, indexed, still complete); overlapping duplicate runs (below) left the index correct |
-| Single feed build per email dispatch | #165 | Yes (smoke test) | n/a (needs subscribers and mail config) | Pending: next dispatch with active subscribers |
+| Single feed build per email dispatch | #165, #166 | Yes (smoke test) | n/a (needs subscribers and mail config) | **Partly**: with the snapshot, dispatch runs take 1.2–3.1 s, one per slot (before #166: about 26 s, timed out at 15 s and retried). Rendering for active subscribers is still to be confirmed |
 | Durable CDN caching; errors not cached | #165 | Yes | **Yes**: `Cache-Status: "Netlify Durable"; … stored` on the preview vs `fwd=bypass` on production; a 405 error is `no-store` and not stored | **Yes**: production now shows `"Netlify Durable"; … stored`; the 405 error stays `no-store` and is not stored |
 | `social-preview` edge caching | #165 | Yes | **Yes**: entity page stored in the durable cache; repeat request is an edge hit | **Yes**: `/places/walpole-park` is stored in the durable cache and a repeat request is an edge hit |
 | Browser feed fetches without `no-store` | #165 | Yes | Not measured (browser-side) | Pending |
-| Phase 2: background ingest (`feed-ingest`), scheduled trigger returns at once, run lock and minimum interval | #166 | Yes: `scripts/test-feed-snapshot.mjs` (real Blobs client) | **Yes** (14 Oct 2026): POST returned 202 in 0.5 s; the background run built the feed in 17.3 s, wrote the snapshot and archived 1,572 items into the preview store in 11 s; a second POST two minutes later did no work (the snapshot kept the first run's `runId`) | Pending: one ingest per slot in the logs; no 499 retries |
-| Phase 2: `combined-feed` serves the snapshot (live fallback if missing or older than 60 min) | #166 | Yes (tests above) | **Yes**: before the first ingest it built live (`reason: no snapshot`); afterwards it served the snapshot in **0.52–0.85 s, vs 10.2–29.2 s on production**, interleaved, 5 samples each | Pending: `combined-feed` timings vs the 8–32 s baseline |
-| Phase 2: source states (current / no new records / unavailable / ingestion failed), last-good items served and labelled stale | #166 | Yes (tests above) | **Yes**: 71 entries classified (45 current, 8 no new records, 5 unavailable, 13 ingestion failed). Real data showed relevance-filter empties being counted as failures; fixed, with every adapter message under test | Pending |
-| Phase 2: source registry with per-source timing | #166 | Yes | **Yes**: the slowest group (faith/community pages) takes ~17 s and sets the ingest's build time | Pending: slowest sources in the ingest log |
+| Phase 2: background ingest (`feed-ingest`), scheduled trigger returns at once, run lock and minimum interval | #166 | Yes: `scripts/test-feed-snapshot.mjs` (real Blobs client) | **Yes** (14 Oct 2026): POST returned 202 in 0.5 s; the background run built the feed in 17.3 s, wrote the snapshot and archived 1,572 items into the preview store in 11 s; a second POST two minutes later did no work (the snapshot kept the first run's `runId`) | **Yes** (14 Oct 2026): slots at 11:45, 12:00 and 12:15 each show one scheduled trigger (204 in about 1.6 s) and one ingest, with no 499 retries; feed build 16.3–27.3 s in the background; archive step 0.5–0.56 s |
+| Phase 2: `combined-feed` serves the snapshot (live fallback if missing or older than 60 min) | #166 | Yes (tests above) | **Yes**: before the first ingest it built live (`reason: no snapshot`); afterwards it served the snapshot in **0.52–0.85 s, vs 10.2–29.2 s on production**, interleaved, 5 samples each | **Yes**: production `combined-feed` is served from the snapshot (`servedFrom: snapshot`). Cache-busted median 0.62 s over 6 samples (0.46–2.44 s), against 10–29 s before |
+| Phase 2: source states (current / no new records / unavailable / ingestion failed), last-good items served and labelled stale | #166 | Yes (tests above) | **Yes**: 71 entries classified (45 current, 8 no new records, 5 unavailable, 13 ingestion failed). Real data showed relevance-filter empties being counted as failures; fixed, with every adapter message under test | **Yes**: production states 46 current, 11 no new records, 5 unavailable, 9 ingestion failed. The same failing sources as on the preview |
+| Phase 2: source registry with per-source timing | #166 | Yes | **Yes**: the slowest group (faith/community pages) takes ~17 s and sets the ingest's build time | **Yes**: the faith/community page group sets the build time (16–27 s) |
 | Phase 4 frontend build | — | No | — | — |
 
 ### Preview finding: sources currently failing (14 Oct 2026)
@@ -32,6 +32,26 @@ The first ingest on the #166 preview reported these real problems, previously hi
 Each needs a source-specific fix or retirement. That is content maintenance, outside this plan.
 
 A Blobs `400` from listing contributions (`Reviewed civic context activity unavailable`) appears only on deploy previews and deploy permalinks, including deploys from before this work. It is caught, and it does not occur on production.
+
+### Source fixes (14 Oct 2026)
+
+These follow from the failing-source list above. Each cause was diagnosed from the live pages, and fixtures trimmed from those pages back `scripts/test-source-adapters.mjs`.
+
+| Source | Cause | Fix |
+|--------|-------|-----|
+| 5 YouTube channels (Cap the Towers, ECI Ealing, ECI Southall, Southall, Young Ealing Foundation) | `videos.xml?user=<handle>` only works for legacy usernames, and these are @handles (404) | Sources name a `youtubeHandle`. The ingest resolves it to a channel ID from the channel page, caches it in Blobs for 30 days, and keeps using a cached ID if the page is briefly unreachable |
+| LAGER Can | Permalinks changed from `/YYYY/MM/DD/slug/` to `/slug/` | New pattern, with the listing scoped to `posts-wrapper` … `</main>` so menu pages are excluded; posts are dated from `<time datetime>` |
+| Ealing Lib Dems | Articles have no `<article>`/`<main>` and no date metadata, so every one was dropped as undated | Per-source `articleDateClass: 'text-aux'`: the date is the only element with that class, directly under the headline |
+| Southall Community Alliance | Articles carry no date of their own | Switched to its WordPress RSS feed, keeping the existing item ID scheme so archived items are not duplicated |
+| Norwood Green Residents' Association | Homepage no longer links any news; the feed's only post is from 2021 | Retired |
+| Neighbours' Paper | RSS fetch timed out at 7.5 s | RSS timeout raised to 12 s, matching the other adapters (fetching now happens in the background ingest) |
+| Ealing Community Independents, Ealing Synagogue | 403 to our crawler user-agent | Left as `unavailable`. We do not disguise the crawler; ask the publishers to allow it, or retire the sources |
+| Ealing Culture | HTML returned where JSON was expected (likely a firewall page) | Left as `unavailable`; needs the publisher's API access or a different endpoint |
+| Hanwell Community Forum | Site unreachable, including from a third-party fetcher | Left as `unavailable`; retire if it stays down |
+
+**Verified on preview (#167, 14 Oct 2026):** after one ingest, all eight targeted sources are `current`: the five YouTube channels (7–15 items each), LAGER Can (10), Ealing Lib Dems (6) and Southall Community Alliance (2). Norwood Green no longer appears. States went from 45 current / 9 ingestion failed to 53 current / 12 no new records / 4 unavailable / 1 ingestion failed. Still open:
+- Neighbours' Paper times out even at 12 s.
+- **New:** Ealing Green Party (`/news/` returns 404, and the homepage HTML now has no links, which suggests a rebuilt or script-rendered site). This is follow-up work, surfaced by the source states as intended.
 
 ### Production finding: the archiver runs two or three times per slot (pre-existing)
 
