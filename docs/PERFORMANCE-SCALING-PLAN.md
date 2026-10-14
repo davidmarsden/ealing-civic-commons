@@ -18,9 +18,12 @@ Three separate states, updated as evidence arrives. *Implemented* = merged-ready
 | Phase 2: `combined-feed` serves the snapshot (live fallback if missing or older than 60 min) | #166 | Yes (tests above) | **Yes**: before the first ingest it built live (`reason: no snapshot`); afterwards it served the snapshot in **0.52–0.85 s, vs 10.2–29.2 s on production**, interleaved, 5 samples each | **Yes**: production `combined-feed` is served from the snapshot (`servedFrom: snapshot`). Cache-busted median 0.62 s over 6 samples (0.46–2.44 s), against 10–29 s before |
 | Phase 2: source states (current / no new records / unavailable / ingestion failed), last-good items served and labelled stale | #166 | Yes (tests above) | **Yes**: 71 entries classified (45 current, 8 no new records, 5 unavailable, 13 ingestion failed). Real data showed relevance-filter empties being counted as failures; fixed, with every adapter message under test | **Yes**: production states 46 current, 11 no new records, 5 unavailable, 9 ingestion failed. The same failing sources as on the preview |
 | Phase 2: source registry with per-source timing | #166 | Yes | **Yes**: the slowest group (faith/community pages) takes ~17 s and sets the ingest's build time | **Yes**: the faith/community page group sets the build time (16–27 s) |
-| Phase 4: fingerprinted, minified JS/CSS (`/assets/<name>.<hash>.<ext>`), references rewritten, `modulepreload` for each page's static imports | #168 | Yes: `scripts/test-build-assets.mjs` (fixture site and the real `public/` tree); all 22 pages behave identically before and after in Chromium (same console errors, same rendered text) | **Yes** (14 Oct 2026): the preview serves hashed assets and `modulepreload` hints; the homepage's first visit transfers 37 KB instead of 84 KB (measurements below) | Pending |
-| Phase 4: one-year `immutable` cache on `/assets/*`; service worker serves hashed assets cache-first, keeps one copy per asset, never caches HTML there | #168 | Yes | **Yes**: `/assets/*` is served `public,max-age=31536000,immutable` while `sw.js` and HTML keep revalidating. From the third visit on, pages make 3–4 network round trips instead of 11–16 (below) | Pending |
-| Fix: place pages with a main civic issue froze the browser (pre-existing) | #168 | Yes: section navigation and the primary-issue renderer only write the DOM when something changed | **Yes**: on the preview `/places/southall-gasworks` loads normally (LCP 1.4 s cold), against frozen in all 3 production runs. Earlier, with the fixed scripts substituted into the production page: `/places/southall-gasworks` was unresponsive indefinitely about 2 s after load; with the fix it answers in 4–8 ms with the same links, hub and hidden sections. Walpole Park, Southall and the gasworks issue page are unchanged | Pending |
+| Phase 4: fingerprinted, minified JS/CSS (`/assets/<name>.<hash>.<ext>`), references rewritten, `modulepreload` for each page's static imports | #168 | Yes: `scripts/test-build-assets.mjs` (fixture site and the real `public/` tree); all 22 pages behave identically before and after in Chromium (same console errors, same rendered text) | **Yes** (14 Oct 2026): the preview serves hashed assets and `modulepreload` hints (measurements below) | **Yes** (14 Oct 2026, after merge): production serves hashed assets and preload hints; first-visit bytes are unchanged within noise, since the files were already compressed in transit (homepage 84 KB, of which scripts ~15 KB) |
+| Phase 4: one-year `immutable` cache on `/assets/*`; service worker serves hashed assets cache-first, keeps one copy per asset, never caches HTML there | #168 | Yes | **Yes**: `/assets/*` is served `public,max-age=31536000,immutable` while `sw.js` and HTML keep revalidating. From the third visit on, pages make 3–4 network round trips instead of 11–16 (below) | **Yes**: production `/assets/*` is `immutable`; steady-state round trips are now 4 / 4 / 4 / 3 on the four measured pages, down from 14 / frozen / 16 / 11 |
+| Fix: place pages with a main civic issue froze the browser (pre-existing) | #168 | Yes: section navigation and the primary-issue renderer only write the DOM when something changed | **Yes**: on the preview `/places/southall-gasworks` loads normally (LCP 1.4 s cold), against frozen in all 3 production runs. Earlier, with the fixed scripts substituted into the production page: `/places/southall-gasworks` was unresponsive indefinitely about 2 s after load; with the fix it answers in 4–8 ms with the same links, hub and hidden sections. Walpole Park, Southall and the gasworks issue page are unchanged | **Yes**: production `/places/southall-gasworks` now loads in all 3 runs (LCP 1.9 s cold, 0.44 s steady) |
+| Phase 5: feed health alerts (snapshot missing or older than 60 min, last ingest failed, source failing over 24 h), emailed on change and daily while open | #169 | Yes: `scripts/test-feed-alerts.mjs` (problem rules, change detection, reminders, resolution, retry after a failed send) | n/a (scheduled functions do not run on previews) | Pending: needs `FEED_ALERT_EMAIL` in production |
+| Phase 3.5: public archive reads (`listArchivedItems`, `historical-reporting`) use eventual consistency; writers stay strong | #169 | Yes (existing archive tests) | **Yes** (14 Oct 2026, production data read-only, 2,275 items, strong and eventual alternated, 2 × 9 samples): four archive queries took a median of **478–555 ms eventual vs 747–774 ms strong**, with the same 224 item reads and no full-scan fallback | Pending |
+| Phase 3.4: keep the archiver's full `item/` listing | #169 | Decision | **Measured**: 2,275 keys listed in a median of 248 ms, once per 15-minute background run | n/a |
 
 ### Phase 4 preview measurements (14 Oct 2026)
 
@@ -28,18 +31,23 @@ Three separate states, updated as evidence arrives. *Implemented* = merged-ready
 
 | Page | | Cold: LCP / KB / round trips | Repeat: LCP / round trips | Steady: LCP / round trips |
 |------|--|------------------------------|---------------------------|---------------------------|
-| `/` | production | 1,024 ms / 84 KB / 17 | 320 ms / 14 | 328 ms / 14 |
+| `/` | production (before) | 1,024 ms / 84 KB / 17 | 320 ms / 14 | 328 ms / 14 |
 | | preview | 968 ms / 37 KB / 17 | 280 ms / 14 | 212 ms / **4** |
-| `/places/southall-gasworks` | production | **frozen** (3 of 3 runs) | — | — |
+| | production (after) | 1,128 ms / 84 KB / 18 | 260 ms / 14 | 216 ms / **4** |
+| `/places/southall-gasworks` | production (before) | **frozen** (3 of 3 runs) | — | — |
 | | preview | 1,416 ms / 83 KB / 27 | 460 ms / 24 | 416 ms / **4** |
-| `/issues/southall-gasworks` | production | 1,316 ms / 54 KB / 19 | 536 ms / 16 | 508 ms / 16 |
+| | production (after) | 1,892 ms / 82 KB / 27 | 500 ms / 24 | 436 ms / **4** |
+| `/issues/southall-gasworks` | production (before) | 1,316 ms / 54 KB / 19 | 536 ms / 16 | 508 ms / 16 |
 | | preview | 1,084 ms / 53 KB / 19 | 360 ms / 16 | 336 ms / **4** |
-| `/explore.html` | production | 928 ms / 61 KB / 14 | 212 ms / 11 | 212 ms / 11 |
+| | production (after) | 1,168 ms / 51 KB / 19 | 348 ms / 16 | 344 ms / **4** |
+| `/explore.html` | production (before) | 928 ms / 61 KB / 14 | 212 ms / 11 | 212 ms / 11 |
 | | preview | 848 ms / 61 KB / 14 | 156 ms / 11 | 176 ms / **3** |
+| | production (after) | 876 ms / 59 KB / 14 | 168 ms / 11 | 160 ms / **3** |
 
 - Production revalidates every script and stylesheet on every visit. With the preview, a returning visitor fetches only the page, the service worker script and live data.
 - All four pages are well under the 2.5 s LCP target on this profile, before and after. The "≤ 3 JS requests per page" target is not met: pages still load each module separately (see above).
-- The preview made one more data-function request per visit on `/` and `/explore.html` than production, with the same `Cache-Control` on both. That accounts for its later `load` event on repeat visits (by 150–250 ms) and is not caused by asset delivery. The cause is not established.
+- The preview made one more data-function request per repeat visit on `/` and `/explore.html` than production, with the same `Cache-Control` on both. Production after the merge does not, so it is a property of deploy previews, not of this change.
+- The preview's smaller homepage transfer (37 KB) did not carry over to production (84 KB), so it was not caused by minification: scripts are about 15 KB either way. Its cause is not established.
 - Timings go through the sandbox's proxy and vary by about ±20% between runs; the round-trip counts and bytes are stable.
 
 ### Preview finding: sources currently failing (14 Oct 2026)
@@ -208,8 +216,8 @@ request path
 1. Maintain **index blobs** at write time in `archiveItems`: `index/recent` (key, publishedAt, sourceId, towns, topics, title), plus per-source/town/topic shards. The existing `manifest/recent` and `manifest/search-index` are a start — make them the read path.
 2. `listArchivedItems` reads the relevant index, filters/sorts metadata in memory, then GETs **only the page** of item blobs (≤100).
 3. Text search (`q`) runs over the index's title/summary fields; if it outgrows that, move archive + search to a hosted Postgres (e.g. Supabase/Neon with `tsvector`) — Blobs isn't a query engine.
-4. Stop listing all `item/` keys inside `archiveItems`; check existence via the index.
-5. Use strong consistency only where read-after-write matters (review/moderation), eventual elsewhere.
+4. ~~Stop listing all `item/` keys inside `archiveItems`; check existence via the index.~~ **Kept (#169).** The listing is what the index reconciles against (completeness, pruning, etags), and it costs about 250 ms for 2,275 keys once per 15-minute background run. Revisit if it passes a few seconds.
+5. Use strong consistency only where read-after-write matters (review/moderation), eventual elsewhere. **Done for public archive reads (#169):** measured about a third faster against production. Moderation, contributions, email and the ingest lock stay strong.
 
 ### Phase 4 — frontend delivery (~1 week, aligns with render audit)
 
