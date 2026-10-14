@@ -18,7 +18,29 @@ Three separate states, updated as evidence arrives. *Implemented* = merged-ready
 | Phase 2: `combined-feed` serves the snapshot (live fallback if missing or older than 60 min) | #166 | Yes (tests above) | **Yes**: before the first ingest it built live (`reason: no snapshot`); afterwards it served the snapshot in **0.52–0.85 s, vs 10.2–29.2 s on production**, interleaved, 5 samples each | **Yes**: production `combined-feed` is served from the snapshot (`servedFrom: snapshot`). Cache-busted median 0.62 s over 6 samples (0.46–2.44 s), against 10–29 s before |
 | Phase 2: source states (current / no new records / unavailable / ingestion failed), last-good items served and labelled stale | #166 | Yes (tests above) | **Yes**: 71 entries classified (45 current, 8 no new records, 5 unavailable, 13 ingestion failed). Real data showed relevance-filter empties being counted as failures; fixed, with every adapter message under test | **Yes**: production states 46 current, 11 no new records, 5 unavailable, 9 ingestion failed. The same failing sources as on the preview |
 | Phase 2: source registry with per-source timing | #166 | Yes | **Yes**: the slowest group (faith/community pages) takes ~17 s and sets the ingest's build time | **Yes**: the faith/community page group sets the build time (16–27 s) |
-| Phase 4 frontend build | — | No | — | — |
+| Phase 4: fingerprinted, minified JS/CSS (`/assets/<name>.<hash>.<ext>`), references rewritten, `modulepreload` for each page's static imports | #168 | Yes: `scripts/test-build-assets.mjs` (fixture site and the real `public/` tree); all 22 pages behave identically before and after in Chromium (same console errors, same rendered text) | **Yes** (14 Oct 2026): the preview serves hashed assets and `modulepreload` hints; the homepage's first visit transfers 37 KB instead of 84 KB (measurements below) | Pending |
+| Phase 4: one-year `immutable` cache on `/assets/*`; service worker serves hashed assets cache-first, keeps one copy per asset, never caches HTML there | #168 | Yes | **Yes**: `/assets/*` is served `public,max-age=31536000,immutable` while `sw.js` and HTML keep revalidating. From the third visit on, pages make 3–4 network round trips instead of 11–16 (below) | Pending |
+| Fix: place pages with a main civic issue froze the browser (pre-existing) | #168 | Yes: section navigation and the primary-issue renderer only write the DOM when something changed | **Yes**: on the preview `/places/southall-gasworks` loads normally (LCP 1.4 s cold), against frozen in all 3 production runs. Earlier, with the fixed scripts substituted into the production page: `/places/southall-gasworks` was unresponsive indefinitely about 2 s after load; with the fix it answers in 4–8 ms with the same links, hub and hidden sections. Walpole Park, Southall and the gasworks issue page are unchanged | Pending |
+
+### Phase 4 preview measurements (14 Oct 2026)
+
+`scripts/measure-pages.mjs`, production and the #168 preview measured alternately per page, 3 runs each (medians), on a throttled mobile profile (150 ms RTT, 1.6 Mbps, 4× CPU). "Round trips" counts same-origin requests that reached the network, including 304 revalidations; *steady* is a third visit, after the service worker has cached what the second fetched.
+
+| Page | | Cold: LCP / KB / round trips | Repeat: LCP / round trips | Steady: LCP / round trips |
+|------|--|------------------------------|---------------------------|---------------------------|
+| `/` | production | 1,024 ms / 84 KB / 17 | 320 ms / 14 | 328 ms / 14 |
+| | preview | 968 ms / 37 KB / 17 | 280 ms / 14 | 212 ms / **4** |
+| `/places/southall-gasworks` | production | **frozen** (3 of 3 runs) | — | — |
+| | preview | 1,416 ms / 83 KB / 27 | 460 ms / 24 | 416 ms / **4** |
+| `/issues/southall-gasworks` | production | 1,316 ms / 54 KB / 19 | 536 ms / 16 | 508 ms / 16 |
+| | preview | 1,084 ms / 53 KB / 19 | 360 ms / 16 | 336 ms / **4** |
+| `/explore.html` | production | 928 ms / 61 KB / 14 | 212 ms / 11 | 212 ms / 11 |
+| | preview | 848 ms / 61 KB / 14 | 156 ms / 11 | 176 ms / **3** |
+
+- Production revalidates every script and stylesheet on every visit. With the preview, a returning visitor fetches only the page, the service worker script and live data.
+- All four pages are well under the 2.5 s LCP target on this profile, before and after. The "≤ 3 JS requests per page" target is not met: pages still load each module separately (see above).
+- The preview made one more data-function request per visit on `/` and `/explore.html` than production, with the same `Cache-Control` on both. That accounts for its later `load` event on repeat visits (by 150–250 ms) and is not caused by asset delivery. The cause is not established.
+- Timings go through the sandbox's proxy and vary by about ±20% between runs; the round-trip counts and bytes are stable.
 
 ### Preview finding: sources currently failing (14 Oct 2026)
 
@@ -52,6 +74,8 @@ These follow from the failing-source list above. Each cause was diagnosed from t
 **Verified on preview (#167, 14 Oct 2026):** after one ingest, all eight targeted sources are `current`: the five YouTube channels (7–15 items each), LAGER Can (10), Ealing Lib Dems (6) and Southall Community Alliance (2). Norwood Green no longer appears. States went from 45 current / 9 ingestion failed to 53 current / 12 no new records / 4 unavailable / 1 ingestion failed. Still open:
 - Neighbours' Paper times out even at 12 s.
 - **New:** Ealing Green Party (`/news/` returns 404, and the homepage HTML now has no links, which suggests a rebuilt or script-rendered site). This is follow-up work, surfaced by the source states as intended.
+
+**Verified in production (#167, 14 Oct 2026):** after the first production ingest, 55 current / 11 no new records / 3 unavailable / 1 ingestion failed. The eight targeted sources are all `current`. The three `unavailable` are Ealing Community Independents and Ealing Synagogue (403) and Hanwell Community Forum (down). The one failure is Ealing Green Party, whose whole site currently shows "Down for maintenance. Back soon."; no adapter change is needed until it returns.
 
 ### Production finding: the archiver runs two or three times per slot (pre-existing)
 
@@ -188,6 +212,9 @@ request path
 5. Use strong consistency only where read-after-write matters (review/moderation), eventual elsewhere.
 
 ### Phase 4 — frontend delivery (~1 week, aligns with render audit)
+
+**Implemented (#168):** items 1–3 in a narrower form. `scripts/build-assets.mjs` runs after the `public/` copy: every JS/CSS file a page loads (directly, through imports, dynamic imports or injected stylesheets) is minified with esbuild and written to `/assets/<path>.<hash>.<ext>`; references are rewritten dependencies-first, so a change cascades to the hashes of everything that imports it, and the hand-kept `?v=` strings no longer matter. Originals stay in place for old cached pages, the service worker and external links. Pages are **not** merged into per-page bundles: each page's module scripts run independently today (an error in one does not stop the others), and the render audit shows several rely on that, so bundling waits for item 4. Stale-while-revalidate for feed JSON is left out: the feed is already served from the snapshot in under a second, and an offline copy would need its own staleness labelling. **Found while measuring:** `/places/southall-gasworks` froze the browser's main thread indefinitely about 2 s after load, in production and before this PR. `context-reporting.js` (primary-issue hub) and `section-nav-sync.js` each observe the hero and section `hidden` attributes and rewrote identical DOM on every callback, so each woke the other forever. Pausing the page showed only those two (and `election-history.js`) on the stack. Both now write only on change; the wider fix is still item 4 (one owner per section, no persistent observers). Measure with `scripts/measure-pages.mjs` (Playwright, mobile network and CPU profile, cold and repeat visits, counting network round trips including 304 revalidations).
+
 1. Add an **esbuild step** to `npm run build`: one entry per page (`index`, `entity`, `issue`, `topic`, `explore`, …), minified, content-hashed filenames, code-split shared modules. Rewrite `<script>` tags at build time; remove manual `?v=` strings.
 2. `_headers`: hashed assets `Cache-Control: public, max-age=31536000, immutable`; HTML stays revalidating.
 3. Service worker: cache-first for hashed assets, stale-while-revalidate for feed JSON (offline reading of the last feed), versioned cache name from the build.

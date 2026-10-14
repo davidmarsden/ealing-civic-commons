@@ -1,3 +1,6 @@
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
 /site-shell.js
   Cache-Control: public, max-age=0, must-revalidate
 
