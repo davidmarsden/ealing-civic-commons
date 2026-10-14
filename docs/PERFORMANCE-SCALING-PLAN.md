@@ -1,6 +1,51 @@
 # Performance & scaling plan
 
-Status: Phase 1 (except 3.x below) and Phase 3.1–3.2/3.4 implemented, 14 October 2026; later phases proposed. Complements `RENDER-ARCHITECTURE-AUDIT.md` (client rendering) and `technical-architecture-spec-v0.1.md`.
+Status: see the verification ledger (§0). Nothing counts as solved until it is verified in production. Complements `RENDER-ARCHITECTURE-AUDIT.md` (client rendering) and `technical-architecture-spec-v0.1.md`.
+
+## 0. Verification ledger
+
+Three separate states, updated as evidence arrives. *Implemented* = merged-ready code with tests; *Verified on preview* = measured on a Netlify deploy preview with real Blobs and CDN; *Verified in production* = measured on production after merge.
+
+| Change | PR | Implemented | Verified on preview | Verified in production |
+|--------|----|-------------|---------------------|------------------------|
+| Archive metadata index + index-backed `listArchivedItems` | #165 | Yes: unit tests (stub store) and end-to-end tests against the real `@netlify/blobs` client with its local server | Pending: `npm run check:archive-index-preview` | Pending: `item-archive` log shows `complete: true`; `civic-archive` timings |
+| Etag reconciliation, pruning, explicit read failures | #165 | Yes (tests above) | Pending | Pending |
+| Single feed build per email dispatch | #165 | Yes (smoke test) | n/a (needs subscribers + mail config) | Pending: dispatch log duration |
+| Durable CDN headers; errors `no-store` | #165 | Yes | Pending: header check in preview script | Pending |
+| `social-preview` edge caching | #165 | Yes | Pending | Pending |
+| Browser feed fetches without `no-store` | #165 | Yes | Pending | Pending |
+| Phase 2 snapshot serving | — | No | — | — |
+| Phase 4 frontend build | — | No | — | — |
+
+### Evidence so far (local, relative only)
+
+`scripts/test-archive-index-blobs.mjs` with the real Blobs client against its local server, 3,000 items:
+
+| Measure | Full scan | Indexed |
+|---------|-----------|---------|
+| Store reads per archive page (40 items) | 3,001 | 41 (constant) |
+| Median page time | 1,529 ms | 34 ms |
+| Full pagination walk (30 pages) | — | 2.1 s, 0 duplicates, 0 missing, newest-first |
+
+Reconciliation cost (the scheduled check of stored-item fingerprints):
+
+- **Steady state:** 2 listings, 2 index reads and 0 writes (no manifest or index rewrite when nothing changed). The only size-dependent part is the `item/` listing (one request per 1,000 keys). The archiver already listed every key on every run before this PR, so the scheduled function takes on no new O(N) reads. Locally: 74 ms at 600 items, 430 ms at 3,000, almost all of it listing.
+- **Backfill:** one read per stale item, capped at 2,000 per run (≈0.5 s per 250 locally). It runs once after deploy, then only for changed items.
+- **Growth to watch:** the index blob is read whole by readers and by the archiver. Its size is logged (`searchIndexBytes`). Shard it or move to Postgres before it reaches a few MB.
+
+These are local-server numbers; network latency to real Blobs will be higher for both paths. The preview run supplies the real ones.
+
+### How to verify on a deploy preview
+
+Scheduled functions don't run on deploy previews, and preview Blobs reads use a deploy-scoped store that starts empty. `netlify/functions/archive-index-check.mjs` handles both. It refuses to run in production and requires an `ARCHIVE_CHECK_TOKEN` env var (set it for the deploy-preview context only). It copies production items into the preview's own store (production is only read, through a wrapper with no write methods), runs reconciliation passes on demand, and compares indexed and full-scan results. Run:
+
+```
+PREVIEW_URL=https://deploy-preview-165--ealing-civic-commons.netlify.app \
+BASELINE_URL=https://ealing.civiccommons.co.uk \
+ARCHIVE_CHECK_TOKEN=... npm run check:archive-index-preview
+```
+
+It writes `archive-index-preview-report.json` with seeding, reconciliation passes and steady-state cost, each comparison case, the pagination walk, endpoint headers and timings against the baseline (cache-busted), and error-response headers. It exits non-zero on any failure.
 
 ## 1. Current shape (as built)
 
@@ -45,7 +90,9 @@ request path
 
 ## 4. Phased plan
 
-### Implementation notes (done)
+### Implementation notes (PR #165; see the ledger for verification state)
+- Archiver reads/writes use strong consistency (it compares a listing with fresh writes). `store()` now passes options to deploy stores too.
+- Etags are taken from a listing made before the read when a backend omits them on reads. The local Blobs server does; the real-client test caught this.
 - `civic-items.mjs`: `manifest/search-index` is now a complete v2 metadata index. Each entry records the etag of the item blob it was built from. Writes are conditional (etag) and never replace a newer revision of an item with an older one. The 15‑minute archiver compares entries with a fresh listing: missing, outdated or etag-mismatched entries are reloaded (≤2000 per run), entries whose blob is confirmed gone are pruned, and the index is marked `complete` only when every listed blob has a current entry. `listArchivedItems` uses the index only when complete and loads just the requested page; a read error is retried once and then rejects (the API returns 503), and a blob missing behind an index entry makes that request use the full scan rather than return a short page. `historical-reporting` benefits automatically. `scripts/test-civic-items.mjs` covers partial backfills, out-of-band changes, concurrent upserts, write conflicts, deletions, read failures and interrupted runs.
 - Index size grows with the archive (one metadata entry per item). Watch `searchIndexSize` in the `item-archive` log; shard by source/year or move to Postgres if the index passes a few MB.
 - `archiveItems` no longer treats a failed `list()` as an empty archive (previously that would have rewritten every item).
@@ -67,6 +114,7 @@ request path
 2. `combined-feed` and `personal-feed` read the snapshot; fall back to live fan-out only if the snapshot is missing or older than ~1 h (and log it).
 3. **Source registry**: replace the 18 hand-written `fetchX().catch(...)` blocks with a table (`id, name, homepage, fetcher, ttl, timeoutMs`). Gives one place for per-source TTLs (e.g. police 15 min, culture 6 h), timeouts, retry/backoff and a simple circuit breaker (skip a source for N runs after repeated failures, serving its last good items from blob).
 4. Store **per-source last-good results** so a failing upstream degrades to stale data, not empty.
+5. **A failed source must never look like an absent one.** Each source's health records one of three states: *no new records* (fetched fine, nothing new), *temporarily unavailable* (fetch failed; last-good items served and marked stale with their age), or *ingestion failed* (fetched but parsing or validation failed, e.g. the page structure changed). The feed and source pages show the state, and this matters most for planning, petitions and FOI.
 
 ### Phase 3 — archive indexing (~1 week, before archive passes a few thousand items)
 1. Maintain **index blobs** at write time in `archiveItems`: `index/recent` (key, publishedAt, sourceId, towns, topics, title), plus per-source/town/topic shards. The existing `manifest/recent` and `manifest/search-index` are a start — make them the read path.

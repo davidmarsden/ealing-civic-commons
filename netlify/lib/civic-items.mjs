@@ -7,7 +7,7 @@ export const MAX_MANIFEST_KEYS = 5000;
 export const SEARCH_INDEX_KEY = 'manifest/search-index';
 export const store = (options = {}) => Netlify.context?.deploy?.context === 'production'
   ? getStore(STORE_NAME, options)
-  : getDeployStore(STORE_NAME);
+  : getDeployStore({ name: STORE_NAME, ...options });
 export const stableItemKey = id => Buffer.from(String(id ?? ''), 'utf8').toString('base64url');
 export const itemBlobKey = key => `item/${String(key ?? '').trim()}`;
 export function validItemKey(value){const key=String(value??'').trim();return key.length>0&&key.length<=512&&/^[A-Za-z0-9_-]+$/.test(key)}
@@ -43,7 +43,7 @@ function archiveMatches(record, { sourceId, town, topic, q }) {
   return true;
 }
 
-function archiveSortTime(record) {
+export function archiveSortTime(record) {
   const published = Date.parse(record?.item?.publishedAt || '');
   if (Number.isFinite(published)) return published;
   const archived = Date.parse(record?.archivedAt || '');
@@ -66,15 +66,17 @@ async function readItemBlob(blobs, key) {
   }
 }
 
-const recordFromBlob = (key, result) => result?.data?.item && result.data.key === key ? { ...result.data, etag: normaliseEtag(result.etag) } : null;
+const recordFromBlob = (key, result, fallbackEtag = null) => result?.data?.item && result.data.key === key ? { ...result.data, etag: normaliseEtag(result.etag) || fallbackEtag } : null;
 
 // strict: any read failure rejects (request paths). Non-strict: failed keys are
 // skipped and simply stay unindexed until a later run (backfill).
-async function loadRecords(blobs, keys, { strict = true } = {}) {
+// `etags` (backfill) supplies listing etags for backends whose reads omit them. The
+// read is at least as new as the listing, so at worst an entry is reloaded again.
+async function loadRecords(blobs, keys, { strict = true, etags = null } = {}) {
   const records = [];
   for (let i = 0; i < keys.length; i += 100) {
     const loaded = await Promise.all(keys.slice(i, i + 100).map(key => {
-      const read = readItemBlob(blobs, key).then(result => recordFromBlob(key, result));
+      const read = readItemBlob(blobs, key).then(result => recordFromBlob(key, result, etags?.get(key) || null));
       return strict ? read : read.catch(() => null);
     }));
     records.push(...loaded.filter(Boolean));
@@ -109,9 +111,13 @@ function searchIndexEntry(record) {
   };
 }
 
-async function readSearchIndex(blobs) {
+// Some Blobs backends omit the etag on reads, so writers also take it from a listing
+// made before the read: if the index changes in between, the conditional write
+// fails and is retried, so it can never commit over a newer index.
+async function readSearchIndex(blobs, { forWrite = false } = {}) {
+  const listedEtag = forWrite ? (await blobs.list({ prefix: SEARCH_INDEX_KEY })).blobs.find(blob => blob.key === SEARCH_INDEX_KEY)?.etag || null : null;
   const result = await blobs.getWithMetadata(SEARCH_INDEX_KEY, { type: 'json' });
-  return { index: result?.data || null, etag: result?.etag || null };
+  return { index: result?.data || null, exists: Boolean(result), etag: result?.etag || listedEtag };
 }
 
 const usableIndex = index => index?.version === SEARCH_INDEX_VERSION && index.complete === true && Array.isArray(index.records);
@@ -127,7 +133,8 @@ const currentEntry = (entry, etag) => entry?.v === SEARCH_INDEX_VERSION && Boole
 async function updateSearchIndex(blobs, records, now, { listing = null } = {}) {
   try {
     for (let attempt = 0; attempt < INDEX_WRITE_ATTEMPTS; attempt += 1) {
-      const { index, etag } = await readSearchIndex(blobs);
+      const { index, exists, etag } = await readSearchIndex(blobs, { forWrite: true });
+      if (exists && !etag) throw new Error('search index etag unavailable; refusing an unconditional write');
       const byKey = new Map((Array.isArray(index?.records) ? index.records : []).filter(entry => validItemKey(entry?.key)).map(entry => [entry.key, entry]));
       let changed = false;
       for (const record of records || []) {
@@ -146,16 +153,16 @@ async function updateSearchIndex(blobs, records, now, { listing = null } = {}) {
         }
         complete = [...listing.etags].every(([key, blobEtag]) => currentEntry(byKey.get(key), blobEtag));
       }
-      if (!changed && complete === usableIndex(index)) return { size: byKey.size, complete };
+      if (!changed && complete === usableIndex(index)) return { size: byKey.size, complete, written: false };
       const body = { version: SEARCH_INDEX_VERSION, updatedAt: now, complete, size: byKey.size, records: [...byKey.values()] };
-      const result = await blobs.setJSON(SEARCH_INDEX_KEY, body, etag ? { onlyIfMatch: etag } : { onlyIfNew: true });
-      if (result?.modified !== false) return { size: byKey.size, complete };
+      const result = await blobs.setJSON(SEARCH_INDEX_KEY, body, exists ? { onlyIfMatch: etag } : { onlyIfNew: true });
+      if (result?.modified !== false) return { size: byKey.size, complete, written: true, bytes: JSON.stringify(body).length, attempts: attempt + 1 };
     }
     console.error('Civic item search index update abandoned after repeated write conflicts');
   } catch (error) {
     console.error('Civic item search index update failed', error);
   }
-  return { size: null, complete: false };
+  return { size: null, complete: false, written: false };
 }
 
 // Listed blobs whose index entry is absent, outdated or built from an older blob,
@@ -164,19 +171,21 @@ async function indexBackfillRecords(blobs, etags, limit = INDEX_BACKFILL_LIMIT) 
   const { index } = await readSearchIndex(blobs);
   const indexed = new Map((Array.isArray(index?.records) ? index.records : []).map(entry => [entry?.key, entry]));
   const stale = [...etags].filter(([key, blobEtag]) => !currentEntry(indexed.get(key), blobEtag)).map(([key]) => key).slice(0, limit);
-  return loadRecords(blobs, stale, { strict: false });
+  return loadRecords(blobs, stale, { strict: false, etags });
 }
 
-export async function listArchivedItems({ limit = 40, offset = 0, sourceId = null, town = null, topic = null, q = null } = {}, { blobs = store({ consistency: 'strong' }) } = {}) {
+export async function listArchivedItems({ limit = 40, offset = 0, sourceId = null, town = null, topic = null, q = null } = {}, { blobs = store({ consistency: 'strong' }), useIndex = true } = {}) {
   const max = Math.max(1, Math.min(Number(limit) || 40, 100));
   const skip = Math.max(0, Number(offset) || 0);
   const filters = { sourceId: cleanFilter(sourceId), town: cleanFilter(town), topic: cleanFilter(topic), q: cleanFilter(q, 240) };
 
-  const { index } = await readSearchIndex(blobs).catch(error => { console.error('Civic item search index unavailable', error); return { index: null }; });
+  const { index } = useIndex ? await readSearchIndex(blobs).catch(error => { console.error('Civic item search index unavailable', error); return { index: null }; }) : { index: null };
   let records = usableIndex(index) ? index.records.filter(entry => entry?.item && validItemKey(entry.key)) : null;
   let matching, page;
   const select = () => {
-    matching = records.filter(record => archiveMatches(record, filters)).sort((a, b) => archiveSortTime(b) - archiveSortTime(a));
+    matching = records.filter(record => archiveMatches(record, filters))
+      // Key tie-break keeps order identical between indexed and full-scan reads.
+      .sort((a, b) => archiveSortTime(b) - archiveSortTime(a) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
     page = matching.slice(skip, skip + max);
   };
 
@@ -221,6 +230,7 @@ export async function listArchivedItems({ limit = 40, offset = 0, sourceId = nul
 }
 
 async function updateManifest(blobs, keysToTouch, now) {
+  if (!keysToTouch.length) return null;
   const manifest = await blobs.get(MANIFEST_KEY, { type: 'json' }).catch(() => null);
   const recent = new Set(Array.isArray(manifest?.keys) ? manifest.keys.filter(validItemKey) : []);
   for (const key of keysToTouch) { recent.delete(key); recent.add(key); }
@@ -245,12 +255,18 @@ export async function upsertMutableItems(items,{blobs=store({consistency:'strong
   const changed=results.filter(r=>r.action!=='unchanged'),touched=changed.map(r=>r.key),manifestSize=await updateManifest(blobs,touched,now),searchIndexSize=changed.length?(await updateSearchIndex(blobs,changed.map(r=>r.record),now)).size:null;return{considered:Array.isArray(items)?items.length:0,inserted:results.filter(r=>r.action==='insert').length,updated:results.filter(r=>r.action==='update').length,unchanged:results.filter(r=>r.action==='unchanged').length,manifestSize,searchIndexSize};
 }
 
-export async function archiveItems(items, { blobs = store(), backfillLimit = INDEX_BACKFILL_LIMIT } = {}) {
+// Strong consistency: reconciliation compares a listing with writes made moments
+// earlier (including by the WDTK publisher), which eventual reads could miss.
+export async function archiveItems(items, { blobs = store({ consistency: 'strong' }), backfillLimit = INDEX_BACKFILL_LIMIT } = {}) {
+  const started = Date.now();
+  const lap = (() => { let last = started; return () => { const now = Date.now(), ms = now - last; last = now; return ms; }; })();
+  const timings = {};
   const now = new Date().toISOString();
   // A failed listing must not be mistaken for an empty archive: every item would
   // look new and be overwritten, and a partial index could be marked complete.
   const listing = await blobs.list({ prefix: 'item/' }).catch(error => { console.error('Civic item listing failed', error); return null; });
-  if (!listing) return { considered: Array.isArray(items) ? items.length : 0, newCandidates: 0, stored: 0, failed: 0, manifestSize: null, archiveSize: null, searchIndexSize: null, searchIndexComplete: false, indexBackfilled: 0 };
+  timings.listMs = lap();
+  if (!listing) return { considered: Array.isArray(items) ? items.length : 0, newCandidates: 0, stored: 0, failed: 0, manifestSize: null, archiveSize: null, searchIndexSize: null, searchIndexComplete: false, indexBackfilled: 0, timings };
   const etags = listedItemEtags(listing);
   const known = new Set(etags.keys());
   const candidates = [];
@@ -266,11 +282,15 @@ export async function archiveItems(items, { blobs = store(), backfillLimit = IND
   const stored = writes.filter(write => write.modified);
   for (const write of stored) known.add(write.key);
   const manifestSize = await updateManifest(blobs, stored.map(write => write.key), now);
+  timings.storeMs = lap();
   const backfill = await indexBackfillRecords(blobs, etags, backfillLimit).catch(error => { console.error('Civic item index backfill failed', error); return null; });
+  timings.backfillMs = lap();
   // New writes count towards completeness when their etag is known; otherwise the
   // next run sees them in its listing and reconciles them then.
   const expected = new Map(etags);
   for (const write of stored) if (write.record.etag) expected.set(write.key, write.record.etag);
   const searchIndex = await updateSearchIndex(blobs, [...(backfill || []), ...stored.map(write => write.record)], now, { listing: backfill ? { etags: expected } : null });
-  return { considered: Array.isArray(items) ? items.length : 0, newCandidates: candidates.length, stored: stored.length, failed: writes.filter(write => write.error).length, manifestSize, archiveSize: known.size, searchIndexSize: searchIndex.size, searchIndexComplete: searchIndex.complete, indexBackfilled: backfill?.length || 0 };
+  timings.indexMs = lap();
+  timings.totalMs = Date.now() - started;
+  return { considered: Array.isArray(items) ? items.length : 0, newCandidates: candidates.length, stored: stored.length, failed: writes.filter(write => write.error).length, manifestSize, archiveSize: known.size, searchIndexSize: searchIndex.size, searchIndexComplete: searchIndex.complete, searchIndexWritten: searchIndex.written, searchIndexBytes: searchIndex.bytes ?? null, indexBackfilled: backfill?.length || 0, timings };
 }
