@@ -2,7 +2,7 @@ import { getStore } from '@netlify/blobs';
 
 const STORE='civic-commons-operations';
 const KEY='whatdotheyknow/last-run';
-const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, max-age=30, stale-while-revalidate=60'}});
+const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':status >= 400 ? 'no-store' : 'public, max-age=30, stale-while-revalidate=60','netlify-cdn-cache-control':status >= 400 ? 'no-store' : 'public, durable, s-maxage=30, stale-while-revalidate=60'}});
 
 export default async request=>{
   if(request.method!=='GET')return json({error:'Method not allowed'},405);

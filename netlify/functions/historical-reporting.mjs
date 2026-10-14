@@ -2,7 +2,7 @@ import { getStore } from '@netlify/blobs';
 import { MANIFEST_KEY, SEARCH_INDEX_KEY, STORE_NAME, itemBlobKey, validItemKey } from '../lib/civic-items.mjs';
 import { itemLinksToPlace, withPlaceLinks } from '../lib/civic-place-links.mjs';
 
-const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=60, stale-while-revalidate=300' } });
+const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': status >= 400 ? 'no-store' : 'public, max-age=60, stale-while-revalidate=300', 'netlify-cdn-cache-control': status >= 400 ? 'no-store' : 'public, durable, s-maxage=60, stale-while-revalidate=300' } });
 const clean = (value, max = 180) => String(value ?? '').trim().slice(0, max);
 const cleanList = (values, max = 180) => [...new Set((values || []).map(value => clean(value, max)).filter(value => value.length >= 3))].slice(0, 20);
 const escapeRegex = value => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

@@ -92,7 +92,7 @@ async function reviewedContextActivity() {
     const recent = published.slice(-12);
     const activities = await Promise.all(recent.map(async contribution => {
       const key = stableItemKey(contribution.itemId);
-      const archived = await getArchivedItem(key, { consistency: 'strong' }).catch(() => null);
+      const archived = await getArchivedItem(key).catch(() => null);
       if (!archived?.item) return null;
       const parent = archived.item;
       return {
@@ -189,7 +189,7 @@ export default async request => {
   }), {
     headers: {
       'content-type': 'application/json; charset=utf-8',
-      'cache-control': 'public, max-age=300, stale-while-revalidate=900',
+      'cache-control': 'public, max-age=300, stale-while-revalidate=900', 'netlify-cdn-cache-control': 'public, durable, s-maxage=300, stale-while-revalidate=900',
       'access-control-allow-origin': '*'
     }
   });

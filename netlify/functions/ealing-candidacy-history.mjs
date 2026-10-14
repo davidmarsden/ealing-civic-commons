@@ -5,7 +5,7 @@ function json(body, status = 200) {
     status,
     headers: {
       'content-type': 'application/json; charset=utf-8',
-      'cache-control': 'public, max-age=300, stale-while-revalidate=1800',
+      'cache-control': status >= 400 ? 'no-store' : 'public, max-age=300, stale-while-revalidate=1800', 'netlify-cdn-cache-control': status >= 400 ? 'no-store' : 'public, durable, s-maxage=300, stale-while-revalidate=1800',
       'access-control-allow-origin': '*'
     }
   });

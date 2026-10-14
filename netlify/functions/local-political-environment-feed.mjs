@@ -391,7 +391,7 @@ export async function fetchLocalPoliticalEnvironmentFeed() {
 export default async () => new Response(JSON.stringify(await fetchLocalPoliticalEnvironmentFeed()), {
   headers: {
     'content-type': 'application/json; charset=utf-8',
-    'cache-control': 'public, max-age=900, stale-while-revalidate=1800',
+    'cache-control': 'public, max-age=900, stale-while-revalidate=1800', 'netlify-cdn-cache-control': 'public, durable, s-maxage=900, stale-while-revalidate=1800',
     'access-control-allow-origin': '*'
   }
 });

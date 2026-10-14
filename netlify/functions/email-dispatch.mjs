@@ -1,4 +1,6 @@
 import { XMLParser } from 'fast-xml-parser';
+import combinedFeedHandler from './combined-feed.mjs';
+import { loadPublishedContributions, renderPersonalFeed } from './personal-feed.mjs';
 import {
   htmlEscape,
   mailConfigured,
@@ -36,19 +38,22 @@ function parseFeed(xml) {
   })).filter(item => item.guid && item.link);
 }
 
-async function fetchPersonalFeed(origin, follows) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 9000);
-  try {
-    const response = await fetch(personalFeedUrl(origin, follows), {
-      signal: controller.signal,
-      headers: { accept: 'application/rss+xml, application/xml;q=0.9' }
-    });
-    if (!response.ok) throw new Error(`Personal RSS returned HTTP ${response.status}`);
-    return parseFeed(await response.text());
-  } finally {
-    clearTimeout(timeout);
-  }
+// The combined feed and published contributions are loaded once per dispatch run
+// and every subscriber's personal feed is rendered from them in-process, so the
+// run costs one upstream fan-out regardless of subscriber count.
+async function loadSharedFeedInputs(origin) {
+  const [feedResponse, contributions] = await Promise.all([
+    combinedFeedHandler(new Request(new URL('/.netlify/functions/combined-feed', origin))),
+    loadPublishedContributions(origin)
+  ]);
+  if (!feedResponse?.ok) throw new Error(`Combined feed returned HTTP ${feedResponse?.status || 'unknown'}`);
+  return { feedData: await feedResponse.json(), contributions };
+}
+
+async function fetchPersonalFeed(origin, follows, shared) {
+  const response = await renderPersonalFeed(new Request(personalFeedUrl(origin, follows)), shared);
+  if (!response.ok) throw new Error(`Personal RSS returned HTTP ${response.status}`);
+  return parseFeed(await response.text());
 }
 
 function newEntriesFor(subscription, items) {
@@ -88,12 +93,12 @@ async function persistCursorIfActive(blobs, key, patch) {
   return true;
 }
 
-async function processSubscription(blobs, key, subscription, origin) {
+async function processSubscription(blobs, key, subscription, origin, shared) {
   if (subscription?.status !== 'active' || !subscription.email || !subscription.unsubscribeToken) return { skipped: true };
 
   let items;
   try {
-    items = await fetchPersonalFeed(origin, subscription.follows);
+    items = await fetchPersonalFeed(origin, subscription.follows, shared);
   } catch (error) {
     console.error(`Email alert feed failed for ${subscription.id}`, error);
     return { failed: true };
@@ -142,13 +147,23 @@ export default async request => {
   const origin = publicOrigin(request.url);
   const blobs = store();
   const listing = await blobs.list({ prefix: 'subscription/' });
+  if (!listing.blobs.length) return;
+
+  let shared;
+  try {
+    shared = await loadSharedFeedInputs(origin);
+  } catch (error) {
+    console.error('Email dispatch skipped: combined feed unavailable', error);
+    return;
+  }
+
   let sent = 0;
   let failed = 0;
 
   for (const blob of listing.blobs) {
     const subscription = await blobs.get(blob.key, { type: 'json', consistency: 'strong' });
     try {
-      const result = await processSubscription(blobs, blob.key, subscription, origin);
+      const result = await processSubscription(blobs, blob.key, subscription, origin, shared);
       sent += result?.sent || 0;
       if (result?.failed) failed += 1;
     } catch (error) {

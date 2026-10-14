@@ -188,4 +188,4 @@ export async function fetchFaithCommunityFeed() {
   return {generatedAt:new Date().toISOString(),items,health};
 }
 
-export default async()=>new Response(JSON.stringify(await fetchFaithCommunityFeed()),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, max-age=300, stale-while-revalidate=900','access-control-allow-origin':'*'}});
+export default async()=>new Response(JSON.stringify(await fetchFaithCommunityFeed()),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, max-age=300, stale-while-revalidate=900','netlify-cdn-cache-control':'public, durable, s-maxage=300, stale-while-revalidate=900','access-control-allow-origin':'*'}});

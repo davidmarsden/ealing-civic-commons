@@ -26,5 +26,5 @@ export default async request=>{
     .sort((a,b)=>publishedTime(b)-publishedTime(a))
     .slice(0,50);
 
-  return new Response(JSON.stringify({generatedAt:new Date().toISOString(),route,items,count:items.length}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, max-age=180, stale-while-revalidate=600','access-control-allow-origin':'*'}});
+  return new Response(JSON.stringify({generatedAt:new Date().toISOString(),route,items,count:items.length}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, max-age=180, stale-while-revalidate=600','netlify-cdn-cache-control':'public, durable, s-maxage=180, stale-while-revalidate=600','access-control-allow-origin':'*'}});
 };

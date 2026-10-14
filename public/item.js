@@ -129,7 +129,7 @@ async function loadItemEntityLinks(item) {
   if (!section || !content) return;
   section.hidden = true;
   try {
-    const response = await fetch('/.netlify/functions/civic-entities', { cache: 'no-store' });
+    const response = await fetch('/.netlify/functions/civic-entities');
     if (!response.ok) return;
     const data = await response.json();
     const direct = directEntityMatches(item, data.entities).slice(0, 8);
@@ -211,7 +211,7 @@ async function load() {
   const contributionsPromise = loadApprovedContributions(key);
   const archivedPromise = loadArchivedItem(key);
   try {
-    const response = await fetch('/.netlify/functions/feed', { cache:'no-store' });
+    const response = await fetch('/.netlify/functions/feed');
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
     const liveItem = findItem(data,key);

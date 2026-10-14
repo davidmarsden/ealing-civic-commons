@@ -1,6 +1,6 @@
 # Performance & scaling plan
 
-Status: proposal, 14 October 2026. Complements `RENDER-ARCHITECTURE-AUDIT.md` (client rendering) and `technical-architecture-spec-v0.1.md`.
+Status: Phase 1 (except 3.x below) and Phase 3.1–3.2/3.4 implemented, 14 October 2026; later phases proposed. Complements `RENDER-ARCHITECTURE-AUDIT.md` (client rendering) and `technical-architecture-spec-v0.1.md`.
 
 ## 1. Current shape (as built)
 
@@ -45,8 +45,17 @@ request path
 
 ## 4. Phased plan
 
+### Implementation notes (done)
+- `civic-items.mjs`: `manifest/search-index` is now a complete v2 metadata index, updated with conditional (etag) writes by both `archiveItems` and `upsertMutableItems`. The 15‑minute archiver backfills missing/outdated entries (≤2000 per run) and marks the index `complete` once it covers every `item/` blob. `listArchivedItems` uses the index when complete and loads only the requested page; otherwise it falls back to the full scan. `historical-reporting` benefits automatically. Covered by `scripts/test-civic-items.mjs`.
+- `archiveItems` no longer treats a failed `list()` as an empty archive (previously that would have rewritten every item).
+- `email-dispatch` builds the combined feed and contributions once per run and renders each subscriber's feed in-process via `renderPersonalFeed`.
+- `netlify-cdn-cache-control: public, durable, …` mirrors every public function `cache-control`; error responses from shared JSON helpers are `no-store`.
+- `social-preview` edge function uses `cache: 'manual'`.
+- Feed/entity/issue list fetches in the browser no longer use `cache: 'no-store'`.
+- Reviewed-context lookups in the combined feed use eventual consistency.
+
 ### Phase 1 — quick wins (low risk, days)
-1. **CDN caching done properly.** Add `Netlify-CDN-Cache-Control: public, durable, s-maxage=300, stale-while-revalidate=900` to read endpoints (feeds, archive, social-page, entity/issue/topic APIs) so one origin computation is shared across edge nodes. Add `Netlify-Vary: query=…` with only the meaningful params. Add cache headers to the functions that lack them (`ealing-council-documents`, `ealing-council-topics`, `moderngov-whatsnew`).
+1. **CDN caching done properly.** Add `Netlify-CDN-Cache-Control: public, durable, s-maxage=300, stale-while-revalidate=900` to read endpoints (feeds, archive, social-page, entity/issue/topic APIs) so one origin computation is shared across edge nodes. Add `Netlify-Vary: query=…` with only the meaningful params.
 2. **Drop `cache: 'no-store'`** from feed/contribution fetches in `app.js` (use default or `no-cache`); rely on short server TTLs.
 3. **Edge caching for `social-preview`**: return the `social-page` response with its cache headers intact and set `cache: 'manual'` in the edge config, or skip the hop for `/` (homepage meta is static).
 4. **Email dispatch**: build the combined feed **once** per run and filter per subscriber in-process (extract `personal-feed`'s filtering into `lib/`); process subscribers with bounded concurrency (e.g. 5).
