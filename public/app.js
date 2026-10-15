@@ -210,14 +210,16 @@ function diagnosticLabel(diagnostic) { const mode = diagnostic.mode === 'browser
 function ago(iso) { const ms = Date.now() - Date.parse(iso || ''); if (!Number.isFinite(ms)) return null; const minutes = Math.round(ms / 60000); if (minutes < 60) return `${Math.max(1, minutes)} min ago`; const hours = Math.round(minutes / 60); return hours < 48 ? `${hours} h ago` : `${Math.round(hours / 24)} days ago`; }
 // A failed source is shown as failed, never as merely empty.
 function healthLabel(h) {
-  if (h.state === 'no-new-records') return 'no new records';
   if (h.state === 'unavailable' || h.state === 'ingestion-failed') {
     const what = h.state === 'unavailable' ? 'unavailable' : 'ingestion failed';
     const since = h.failingSince ? ` since ${ago(h.failingSince)}` : '';
     const lastGood = h.servingLastGood ? ` · showing ${h.servingLastGood} earlier items from ${ago(h.lastSuccessAt) || 'before'}` : (h.lastSuccessAt ? ` · last fetched ${ago(h.lastSuccessAt)}` : '');
     return `${what}${since}${lastGood}`;
   }
-  return h.ok ? h.itemCount : 'currently unavailable';
+  // Pages retrieved through the third-party fallback fetcher say so.
+  const via = h.retrievedVia ? ' · via fallback fetcher' : '';
+  if (h.state === 'no-new-records') return `no new records${via}`;
+  return h.ok ? `${h.itemCount}${via}` : 'currently unavailable';
 }
 function renderHealth() { const health = state.data?.health ?? []; healthList.innerHTML = health.map(h => { const healthStatus = h.status || (h.ok ? 'ok' : 'error'); const label = healthLabel(h); const dotClass = h.state === 'no-new-records' ? 'idle' : h.state === 'ingestion-failed' ? 'bad' : h.ok ? 'ok' : (h.state === 'unavailable' || healthStatus === 'blocked' || healthStatus === 'upstream') ? 'blocked' : 'bad'; const sourceName = h.homepage ? `<a class="health-source" href="${esc(h.homepage)}" target="_blank" rel="noopener noreferrer">${esc(h.name)}</a>` : esc(h.name); const diagnostics = showDiagnostics && Array.isArray(h.diagnostics) && h.diagnostics.length ? `<div class="health-diagnostics"><strong>Fetch diagnostics</strong>${h.diagnostics.map(d => `<span>${esc(diagnosticLabel(d))}</span>`).join('')}${h.error ? `<span>Result: ${esc(h.error)}</span>` : ''}</div>` : ''; const title = showDiagnostics ? esc(h.error || 'Feed fetched successfully') : ''; return `<div class="health-entry"><div class="health-row"${title ? ` title="${title}"` : ''}><span class="health-dot ${dotClass}"></span><span>${sourceName}</span><span class="health-count">${esc(label)}</span></div>${diagnostics}</div>`; }).join(''); }
 
