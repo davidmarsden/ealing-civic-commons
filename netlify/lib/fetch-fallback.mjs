@@ -70,8 +70,8 @@ export function installFetchFallback({ token = process.env.APIFY_TOKEN, budget =
   const skipHosts = new Set(['api.apify.com', ...ownHosts.map(hostOf).filter(Boolean)]);
   let used = 0;
   // One fallback attempt per URL per run: adapters often retry a refused page
-  // themselves (e.g. with a browser user-agent), which would otherwise send the
-  // same URL to the fallback twice.
+  // themselves (e.g. with a browser user-agent), and sources run in parallel, so
+  // the same URL could otherwise go to the fallback more than once.
   const attempted = new Map();
 
   globalThis.fetch = async (input, init = {}) => {
@@ -83,30 +83,30 @@ export function installFetchFallback({ token = process.env.APIFY_TOKEN, budget =
     let response, error;
     try { response = await originalFetch(input, init); } catch (caught) { error = caught; }
     if (!shouldRetry(response, error)) { if (error) throw error; return response; }
-    if (attempted.has(url)) {
-      const earlier = attempted.get(url);
-      if (earlier) return new Response(earlier.body, { status: earlier.status, headers: earlier.headers });
-      if (error) throw error;
-      return response;
+    // Concurrent and later requests for a URL share its one fallback attempt
+    // (a promise of the retrieved page, or null if the fallback failed).
+    if (!attempted.has(url)) {
+      if (used >= budget) {
+        log.push({ url, host, direct: error ? String(error?.message || error) : response.status, outcome: 'budget-exhausted' });
+        if (error) throw error;
+        return response;
+      }
+      used += 1;
+      const started = Date.now();
+      const direct = error ? String(error?.message || error) : response.status;
+      attempted.set(url, fetchViaActor(originalFetch, url, token).then(async fallback => {
+        const page = { body: await fallback.text(), status: fallback.status, headers: Object.fromEntries(fallback.headers) };
+        log.push({ url, host, direct, outcome: 'retrieved', status: page.status, ms: Date.now() - started });
+        return page;
+      }, fallbackError => {
+        log.push({ url, host, direct, outcome: 'failed', error: String(fallbackError?.message || fallbackError), ms: Date.now() - started });
+        return null;
+      }));
     }
-    if (used >= budget) {
-      log.push({ url, host, direct: error ? String(error?.message || error) : response.status, outcome: 'budget-exhausted' });
-      if (error) throw error;
-      return response;
-    }
-    used += 1;
-    const started = Date.now();
-    try {
-      const fallback = await fetchViaActor(originalFetch, url, token);
-      attempted.set(url, { body: await fallback.clone().text(), status: fallback.status, headers: Object.fromEntries(fallback.headers) });
-      log.push({ url, host, direct: error ? String(error?.message || error) : response.status, outcome: 'retrieved', status: fallback.status, ms: Date.now() - started });
-      return fallback;
-    } catch (fallbackError) {
-      attempted.set(url, null);
-      log.push({ url, host, direct: error ? String(error?.message || error) : response.status, outcome: 'failed', error: String(fallbackError?.message || fallbackError), ms: Date.now() - started });
-      if (error) throw error;
-      return response;
-    }
+    const page = await attempted.get(url);
+    if (page) return new Response(page.body, { status: page.status, headers: page.headers });
+    if (error) throw error;
+    return response;
   };
   return { log, active: true, restore: () => { globalThis.fetch = originalFetch; } };
 }

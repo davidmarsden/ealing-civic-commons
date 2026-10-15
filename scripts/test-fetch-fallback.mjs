@@ -78,6 +78,15 @@ assert.equal(await again.text(), '<html>https://blocked.example/news/</html>');
 assert.equal(fallbackAttempts(reuse.log), 1);
 reuse.restore();
 
+// Concurrent requests for the same refused URL share one fallback request.
+const concurrent = installFetchFallback({ token: 't' });
+const before = calls.filter(call => call.url.startsWith('https://api.apify.com/')).length;
+const pages = await Promise.all([fetch('https://blocked.example/news/'), fetch('https://blocked.example/news/'), fetch('https://blocked.example/news/')]);
+assert.deepEqual(pages.map(page => page.status), [200, 200, 200]);
+assert.equal(calls.filter(call => call.url.startsWith('https://api.apify.com/')).length - before, 1);
+assert.equal(fallbackAttempts(concurrent.log), 1);
+concurrent.restore();
+
 // Health entries are marked by host.
 const health = annotateRetrieval([{ id: 'a', homepage: 'https://www.blocked.example/' }, { id: 'b', homepage: 'https://ok.example/' }], run.log);
 assert.equal(health[0].retrievedVia, 'third-party fetcher');
