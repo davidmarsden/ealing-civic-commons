@@ -87,9 +87,7 @@ The following named source surfaces are configured in the current live aggregati
 | Ealing Green Party — News | Borough-wide | Political organisation / campaign | First-party news page; same political-source treatment as other parties | **INGESTING** |
 | Ealing Liberal Democrats — News | Borough-wide | Political organisation / campaign | First-party local news page; same political-source treatment as other parties | **INGESTING** |
 | Rupa Huq MP — News | Ealing / Acton | Elected representative / political publishing | Dated first-party article links from the MP’s website; political claims remain attributable to the publisher and current office metadata remains anchored to Parliament | **INGESTING** |
-| Hanwell Community Forum | Hanwell | Community forum | First-party site monitored for safely dated community/civic publications; health remains visible if the upstream site is unavailable or exposes no current dated items | **INGESTING** |
-| Southall Community Alliance | Southall | Community alliance / charity | First-party news section; article metadata and scoped article content extracted conservatively | **INGESTING** |
-| Norwood Green Residents’ Association | Southall / Norwood Green | Residents / community | Current first-party residents’ site monitored for safely dated civic/community publications | **INGESTING** |
+| Southall Community Alliance | Southall | Community alliance / charity | First-party WordPress RSS feed (article pages carry no dates of their own) | **INGESTING** |
 | Bedford Park Society | Acton | Conservation / residents | First-party Society news/publication section; article metadata used for dates and scoped content | **INGESTING** |
 | Sri Guru Singh Sabha Southall — civic/community video | Southall | Community / faith / video | YouTube Atom filtered for civic/community material and excluding routine worship livestreams | **INGESTING** |
 | Metropolitan Police — Ealing-relevant video | Borough-wide | Official record / video | Metropolitan Police YouTube Atom filtered for explicit Ealing-area terms | **INGESTING** |
@@ -121,8 +119,8 @@ This is the part of the register most affected by the v0.3 status ambiguity.
 | **Friends of the Victoria Hall** | `READY` | **INGESTING** | Live through a dedicated chronology adapter. |
 | **Bedford Park Society** | `READY` / later `VERIFIED` | **INGESTING** | Current first-party Society publishing surface is now wired into live source health and aggregation. |
 | **Southall Community Alliance** | `PARTNER` | **INGESTING** | Current 2026 first-party news is now extracted directly; a partnership could still improve the publishing bridge. |
-| **Norwood Green Residents’ Association** | `PARTNER` | **INGESTING** | Current first-party residents’ site is now operationally configured. |
-| **Hanwell Community Forum** | `PARTNER` | **INGESTING** | High-priority Hanwell source is now operationally configured; upstream health is reported independently. |
+| **Norwood Green Residents’ Association** | `PARTNER` | **RETIRED** (14 Oct 2026) | The homepage no longer links any news and the feed's only post is from 2021; removed from ingestion (#167). |
+| **Hanwell Community Forum** | `PARTNER` | **RETIRED** (15 Oct 2026) | The forum is defunct and its site unreachable; removed from ingestion. |
 
 The key rule from now on is simple: **READY/VERIFIED must never be used as a synonym for INGESTING.**
 

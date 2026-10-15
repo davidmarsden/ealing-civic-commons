@@ -130,13 +130,13 @@ Open Council Network public Ealing summaries are integrated through a conservati
 
 ## Source model
 
-The live source universe spans local journalism, community organisations, campaign publishing, independent commentary, party-political publishing and official records. Recent additions include Stop The Towers, Friends of the Victoria Hall, Southall Speaks, Visit Southall, Vicious Ealing Council, EALING.NEWS, Ealing Culture, LAGER Can, Ealing Labour, Ealing Conservatives, Ealing Green Party, Ealing Liberal Democrats, Hanwell Community Forum, Southall Community Alliance, Norwood Green Residents’ Association and Bedford Park Society, alongside the established journalism, community and official sources.
+The live source universe spans local journalism, community organisations, campaign publishing, independent commentary, party-political publishing and official records. Recent additions include Stop The Towers, Friends of the Victoria Hall, Southall Speaks, Visit Southall, Vicious Ealing Council, EALING.NEWS, Ealing Culture, LAGER Can, Ealing Labour, Ealing Conservatives, Ealing Green Party, Ealing Liberal Democrats, Southall Community Alliance and Bedford Park Society, alongside the established journalism, community and official sources.
 
 The human-readable [Source Register v0.4](./docs/source-register-v0.4.md) distinguishes sources that are actually **INGESTING** from those that are merely **VERIFIED**, **CANDIDATE**, **PARTNER** or **REFERENCE**. Production source definitions and public source-health output remain authoritative for live operational state.
 
 Native RSS remains the preferred path when available, but it is no longer the only path: source-specific public-page adapters, official-register adapters and structured first-party APIs are established ingestion patterns where they preserve first-party provenance and stable identities.
 
-Further candidates are added deliberately to fill geographic and thematic gaps rather than simply maximise source count. Positive Greenford and Visions for Northolt are already live; Hanwell coverage has improved with Hanwell Community Forum; Southall/Norwood Green community coverage has deepened. **Perivale remains the clearest geographic publishing gap.**
+Further candidates are added deliberately to fill geographic and thematic gaps rather than simply maximise source count. Positive Greenford and Visions for Northolt are already live; Hanwell Community Forum (defunct) and Norwood Green Residents’ Association (no current news) have been retired, so **Perivale and Hanwell are the clearest geographic publishing gaps.**
 
 ## Public entity model
 
