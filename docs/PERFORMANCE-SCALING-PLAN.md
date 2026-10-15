@@ -97,6 +97,7 @@ During the ingest only, a source request refused with 403, 429, 503 or a Cloudfl
 - **Time limit:** each fallback request has its own 25 s limit rather than the adapter's (whose 7.5–18 s is often mostly spent before the 403 arrives); sources run in parallel inside the 15-minute background ingest.
 - **Cost:** one test fetch used 0.0016 Apify compute units. Check actual usage after the first day.
 - Publishers who block us are still asked to allow our requests directly; the fallback is the stopgap.
+- **Setup:** `APIFY_TOKEN` must be available to Functions in each context that should use the fallback (Production, and Deploy Previews for testing). Functions only see variables that existed when the deploy was built. Each snapshot records `ingest.fallbackActive`, so `combined-feed` shows whether the fallback ran; on 15 Oct a preview built before the token was scoped to previews reported `false`.
 
 ### Production finding: the archiver runs two or three times per slot (pre-existing)
 
