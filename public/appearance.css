@@ -1,0 +1,31 @@
+/* Civic Commons appearance tokens. Loaded after existing styles. */
+:root[data-theme="dark"] {
+ color-scheme:dark;
+ --ink:#e5eee8;--muted:#b6c7c0;--paper:#172321;--card:#273733;
+ --line:#42574e;--green:#acd5b7;--green-dark:#c5e4cd;
+ --amber:#e8b47d;--blue:#527b9b;--purple:#92709a;
+ --shadow:0 10px 30px rgba(0,0,0,.2);
+}
+:root[data-theme="dark"] body {background:var(--paper);color:var(--ink)}
+:root[data-theme="dark"] .site-header {background:rgba(23,35,33,.96)}
+:root[data-theme="dark"] .hero {background:radial-gradient(circle at 85% 15%,rgba(172,213,183,.1),transparent 34%)}
+:root[data-theme="dark"] .lede,:root[data-theme="dark"] .item-summary,
+:root[data-theme="dark"] .panel p,:root[data-theme="dark"] .submit-grid > div > p:not(.eyebrow),
+:root[data-theme="dark"] .documents-grid > div:first-child > p:not(.eyebrow),
+:root[data-theme="dark"] .social-next-grid > div:last-child p {color:var(--muted)}
+:root[data-theme="dark"] .submit-source {background:#1c2b27}
+:root[data-theme="dark"] .documents {background:var(--card)}
+:root[data-theme="dark"] .social-next {background:#20322c}
+:root[data-theme="dark"] .social-next p:last-child,
+:root[data-theme="dark"] .principle strong {color:var(--green)}
+:root[data-theme="dark"] .tag {background:var(--card)}
+:root[data-theme="dark"] .source-pill {color:#fff}
+:root[data-theme="dark"] .journalism,:root[data-theme="dark"] .submit-button,
+:root[data-theme="dark"] .view-button.active {background:#356a50;color:#fff}
+:root[data-theme="dark"] .about {background:#10291f}
+:root[data-theme="dark"] input,:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea {color-scheme:dark}
+.appearance-control {display:flex;align-items:center;gap:6px;margin-left:auto}
+.appearance-control label {font-size:.8rem;color:var(--muted)}
+.appearance-control select {width:auto;padding:5px 8px;font-size:.8rem}
+@media(max-width:720px){.appearance-control label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}}
