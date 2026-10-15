@@ -13,9 +13,11 @@ const RETRY_STATUSES = new Set([403, 429, 503, 520, 521, 522, 523, 524, 525, 526
 const DEFAULT_BUDGET = 40;
 // The fallback has its own time limit rather than the adapter's: adapter timeouts
 // (7.5-18 s) budget a direct fetch and are often mostly spent by the time a 403
-// arrives, while a fallback fetch takes about 6 s. 25 s bounds how long one source
-// can hold the background ingest (15-minute limit); sources run in parallel.
-const TIMEOUT_MS = 25000;
+// arrives. Fallback fetches usually take about 6 s but escalate to slower routes
+// for some sites (35 s measured for ealingindependents.org on 15 Oct). 60 s bounds
+// how long one source can hold the background ingest (15-minute limit); sources
+// run in parallel.
+const TIMEOUT_MS = 60000;
 
 const hostOf = value => { try { return new URL(value).hostname.replace(/^www\./, ''); } catch { return null; } };
 // The site a host belongs to: news.met.police.uk and www.met.police.uk are both
@@ -41,7 +43,7 @@ async function fetchViaActor(originalFetch, url, token) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const response = await originalFetch(`${ACTOR_URL}?token=${encodeURIComponent(token)}&timeout=20`, {
+    const response = await originalFetch(`${ACTOR_URL}?token=${encodeURIComponent(token)}&timeout=55`, {
       method: 'POST',
       signal: controller.signal,
       headers: { 'content-type': 'application/json' },
@@ -67,6 +69,10 @@ export function installFetchFallback({ token = process.env.APIFY_TOKEN, budget =
   const originalFetch = globalThis.fetch;
   const skipHosts = new Set(['api.apify.com', ...ownHosts.map(hostOf).filter(Boolean)]);
   let used = 0;
+  // One fallback attempt per URL per run: adapters often retry a refused page
+  // themselves (e.g. with a browser user-agent), which would otherwise send the
+  // same URL to the fallback twice.
+  const attempted = new Map();
 
   globalThis.fetch = async (input, init = {}) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input?.url;
@@ -77,6 +83,12 @@ export function installFetchFallback({ token = process.env.APIFY_TOKEN, budget =
     let response, error;
     try { response = await originalFetch(input, init); } catch (caught) { error = caught; }
     if (!shouldRetry(response, error)) { if (error) throw error; return response; }
+    if (attempted.has(url)) {
+      const earlier = attempted.get(url);
+      if (earlier) return new Response(earlier.body, { status: earlier.status, headers: earlier.headers });
+      if (error) throw error;
+      return response;
+    }
     if (used >= budget) {
       log.push({ url, host, direct: error ? String(error?.message || error) : response.status, outcome: 'budget-exhausted' });
       if (error) throw error;
@@ -86,9 +98,11 @@ export function installFetchFallback({ token = process.env.APIFY_TOKEN, budget =
     const started = Date.now();
     try {
       const fallback = await fetchViaActor(originalFetch, url, token);
+      attempted.set(url, { body: await fallback.clone().text(), status: fallback.status, headers: Object.fromEntries(fallback.headers) });
       log.push({ url, host, direct: error ? String(error?.message || error) : response.status, outcome: 'retrieved', status: fallback.status, ms: Date.now() - started });
       return fallback;
     } catch (fallbackError) {
+      attempted.set(url, null);
       log.push({ url, host, direct: error ? String(error?.message || error) : response.status, outcome: 'failed', error: String(fallbackError?.message || fallbackError), ms: Date.now() - started });
       if (error) throw error;
       return response;

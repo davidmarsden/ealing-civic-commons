@@ -8,6 +8,7 @@ const calls = [];
 let actorReply = url => [{ raw: `<html>${url}</html>`, fetch: { httpStatusCode: 200, contentType: 'text/html; charset=utf-8' } }];
 const sites = {
   'https://blocked.example/news/': () => new Response('denied', { status: 403 }),
+  'https://blocked.example/other/': () => new Response('denied', { status: 403 }),
   'https://ok.example/': () => new Response('fine', { status: 200 }),
   'https://missing.example/': () => new Response('gone', { status: 404 }),
   'https://reset.example/': () => { throw new TypeError('fetch failed'); },
@@ -49,21 +50,33 @@ await assert.rejects(fetch('https://slow.example/'), /aborted/);
 // A refused connection is retried too.
 assert.equal((await fetch('https://reset.example/')).status, 200);
 // The budget caps fallback use per run; beyond it the original result stands.
-assert.equal((await fetch('https://blocked.example/news/')).status, 403);
+assert.equal((await fetch('https://blocked.example/other/')).status, 403);
 assert.deepEqual(run.log.map(entry => entry.outcome), ['retrieved', 'retrieved', 'budget-exhausted']);
 assert.equal(fallbackAttempts(run.log), 2, 'requests skipped once the budget is spent are not counted');
 run.restore();
 assert.equal(globalThis.fetch, base, 'restore puts the original fetch back');
 
-// A failed fallback returns the original response, not a fabricated page.
+// A failed fallback returns the original response, not a fabricated page, and
+// the same URL is not sent to the fallback again in that run.
 const failing = installFetchFallback({ token: 't' });
 actorReply = () => new Response('quota', { status: 402 });
 assert.equal((await fetch('https://blocked.example/news/')).status, 403);
 actorReply = () => [{ raw: null, fetch: { httpStatusCode: 0 } }];
-assert.equal((await fetch('https://blocked.example/news/')).status, 403);
 await assert.rejects(fetch('https://reset.example/'), /fetch failed/);
-assert.deepEqual(failing.log.map(entry => entry.outcome), ['failed', 'failed', 'failed']);
+const actorCallsBefore = calls.filter(call => call.url.startsWith('https://api.apify.com/')).length;
+assert.equal((await fetch('https://blocked.example/news/', { headers: { 'user-agent': 'browser' } })).status, 403);
+assert.equal(calls.filter(call => call.url.startsWith('https://api.apify.com/')).length, actorCallsBefore, 'a failed URL is not retried through the fallback');
+assert.deepEqual(failing.log.map(entry => entry.outcome), ['failed', 'failed']);
 failing.restore();
+
+// A retrieved URL fetched again in the same run reuses the retrieved page.
+actorReply = url => [{ raw: `<html>${url}</html>`, fetch: { httpStatusCode: 200, contentType: 'text/html' } }];
+const reuse = installFetchFallback({ token: 't' });
+await (await fetch('https://blocked.example/news/')).text();
+const again = await fetch('https://blocked.example/news/');
+assert.equal(await again.text(), '<html>https://blocked.example/news/</html>');
+assert.equal(fallbackAttempts(reuse.log), 1);
+reuse.restore();
 
 // Health entries are marked by host.
 const health = annotateRetrieval([{ id: 'a', homepage: 'https://www.blocked.example/' }, { id: 'b', homepage: 'https://ok.example/' }], run.log);
