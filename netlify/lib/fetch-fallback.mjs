@@ -13,9 +13,11 @@ const RETRY_STATUSES = new Set([403, 429, 503, 520, 521, 522, 523, 524, 525, 526
 const DEFAULT_BUDGET = 40;
 // The fallback has its own time limit rather than the adapter's: adapter timeouts
 // (7.5-18 s) budget a direct fetch and are often mostly spent by the time a 403
-// arrives, while a fallback fetch takes about 6 s. 25 s bounds how long one source
-// can hold the background ingest (15-minute limit); sources run in parallel.
-const TIMEOUT_MS = 25000;
+// arrives. Fallback fetches usually take about 6 s but escalate to slower routes
+// for some sites (35 s measured for ealingindependents.org on 15 Oct). 60 s bounds
+// how long one source can hold the background ingest (15-minute limit); sources
+// run in parallel.
+const TIMEOUT_MS = 60000;
 
 const hostOf = value => { try { return new URL(value).hostname.replace(/^www\./, ''); } catch { return null; } };
 // The site a host belongs to: news.met.police.uk and www.met.police.uk are both
@@ -37,11 +39,11 @@ function shouldRetry(response, error) {
   return RETRY_STATUSES.has(response.status);
 }
 
-async function fetchViaActor(originalFetch, url, token) {
+async function fetchOnce(originalFetch, url, token, timeoutMs) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await originalFetch(`${ACTOR_URL}?token=${encodeURIComponent(token)}&timeout=20`, {
+    const response = await originalFetch(`${ACTOR_URL}?token=${encodeURIComponent(token)}&timeout=${Math.max(5, Math.floor(timeoutMs / 1000) - 5)}`, {
       method: 'POST',
       signal: controller.signal,
       headers: { 'content-type': 'application/json' },
@@ -51,12 +53,28 @@ async function fetchViaActor(originalFetch, url, token) {
     const [item] = await response.json();
     const status = Number(item?.fetch?.httpStatusCode) || 0;
     if (!item || typeof item.raw !== 'string' || !status) throw new Error('fallback fetcher returned no page');
+    // A page the site still refused is not a retrieval.
+    if (status >= 400) throw new Error(`fallback fetcher got HTTP ${status} from the site`);
     return new Response(item.raw, {
       status,
       headers: { 'content-type': item.fetch?.contentType || 'text/html; charset=utf-8', 'x-retrieved-via': 'apify-web-fetch' }
     });
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+// The fetcher's success varies between attempts for the same page (15 Oct:
+// ealingsynagogue.org.uk failed in an ingest, then succeeded by hand in 3 s), so
+// an attempt that fails with time to spare is tried once more within the limit.
+async function fetchViaActor(originalFetch, url, token) {
+  const started = Date.now();
+  try {
+    return await fetchOnce(originalFetch, url, token, TIMEOUT_MS);
+  } catch (error) {
+    const remaining = TIMEOUT_MS - (Date.now() - started);
+    if (remaining < 15000) throw error;
+    return fetchOnce(originalFetch, url, token, remaining);
   }
 }
 
@@ -67,6 +85,10 @@ export function installFetchFallback({ token = process.env.APIFY_TOKEN, budget =
   const originalFetch = globalThis.fetch;
   const skipHosts = new Set(['api.apify.com', ...ownHosts.map(hostOf).filter(Boolean)]);
   let used = 0;
+  // One fallback attempt per URL per run: adapters often retry a refused page
+  // themselves (e.g. with a browser user-agent), and sources run in parallel, so
+  // the same URL could otherwise go to the fallback more than once.
+  const attempted = new Map();
 
   globalThis.fetch = async (input, init = {}) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input?.url;
@@ -77,22 +99,30 @@ export function installFetchFallback({ token = process.env.APIFY_TOKEN, budget =
     let response, error;
     try { response = await originalFetch(input, init); } catch (caught) { error = caught; }
     if (!shouldRetry(response, error)) { if (error) throw error; return response; }
-    if (used >= budget) {
-      log.push({ url, host, direct: error ? String(error?.message || error) : response.status, outcome: 'budget-exhausted' });
-      if (error) throw error;
-      return response;
+    // Concurrent and later requests for a URL share its one fallback attempt
+    // (a promise of the retrieved page, or null if the fallback failed).
+    if (!attempted.has(url)) {
+      if (used >= budget) {
+        log.push({ url, host, direct: error ? String(error?.message || error) : response.status, outcome: 'budget-exhausted' });
+        if (error) throw error;
+        return response;
+      }
+      used += 1;
+      const started = Date.now();
+      const direct = error ? String(error?.message || error) : response.status;
+      attempted.set(url, fetchViaActor(originalFetch, url, token).then(async fallback => {
+        const page = { body: await fallback.text(), status: fallback.status, headers: Object.fromEntries(fallback.headers) };
+        log.push({ url, host, direct, outcome: 'retrieved', status: page.status, ms: Date.now() - started });
+        return page;
+      }, fallbackError => {
+        log.push({ url, host, direct, outcome: 'failed', error: String(fallbackError?.message || fallbackError), ms: Date.now() - started });
+        return null;
+      }));
     }
-    used += 1;
-    const started = Date.now();
-    try {
-      const fallback = await fetchViaActor(originalFetch, url, token);
-      log.push({ url, host, direct: error ? String(error?.message || error) : response.status, outcome: 'retrieved', status: fallback.status, ms: Date.now() - started });
-      return fallback;
-    } catch (fallbackError) {
-      log.push({ url, host, direct: error ? String(error?.message || error) : response.status, outcome: 'failed', error: String(fallbackError?.message || fallbackError), ms: Date.now() - started });
-      if (error) throw error;
-      return response;
-    }
+    const page = await attempted.get(url);
+    if (page) return new Response(page.body, { status: page.status, headers: page.headers });
+    if (error) throw error;
+    return response;
   };
   return { log, active: true, restore: () => { globalThis.fetch = originalFetch; } };
 }
@@ -130,7 +160,7 @@ export function fallbackHosts(log) {
   for (const entry of log) {
     const host = (hosts[entry.host] = hosts[entry.host] || { retrieved: 0, failed: 0, skipped: 0 });
     if (entry.outcome === 'retrieved') host.retrieved += 1;
-    else if (entry.outcome === 'failed') host.failed += 1;
+    else if (entry.outcome === 'failed') { host.failed += 1; host.lastError = String(entry.error || '').slice(0, 160); }
     else host.skipped += 1;
   }
   return hosts;
