@@ -31,7 +31,7 @@ export async function runIngest({ origin, blobs = store({ consistency: 'strong' 
 
     const previous = await readSourceState(blobs).catch(() => undefined);
     const { feed, state } = applySourceStates(live, previous, new Date(now()).toISOString());
-    await writeSnapshot(blobs, { ...feed, ingest: { runId, buildMs, fallbackRequests: fallbackAttempts(retrieval.log) } });
+    await writeSnapshot(blobs, { ...feed, ingest: { runId, buildMs, fallbackActive: retrieval.active, fallbackRequests: fallbackAttempts(retrieval.log) } });
     await writeSourceState(blobs, state);
 
     const slowest = [...feed.health].filter(entry => Number.isFinite(entry.durationMs)).sort((a, b) => b.durationMs - a.durationMs).slice(0, 5).map(entry => `${entry.id} ${entry.durationMs}ms`);
