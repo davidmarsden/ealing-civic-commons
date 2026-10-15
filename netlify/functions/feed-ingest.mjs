@@ -21,6 +21,7 @@ export async function runIngest({ origin, blobs = store({ consistency: 'strong' 
   // Sources that refuse cloud-server requests are retried through a third-party
   // fetcher (see lib/fetch-fallback.mjs) for this run only.
   const retrieval = fallback({ ownHosts: [origin] });
+  if (!retrieval.active) console.log('Fetch fallback inactive: APIFY_TOKEN is not set for this deploy');
   try {
     const response = await build(new Request(new URL('/.netlify/functions/combined-feed', origin)));
     if (!response?.ok) throw new Error(`live feed build returned HTTP ${response?.status || 'unknown'}`);
