@@ -78,6 +78,19 @@ assert.equal(await again.text(), '<html>https://blocked.example/news/</html>');
 assert.equal(fallbackAttempts(reuse.log), 1);
 reuse.restore();
 
+// A failed fetcher attempt is retried once; a page the site still refused is a failure.
+let flaky = 0;
+actorReply = url => (flaky++ === 0 ? new Response('busy', { status: 502 }) : [{ raw: `<html>${url}</html>`, fetch: { httpStatusCode: 200, contentType: 'text/html' } }]);
+const retrying = installFetchFallback({ token: 't' });
+assert.equal((await fetch('https://blocked.example/news/')).status, 200);
+assert.equal(flaky, 2, 'one retry after a failed attempt');
+actorReply = () => [{ raw: 'still blocked', fetch: { httpStatusCode: 403 } }];
+assert.equal((await fetch('https://blocked.example/other/')).status, 403);
+assert.equal(retrying.log.at(-1).outcome, 'failed');
+assert.match(fallbackHosts(retrying.log)['blocked.example'].lastError, /HTTP 403 from the site/);
+retrying.restore();
+actorReply = url => [{ raw: `<html>${url}</html>`, fetch: { httpStatusCode: 200, contentType: 'text/html' } }];
+
 // Concurrent requests for the same refused URL share one fallback request.
 const concurrent = installFetchFallback({ token: 't' });
 const before = calls.filter(call => call.url.startsWith('https://api.apify.com/')).length;

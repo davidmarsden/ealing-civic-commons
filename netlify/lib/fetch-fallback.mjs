@@ -39,11 +39,11 @@ function shouldRetry(response, error) {
   return RETRY_STATUSES.has(response.status);
 }
 
-async function fetchViaActor(originalFetch, url, token) {
+async function fetchOnce(originalFetch, url, token, timeoutMs) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await originalFetch(`${ACTOR_URL}?token=${encodeURIComponent(token)}&timeout=55`, {
+    const response = await originalFetch(`${ACTOR_URL}?token=${encodeURIComponent(token)}&timeout=${Math.max(5, Math.floor(timeoutMs / 1000) - 5)}`, {
       method: 'POST',
       signal: controller.signal,
       headers: { 'content-type': 'application/json' },
@@ -53,12 +53,28 @@ async function fetchViaActor(originalFetch, url, token) {
     const [item] = await response.json();
     const status = Number(item?.fetch?.httpStatusCode) || 0;
     if (!item || typeof item.raw !== 'string' || !status) throw new Error('fallback fetcher returned no page');
+    // A page the site still refused is not a retrieval.
+    if (status >= 400) throw new Error(`fallback fetcher got HTTP ${status} from the site`);
     return new Response(item.raw, {
       status,
       headers: { 'content-type': item.fetch?.contentType || 'text/html; charset=utf-8', 'x-retrieved-via': 'apify-web-fetch' }
     });
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+// The fetcher's success varies between attempts for the same page (15 Oct:
+// ealingsynagogue.org.uk failed in an ingest, then succeeded by hand in 3 s), so
+// an attempt that fails with time to spare is tried once more within the limit.
+async function fetchViaActor(originalFetch, url, token) {
+  const started = Date.now();
+  try {
+    return await fetchOnce(originalFetch, url, token, TIMEOUT_MS);
+  } catch (error) {
+    const remaining = TIMEOUT_MS - (Date.now() - started);
+    if (remaining < 15000) throw error;
+    return fetchOnce(originalFetch, url, token, remaining);
   }
 }
 
@@ -144,7 +160,7 @@ export function fallbackHosts(log) {
   for (const entry of log) {
     const host = (hosts[entry.host] = hosts[entry.host] || { retrieved: 0, failed: 0, skipped: 0 });
     if (entry.outcome === 'retrieved') host.retrieved += 1;
-    else if (entry.outcome === 'failed') host.failed += 1;
+    else if (entry.outcome === 'failed') { host.failed += 1; host.lastError = String(entry.error || '').slice(0, 160); }
     else host.skipped += 1;
   }
   return hosts;
