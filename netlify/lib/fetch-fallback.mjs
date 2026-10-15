@@ -18,6 +18,14 @@ const DEFAULT_BUDGET = 40;
 const TIMEOUT_MS = 25000;
 
 const hostOf = value => { try { return new URL(value).hostname.replace(/^www\./, ''); } catch { return null; } };
+// The site a host belongs to: news.met.police.uk and www.met.police.uk are both
+// met.police.uk. UK second-level suffixes (co.uk, police.uk, …) are kept whole.
+const UK_SECOND_LEVEL = new Set(['co', 'org', 'gov', 'ac', 'police', 'nhs', 'ltd', 'me', 'net', 'sch', 'plc']);
+export function siteOf(host) {
+  const labels = String(host || '').toLowerCase().split('.').filter(Boolean);
+  const keep = labels.length >= 2 && labels.at(-1) === 'uk' && UK_SECOND_LEVEL.has(labels.at(-2)) ? 3 : 2;
+  return labels.slice(-keep).join('.');
+}
 
 function shouldRetry(response, error) {
   if (error) {
@@ -96,22 +104,34 @@ export const fallbackAttempts = log => log.filter(entry => entry.outcome === 're
 // Marks health entries whose pages were retrieved through the fallback, so the
 // site shows how each source was read. A retrieval is attributed to an entry when
 // the requested URL is the entry's URL or lies under its homepage; failing that,
-// by host, but only when exactly one entry uses that host (YouTube, for example,
+// by site, but only when exactly one entry uses that site (YouTube, for example,
 // serves many sources and must not mark them all).
 export function annotateRetrieval(health, log) {
   const retrieved = log.filter(entry => entry.outcome === 'retrieved');
   if (!retrieved.length) return health;
   const strip = value => String(value || '').replace(/^https?:\/\/(www\.)?/i, '').replace(/#.*$/, '').replace(/\/+(\?|$)/, '$1');
-  const hostCounts = new Map();
-  for (const entry of health) { const host = hostOf(entry.homepage || entry.url || ''); if (host) hostCounts.set(host, (hostCounts.get(host) || 0) + 1); }
+  const siteCounts = new Map();
+  for (const entry of health) { const site = siteOf(hostOf(entry.homepage || entry.url || '')); if (site) siteCounts.set(site, (siteCounts.get(site) || 0) + 1); }
   return health.map(entry => {
     const own = [entry.url, entry.feedUrl, entry.homepage].filter(Boolean).map(strip);
-    const host = hostOf(entry.homepage || entry.url || '');
+    const site = siteOf(hostOf(entry.homepage || entry.url || ''));
     const matches = retrieved.filter(item => {
       const target = strip(item.url);
       if (own.some(base => base && (target === base || target.startsWith(`${base}/`)))) return true;
-      return host && item.host === host && hostCounts.get(host) === 1;
+      return site && siteOf(item.host) === site && siteCounts.get(site) === 1;
     });
     return matches.length ? { ...entry, retrievedVia: 'third-party fetcher', fallbackRequests: matches.length } : entry;
   });
+}
+
+// Per-host summary of a run's fallback use, recorded with the snapshot.
+export function fallbackHosts(log) {
+  const hosts = {};
+  for (const entry of log) {
+    const host = (hosts[entry.host] = hosts[entry.host] || { retrieved: 0, failed: 0, skipped: 0 });
+    if (entry.outcome === 'retrieved') host.retrieved += 1;
+    else if (entry.outcome === 'failed') host.failed += 1;
+    else host.skipped += 1;
+  }
+  return hosts;
 }

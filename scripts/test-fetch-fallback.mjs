@@ -2,7 +2,7 @@
 // Third-party retrieval fallback: when it retries, what it returns, its budget,
 // and that failures stay failures.
 import assert from 'node:assert/strict';
-import { annotateRetrieval, fallbackAttempts, installFetchFallback } from '../netlify/lib/fetch-fallback.mjs';
+import { annotateRetrieval, fallbackAttempts, fallbackHosts, installFetchFallback, siteOf } from '../netlify/lib/fetch-fallback.mjs';
 
 const calls = [];
 let actorReply = url => [{ raw: `<html>${url}</html>`, fetch: { httpStatusCode: 200, contentType: 'text/html; charset=utf-8' } }];
@@ -77,5 +77,11 @@ const shared = annotateRetrieval([
 ], [{ url: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCa', host: 'youtube.com', outcome: 'retrieved' }]);
 assert.equal(shared[0].retrievedVia, 'third-party fetcher');
 assert.equal(shared[1].retrievedVia, undefined, 'a shared host does not mark every source on it');
+// Pages on another host of the same site count for that site's only source.
+assert.deepEqual(['news.met.police.uk', 'met.police.uk', 'www.bbc.co.uk', 'ealingindependents.org', 'a.b.example.com'].map(siteOf), ['met.police.uk', 'met.police.uk', 'bbc.co.uk', 'ealingindependents.org', 'example.com']);
+const met = annotateRetrieval([{ id: 'met', homepage: 'https://news.met.police.uk/latest_news' }, { id: 'other', homepage: 'https://www.ealing.gov.uk/' }],
+  [{ url: 'https://www.met.police.uk/area/your-area/met/ealing/x/contact-us/our-priorities', host: 'met.police.uk', outcome: 'retrieved' }]);
+assert.deepEqual([met[0].retrievedVia, met[1].retrievedVia], ['third-party fetcher', undefined]);
+assert.deepEqual(fallbackHosts(run.log), { 'blocked.example': { retrieved: 1, failed: 0, skipped: 1 }, 'reset.example': { retrieved: 1, failed: 0, skipped: 0 } });
 
 console.log('Fetch fallback: retry rules, labelled responses, budget, failures and health annotation OK.');

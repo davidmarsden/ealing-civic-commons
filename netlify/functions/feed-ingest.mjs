@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { buildCombinedFeed } from './combined-feed.mjs';
 import { runArchive } from './item-archive.mjs';
-import { annotateRetrieval, fallbackAttempts, installFetchFallback } from '../lib/fetch-fallback.mjs';
+import { annotateRetrieval, fallbackAttempts, fallbackHosts, installFetchFallback } from '../lib/fetch-fallback.mjs';
 import { acquireIngestLock, applySourceStates, readSourceState, releaseIngestLock, store, writeSnapshot, writeSourceState } from '../lib/feed-snapshot.mjs';
 
 // Background ingest: builds the combined feed once from every upstream source,
@@ -31,7 +31,7 @@ export async function runIngest({ origin, blobs = store({ consistency: 'strong' 
 
     const previous = await readSourceState(blobs).catch(() => undefined);
     const { feed, state } = applySourceStates(live, previous, new Date(now()).toISOString());
-    await writeSnapshot(blobs, { ...feed, ingest: { runId, buildMs, fallbackActive: retrieval.active, fallbackRequests: fallbackAttempts(retrieval.log) } });
+    await writeSnapshot(blobs, { ...feed, ingest: { runId, buildMs, fallbackActive: retrieval.active, fallbackRequests: fallbackAttempts(retrieval.log), fallbackHosts: fallbackHosts(retrieval.log) } });
     await writeSourceState(blobs, state);
 
     const slowest = [...feed.health].filter(entry => Number.isFinite(entry.durationMs)).sort((a, b) => b.durationMs - a.durationMs).slice(0, 5).map(entry => `${entry.id} ${entry.durationMs}ms`);
