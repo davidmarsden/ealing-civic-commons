@@ -80,18 +80,6 @@ const sources = [
     defaultTopics: ['Council & democracy', 'Community']
   },
   {
-    id: 'hanwell-community-forum',
-    name: 'Hanwell Community Forum',
-    url: 'https://hanwellcommunityforum.org.uk/',
-    homepage: 'https://hanwellcommunityforum.org.uk/',
-    sourceClass: 'Organisation / campaign',
-    contentLabel: 'Community forum',
-    type: 'community',
-    towns: ['Hanwell'],
-    articlePattern: /^\/[a-z0-9][a-z0-9-]+\/?$/i,
-    defaultTopics: ['Community', 'Council & democracy']
-  },
-  {
     id: 'southall-community-alliance',
     name: 'Southall Community Alliance',
     url: 'https://southallcommunityalliance.com/',

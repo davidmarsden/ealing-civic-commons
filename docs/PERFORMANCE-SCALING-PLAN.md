@@ -76,9 +76,9 @@ These follow from the failing-source list above. Each cause was diagnosed from t
 | Southall Community Alliance | Articles carry no date of their own | Switched to its WordPress RSS feed, keeping the existing item ID scheme so archived items are not duplicated |
 | Norwood Green Residents' Association | Homepage no longer links any news; the feed's only post is from 2021 | Retired |
 | Neighbours' Paper | RSS fetch timed out at 7.5 s | RSS timeout raised to 12 s, matching the other adapters (fetching now happens in the background ingest) |
-| Ealing Community Independents, Ealing Synagogue | 403 to our crawler user-agent | Left as `unavailable`. We do not disguise the crawler; ask the publishers to allow it, or retire the sources |
+| Ealing Community Independents, Ealing Synagogue | 403 from Netlify's servers. Both sites are live in a browser, and production already retries with a browser user-agent, which also gets 403 (in 0.3–1.8 s): the hosts block cloud-server traffic, not our crawler's name | Left as `unavailable`; needs the publishers to allow our requests, or another route (decision pending) |
 | Ealing Culture | HTML returned where JSON was expected (likely a firewall page) | Left as `unavailable`; needs the publisher's API access or a different endpoint |
-| Hanwell Community Forum | Site unreachable, including from a third-party fetcher | Left as `unavailable`; retire if it stays down |
+| Hanwell Community Forum | Site unreachable, including from a third-party fetcher; the forum is defunct | **Retired** (15 Oct 2026) |
 
 **Verified on preview (#167, 14 Oct 2026):** after one ingest, all eight targeted sources are `current`: the five YouTube channels (7–15 items each), LAGER Can (10), Ealing Lib Dems (6) and Southall Community Alliance (2). Norwood Green no longer appears. States went from 45 current / 9 ingestion failed to 53 current / 12 no new records / 4 unavailable / 1 ingestion failed. Still open:
 - Neighbours' Paper times out even at 12 s.

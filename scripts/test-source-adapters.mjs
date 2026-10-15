@@ -50,8 +50,10 @@ assert.ok(!/\[…\]|\[&#8230;\]/.test(awards.summary), 'feed truncation marker r
 assert.deepEqual(awards.towns, ['Southall']);
 assert.ok(!requested.includes('https://southallcommunityalliance.com/'), 'the page is no longer scraped');
 
-// Norwood Green is retired, not silently failing.
+// Retired sources are gone, not silently failing.
 assert.equal(healthFor('norwood-green-residents'), undefined);
+assert.equal(healthFor('hanwell-community-forum'), undefined);
+assert.ok(!requested.some(url => url.includes('hanwellcommunityforum')), 'Hanwell Community Forum is not fetched');
 
 // YouTube @handles resolve to channel IDs, with caching and honest failures.
 const { channelIdFromPage, resolveYoutubeHandle } = await import('../netlify/lib/youtube-channels.mjs');
@@ -75,4 +77,4 @@ store.set('youtube/handle/offline', { channelId: 'UCyyyyyyyyyyyyyyyyyyyyyy', res
 assert.equal(await resolveYoutubeHandle('offline', { cache, fetchImpl: async () => { throw new TypeError('fetch failed'); } }), 'UCyyyyyyyyyyyyyyyyyyyyyy');
 await assert.rejects(resolveYoutubeHandle('never-seen', { cache, fetchImpl: async () => { throw new TypeError('fetch failed'); } }), /fetch failed/);
 
-console.log('Source adapters: LAGER Can, Lib Dems, Southall Community Alliance RSS, Norwood retirement and YouTube handles OK.');
+console.log('Source adapters: LAGER Can, Lib Dems, Southall Community Alliance RSS, Norwood and Hanwell retirements and YouTube handles OK.');

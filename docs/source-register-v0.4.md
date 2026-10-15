@@ -121,8 +121,8 @@ This is the part of the register most affected by the v0.3 status ambiguity.
 | **Friends of the Victoria Hall** | `READY` | **INGESTING** | Live through a dedicated chronology adapter. |
 | **Bedford Park Society** | `READY` / later `VERIFIED` | **INGESTING** | Current first-party Society publishing surface is now wired into live source health and aggregation. |
 | **Southall Community Alliance** | `PARTNER` | **INGESTING** | Current 2026 first-party news is now extracted directly; a partnership could still improve the publishing bridge. |
-| **Norwood Green Residents’ Association** | `PARTNER` | **INGESTING** | Current first-party residents’ site is now operationally configured. |
-| **Hanwell Community Forum** | `PARTNER` | **INGESTING** | High-priority Hanwell source is now operationally configured; upstream health is reported independently. |
+| **Norwood Green Residents’ Association** | `PARTNER` | **RETIRED** (14 Oct 2026) | The homepage no longer links any news and the feed's only post is from 2021; removed from ingestion (#167). |
+| **Hanwell Community Forum** | `PARTNER` | **RETIRED** (15 Oct 2026) | The forum is defunct and its site unreachable; removed from ingestion. |
 
 The key rule from now on is simple: **READY/VERIFIED must never be used as a synonym for INGESTING.**
 
