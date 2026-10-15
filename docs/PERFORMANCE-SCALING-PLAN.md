@@ -93,7 +93,8 @@ During the ingest only, a source request refused with 403, 429, 503 or a Cloudfl
 - **Applies to every source**, since it wraps `fetch` for the run; the request-serving path is not affected.
 - **Limits:** active only when `APIFY_TOKEN` is set; GET requests to other sites only; an adapter's own timeout is not retried; at most `FETCH_FALLBACK_BUDGET` (default 40) fallback requests per run.
 - **Failures stay failures:** if the fallback fails, the adapter gets the original response or error, so the source state is unchanged.
-- **Labelled:** health entries record `retrievedVia: "third-party fetcher"` and the homepage shows "via fallback fetcher"; the snapshot's `ingest.fallbackRequests` counts uses per run, and the ingest log lists each one.
+- **Labelled:** health entries record `retrievedVia: "third-party fetcher"` and the homepage shows "via fallback fetcher". A retrieval is attributed to the source whose URL or homepage it was under, or by host only when one source uses that host. The snapshot counts fallback requests made while building the feed; the run summary and ingest log count the whole run, including the archive step, excluding requests skipped once the budget was spent.
+- **Time limit:** each fallback request has its own 25 s limit rather than the adapter's (whose 7.5–18 s is often mostly spent before the 403 arrives); sources run in parallel inside the 15-minute background ingest.
 - **Cost:** one test fetch used 0.0016 Apify compute units. Check actual usage after the first day.
 - Publishers who block us are still asked to allow our requests directly; the fallback is the stopgap.
 

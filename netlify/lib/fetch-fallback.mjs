@@ -11,7 +11,11 @@
 const ACTOR_URL = 'https://api.apify.com/v2/acts/apify~web-fetch/run-sync-get-dataset-items';
 const RETRY_STATUSES = new Set([403, 429, 503, 520, 521, 522, 523, 524, 525, 526, 530]);
 const DEFAULT_BUDGET = 40;
-const TIMEOUT_MS = 45000;
+// The fallback has its own time limit rather than the adapter's: adapter timeouts
+// (7.5-18 s) budget a direct fetch and are often mostly spent by the time a 403
+// arrives, while a fallback fetch takes about 6 s. 25 s bounds how long one source
+// can hold the background ingest (15-minute limit); sources run in parallel.
+const TIMEOUT_MS = 25000;
 
 const hostOf = value => { try { return new URL(value).hostname.replace(/^www\./, ''); } catch { return null; } };
 
@@ -29,7 +33,7 @@ async function fetchViaActor(originalFetch, url, token) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const response = await originalFetch(`${ACTOR_URL}?token=${encodeURIComponent(token)}&timeout=40`, {
+    const response = await originalFetch(`${ACTOR_URL}?token=${encodeURIComponent(token)}&timeout=20`, {
       method: 'POST',
       signal: controller.signal,
       headers: { 'content-type': 'application/json' },
@@ -85,14 +89,29 @@ export function installFetchFallback({ token = process.env.APIFY_TOKEN, budget =
   return { log, active: true, restore: () => { globalThis.fetch = originalFetch; } };
 }
 
-// Marks health entries whose pages were retrieved through the fallback, matched
-// by host, so the site shows how each source was read.
+// Requests that actually went to the fallback fetcher (not those skipped once the
+// budget was spent).
+export const fallbackAttempts = log => log.filter(entry => entry.outcome === 'retrieved' || entry.outcome === 'failed').length;
+
+// Marks health entries whose pages were retrieved through the fallback, so the
+// site shows how each source was read. A retrieval is attributed to an entry when
+// the requested URL is the entry's URL or lies under its homepage; failing that,
+// by host, but only when exactly one entry uses that host (YouTube, for example,
+// serves many sources and must not mark them all).
 export function annotateRetrieval(health, log) {
-  const retrieved = new Map();
-  for (const entry of log) if (entry.outcome === 'retrieved') retrieved.set(entry.host, (retrieved.get(entry.host) || 0) + 1);
-  if (!retrieved.size) return health;
+  const retrieved = log.filter(entry => entry.outcome === 'retrieved');
+  if (!retrieved.length) return health;
+  const strip = value => String(value || '').replace(/^https?:\/\/(www\.)?/i, '').replace(/#.*$/, '').replace(/\/+(\?|$)/, '$1');
+  const hostCounts = new Map();
+  for (const entry of health) { const host = hostOf(entry.homepage || entry.url || ''); if (host) hostCounts.set(host, (hostCounts.get(host) || 0) + 1); }
   return health.map(entry => {
-    const count = retrieved.get(hostOf(entry.homepage || entry.url || ''));
-    return count ? { ...entry, retrievedVia: 'third-party fetcher', fallbackRequests: count } : entry;
+    const own = [entry.url, entry.feedUrl, entry.homepage].filter(Boolean).map(strip);
+    const host = hostOf(entry.homepage || entry.url || '');
+    const matches = retrieved.filter(item => {
+      const target = strip(item.url);
+      if (own.some(base => base && (target === base || target.startsWith(`${base}/`)))) return true;
+      return host && item.host === host && hostCounts.get(host) === 1;
+    });
+    return matches.length ? { ...entry, retrievedVia: 'third-party fetcher', fallbackRequests: matches.length } : entry;
   });
 }

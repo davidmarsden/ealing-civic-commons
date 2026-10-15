@@ -2,7 +2,7 @@
 // Third-party retrieval fallback: when it retries, what it returns, its budget,
 // and that failures stay failures.
 import assert from 'node:assert/strict';
-import { annotateRetrieval, installFetchFallback } from '../netlify/lib/fetch-fallback.mjs';
+import { annotateRetrieval, fallbackAttempts, installFetchFallback } from '../netlify/lib/fetch-fallback.mjs';
 
 const calls = [];
 let actorReply = url => [{ raw: `<html>${url}</html>`, fetch: { httpStatusCode: 200, contentType: 'text/html; charset=utf-8' } }];
@@ -51,6 +51,7 @@ assert.equal((await fetch('https://reset.example/')).status, 200);
 // The budget caps fallback use per run; beyond it the original result stands.
 assert.equal((await fetch('https://blocked.example/news/')).status, 403);
 assert.deepEqual(run.log.map(entry => entry.outcome), ['retrieved', 'retrieved', 'budget-exhausted']);
+assert.equal(fallbackAttempts(run.log), 2, 'requests skipped once the budget is spent are not counted');
 run.restore();
 assert.equal(globalThis.fetch, base, 'restore puts the original fetch back');
 
@@ -69,5 +70,12 @@ const health = annotateRetrieval([{ id: 'a', homepage: 'https://www.blocked.exam
 assert.equal(health[0].retrievedVia, 'third-party fetcher');
 assert.equal(health[0].fallbackRequests, 1);
 assert.equal(health[1].retrievedVia, undefined);
+// On a host shared by several sources, only the source whose URL was retrieved is marked.
+const shared = annotateRetrieval([
+  { id: 'yt-a', homepage: 'https://www.youtube.com/@channel-a', url: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCa' },
+  { id: 'yt-b', homepage: 'https://www.youtube.com/@channel-b', url: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCb' }
+], [{ url: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCa', host: 'youtube.com', outcome: 'retrieved' }]);
+assert.equal(shared[0].retrievedVia, 'third-party fetcher');
+assert.equal(shared[1].retrievedVia, undefined, 'a shared host does not mark every source on it');
 
 console.log('Fetch fallback: retry rules, labelled responses, budget, failures and health annotation OK.');

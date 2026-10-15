@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { buildCombinedFeed } from './combined-feed.mjs';
 import { runArchive } from './item-archive.mjs';
-import { annotateRetrieval, installFetchFallback } from '../lib/fetch-fallback.mjs';
+import { annotateRetrieval, fallbackAttempts, installFetchFallback } from '../lib/fetch-fallback.mjs';
 import { acquireIngestLock, applySourceStates, readSourceState, releaseIngestLock, store, writeSnapshot, writeSourceState } from '../lib/feed-snapshot.mjs';
 
 // Background ingest: builds the combined feed once from every upstream source,
@@ -30,16 +30,17 @@ export async function runIngest({ origin, blobs = store({ consistency: 'strong' 
 
     const previous = await readSourceState(blobs).catch(() => undefined);
     const { feed, state } = applySourceStates(live, previous, new Date(now()).toISOString());
-    await writeSnapshot(blobs, { ...feed, ingest: { runId, buildMs, fallbackRequests: retrieval.log.length } });
+    await writeSnapshot(blobs, { ...feed, ingest: { runId, buildMs, fallbackRequests: fallbackAttempts(retrieval.log) } });
     await writeSourceState(blobs, state);
 
     const slowest = [...feed.health].filter(entry => Number.isFinite(entry.durationMs)).sort((a, b) => b.durationMs - a.durationMs).slice(0, 5).map(entry => `${entry.id} ${entry.durationMs}ms`);
     const problems = feed.health.filter(entry => entry.state === 'unavailable' || entry.state === 'ingestion-failed').map(entry => `${entry.id}=${entry.state}`);
     console.log(`Feed snapshot written: ${feed.items.length} items; states ${JSON.stringify(feed.sourceStates)}; build ${buildMs}ms; slowest ${slowest.join(', ')}${problems.length ? `; problems ${problems.join(', ')}` : ''}`);
 
-    if (retrieval.log.length) console.log(`Fetch fallback: ${retrieval.log.map(entry => `${entry.host} ${entry.direct}→${entry.outcome}${entry.status ? ` ${entry.status}` : ''}`).join(', ')}`);
-
     const archived = await archive(live);
+    // After the archive step, whose deep fetches can use the fallback too.
+    summary.fallbackRequests = fallbackAttempts(retrieval.log);
+    if (retrieval.log.length) console.log(`Fetch fallback (${summary.fallbackRequests} requests): ${retrieval.log.map(entry => `${entry.host} ${entry.direct}→${entry.outcome}${entry.status ? ` ${entry.status}` : ''}`).join(', ')}`);
     Object.assign(summary, { status: archived?.error ? 'archive-failed' : 'ok', buildMs, items: feed.items.length, sourceStates: feed.sourceStates, archived: archived?.stored ?? null, totalMs: now() - started });
     return summary;
   } catch (error) {
