@@ -167,6 +167,20 @@ try {
   assert.equal((await ingestBlobs.get(LAST_RUN_KEY, { type: 'json' })).status, 'failed');
   clock += 6 * 60_000;
   assert.equal((await runIngest({ origin: 'http://x', blobs: ingestBlobs, build: liveBuild, archive, now: () => clock })).status, 'ok', 'lock was released after the failure');
+
+  // Pages retrieved through the third-party fallback are labelled on their source,
+  // and the fetch wrapper is always removed after the run.
+  clock += 6 * 60_000;
+  let fetchRestored = 0;
+  const fallback = () => ({ active: true, log: [{ host: 'blocked.example', outcome: 'retrieved', status: 200 }], restore: () => { fetchRestored += 1; } });
+  const blockedBuild = async () => new Response(JSON.stringify({ generatedAt: new Date(clock).toISOString(), items: [{ id: 'c1', sourceId: 'c', publishedAt: new Date(clock).toISOString() }], health: [{ id: 'c', name: 'C', ok: true, itemCount: 1, homepage: 'https://www.blocked.example/' }] }), { headers: { 'content-type': 'application/json' } });
+  assert.equal((await runIngest({ origin: 'http://x', blobs: ingestBlobs, build: blockedBuild, archive, now: () => clock, fallback })).status, 'ok');
+  const cHealth = (await readSnapshot(ingestBlobs, clock)).feed.health.find(h => h.id === 'c');
+  assert.deepEqual([cHealth.state, cHealth.retrievedVia, cHealth.fallbackRequests], ['current', 'third-party fetcher', 1]);
+  assert.equal((await readSnapshot(ingestBlobs, clock)).feed.ingest.fallbackRequests, 1);
+  clock += 6 * 60_000;
+  await runIngest({ origin: 'http://x', blobs: ingestBlobs, build: async () => { throw new Error('boom'); }, archive, now: () => clock, fallback });
+  assert.equal(fetchRestored, 2, 'fetch restored after successful and failed runs');
   assert.ok(await ingestBlobs.get(SNAPSHOT_KEY, { type: 'json' }));
 
   console.log('Feed snapshot: source states, last-good substitution, lock, snapshot serving and ingest runs OK.');

@@ -76,7 +76,7 @@ These follow from the failing-source list above. Each cause was diagnosed from t
 | Southall Community Alliance | Articles carry no date of their own | Switched to its WordPress RSS feed, keeping the existing item ID scheme so archived items are not duplicated |
 | Norwood Green Residents' Association | Homepage no longer links any news; the feed's only post is from 2021 | Retired |
 | Neighbours' Paper | RSS fetch timed out at 7.5 s | RSS timeout raised to 12 s, matching the other adapters (fetching now happens in the background ingest) |
-| Ealing Community Independents, Ealing Synagogue | 403 from Netlify's servers. Both sites are live in a browser, and production already retries with a browser user-agent, which also gets 403 (in 0.3–1.8 s): the hosts block cloud-server traffic, not our crawler's name | Left as `unavailable`; needs the publishers to allow our requests, or another route (decision pending) |
+| Ealing Community Independents, Ealing Synagogue | 403 from Netlify's servers. Both sites are live in a browser and sit behind Cloudflare, which refuses cloud-server traffic whatever the user-agent (production's browser-user-agent retry also gets 403) | **Third-party retrieval fallback** (#172) while the publishers are asked to allow our requests: a test fetch of `ealingindependents.org/news/` through Apify returned 200 in 6 s |
 | Ealing Culture | HTML returned where JSON was expected (likely a firewall page) | Left as `unavailable`; needs the publisher's API access or a different endpoint |
 | Hanwell Community Forum | Site unreachable, including from a third-party fetcher; the forum is defunct | **Retired** (15 Oct 2026) |
 
@@ -85,6 +85,20 @@ These follow from the failing-source list above. Each cause was diagnosed from t
 - **New:** Ealing Green Party (`/news/` returns 404, and the homepage HTML now has no links, which suggests a rebuilt or script-rendered site). This is follow-up work, surfaced by the source states as intended.
 
 **Verified in production (#167, 14 Oct 2026):** after the first production ingest, 55 current / 11 no new records / 3 unavailable / 1 ingestion failed. The eight targeted sources are all `current`. The three `unavailable` are Ealing Community Independents and Ealing Synagogue (403) and Hanwell Community Forum (down). The one failure is Ealing Green Party, whose whole site currently shows "Down for maintenance. Back soon."; no adapter change is needed until it returns.
+
+### Third-party retrieval fallback (#172)
+
+During the ingest only, a source request refused with 403, 429, 503 or a Cloudflare 52x status, or a refused or reset connection, is retried once through Apify's `web-fetch` actor (`netlify/lib/fetch-fallback.mjs`). The adapter receives the publisher's original response body and parses it as usual.
+
+- **Applies to every source**, since it wraps `fetch` for the run; the request-serving path is not affected.
+- **Limits:** active only when `APIFY_TOKEN` is set; GET requests to other sites only; an adapter's own timeout is not retried; at most `FETCH_FALLBACK_BUDGET` (default 40) fallback requests per run.
+- **Failures stay failures:** if the fallback fails, the adapter gets the original response or error, so the source state is unchanged.
+- **Labelled:** health entries record `retrievedVia: "third-party fetcher"` and the homepage shows "via fallback fetcher". A retrieval is attributed to the source whose URL or homepage it was under, or by site (e.g. `news.met.police.uk` and `www.met.police.uk` are both `met.police.uk`) only when one source uses that site. `ingest.fallbackHosts` records retrieved/failed/skipped counts per host for each run. The snapshot counts fallback requests made while building the feed; the run summary and ingest log count the whole run, including the archive step, excluding requests skipped once the budget was spent.
+- **Time limit:** each fallback request has its own 25 s limit rather than the adapter's (whose 7.5–18 s is often mostly spent before the 403 arrives); sources run in parallel inside the 15-minute background ingest.
+- **Cost:** one test fetch used 0.0016 Apify compute units. Check actual usage after the first day.
+- **Verified on preview (15 Oct 2026):** with the token scoped to previews, one ingest made 8 fallback requests: `ealingindependents.org` 1 retrieved, `ealingsynagogue.org.uk` 1 retrieved, `met.police.uk` 2 retrieved and 4 failed. Ealing Community Independents (1 item) and Ealing Synagogue (6 items) went from `unavailable` to `current`, each labelled; the Met source stayed `current` (2 items, labelled), but its four failed fallbacks took its fetch to 42 s and the feed build from about 18 s to 42 s, within the background limit. Source states: 58 current, 11 no new records, none unavailable.
+- Publishers who block us are still asked to allow our requests directly; the fallback is the stopgap.
+- **Setup:** `APIFY_TOKEN` must be available to Functions in each context that should use the fallback (Production, and Deploy Previews for testing). Functions only see variables that existed when the deploy was built. Each snapshot records `ingest.fallbackActive`, so `combined-feed` shows whether the fallback ran; on 15 Oct a preview built before the token was scoped to previews reported `false`.
 
 ### Production finding: the archiver runs two or three times per slot (pre-existing)
 
