@@ -87,9 +87,10 @@ export function darkCounterpart(role, color) {
     if (l < .6) return null;
     // White and near-white panels are cards: use the dark card colour.
     if (l >= .96) return format(CARD_DARK, color.a);
-    // Cream and paper tones are the light theme's neutrals: give them the dark
-    // theme's neutral hue rather than turning them brown. Real tints keep theirs.
-    const neutral = chroma(color) < .08 && h >= 34 && h <= 70;
+    // Cream, paper and pale green panels are the light theme's neutrals: give
+    // them the dark theme's neutral hue rather than turning them brown or olive.
+    // Red, amber and blue tints keep their hue.
+    const neutral = chroma(color) < .08 && h >= 34 && h <= 170;
     return format(fromHsl(neutral ? { ...NEUTRAL_DARK, l: clamp(.18 + (1 - l) * .4) } : { h, s: s * .45, l: clamp(.18 + (1 - l) * .4) }), color.a);
   }
   if (role === 'line') {
@@ -116,7 +117,7 @@ export function transformCss(css) {
       if (!role || prop.startsWith('--')) return decl;
       let changed = value;
       if (role === 'bg') {
-        changed = changed.replace(/var\(--(green-dark|green|amber|blue|purple)\)/g, (match, name, offset, whole) =>
+        changed = changed.replace(/var\(--((?:cc-)?(?:green-dark|green|amber|blue|purple))\)/g, (match, name, offset, whole) =>
           /var\(--fill-[\w-]+,\s*$/.test(whole.slice(0, offset)) ? match : `var(--fill-${name}, var(--${name}))`);
       }
       changed = changed.replace(LITERAL, (literal, ...rest) => {
@@ -147,7 +148,11 @@ export function transformCss(css) {
 // reaches. The network pages (another hostname) and the Commons Chat app keep
 // their own styles. Pages get their inline <style> blocks rewritten too.
 const SKIP_DIRS = new Set(['data', 'network', 'assets']);
-const SKIP_FILES = new Set([APPEARANCE, join(PUBLIC, 'commons-chat', 'commons-chat.css'), join(PUBLIC, 'commons-chat', 'index.html'), join(PUBLIC, 'offline.html')]);
+const SKIP_FILES = new Set([APPEARANCE, join(PUBLIC, 'commons-chat', 'index.html'), join(PUBLIC, 'offline.html')]);
+// Commons Chat's page is served by the chat server and does not load
+// appearance.css, so its stylesheet carries its own generated block.
+export const CHAT_CSS = join(PUBLIC, 'commons-chat', 'commons-chat.css');
+export const CHAT_PAGE = join(PUBLIC, 'commons-chat', 'index.html');
 async function walk(dir, found = []) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);
@@ -161,27 +166,31 @@ export async function sources() {
   return { files: all.filter(file => file.endsWith('.css')).sort(), pages: all.filter(file => file.endsWith('.html')).sort() };
 }
 
+const writeBlock = (text, block) => {
+  const start = text.indexOf(BEGIN), stop = text.indexOf(END);
+  return start >= 0 && stop > start ? text.slice(0, start) + block + text.slice(stop + END.length) : `${text.trimEnd()}\n${block}\n`;
+};
+const blockFor = (tokens, fills) => [BEGIN, ':root[data-theme="dark"] {', ...Object.entries(fills).map(([name, value]) => ` --fill-${name}:${value};`), ...[...tokens].sort().map(([k, v]) => ` ${k}:${v};`), '}', END].join('\n');
+
 export async function run({ check = false } = {}) {
   const { files, pages } = await sources();
-  const tokens = new Map();
+  const site = new Map(), chat = new Map();
   const changedFiles = [];
   const apply = async (file, transform) => {
     const before = await readFile(file, 'utf8');
     const after = transform(before);
     if (after !== before) { changedFiles.push(file); if (!check) await writeFile(file, after); }
   };
-  const collect = css => { const result = transformCss(css); for (const [k, v] of result.tokens) tokens.set(k, v); return result.css; };
-  for (const file of files) await apply(file, collect);
-  for (const page of pages) await apply(page, html => html.replace(/(<style[^>]*>)([\s\S]*?)(<\/style>)/gi, (m, open, css, close) => open + collect(css) + close));
-
-  const block = [BEGIN, ':root[data-theme="dark"] {', ...FILL_TOKENS.map(name => ` --fill-${name}:${FILL_DARK[name]};`), ...[...tokens].sort().map(([k, v]) => ` ${k}:${v};`), '}', END].join('\n');
-  const appearance = await readFile(APPEARANCE, 'utf8');
-  const start = appearance.indexOf(BEGIN), stop = appearance.indexOf(END);
-  const nextAppearance = start >= 0 && stop > start
-    ? appearance.slice(0, start) + block + appearance.slice(stop + END.length)
-    : `${appearance.trimEnd()}\n${block}\n`;
-  if (nextAppearance !== appearance) { changedFiles.push(APPEARANCE); if (!check) await writeFile(APPEARANCE, nextAppearance); }
-  return { changedFiles, tokens: tokens.size };
+  const collect = into => css => { const result = transformCss(css.replace(/\/\* dark-palette:begin[\s\S]*?dark-palette:end \*\//, '')); for (const [k, v] of result.tokens) into.set(k, v); return result.css; };
+  for (const file of files.filter(file => file !== CHAT_CSS)) await apply(file, collect(site));
+  for (const page of pages) await apply(page, html => html.replace(/(<style[^>]*>)([\s\S]*?)(<\/style>)/gi, (m, open, css, close) => open + collect(site)(css) + close));
+  // Commons Chat: rewrite its stylesheet and write its palette into the same file.
+  await apply(CHAT_CSS, css => {
+    const body = collect(chat)(css.replace(/\n?\/\* dark-palette:begin[\s\S]*?dark-palette:end \*\/\n?/, '\n'));
+    return writeBlock(body, blockFor(chat, Object.fromEntries(FILL_TOKENS.map(name => [`cc-${name}`, FILL_DARK[name]]))));
+  });
+  await apply(APPEARANCE, text => writeBlock(text, blockFor(site, Object.fromEntries(FILL_TOKENS.map(name => [name, FILL_DARK[name]])))));
+  return { changedFiles, tokens: site.size + chat.size };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

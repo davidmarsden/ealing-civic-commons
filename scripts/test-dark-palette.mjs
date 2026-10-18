@@ -2,7 +2,7 @@
 // Tests for the dark-mode palette and the appearance bootstrap.
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
-import { darkCounterpart, parseColor, run, sources, transformCss } from './dark-palette.mjs';
+import { CHAT_PAGE, darkCounterpart, parseColor, run, sources, transformCss } from './dark-palette.mjs';
 
 const luminance = ({ r, g, b }) => {
   const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; };
@@ -67,6 +67,16 @@ for (const name of pages) {
   assert.ok(firstStylesheet < 0 || boot < firstStylesheet, `${name}: bootstrap before stylesheets`);
   assert.match(head, /href="\/appearance\.css"/, `${name}: appearance.css in <head>`);
   assert.match(head, /src="\/appearance\.js"/, `${name}: appearance.js in <head>`);
+}
+
+// Commons Chat's page is a template the chat server fetches from this site; it
+// has no site shell, so it boots the theme itself and loads appearance.js by URL.
+{
+  const html = await readFile(CHAT_PAGE, 'utf8');
+  const head = html.slice(0, html.search(/<\/head>|<body/i));
+  const boot = head.indexOf('data-appearance-boot');
+  assert.ok(boot >= 0 && boot < head.search(/<link[^>]+rel="stylesheet"|<link[^>]+stylesheet/), 'Commons Chat: bootstrap before stylesheets');
+  assert.match(head, /src="https:\/\/ealing\.civiccommons\.co\.uk\/appearance\.js[^"]*"/, 'Commons Chat: appearance.js');
 }
 
 console.log('dark palette tests passed');

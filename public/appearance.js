@@ -14,7 +14,8 @@
  apply();
  system.addEventListener?.('change',()=>{if(mode==='system')apply()});
  function mount(){
-  const header=document.querySelector('.site-header .header-inner');
+  // The site header, or Commons Chat's navbar (its page has no site shell).
+  const header=document.querySelector('.site-header .header-inner')||document.querySelector('.navbar .container');
   if(!header||header.querySelector('.appearance-control'))return;
   const holder=document.createElement('div');holder.className='appearance-control';
   const label=document.createElement('label');label.textContent='Appearance';label.htmlFor='commons-appearance';
