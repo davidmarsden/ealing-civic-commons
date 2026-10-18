@@ -25,6 +25,12 @@
     }
   }
   enablePwa();
+  if (!document.querySelector('link[data-appearance]')) {
+    const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = '/appearance.css'; css.dataset.appearance = 'true'; document.head.append(css);
+  }
+  if (!document.querySelector('script[data-appearance]')) {
+    const script = document.createElement('script'); script.src = '/appearance.js'; script.defer = true; script.dataset.appearance = 'true'; document.head.append(script);
+  }
   const NAV_ITEMS = [
     { label: 'Latest', href: '/' },
     { label: 'Archive', href: '/archive.html', match: path => path === '/archive.html' },
