@@ -143,13 +143,22 @@ export function transformCss(css) {
   return { css: out.replace(/\u0000(\d+)\u0000/g, (_, i) => comments[+i]), tokens, unwrapped };
 }
 
-async function sources() {
-  const files = [
-    ...(await readdir(PUBLIC)).filter(name => name.endsWith('.css') && name !== 'appearance.css').map(name => join(PUBLIC, name)),
-    ...(await readdir(join(PUBLIC, 'brand'))).filter(name => name.endsWith('.css')).map(name => join(PUBLIC, 'brand', name))
-  ];
-  const pages = (await readdir(PUBLIC)).filter(name => name.endsWith('.html')).map(name => join(PUBLIC, name));
-  return { files, pages };
+// Stylesheets and pages that the site shell (and so the appearance control)
+// reaches. The network pages (another hostname) and the Commons Chat app keep
+// their own styles. Pages get their inline <style> blocks rewritten too.
+const SKIP_DIRS = new Set(['data', 'network', 'assets']);
+const SKIP_FILES = new Set([APPEARANCE, join(PUBLIC, 'commons-chat', 'commons-chat.css'), join(PUBLIC, 'commons-chat', 'index.html'), join(PUBLIC, 'offline.html')]);
+async function walk(dir, found = []) {
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) { if (!SKIP_DIRS.has(entry.name)) await walk(full, found); }
+    else if (!SKIP_FILES.has(full)) found.push(full);
+  }
+  return found;
+}
+export async function sources() {
+  const all = await walk(PUBLIC);
+  return { files: all.filter(file => file.endsWith('.css')).sort(), pages: all.filter(file => file.endsWith('.html')).sort() };
 }
 
 export async function run({ check = false } = {}) {

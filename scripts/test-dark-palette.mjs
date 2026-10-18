@@ -2,7 +2,7 @@
 // Tests for the dark-mode palette and the appearance bootstrap.
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
-import { darkCounterpart, parseColor, run, transformCss } from './dark-palette.mjs';
+import { darkCounterpart, parseColor, run, sources, transformCss } from './dark-palette.mjs';
 
 const luminance = ({ r, g, b }) => {
   const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; };
@@ -51,9 +51,15 @@ const { changedFiles } = await run({ check: true });
 assert.deepEqual(changedFiles, [], `run node scripts/dark-palette.mjs (${changedFiles.join(', ')})`);
 
 // Every page sets its theme in <head> before any stylesheet, so there is no flash
-// of the light theme for dark-mode readers. (offline.html has its own styles.)
-for (const name of (await readdir('public')).filter(file => file.endsWith('.html') && file !== 'offline.html')) {
-  const html = await readFile(`public/${name}`, 'utf8');
+// of the light theme for dark-mode readers.
+// Pages are those the palette covers: every page that loads the site shell.
+const { pages } = await sources();
+for (const file of await readdir('public', { recursive: true })) {
+  const path = `public/${file}`;
+  if (path.endsWith('.html') && !path.startsWith('public/data/') && (await readFile(path, 'utf8')).includes('site-shell.js')) assert.ok(pages.includes(path), `${path} loads the site shell but is not covered`);
+}
+for (const name of pages) {
+  const html = await readFile(name, 'utf8');
   const head = html.slice(0, html.search(/<\/head>|<body/i));
   const boot = head.indexOf('data-appearance-boot');
   assert.ok(boot >= 0, `${name}: appearance bootstrap in <head>`);
