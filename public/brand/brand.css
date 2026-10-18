@@ -1,7 +1,7 @@
 .brand-lockup { display: inline-flex; align-items: center; gap: 11px; min-width: max-content; color: inherit; text-decoration: none; }
 .brand-mark { width: 48px; height: 43px; object-fit: contain; flex: 0 0 48px; display: block; }
 .brand-mark-town { width: 43px; height: 43px; flex-basis: 43px; object-fit: cover; border-radius: 50%; }
-.brand-divider { width: 1px; height: 36px; background: rgba(31,91,66,.45); }
+.brand-divider { width: 1px; height: 36px; background: var(--dark-bg-rgba-31-91-66-_45, rgba(31,91,66,.45)); }
 .brand-copy { display: grid; line-height: 1; }
 .brand-copy .brand { display: block; font-family: Georgia, 'Times New Roman', serif; font-size: 1.02rem; font-weight: 500; letter-spacing: .085em; white-space: nowrap; }
 .brand-copy .strap { margin-top: 6px; width: 100%; display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: center; column-gap: 9px; font-size: .58rem; line-height: 1; letter-spacing: .2em; text-transform: uppercase; text-align: center; font-weight: 700; color: var(--green); }

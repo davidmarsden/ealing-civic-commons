@@ -3,7 +3,7 @@
   padding: 1.25rem 1.35rem;
   border: 1px solid var(--line, #d8d5cb);
   border-radius: 14px;
-  background: rgba(235, 242, 238, 0.72);
+  background: var(--dark-bg-rgba-235-242-238-0_72, rgba(235, 242, 238, 0.72));
 }
 
 .source-links-panel h2 {

@@ -20,7 +20,7 @@
 
 .memory-tag-link {
   border-color: var(--green);
-  background: #e3eee7;
+  background: var(--dark-bg-e3eee7, #e3eee7);
   color: var(--green-dark);
   font-weight: 800;
   text-decoration: none;
@@ -37,7 +37,7 @@
 .memory-tag-link:hover,
 .memory-tag-link:focus-visible {
   border-color: var(--green-dark);
-  background: var(--green-dark);
+  background: var(--fill-green-dark, var(--green-dark));
   color: #fff;
   text-decoration: none;
   outline: none;
