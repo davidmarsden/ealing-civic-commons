@@ -22,6 +22,8 @@ Status: proposed; no production behaviour changed by this document.
 - Confirm the current SocialSpec specification and Micro.blog interoperability before implementing endpoint names and format.
 - Add a single generator using reviewed site metadata and an explicit curated list of public sources.
 - Publish `/.well-known/about.md`, `/.well-known/contact.vcf` (only once a public contact address is approved), and `/.well-known/following.opml`.
+- Publish a canonical, site-wide RSS/Atom or JSON Feed at `/feed.xml` or `/feed.json` for approved **public** Commons items. The existing aggregation JSON API and browser-local personal RSS endpoints are not substitutes for a standard public posts feed. Determine whether a suitable public feed already exists before adding a generator, and reuse the canonical public-item selection and stable URLs rather than creating a parallel ingestion pipeline.
+- Validate the public feed's schema, MIME type, CORS headers, absolute canonical links, stable IDs, and exclusion of private submissions or unpublished items. Include its discovery link in the site's HTML where appropriate.
 - Do **not** derive public following lists from user browser storage or all ingested sources.
 - Ensure static Netlify serving takes precedence over wildcard rewrites; specify appropriate Content-Type and permissive read-only CORS headers where required by the specification.
 - Add fixture-based tests for XML escaping, vCard escaping, Markdown safety, no personal contact leakage, MIME types, and deterministic output.
@@ -53,7 +55,7 @@ Only then design a separate Chat PR for voluntary subscription to curated Common
 - No changes to Current Commons rendering.
 - No private user follow or unpublished research data exposed.
 - Existing build/tests remain green.
-- Static endpoints independently testable and reversible.
+- Static endpoints, including the canonical public posts feed, independently testable and reversible.
 - Source discovery is advisory and human-reviewed.
 - Chat integration requires its own audited PR.
 
