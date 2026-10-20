@@ -1,3 +1,5 @@
+import { channelFeedUrl, resolveYoutubeHandle } from '../lib/youtube-channels.mjs';
+import { store as feedStore } from '../lib/feed-snapshot.mjs';
 import { XMLParser } from 'fast-xml-parser';
 import { enrichEalingCouncilTopics } from './ealing-council-topics.mjs';
 
@@ -158,7 +160,7 @@ const sources = [
   {
     id: 'eci-southall-youtube',
     name: 'ECI Southall — YouTube',
-    url: 'https://www.youtube.com/feeds/videos.xml?user=eci-southall',
+    youtubeHandle: 'eci-southall',
     homepage: 'https://www.youtube.com/@eci-southall',
     sourceClass: 'Political organisation / campaign',
     towns: ['Southall'],
@@ -168,7 +170,7 @@ const sources = [
   {
     id: 'eci-ealing-youtube',
     name: 'ECI Ealing — YouTube',
-    url: 'https://www.youtube.com/feeds/videos.xml?user=eci-ealing',
+    youtubeHandle: 'eci-ealing',
     homepage: 'https://www.youtube.com/@eci-ealing',
     sourceClass: 'Political organisation / campaign',
     towns: BOROUGH_TOWNS,
@@ -188,7 +190,7 @@ const sources = [
   {
     id: 'southall-youtube',
     name: 'Southall — YouTube',
-    url: 'https://www.youtube.com/feeds/videos.xml?user=southall8980',
+    youtubeHandle: 'southall8980',
     homepage: 'https://www.youtube.com/@southall8980',
     sourceClass: 'Community / local video',
     towns: ['Southall'],
@@ -198,7 +200,7 @@ const sources = [
   {
     id: 'young-ealing-foundation-youtube',
     name: 'Young Ealing Foundation — YouTube',
-    url: 'https://www.youtube.com/feeds/videos.xml?user=youngealingfoundation',
+    youtubeHandle: 'youngealingfoundation',
     homepage: 'https://www.youtube.com/@youngealingfoundation',
     sourceClass: 'Organisation / voluntary sector',
     towns: BOROUGH_TOWNS,
@@ -208,7 +210,7 @@ const sources = [
   {
     id: 'cap-the-towers-youtube',
     name: 'Cap The Towers — YouTube',
-    url: 'https://www.youtube.com/feeds/videos.xml?user=capthetowers6717',
+    youtubeHandle: 'capthetowers6717',
     homepage: 'https://www.youtube.com/@capthetowers6717',
     sourceClass: 'Organisation / campaign',
     towns: BOROUGH_TOWNS,
@@ -475,7 +477,9 @@ function errorMessage(error) {
 
 async function fetchAttempt(source, browserLike = false) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 7500);
+  // Fetches run in the background ingest, not on a visitor's request, so slow
+  // publishers get the same 12 s allowance as the other adapters.
+  const timeout = setTimeout(() => controller.abort(), 12000);
   const startedAt = Date.now();
   try {
     const response = await fetch(source.url, {
@@ -515,9 +519,23 @@ async function recordedAttempt(source, browserLike, diagnostics) {
   }
 }
 
-async function fetchSource(source) {
+// @handle channels have no legacy username, so their feed URL is resolved to a
+// channel ID first (cached in the feed store).
+async function withResolvedUrl(source) {
+  if (!source.youtubeHandle) return source;
+  const cache = (() => { try { return feedStore(); } catch { return null; } })();
+  const channelId = await resolveYoutubeHandle(source.youtubeHandle, { cache });
+  return { ...source, url: channelFeedUrl(channelId) };
+}
+
+async function fetchSource(declared) {
   const diagnostics = [];
-  let attempt;
+  let attempt, source;
+  try {
+    source = await withResolvedUrl(declared);
+  } catch (error) {
+    return { source: declared, ok: false, status: 'error', error: errorMessage(error), items: [], diagnostics };
+  }
 
   try {
     attempt = await recordedAttempt(source, false, diagnostics);
@@ -658,7 +676,7 @@ export default async () => {
   }), {
     headers: {
       'content-type': 'application/json; charset=utf-8',
-      'cache-control': 'public, max-age=300, stale-while-revalidate=900',
+      'cache-control': 'public, max-age=300, stale-while-revalidate=900', 'netlify-cdn-cache-control': 'public, durable, s-maxage=300, stale-while-revalidate=900',
       'access-control-allow-origin': '*'
     }
   });

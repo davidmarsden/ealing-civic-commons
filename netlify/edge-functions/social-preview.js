@@ -55,5 +55,8 @@ export default async (request, context) => {
 
 export const config = {
   path: ['/', '/items/*', '/people/*', '/organisations/*', '/places/*'],
-  onError: 'bypass'
+  onError: 'bypass',
+  // Let the CDN cache the metadata-enriched shell using social-page's own cache
+  // headers, so repeat views do not invoke this edge function and social-page.
+  cache: 'manual'
 };

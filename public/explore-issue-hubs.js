@@ -13,7 +13,7 @@ function entityIdFromRoute(href) {
 
 (async () => {
   try {
-    const response = await fetch('/.netlify/functions/civic-issues', { cache:'no-store' });
+    const response = await fetch('/.netlify/functions/civic-issues');
     if (!response.ok) return;
     const data = await response.json();
     const primary = new Map((data.issues || []).filter(issue => issue.primaryEntityId).map(issue => [issue.primaryEntityId, issue]));

@@ -1,7 +1,7 @@
-.watch-hero { padding: 64px 0 44px; border-bottom: 1px solid var(--line); background: radial-gradient(circle at 85% 15%, rgba(49,90,120,.09), transparent 34%); }
+.watch-hero { padding: 64px 0 44px; border-bottom: 1px solid var(--line); background: radial-gradient(circle at 85% 15%, var(--dark-bg-rgba-49-90-120-_09, rgba(49,90,120,.09)), transparent 34%); }
 .watch-hero-grid { display: grid; grid-template-columns: minmax(0,1.6fr) minmax(240px,.7fr); gap: 60px; align-items: end; }
 .watch-hero h1 { font-size: clamp(3.4rem, 7vw, 6.4rem); }
-.watch-intro { padding: 28px 0 6px; color: #4c5650; max-width: 1180px; }
+.watch-intro { padding: 28px 0 6px; color: var(--dark-fg-4c5650, #4c5650); max-width: 1180px; }
 .watch-intro p { max-width: 880px; font-size: 1.03rem; }
 .watch-filters { padding-top: 18px; scroll-margin-top: 92px; }
 .watch-toolbar { display: flex; justify-content: space-between; gap: 18px; align-items: center; padding: 4px 0 28px; color: var(--muted); font-size: .88rem; }
@@ -10,10 +10,10 @@
 .watch-health { display: grid; gap: 10px; }
 .watch-health-row { display: grid; grid-template-columns: 9px minmax(0,1fr) auto; gap: 8px; align-items: start; font-size: .8rem; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
 .watch-health-row:last-child { border-bottom: 0; padding-bottom: 0; }
-.watch-health-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; background: #a5aaa6; }
+.watch-health-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; background: var(--dark-bg-a5aaa6, #a5aaa6); }
 .watch-health-dot.active { background: #3e865f; }
 .watch-health-dot.quiet { background: #8b8d55; }
-.watch-health-dot.historical { background: var(--amber); }
+.watch-health-dot.historical { background: var(--fill-amber, var(--amber)); }
 .watch-health-dot.empty, .watch-health-dot.unavailable { background: #b64d43; }
 .watch-health-state { color: var(--muted); text-transform: capitalize; }
 .document-category, .watch-health-category { appearance: none; border: 0; padding: 0; background: none; color: var(--blue); font: inherit; font-weight: 800; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }

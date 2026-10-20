@@ -134,6 +134,6 @@ export default async () => {
   const result = await fetchEalingPetitions();
   return new Response(JSON.stringify(result), {
     status: 200,
-    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=120, stale-while-revalidate=600' }
+    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=120, stale-while-revalidate=600', 'netlify-cdn-cache-control': 'public, durable, s-maxage=120, stale-while-revalidate=600' }
   });
 };

@@ -20,7 +20,7 @@ function topicLink(topic) {
   return slug ? `<a class="entity-topic" href="/topics/${esc(slug)}">${esc(topic.name)}</a>` : `<span class="entity-topic">${esc(topic?.name)}</span>`;
 }
 function canonicalUrl(value) { try { const url=new URL(value,location.origin); url.hash=''; if(url.pathname!=='/')url.pathname=url.pathname.replace(/\/+$/,''); return url.toString(); } catch { return String(value||'').trim(); } }
-function mergeReporting(reviewed=[],archived=[]) { const out=[],seen=new Set(); const add=item=>{const key=canonicalUrl(item.url); if(!key||seen.has(key))return; seen.add(key); out.push(item);}; reviewed.forEach(post=>add({...post,source:post.source||'Southall Stories',date:post.date||post.publishedAt||null,reviewedMatch:true})); archived.forEach(record=>{const item=record?.item;if(item?.url)add({title:item.title,url:item.url,summary:item.summary,date:item.publishedAt||record.archivedAt,source:item.source||'Archived publisher',archivedMatch:true});}); return out.sort((a,b)=>(Date.parse(b.date||'')||0)-(Date.parse(a.date||'')||0)); }
+function mergeReporting(reviewed=[],archived=[],currentUrls=[]) { const out=[],seen=new Set(currentUrls.map(canonicalUrl)); const add=item=>{const key=canonicalUrl(item.url); if(!key||seen.has(key))return; seen.add(key); out.push(item);}; reviewed.forEach(post=>add({...post,source:post.source||'Southall Stories',date:post.date||post.publishedAt||null,reviewedMatch:true})); archived.forEach(record=>{const item=record?.item;if(item?.url)add({title:item.title,url:item.url,summary:item.summary,date:item.publishedAt||record.archivedAt,source:item.source||'Archived publisher',archivedMatch:true});}); return out.sort((a,b)=>(Date.parse(b.date||'')||0)-(Date.parse(a.date||'')||0)); }
 async function archivedReporting(terms=[], topics=[]) { const endpoint=new URL('/.netlify/functions/historical-reporting',location.origin); [...new Set(terms.filter(term=>String(term||'').trim().length>=3))].slice(0,20).forEach(term=>endpoint.searchParams.append('term',term)); topics.forEach(topic=>endpoint.searchParams.append('topic',topic)); endpoint.searchParams.set('limit','100'); const response=await fetch(endpoint,{cache:'no-store'}); if(!response.ok)throw new Error(`Historical reporting HTTP ${response.status}`); return (await response.json()).records||[]; }
 
 function normaliseName(value) {
@@ -95,12 +95,18 @@ async function load() {
     if (!issueResponse.ok) throw new Error(`Issue HTTP ${issueResponse.status}`);
     const data = await issueResponse.json(); if (!data.matched) throw new Error(data.reason || 'Issue not found');
     renderHero(data); renderStats(data); renderProviders(data.providers); renderActors(visibleActors(data)); renderRelationships(data.relationships); renderSources(data.sources);
-    const [archiveResult,feedResponse] = await Promise.all([
-      archivedReporting([data.issue.name,...(data.issue.aliases||[])], []).catch(()=>[]),
-      fetch('/.netlify/functions/combined-feed',{cache:'no-store'}).catch(()=>null)
-    ]);
-    if (feedResponse?.ok) { const feed = await feedResponse.json(); renderCurrent(currentMatches(feed,data.issue)); }
-    const historical=mergeReporting(data.reporting,archiveResult); renderReporting(historical); renderStats(data,historical.length);
+    // Sole owner of this page's Current Commons and historical reporting (the
+    // generic context-reporting.js no longer runs here). Historical reporting is
+    // shown as soon as the archive answers, without waiting for the feed (a live
+    // build when the snapshot is stale can take 10-30 s); once the feed arrives,
+    // records shown as current are taken out of the historical list.
+    const feedPromise = fetch('/.netlify/functions/combined-feed').then(response => response.ok ? response.json() : null).catch(()=>null);
+    const archiveResult = await archivedReporting([data.issue.name,...(data.issue.aliases||[])], []).catch(()=>[]);
+    let historical=mergeReporting(data.reporting,archiveResult); renderReporting(historical); renderStats(data,historical.length);
+    const feed = await feedPromise;
+    const current = feed ? currentMatches(feed, data.issue) : [];
+    renderCurrent(current);
+    if (current.length) { historical=mergeReporting(data.reporting,archiveResult,current.map(item=>item.url)); if (historical.length) renderReporting(historical); else { $('#reportingSection').hidden = true; $('#issueReporting').innerHTML = ''; } renderStats(data,historical.length); }
   } catch (error) {
     $('#issueStatus').innerHTML = '<h1>Civic issue temporarily unavailable.</h1><p>The issue graph could not be loaded. The rest of Civic Commons is unaffected.</p><p><a href="/explore.html">Explore the civic graph →</a></p>';
     console.error('Civic issue page failed', error);

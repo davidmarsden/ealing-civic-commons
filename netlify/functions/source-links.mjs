@@ -30,7 +30,7 @@ const json = (statusCode, body) => ({
   statusCode,
   headers: {
     'content-type': 'application/json; charset=utf-8',
-    'cache-control': 'public, max-age=900'
+    'cache-control': statusCode >= 400 ? 'no-store' : 'public, max-age=900', 'netlify-cdn-cache-control': statusCode >= 400 ? 'no-store' : 'public, durable, s-maxage=900'
   },
   body: JSON.stringify(body)
 });

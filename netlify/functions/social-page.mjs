@@ -179,7 +179,7 @@ export default async request => {
     status: 200,
     headers: {
       'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'public, max-age=300, stale-while-revalidate=1800',
+      'cache-control': 'public, max-age=300, stale-while-revalidate=1800', 'netlify-cdn-cache-control': 'public, durable, s-maxage=300, stale-while-revalidate=1800',
       'x-frame-options': 'DENY',
       'x-content-type-options': 'nosniff',
       'referrer-policy': 'strict-origin-when-cross-origin',

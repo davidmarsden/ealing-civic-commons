@@ -25,6 +25,12 @@
     }
   }
   enablePwa();
+  if (!document.querySelector('link[data-appearance]')) {
+    const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = '/appearance.css'; css.dataset.appearance = 'true'; document.head.append(css);
+  }
+  if (!document.querySelector('script[data-appearance]')) {
+    const script = document.createElement('script'); script.src = '/appearance.js'; script.defer = true; script.dataset.appearance = 'true'; document.head.append(script);
+  }
   const NAV_ITEMS = [
     { label: 'Latest', href: '/' },
     { label: 'Archive', href: '/archive.html', match: path => path === '/archive.html' },
@@ -147,6 +153,5 @@
   });
 
   if (path === '/') import('/commons-scope.js?v=20260903-3').catch(error => console.warn('Commons scope module unavailable', error));
-  if (/^\/(people|organisations|places|issues|topics)\//.test(path)) import('/context-reporting.js?v=20261004-1').catch(error => console.warn('Context reporting unavailable', error));
   if (path === '/explore.html') import('/explore-issue-hubs.js?v=20260902-1').catch(error => console.warn('Explore issue hubs unavailable', error));
 })();
