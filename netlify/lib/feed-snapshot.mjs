@@ -79,7 +79,10 @@ export function applySourceStates(feed, previous = { sources: {}, groups: {} }, 
     }
     if (!failed) {
       const lastItems = liveItemsFor(ids).slice(0, LAST_GOOD_ITEMS_PER_SOURCE);
-      sources[entry.id] = { lastSuccessAt: now, lastAttemptAt: now, failingSince: null, consecutiveFailures: 0, lastItems: lastItems.length ? lastItems : (before.lastItems || []) };
+      // The source's identity, kept so lists of sources (following.opml) can
+      // still name it while its whole fetcher group is failing.
+      const meta = { name: entry.name, homepage: entry.homepage || null, sourceClass: entry.sourceClass || null, group: entry.group || null };
+      sources[entry.id] = { lastSuccessAt: now, lastAttemptAt: now, failingSince: null, consecutiveFailures: 0, lastItems: lastItems.length ? lastItems : (before.lastItems || []), meta };
       return { ...entry, state, lastSuccessAt: now };
     }
     const failingSince = before.failingSince || now;

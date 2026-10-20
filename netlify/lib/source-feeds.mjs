@@ -41,7 +41,10 @@ export const PUBLIC_FEEDS = {
   'southall-transition': 'https://southalltransition.org/feed/',
   'vicious-ealing-council': 'https://vicious-ealing-council.co.uk/feed/',
   'view-from-w5': 'https://theviewfromw5.substack.com/feed',
-  'west-ealing-neighbours': 'https://www.westealingneighbours.org.uk/feed/'
+  'west-ealing-neighbours': 'https://www.westealingneighbours.org.uk/feed/',
+  // WhatDoTheyKnow's Atom feed of requests to Ealing Council (the authority feed
+  // the WDTK publisher and probe read).
+  'whatdotheyknow': 'https://www.whatdotheyknow.com/feed/body/ealing_borough_council'
 };
 
 // YouTube channels named by @handle: their feed needs the channel ID, which the
