@@ -1,3 +1,6 @@
+import { store as feedStore } from '../lib/feed-snapshot.mjs';
+import { channelFeedUrl, resolveYoutubeHandle } from '../lib/youtube-channels.mjs';
+
 const allowedHosts = new Set([
   'london.gov.uk', 'www.london.gov.uk',
   'ealing.gov.uk', 'www.ealing.gov.uk', 'ealing.moderngov.co.uk',
@@ -13,17 +16,20 @@ const allowedHosts = new Set([
   'commons.southallstories.uk'
 ]);
 
+// Feed URL per YouTube source, or the @handle for channels that have no legacy
+// username: `?user=<handle>` returns 404 for those, so their feed is found from
+// the channel ID (resolved once and cached, as the feed ingest does).
 const youtubeFeeds = new Map([
   ['Ealing Council — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=EalingCouncil'],
   ['Southall Black Sisters — YouTube', 'https://www.youtube.com/feeds/videos.xml?channel_id=UCUsEWqUfUJYr9uwLtXymxVA'],
   ['London Assembly — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=LondonAssembly'],
   ['ExposureBox — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=exposurebox'],
-  ['ECI Southall — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=eci-southall'],
-  ['ECI Ealing — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=eci-ealing'],
+  ['ECI Southall — YouTube', { handle: 'eci-southall' }],
+  ['ECI Ealing — YouTube', { handle: 'eci-ealing' }],
   ['Clean Air for Southall and Hayes — YouTube', 'https://www.youtube.com/feeds/videos.xml?channel_id=UChFHFUx8LL0v7u5NIwyImZQ'],
-  ['Southall — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=southall8980'],
-  ['Young Ealing Foundation — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=youngealingfoundation'],
-  ['Cap The Towers — YouTube', 'https://www.youtube.com/feeds/videos.xml?user=capthetowers6717']
+  ['Southall — YouTube', { handle: 'southall8980' }],
+  ['Young Ealing Foundation — YouTube', { handle: 'youngealingfoundation' }],
+  ['Cap The Towers — YouTube', { handle: 'capthetowers6717' }]
 ]);
 
 const json = (statusCode, body) => ({
@@ -103,9 +109,15 @@ function youtubeVideoId(raw) {
   return null;
 }
 
+async function youtubeFeedUrl(entry) {
+  if (!entry?.handle) return entry || null;
+  const cache = (() => { try { return feedStore(); } catch { return null; } })();
+  try { return channelFeedUrl(await resolveYoutubeHandle(entry.handle, { cache })); } catch { return null; }
+}
+
 async function youtubeDescriptionLinks(sourceUrl, sourceName) {
   const videoId = youtubeVideoId(sourceUrl);
-  const feedUrl = youtubeFeeds.get(sourceName);
+  const feedUrl = await youtubeFeedUrl(youtubeFeeds.get(sourceName));
   if (!videoId || !feedUrl) return [];
 
   const response = await fetch(feedUrl, {
