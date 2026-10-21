@@ -39,3 +39,15 @@
 
 /data/planning-archive.json
   Cache-Control: public, max-age=0, must-revalidate
+
+# SocialSpec (socialspec.org): AboutSpec and ContactSpec. FollowSpec
+# (/.well-known/following.opml) is served by the socialspec-following function.
+/.well-known/about.md
+  Content-Type: text/markdown; charset=utf-8
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=3600
+
+/.well-known/contact.vcf
+  Content-Type: text/vcard; charset=utf-8
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=3600

@@ -22,6 +22,13 @@ export function channelIdFromPage(html = '') {
 
 export const channelFeedUrl = channelId => `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
 
+// The cached channel ID for a handle, without fetching (null if not cached).
+export async function cachedChannelId(handle, cache) {
+  const key = `youtube/handle/${String(handle || '').replace(/^@/, '').trim().toLowerCase()}`;
+  const cached = cache ? await cache.get(key, { type: 'json' }).catch(() => null) : null;
+  return cached?.channelId && CHANNEL_ID.test(cached.channelId) ? cached.channelId : null;
+}
+
 // `cache` is a Blobs-like store ({ get, setJSON }); resolution still works without it.
 export async function resolveYoutubeHandle(handle, { cache = null, fetchImpl = fetch, now = Date.now() } = {}) {
   const clean = String(handle || '').replace(/^@/, '').trim();
