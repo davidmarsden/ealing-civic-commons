@@ -1,4 +1,5 @@
 import { serveCombinedFeed } from './combined-feed.mjs';
+import { withPlausibleDate } from '../lib/item-dates.mjs';
 import { sourceEntry, xml } from '../lib/rss-items.mjs';
 
 // The Commons' own feed at /feed.xml (the SocialSpec entry point): the latest
@@ -11,18 +12,15 @@ const SITE = 'https://ealing.civiccommons.co.uk';
 const MAX_ITEMS = 50;
 const CORS = { 'access-control-allow-origin': '*' };
 
-// A date more than a day after the feed was built is a publisher's mistake (the
-// Met issued a ward priority "20 November 2026" in October 2026); in a feed it
-// would pin the item to the top of readers for weeks. Such items stay, undated.
-const FUTURE_TOLERANCE_MS = 24 * 60 * 60 * 1000;
-
 export function buildSiteFeed(feed, { siteOrigin = SITE, limit = MAX_ITEMS } = {}) {
   const generated = Date.parse(feed?.generatedAt || '') || Date.now();
-  const time = item => { const t = Date.parse(item.publishedAt || ''); return Number.isFinite(t) && t <= generated + FUTURE_TOLERANCE_MS ? t : null; };
+  const time = item => { const t = Date.parse(item.publishedAt || ''); return Number.isFinite(t) ? t : 0; };
+  // Impossible future dates are already cleared when the timeline is built; this
+  // also covers a snapshot written before that rule existed.
   const items = (Array.isArray(feed?.items) ? feed.items : [])
     .filter(item => item?.id && item?.title)
-    .map(item => (time(item) == null && item.publishedAt ? { ...item, publishedAt: null } : item))
-    .sort((a, b) => (time(b) ?? 0) - (time(a) ?? 0))
+    .map(item => withPlausibleDate(item, generated))
+    .sort((a, b) => time(b) - time(a))
     .slice(0, limit);
   const built = new Date(generated).toUTCString();
   return [

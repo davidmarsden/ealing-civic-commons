@@ -1,6 +1,7 @@
 import coreFeedHandler from './combined-feed-core.mjs';
 import { listArchivedItems } from '../lib/civic-items.mjs';
 import { withPlaceLinks } from '../lib/civic-place-links.mjs';
+import { withPlausibleDate } from '../lib/item-dates.mjs';
 import { readSnapshot, SNAPSHOT_MAX_AGE_MS, store as feedStore } from '../lib/feed-snapshot.mjs';
 
 const WDTK_SOURCE_ID='whatdotheyknow';
@@ -37,7 +38,8 @@ async function recentWhatDoTheyKnow(){
 export async function buildCombinedFeed(request){
   const [coreResponse,wdtk]=await Promise.all([coreFeedHandler(request),recentWhatDoTheyKnow()]);
   const core=coreResponse?.ok?await coreResponse.json():{generatedAt:new Date().toISOString(),items:[],health:[],enrichment:{}};
-  const items=coveragePreservingSlice([...(wdtk.items||[]),...(core.items||[])]).map(withPlaceLinks);
+  const now=Date.now();
+  const items=coveragePreservingSlice([...(wdtk.items||[]),...(core.items||[])].map(item=>withPlausibleDate(item,now))).map(withPlaceLinks);
   const health=[...(core.health||[]),{id:WDTK_SOURCE_ID,name:WDTK_SOURCE_NAME,homepage:WDTK_HOMEPAGE,ok:!wdtk.error,status:wdtk.error?'error':(wdtk.items.length?'ok':'empty'),error:wdtk.error,itemCount:wdtk.items.length}].sort((a,b)=>String(a?.name||'').localeCompare(String(b?.name||''),'en-GB',{sensitivity:'base'}));
   return new Response(JSON.stringify({...core,generatedAt:new Date().toISOString(),items,health,enrichment:{...(core.enrichment||{}),placeLinks:{method:'Explicit place mentions and deliberately narrow civic-context rules attach records to durable Commons place routes. Inferred links remain attributable discovery metadata rather than reviewed civic assertions.'},whatDoTheyKnow:{included:wdtk.items.length,archiveSize:wdtk.archiveSize,method:'Recent Ealing Council FOI/EIR requests persisted by the scheduled WhatDoTheyKnow publisher are projected from the Civic Archive into Latest. The original WhatDoTheyKnow request remains canonical.'}}}),{headers:{'content-type':'application/json; charset=utf-8','cache-control':'public, max-age=300, stale-while-revalidate=900','netlify-cdn-cache-control':'public, durable, s-maxage=300, stale-while-revalidate=900','access-control-allow-origin':'*'}});
 }
