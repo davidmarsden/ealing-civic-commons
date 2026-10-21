@@ -9,12 +9,20 @@ const SITE = 'https://ealing.civiccommons.co.uk';
 const MAX_ITEMS = 50;
 const CORS = { 'access-control-allow-origin': '*' };
 
+// A date more than a day after the feed was built is a publisher's mistake (the
+// Met issued a ward priority "20 November 2026" in October 2026); in a feed it
+// would pin the item to the top of readers for weeks. Such items stay, undated.
+const FUTURE_TOLERANCE_MS = 24 * 60 * 60 * 1000;
+
 export function buildSiteFeed(feed, { siteOrigin = SITE, limit = MAX_ITEMS } = {}) {
+  const generated = Date.parse(feed?.generatedAt || '') || Date.now();
+  const time = item => { const t = Date.parse(item.publishedAt || ''); return Number.isFinite(t) && t <= generated + FUTURE_TOLERANCE_MS ? t : null; };
   const items = (Array.isArray(feed?.items) ? feed.items : [])
     .filter(item => item?.id && item?.title)
-    .sort((a, b) => (Date.parse(b.publishedAt || 0) || 0) - (Date.parse(a.publishedAt || 0) || 0))
+    .map(item => (time(item) == null && item.publishedAt ? { ...item, publishedAt: null } : item))
+    .sort((a, b) => (time(b) ?? 0) - (time(a) ?? 0))
     .slice(0, limit);
-  const built = new Date(feed?.generatedAt || Date.now()).toUTCString();
+  const built = new Date(generated).toUTCString();
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',

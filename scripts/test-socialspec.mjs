@@ -87,6 +87,13 @@ for (const file of (await readdir('netlify/functions')).filter(name => name.ends
   assert.match(channel.item[0].link, /^https:\/\/ealing\.civiccommons\.co\.uk\/items\//);
   assert.equal(channel.item[0].source['#text'], 'Southall Stories');
   assert.match(rss, /Item \d+ &amp; &quot;more&quot;/);
+  // A future-dated item is kept but undated, and does not jump to the top.
+  const future = buildSiteFeed({ generatedAt: '2026-10-21T09:00:00Z', items: [
+    { id: 'met', title: 'Priorities', source: 'Met', publishedAt: '2026-11-20T12:00:00Z' },
+    { id: 'news', title: 'News', source: 'Paper', publishedAt: '2026-10-20T12:00:00Z' }
+  ] });
+  const futureItems = new XMLParser().parse(future).rss.channel.item;
+  assert.deepEqual(futureItems.map(item => [item.title, item.pubDate ?? null]), [['News', 'Tue, 20 Oct 2026 12:00:00 GMT'], ['Priorities', null]]);
 }
 
 // AboutSpec and ContactSpec files exist, are well formed, and allow CORS.
