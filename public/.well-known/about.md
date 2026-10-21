@@ -14,7 +14,8 @@ Ealing Civic Commons connects civic information that is already being published 
 ## Follow and reuse
 
 - [Latest civic timeline](https://ealing.civiccommons.co.uk/)
-- [RSS feeds](https://ealing.civiccommons.co.uk/rss.html)
+- [Civic timeline feed (RSS)](https://ealing.civiccommons.co.uk/feed.xml)
+- [Personal RSS feeds](https://ealing.civiccommons.co.uk/rss.html)
 - [Sources we follow (OPML)](https://ealing.civiccommons.co.uk/.well-known/following.opml)
 - [Submit a source](https://ealing.civiccommons.co.uk/#submit-source)
 - [Documents and source register](https://ealing.civiccommons.co.uk/documents/)

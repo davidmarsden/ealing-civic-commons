@@ -7,6 +7,8 @@ import { XMLParser } from 'fast-xml-parser';
 import { PUBLIC_FEEDS, YOUTUBE_HANDLES } from '../netlify/lib/source-feeds.mjs';
 import { buildFollowingOpml, feedsWithChannels, followedSources } from '../netlify/functions/socialspec-following.mjs';
 import { applySourceStates } from '../netlify/lib/feed-snapshot.mjs';
+import { buildSiteFeed, serveSiteFeed } from '../netlify/functions/site-feed.mjs';
+import { serveCombinedFeed } from '../netlify/functions/combined-feed.mjs';
 
 // OPML: feeds become rss outlines, other sources link outlines; names escaped;
 // duplicates dropped; valid XML.
@@ -70,6 +72,49 @@ for (const file of (await readdir('netlify/functions')).filter(name => name.ends
     // ?user=<handle> for an @handle channel is resolved via its cached channel ID.
     if (handles.has(new URL(url).searchParams.get('user'))) continue;
     assert.ok(mapped.has(url), `${file}: feed ${url} is not in netlify/lib/source-feeds.mjs`);
+  }
+}
+
+// Site feed (/feed.xml): newest items first, capped, escaped, valid RSS 2.0 with
+// a self link; each item links to its Commons page and names the publisher.
+{
+  const items = Array.from({ length: 60 }, (_, i) => ({ id: `src:${i}`, title: `Item ${i} & "more"`, source: 'Southall Stories', sourceHomepage: 'https://southallstories.uk/', url: `https://southallstories.uk/${i}`, publishedAt: new Date(Date.UTC(2026, 9, 1 + (i % 28), i % 24)).toISOString() }));
+  const rss = buildSiteFeed({ generatedAt: '2026-10-21T09:00:00Z', items: [...items, { id: 'untitled' }] });
+  const channel = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '' }).parse(rss).rss.channel;
+  assert.equal(channel.item.length, 50);
+  const dates = channel.item.map(item => Date.parse(item.pubDate));
+  assert.deepEqual(dates, [...dates].sort((a, b) => b - a), 'newest first');
+  assert.equal(channel['atom:link'].href, 'https://ealing.civiccommons.co.uk/feed.xml');
+  assert.match(channel.item[0].link, /^https:\/\/ealing\.civiccommons\.co\.uk\/items\//);
+  assert.equal(channel.item[0].source['#text'], 'Southall Stories');
+  assert.match(rss, /Item \d+ &amp; &quot;more&quot;/);
+  // A future-dated item is kept but undated, and does not jump to the top.
+  const future = buildSiteFeed({ generatedAt: '2026-10-21T09:00:00Z', items: [
+    { id: 'met', title: 'Priorities', source: 'Met', publishedAt: '2026-11-20T12:00:00Z' },
+    { id: 'news', title: 'News', source: 'Paper', publishedAt: '2026-10-20T12:00:00Z' }
+  ] });
+  const futureItems = new XMLParser().parse(future).rss.channel.item;
+  assert.deepEqual(futureItems.map(item => [item.title, item.pubDate ?? null]), [['News', 'Tue, 20 Oct 2026 12:00:00 GMT'], ['Priorities', null]]);
+}
+
+// Serving: a stale snapshot is rebuilt live (same path as the homepage), and a
+// timeline that cannot be had is a 503, never an empty feed.
+{
+  const request = new Request('https://ealing.civiccommons.co.uk/feed.xml');
+  const item = { id: 'a', title: 'Fresh item', source: 'Paper', publishedAt: '2026-10-21T08:00:00Z' };
+  const stale = { ageMs: 3 * 60 * 60 * 1000, feed: { generatedAt: '2026-10-21T05:00:00Z', items: [{ ...item, title: 'Old item' }] } };
+  let built = 0;
+  const serve = req => serveCombinedFeed(req, { readFeedSnapshot: async () => stale, build: async () => { built += 1; return Response.json({ generatedAt: '2026-10-21T08:05:00Z', items: [item] }); } });
+  const fresh = await serveSiteFeed(request, { serve });
+  assert.equal(fresh.status, 200);
+  assert.equal(built, 1, 'stale snapshot triggers a live build');
+  const body = await fresh.text();
+  assert.match(body, /Fresh item/);
+  assert.doesNotMatch(body, /Old item/);
+  assert.equal(fresh.headers.get('access-control-allow-origin'), '*');
+  for (const failing of [async () => new Response('down', { status: 502 }), async () => { throw new Error('boom'); }, async () => Response.json({ items: [] })]) {
+    const response = await serveSiteFeed(request, { serve: failing });
+    assert.equal(response.status, 503);
   }
 }
 
