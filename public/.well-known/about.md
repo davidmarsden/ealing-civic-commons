@@ -19,3 +19,7 @@ Ealing Civic Commons connects civic information that is already being published 
 - [Submit a source](https://ealing.civiccommons.co.uk/#submit-source)
 - [Documents and source register](https://ealing.civiccommons.co.uk/documents/)
 - [Part of the Civic Commons network](https://civiccommons.co.uk/)
+
+## Contact
+
+[commons@davidmarsden.info](mailto:commons@davidmarsden.info)

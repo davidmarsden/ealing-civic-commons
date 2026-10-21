@@ -79,6 +79,7 @@ assert.match(about, /^# Ealing Civic Commons/);
 const vcard = await readFile('public/.well-known/contact.vcf', 'utf8');
 assert.match(vcard, /^BEGIN:VCARD\r\nVERSION:4\.0\r\n/);
 assert.match(vcard, /\r\nFN:Ealing Civic Commons\r\n/);
+assert.match(vcard, /\r\nEMAIL;TYPE=work:commons@davidmarsden\.info\r\n/);
 assert.match(vcard, /\r\nEND:VCARD\r\n$/);
 assert.ok(vcard.split('\r\n').every(line => line.length <= 75 || /^(NOTE|URL)/.test(line)), 'vCard lines should be short or foldable fields');
 const headers = await readFile('public/_headers', 'utf8');
