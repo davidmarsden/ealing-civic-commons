@@ -1,10 +1,12 @@
-import { readSnapshot, store } from '../lib/feed-snapshot.mjs';
+import { serveCombinedFeed } from './combined-feed.mjs';
 import { sourceEntry, xml } from '../lib/rss-items.mjs';
 
 // The Commons' own feed at /feed.xml (the SocialSpec entry point): the latest
-// civic timeline as RSS 2.0, served from the ingest's snapshot. Each item links
-// to its Commons page and names the original publisher, which stays canonical.
-// A missing snapshot is an error, never an empty feed.
+// civic timeline as RSS 2.0. It reads the timeline the way the homepage does: the
+// ingest's snapshot while fresh, a live build when it is missing or stale, so a
+// stalled ingest never leaves subscribers on old items. Each item links to its
+// Commons page and names the original publisher, which stays canonical. If no
+// timeline can be had, the answer is an error, never an empty feed.
 const SITE = 'https://ealing.civiccommons.co.uk';
 const MAX_ITEMS = 50;
 const CORS = { 'access-control-allow-origin': '*' };
@@ -41,14 +43,23 @@ export function buildSiteFeed(feed, { siteOrigin = SITE, limit = MAX_ITEMS } = {
   ].join('\n');
 }
 
-export default async () => {
-  const snapshot = await readSnapshot(store()).catch(() => null);
-  if (!snapshot?.feed?.items?.length) {
-    return new Response('The Civic Commons feed is temporarily unavailable.\n', { status: 503, headers: { ...CORS, 'cache-control': 'no-store', 'content-type': 'text/plain; charset=utf-8', 'retry-after': '300' } });
+export async function serveSiteFeed(request, { serve = serveCombinedFeed } = {}) {
+  const unavailable = () => new Response('The Civic Commons feed is temporarily unavailable.\n', { status: 503, headers: { ...CORS, 'cache-control': 'no-store', 'content-type': 'text/plain; charset=utf-8', 'retry-after': '300' } });
+  let feed;
+  try {
+    const response = await serve(request);
+    if (!response?.ok) return unavailable();
+    feed = await response.json();
+  } catch (error) {
+    console.error('Site feed: timeline unavailable', error);
+    return unavailable();
   }
-  return new Response(buildSiteFeed(snapshot.feed), {
+  if (!feed?.items?.length) return unavailable();
+  return new Response(buildSiteFeed(feed), {
     headers: { ...CORS, 'content-type': 'application/rss+xml; charset=utf-8', 'cache-control': 'public, max-age=300' }
   });
-};
+}
+
+export default request => serveSiteFeed(request);
 
 export const config = { path: '/feed.xml' };
