@@ -7,6 +7,7 @@ import { XMLParser } from 'fast-xml-parser';
 import { PUBLIC_FEEDS, YOUTUBE_HANDLES } from '../netlify/lib/source-feeds.mjs';
 import { buildFollowingOpml, feedsWithChannels, followedSources } from '../netlify/functions/socialspec-following.mjs';
 import { applySourceStates } from '../netlify/lib/feed-snapshot.mjs';
+import { buildSiteFeed } from '../netlify/functions/site-feed.mjs';
 
 // OPML: feeds become rss outlines, other sources link outlines; names escaped;
 // duplicates dropped; valid XML.
@@ -71,6 +72,21 @@ for (const file of (await readdir('netlify/functions')).filter(name => name.ends
     if (handles.has(new URL(url).searchParams.get('user'))) continue;
     assert.ok(mapped.has(url), `${file}: feed ${url} is not in netlify/lib/source-feeds.mjs`);
   }
+}
+
+// Site feed (/feed.xml): newest items first, capped, escaped, valid RSS 2.0 with
+// a self link; each item links to its Commons page and names the publisher.
+{
+  const items = Array.from({ length: 60 }, (_, i) => ({ id: `src:${i}`, title: `Item ${i} & "more"`, source: 'Southall Stories', sourceHomepage: 'https://southallstories.uk/', url: `https://southallstories.uk/${i}`, publishedAt: new Date(Date.UTC(2026, 9, 1 + (i % 28), i % 24)).toISOString() }));
+  const rss = buildSiteFeed({ generatedAt: '2026-10-21T09:00:00Z', items: [...items, { id: 'untitled' }] });
+  const channel = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '' }).parse(rss).rss.channel;
+  assert.equal(channel.item.length, 50);
+  const dates = channel.item.map(item => Date.parse(item.pubDate));
+  assert.deepEqual(dates, [...dates].sort((a, b) => b - a), 'newest first');
+  assert.equal(channel['atom:link'].href, 'https://ealing.civiccommons.co.uk/feed.xml');
+  assert.match(channel.item[0].link, /^https:\/\/ealing\.civiccommons\.co\.uk\/items\//);
+  assert.equal(channel.item[0].source['#text'], 'Southall Stories');
+  assert.match(rss, /Item \d+ &amp; &quot;more&quot;/);
 }
 
 // AboutSpec and ContactSpec files exist, are well formed, and allow CORS.

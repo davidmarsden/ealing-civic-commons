@@ -1,23 +1,11 @@
 import feedHandler from './combined-feed.mjs';
 import { getArchivedItem } from '../lib/civic-items.mjs';
+import { sourceEntry, stableItemKey, xml } from '../lib/rss-items.mjs';
 
 const MAX_TARGETS_PER_TYPE = 50;
 const MAX_TARGET_LENGTH = 512;
 const allowedParams = new Set(['item', 'source', 'town', 'topic']);
 const BOROUGH_TOWNS = ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
-
-function xml(value = '') {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
-function stableItemKey(id) {
-  return Buffer.from(String(id ?? ''), 'utf8').toString('base64url');
-}
 
 function explicitTownsFromText(item) {
   const haystack = `${item?.title || ''} ${item?.summary || ''}`
@@ -94,18 +82,6 @@ function canonicalFeedUrl(requestUrl, targets) {
   ];
   ordered.forEach(([name, values]) => values.forEach(value => url.searchParams.append(name, value)));
   return url.href;
-}
-
-function sourceEntry(item, siteOrigin) {
-  const key = stableItemKey(item.id);
-  const commonsUrl = `${siteOrigin}/items/${encodeURIComponent(key)}`;
-  const originalUrl = item.url || item.sourceHomepage || siteOrigin;
-  const sourceUrl = item.sourceHomepage || originalUrl;
-  const description = [item.summary || '', `Source: ${item.source}`, `Original: ${originalUrl}`].filter(Boolean).join('\n\n');
-  return {
-    sortDate: item.publishedAt || null,
-    xml: `    <item>\n      <title>${xml(item.title)}</title>\n      <link>${xml(commonsUrl)}</link>\n      <guid isPermaLink="false">${xml(`civic-item:${key}`)}</guid>${item.publishedAt ? `\n      <pubDate>${xml(new Date(item.publishedAt).toUTCString())}</pubDate>` : ''}\n      <description>${xml(description)}</description>\n      <source url="${xml(sourceUrl)}">${xml(item.source)}</source>\n    </item>`
-  };
 }
 
 function contributionEntry(contribution, siteOrigin, titleByThread) {
