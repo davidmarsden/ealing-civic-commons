@@ -42,6 +42,7 @@ jobs:
       - name: Build latest snapshot and durable archive
         run: npm run publish:planning-snapshot
       - name: Update planning refresh pull request
+        id: pr
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -63,10 +64,27 @@ jobs:
           existing_pr="$(gh pr list --state open --base main --head "$branch" --json number --jq '.[0].number // empty')"
           if [ -n "$existing_pr" ]; then
             echo "Updated existing planning refresh PR #$existing_pr."
-            exit 0
+          else
+            gh pr create --base main --head "$branch" --title "Refresh Ealing planning data" --body "Automated refresh from the latest completed Ealing PAM weekly list. This continuing PR updates both the latest-week view and the durable planning archive, so an unmerged week's applications are carried forward into later scheduled refreshes. The workflow merges it once the planning checks pass; if they fail it stays open for review. Ealing Council's planning register remains authoritative, and Netlify deploys remain independent of PAM availability."
           fi
-
-          gh pr create --base main --head "$branch" --title "Refresh Ealing planning data" --body "Automated refresh from the latest completed Ealing PAM weekly list. This continuing PR updates both the latest-week view and the durable planning archive, so an unmerged week's applications are carried forward into later scheduled refreshes. Ealing Council's planning register remains authoritative, and Netlify deploys remain independent of PAM availability."
+          echo "pr_ready=true" >> "$GITHUB_OUTPUT"
+      # PRs opened with GITHUB_TOKEN do not trigger the test workflow, and an
+      # unmerged refresh left the site 15 days stale in October 2026. So the
+      # checks run here, and the refresh merges itself when they pass. If they
+      # fail, the PR stays open and the planning freshness watch raises an issue.
+      - name: Check refreshed planning data
+        if: steps.pr.outputs.pr_ready == 'true'
+        run: |
+          npm run test:planning-history
+          npm run test:civic-place-links
+          npm run test:civic-items
+          node scripts/check-planning-refresh.mjs origin/main
+      - name: Merge planning refresh
+        if: steps.pr.outputs.pr_ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr merge automation/planning-snapshot --merge --delete-branch
       - name: Upload inspection artifact
         if: always()
         uses: actions/upload-artifact@v4
