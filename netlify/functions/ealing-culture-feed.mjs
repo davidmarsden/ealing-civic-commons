@@ -1,10 +1,13 @@
 const HOME = 'https://ealingculture.org/';
 const API = new URL('/wp-json/wp/v2/', HOME);
+// Events moved to The Events Calendar in October 2026 (the old `event` post type
+// is gone). Its own API carries the category names and the Towns field.
+const EVENTS_API = new URL('/wp-json/tribe/events/v1/events', HOME);
+const EVENT_LOOKBACK_MS = 365 * 24 * 60 * 60 * 1000;
 const BOROUGH_TOWNS = ['Ealing', 'Acton', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
 const USER_AGENT = 'Southall-Ealing-Civic-Commons/0.1 (+public-interest prototype)';
 
 const TYPES = {
-  event: { taxonomies: ['audience', 'event-type', 'town'] },
   news: { taxonomies: ['news-category', 'town'] },
   venue: { taxonomies: ['suitability', 'venue-town', 'venue-type'] },
   creative: { taxonomies: ['creative---business-type', 'creative-category', 'creative---location'] }
@@ -76,6 +79,50 @@ async function fetchCollection(restBase, { embed = true } = {}) {
   return rows;
 }
 
+async function fetchEvents(now = Date.now()) {
+  const rows = [];
+  const startDate = new Date(now - EVENT_LOOKBACK_MS).toISOString().slice(0, 10);
+  let page = 1;
+  let totalPages = 1;
+  do {
+    const url = new URL(EVENTS_API);
+    url.searchParams.set('per_page', '50');
+    url.searchParams.set('page', String(page));
+    url.searchParams.set('start_date', startDate);
+    const { json } = await fetchJson(url);
+    if (!Array.isArray(json?.events)) throw new Error(`Expected events from ${url}`);
+    rows.push(...json.events);
+    totalPages = Number(json.total_pages || 1);
+    page += 1;
+  } while (page <= totalPages);
+  return rows;
+}
+
+function customField(event, label) {
+  const field = Object.values(event?.custom_fields || {}).find(entry => entry?.label === label);
+  return String(field?.value || '').split(',').map(value => decode(value).trim()).filter(Boolean);
+}
+
+// An Events Calendar event in the shape baseItem reads, with its category and
+// town names, which that API gives directly.
+function eventRow(event) {
+  return {
+    row: {
+      id: event.id,
+      title: { rendered: event.title },
+      content: { rendered: event.description },
+      excerpt: { rendered: event.excerpt },
+      link: event.url,
+      date_gmt: String(event.date_utc || '').replace(' ', 'T'),
+      date: String(event.date || '').replace(' ', 'T'),
+      modified_gmt: String(event.modified_utc || '').replace(' ', 'T'),
+      modified: String(event.modified || '').replace(' ', 'T')
+    },
+    cats: (event.categories || []).map(category => decode(category?.name || '')).filter(Boolean),
+    sourceLocations: customField(event, 'Towns')
+  };
+}
+
 async function loadTaxonomies() {
   const names = [...new Set(Object.values(TYPES).flatMap(type => type.taxonomies))];
   const maps = {};
@@ -117,15 +164,15 @@ function topicGuess(text = '', extra = []) {
   return [...new Set(topics)].slice(0, 3);
 }
 
-function baseItem(row, kind, maps) {
+function baseItem(row, kind, maps, known = {}) {
   const title = strip(row.title?.rendered ?? row.title ?? '');
   const body = strip(row.content?.rendered ?? '');
   const excerpt = strip(row.excerpt?.rendered ?? '');
   const summaryText = excerpt || body;
   const summary = summaryText.length > 420 ? `${summaryText.slice(0, 417).trimEnd()}…` : summaryText;
-  const sourceLocations = names(row, 'town', maps);
+  const sourceLocations = known.sourceLocations ?? names(row, 'town', maps);
   const place = townShape(sourceLocations);
-  const cats = kind === 'event' ? names(row, 'event-type', maps) : names(row, 'news-category', maps);
+  const cats = known.cats ?? names(row, 'news-category', maps);
   return {
     id: `ealing-culture:${kind}:${row.id}`,
     sourceId: 'ealing-culture',
@@ -189,18 +236,24 @@ export async function fetchEalingCultureFeed({ includeReferences = false } = {})
   const errors = [];
   const { maps, warnings } = await loadTaxonomies();
   const raw = {};
+  try {
+    raw.event = await fetchEvents();
+  } catch (error) {
+    raw.event = [];
+    errors.push(`collection_fetch_failed:event:${error?.name === 'AbortError' ? 'Timed out' : String(error?.message || error)}`);
+  }
   for (const kind of Object.keys(TYPES)) {
     try {
       raw[kind] = await fetchCollection(kind);
     } catch (error) {
       raw[kind] = [];
       const message = error?.name === 'AbortError' ? 'Timed out' : String(error?.message || error);
-      if (kind === 'event' || kind === 'news') errors.push(`collection_fetch_failed:${kind}:${message}`);
+      if (kind === 'news') errors.push(`collection_fetch_failed:${kind}:${message}`);
       else warnings.push(`reference_collection_fetch_failed:${kind}:${message}`);
     }
   }
 
-  const allEventItems = raw.event.map(row => baseItem(row, 'event', maps));
+  const allEventItems = raw.event.map(eventRow).map(({ row, ...known }) => baseItem(row, 'event', maps, known));
   const eventItems = allEventItems.filter(isCivicEvent);
   const newsItems = raw.news.map(row => baseItem(row, 'news', maps));
   const references = includeReferences ? {
@@ -238,7 +291,7 @@ export async function fetchEalingCultureFeed({ includeReferences = false } = {})
   };
 }
 
-export const _test = { isCivicEvent, topicGuess, townShape };
+export const _test = { isCivicEvent, topicGuess, townShape, eventRow };
 
 export default async () => new Response(JSON.stringify(await fetchEalingCultureFeed({ includeReferences: true })), {
   headers: {

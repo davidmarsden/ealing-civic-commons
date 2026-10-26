@@ -34,3 +34,4 @@ jobs:
       - run: npm run test:source-links
       - run: npm run test:planning-refresh-guard
       - run: npm run test:moderngov
+      - run: npm run test:ealing-culture
