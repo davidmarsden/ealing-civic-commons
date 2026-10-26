@@ -18,6 +18,13 @@ assert.deepEqual(feedProblems({ snapshot: null, now }).map(p => p.key), ['snapsh
 const fresh = { generatedAt: iso(now - 10 * 60 * 1000), items: [], health: [source('ok', 'current'), source('brief', 'unavailable', 2 * HOUR), source('long', 'unavailable', 30 * HOUR), source('broken', 'ingestion-failed', 25 * HOUR), source('empty', 'no-new-records')] };
 assert.deepEqual(feedProblems({ snapshot: fresh, now }).map(p => p.key), ['source:long', 'source:broken'], 'only sources failing for over 24 h');
 assert.match(feedProblems({ snapshot: fresh, now })[0].text, /LONG has been unavailable for 30 h/);
+// A feed address that returns 404 or 410 has moved: reported after 2 h, and said so.
+const moved = { ...source('culture', 'unavailable', 3 * HOUR), error: 'collection_fetch_failed:event:404 Not Found: https://ealingculture.org/wp-json/wp/v2/event' };
+const movedProblems = feedProblems({ snapshot: { ...fresh, health: [moved, { ...source('gone', 'ingestion-failed', 3 * HOUR), error: 'HTTP 410' }, { ...source('fresh404', 'unavailable', HOUR), error: '404 Not Found' }] }, now });
+assert.deepEqual(movedProblems.map(p => p.key), ['source:culture', 'source:gone'], 'moved feeds alert after 2 h, not 24 h');
+assert.match(movedProblems[0].text, /^CULTURE: feed address not found, so the publisher has probably moved or removed it/);
+assert.match(movedProblems[0].text, /Failing for 3 h .*404 Not Found/);
+assert.deepEqual(feedProblems({ snapshot: { ...fresh, health: [{ ...source('id404', 'unavailable', 3 * HOUR), error: 'HTTP 503 for item 404' }] }, now }), [], 'a 404 that is not a status is not a move');
 assert.deepEqual(feedProblems({ snapshot: { ...fresh, generatedAt: iso(now - 2 * HOUR), health: [] }, now }).map(p => p.key), ['snapshot:stale']);
 assert.deepEqual(feedProblems({ snapshot: { ...fresh, health: [] }, lastRun: { status: 'failed', finishedAt: iso(now - HOUR), error: 'boom' }, now }).map(p => p.key), ['ingest:failed']);
 assert.deepEqual(feedProblems({ snapshot: { ...fresh, health: [] }, lastRun: { status: 'running', startedAt: iso(now) }, now }), [], 'a run in progress is not a failure');

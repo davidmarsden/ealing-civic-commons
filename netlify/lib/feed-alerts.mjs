@@ -6,7 +6,12 @@ import { LAST_RUN_KEY, SNAPSHOT_KEY, SNAPSHOT_MAX_AGE_MS } from './feed-snapshot
 export const ALERT_STATE_KEY = 'alerts/state';
 export const SOURCE_FAILING_ALERT_MS = 24 * 60 * 60 * 1000;
 export const REMIND_AFTER_MS = 24 * 60 * 60 * 1000;
+// A source whose address returns 404 or 410 has usually been moved or removed by
+// its publisher, which no retry fixes, so it is reported after a couple of hours
+// and named as such.
+export const SOURCE_MOVED_ALERT_MS = 2 * 60 * 60 * 1000;
 const FAILED = new Set(['unavailable', 'ingestion-failed']);
+const MOVED = /\b(?:404|410)\s*(?:Not Found|Gone)\b|\bHTTP\s*(?:404|410)\b/i;
 
 const timeOf = value => { const t = Date.parse(value || ''); return Number.isFinite(t) ? t : null; };
 const hours = ms => `${Math.round(ms / (60 * 60 * 1000))} h`;
@@ -26,10 +31,14 @@ export function feedProblems({ snapshot, lastRun, now = Date.now() }) {
   }
   for (const entry of Array.isArray(snapshot?.health) ? snapshot.health : []) {
     const since = timeOf(entry?.failingSince);
-    if (!FAILED.has(entry?.state) || since == null || now - since < SOURCE_FAILING_ALERT_MS) continue;
+    const moved = MOVED.test(String(entry?.error || ''));
+    if (!FAILED.has(entry?.state) || since == null || now - since < (moved ? SOURCE_MOVED_ALERT_MS : SOURCE_FAILING_ALERT_MS)) continue;
+    const detail = `${hours(now - since)} (since ${entry.failingSince}; ${entry.consecutiveFailures || '?'} failed runs)${entry.error ? `: ${String(entry.error).slice(0, 200)}` : ''}.`;
     problems.push({
       key: `source:${entry.id}`,
-      text: `${entry.name || entry.id} has been ${entry.state} for ${hours(now - since)} (since ${entry.failingSince}; ${entry.consecutiveFailures || '?'} failed runs)${entry.error ? `: ${String(entry.error).slice(0, 200)}` : ''}.`
+      text: moved
+        ? `${entry.name || entry.id}: feed address not found, so the publisher has probably moved or removed it and the adapter needs updating. Failing for ${detail}`
+        : `${entry.name || entry.id} has been ${entry.state} for ${detail}`
     });
   }
   return problems;
