@@ -33,3 +33,4 @@ jobs:
       - run: npm run test:item-dates
       - run: npm run test:source-links
       - run: npm run test:planning-refresh-guard
+      - run: npm run test:moderngov

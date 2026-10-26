@@ -180,8 +180,13 @@ async function fetchViaStaticRelay() {
       guid: textValue(entry?.guid ?? entry?.id)
     })).filter(Boolean);
 
+    // A well-formed feed is the authoritative answer even when this week holds
+    // only events we do not publish (e.g. "Meeting held" notices).
+    const valid = Boolean(parsed?.rss?.channel || parsed?.feed);
     return {
       items,
+      valid,
+      skipped: rawItems.length - items.length,
       error: items.length ? null : 'Static-egress relay responded but contained no supported publication updates',
       diagnostics
     };
@@ -298,6 +303,13 @@ export async function fetchModernGovWhatsNew() {
   const relay = await fetchViaStaticRelay();
   if (relay.items.length) {
     return { items: relay.items, health: [{ ...SOURCE, ok: true, status: 'ok', error: null, itemCount: relay.items.length, diagnostics: relay.diagnostics }] };
+  }
+  // The official feed answered but this week has no agenda, minutes, decision
+  // or petition publications (only meeting notices, or nothing): a quiet week,
+  // not an outage. The fallbacks read the same official list, so they are skipped.
+  if (relay.valid) {
+    const detail = relay.skipped ? ` (${relay.skipped} meeting or other notices skipped)` : '';
+    return { items: [], health: [{ ...SOURCE, ok: true, status: 'empty', error: `ModernGov feed responded but contained no supported publication updates this week${detail}`, itemCount: 0, diagnostics: relay.diagnostics }] };
   }
 
   const bridge = await fetchViaRssBridge();
