@@ -4,7 +4,8 @@ import { store } from '../lib/feed-snapshot.mjs';
 
 // Hourly check of the feed pipeline: emails FEED_ALERT_EMAIL (comma-separated)
 // when the snapshot is stale or missing, the last ingest failed, or a source has
-// been failing for more than 24 hours. Without recipients or mail configuration
+// been failing for more than 24 hours (2 hours when its address returns 404 or
+// 410: a moved feed). Without recipients or mail configuration
 // it only logs, and records nothing, so the first configured run reports
 // everything that is open.
 export async function runFeedHealthCheck({ blobs = store({ consistency: 'strong' }), send = sendMail, recipients = String(process.env.FEED_ALERT_EMAIL || '').split(',').map(value => value.trim()).filter(Boolean), canSend = mailConfigured(), now = Date.now() } = {}) {
