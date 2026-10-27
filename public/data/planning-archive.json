@@ -1,11 +1,483 @@
 {
   "archive_version": 1,
-  "generated_at": "2026-10-20T11:37:55.754Z",
-  "latest_week": "12 Oct 2026",
+  "generated_at": "2026-10-27T12:12:51.141Z",
+  "latest_week": "19 Oct 2026",
   "source": "Ealing PAM / Civica Public Access",
   "canonical_source": "Ealing Council Planning Register",
   "place_link_rules_version": 1,
   "records": [
+    {
+      "id": "planning:ealing:263873palhe",
+      "reference": "263873PALHE",
+      "address": "3 Ivy Crescent Chiswick W4 5NG",
+      "proposal": "Single storey (Max 6m deep and Max 3.35m high) rear extension (42 days Prior Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-23",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TNAT9OJMLCD00&activeTab=summary",
+      "town": null,
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263873palhe",
+      "place_links": [],
+      "first_seen_week": "19 Oct 2026",
+      "last_seen_week": "19 Oct 2026",
+      "first_seen_at": "2026-10-27T12:12:51.141Z",
+      "last_seen_at": "2026-10-27T12:12:51.141Z",
+      "weeks_seen": [
+        "19 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-27T12:12:51.141Z",
+          "week": "19 Oct 2026",
+          "address": "3 Ivy Crescent Chiswick W4 5NG",
+          "proposal": "Single storey (Max 6m deep and Max 3.35m high) rear extension (42 days Prior Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-23",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TNAT9OJMLCD00&activeTab=summary",
+          "town": null,
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": []
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263908opdcob",
+      "reference": "263908OPDCOB",
+      "address": "Atlas Road Car Park, Atlas Road Park Royal London NW10 6DN",
+      "proposal": "Temporary planning permission for a period of five years, for the proposed use of the site as a construction compound to support the demolition and construction activities arising from the OPEN Energy Centre and district heating network development (granted under permission reference 25/0184/FUMOPDC), comprising the installation of a two-storey modular site office and welfare building, and a single-storey modular education (STEM) unit; provision of storage areas for plant, materials, spoil and aggregates; provision of loading/unloading areas and workforce vehicle parking spaces; and other associated works. (Out of Borough)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-23",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TNICUUJM0KW00&activeTab=summary",
+      "town": null,
+      "category": "Out of borough",
+      "out_of_borough": true,
+      "commons_path": "/planning/263908opdcob",
+      "place_links": [],
+      "first_seen_week": "19 Oct 2026",
+      "last_seen_week": "19 Oct 2026",
+      "first_seen_at": "2026-10-27T12:12:51.141Z",
+      "last_seen_at": "2026-10-27T12:12:51.141Z",
+      "weeks_seen": [
+        "19 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-27T12:12:51.141Z",
+          "week": "19 Oct 2026",
+          "address": "Atlas Road Car Park, Atlas Road Park Royal London NW10 6DN",
+          "proposal": "Temporary planning permission for a period of five years, for the proposed use of the site as a construction compound to support the demolition and construction activities arising from the OPEN Energy Centre and district heating network development (granted under permission reference 25/0184/FUMOPDC), comprising the installation of a two-storey modular site office and welfare building, and a single-storey modular education (STEM) unit; provision of storage areas for plant, materials, spoil and aggregates; provision of loading/unloading areas and workforce vehicle parking spaces; and other associated works. (Out of Borough)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-23",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TNICUUJM0KW00&activeTab=summary",
+          "town": null,
+          "category": "Out of borough",
+          "out_of_borough": true,
+          "place_links": []
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263876palhe",
+      "reference": "263876PALHE",
+      "address": "66 Shakespeare Road Acton W3 6SN",
+      "proposal": "Single storey (Max 5.55m deep and Max 3.65m high) rear extension (42 days Prior Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-22",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TNB3MOJMLCU00&activeTab=summary",
+      "town": "Acton",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263876palhe",
+      "place_links": [
+        {
+          "route": "places/acton",
+          "label": "Acton",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "19 Oct 2026",
+      "last_seen_week": "19 Oct 2026",
+      "first_seen_at": "2026-10-27T12:12:51.141Z",
+      "last_seen_at": "2026-10-27T12:12:51.141Z",
+      "weeks_seen": [
+        "19 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-27T12:12:51.141Z",
+          "week": "19 Oct 2026",
+          "address": "66 Shakespeare Road Acton W3 6SN",
+          "proposal": "Single storey (Max 5.55m deep and Max 3.65m high) rear extension (42 days Prior Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-22",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TNB3MOJMLCU00&activeTab=summary",
+          "town": "Acton",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/acton",
+              "label": "Acton",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263912ful",
+      "reference": "263912FUL",
+      "address": "112 Fordhook Avenue Ealing W5 3LR",
+      "proposal": "Two storey side extension and rear roof extension; Ground floor rear extension, to create 3 existing dwelling into 3 separate flats",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-22",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TNIIMJJM0GX00&activeTab=summary",
+      "town": "Ealing",
+      "category": "Planning application",
+      "out_of_borough": false,
+      "commons_path": "/planning/263912ful",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "19 Oct 2026",
+      "last_seen_week": "19 Oct 2026",
+      "first_seen_at": "2026-10-27T12:12:51.141Z",
+      "last_seen_at": "2026-10-27T12:12:51.141Z",
+      "weeks_seen": [
+        "19 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-27T12:12:51.141Z",
+          "week": "19 Oct 2026",
+          "address": "112 Fordhook Avenue Ealing W5 3LR",
+          "proposal": "Two storey side extension and rear roof extension; Ground floor rear extension, to create 3 existing dwelling into 3 separate flats",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-22",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TNIIMJJM0GX00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Planning application",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263853palhe",
+      "reference": "263853PALHE",
+      "address": "99 Rutland Road Southall UB1 2XS",
+      "proposal": "Single storey (Max 6m deep and Max 3.50m high) rear extension (42 days Prior Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-20",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TN7VPLJML9Z00&activeTab=summary",
+      "town": "Southall",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263853palhe",
+      "place_links": [
+        {
+          "route": "places/southall",
+          "label": "Southall",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "19 Oct 2026",
+      "last_seen_week": "19 Oct 2026",
+      "first_seen_at": "2026-10-27T12:12:51.141Z",
+      "last_seen_at": "2026-10-27T12:12:51.141Z",
+      "weeks_seen": [
+        "19 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-27T12:12:51.141Z",
+          "week": "19 Oct 2026",
+          "address": "99 Rutland Road Southall UB1 2XS",
+          "proposal": "Single storey (Max 6m deep and Max 3.50m high) rear extension (42 days Prior Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-20",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TN7VPLJML9Z00&activeTab=summary",
+          "town": "Southall",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/southall",
+              "label": "Southall",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263844palhe",
+      "reference": "263844PALHE",
+      "address": "146 Kings Avenue Greenford UB6 9DF",
+      "proposal": "Single storey rear extension (max 6m deep and max 3.5m high) (42 Days Prior Approval Notification process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-19",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TN5MEHJM0KK00&activeTab=summary",
+      "town": "Greenford",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263844palhe",
+      "place_links": [
+        {
+          "route": "places/greenford",
+          "label": "Greenford",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "19 Oct 2026",
+      "last_seen_week": "19 Oct 2026",
+      "first_seen_at": "2026-10-27T12:12:51.141Z",
+      "last_seen_at": "2026-10-27T12:12:51.141Z",
+      "weeks_seen": [
+        "19 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-27T12:12:51.141Z",
+          "week": "19 Oct 2026",
+          "address": "146 Kings Avenue Greenford UB6 9DF",
+          "proposal": "Single storey rear extension (max 6m deep and max 3.5m high) (42 Days Prior Approval Notification process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-19",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TN5MEHJM0KK00&activeTab=summary",
+          "town": "Greenford",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/greenford",
+              "label": "Greenford",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263845palhe",
+      "reference": "263845PALHE",
+      "address": "49 Waxlow Crescent Southall UB1 2ST",
+      "proposal": "Single storey rear extension (max 6m deep and max 3m high) (42 Days Prior Approval Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-19",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TN5N52JML8700&activeTab=summary",
+      "town": "Southall",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263845palhe",
+      "place_links": [
+        {
+          "route": "places/southall",
+          "label": "Southall",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "19 Oct 2026",
+      "last_seen_week": "19 Oct 2026",
+      "first_seen_at": "2026-10-27T12:12:51.141Z",
+      "last_seen_at": "2026-10-27T12:12:51.141Z",
+      "weeks_seen": [
+        "19 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-27T12:12:51.141Z",
+          "week": "19 Oct 2026",
+          "address": "49 Waxlow Crescent Southall UB1 2ST",
+          "proposal": "Single storey rear extension (max 6m deep and max 3m high) (42 Days Prior Approval Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-19",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TN5N52JML8700&activeTab=summary",
+          "town": "Southall",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/southall",
+              "label": "Southall",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263846ptc",
+      "reference": "263846PTC",
+      "address": "21 Hillcroft Crescent Ealing W5 2SG",
+      "proposal": "5DD T1- removal Crack willow",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-19",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TN5NTCJM0KK00&activeTab=summary",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263846ptc",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "19 Oct 2026",
+      "last_seen_week": "19 Oct 2026",
+      "first_seen_at": "2026-10-27T12:12:51.141Z",
+      "last_seen_at": "2026-10-27T12:12:51.141Z",
+      "weeks_seen": [
+        "19 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-27T12:12:51.141Z",
+          "week": "19 Oct 2026",
+          "address": "21 Hillcroft Crescent Ealing W5 2SG",
+          "proposal": "5DD T1- removal Crack willow",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-19",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TN5NTCJM0KK00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263847ptc",
+      "reference": "263847PTC",
+      "address": "122 Homefarm Road Hanwell Ealing W7 1NP",
+      "proposal": "T1 -T2 Fell to near ground level 2x pine trees growing in close proximity to the adjacent buildings",
+      "status": "No Objection",
+      "validated_date": "2026-10-19",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TN5SPDJML8B00&activeTab=summary",
+      "town": "Hanwell",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/263847ptc",
+      "place_links": [
+        {
+          "route": "places/hanwell",
+          "label": "Hanwell",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "19 Oct 2026",
+      "last_seen_week": "19 Oct 2026",
+      "first_seen_at": "2026-10-27T12:12:51.141Z",
+      "last_seen_at": "2026-10-27T12:12:51.141Z",
+      "weeks_seen": [
+        "19 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-27T12:12:51.141Z",
+          "week": "19 Oct 2026",
+          "address": "122 Homefarm Road Hanwell Ealing W7 1NP",
+          "proposal": "T1 -T2 Fell to near ground level 2x pine trees growing in close proximity to the adjacent buildings",
+          "status": "No Objection",
+          "validated_date": "2026-10-19",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TN5SPDJML8B00&activeTab=summary",
+          "town": "Hanwell",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/hanwell",
+              "label": "Hanwell",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263850palhe",
+      "reference": "263850PALHE",
+      "address": "16 Moat Farm Road Northolt UB5 5DR",
+      "proposal": "Single storey rear extension (max 6m deep and max 2.83 (following part demolition of rear extension) (42 Days Prior Approval Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-10-19",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TN7AM1JM0KK00&activeTab=summary",
+      "town": "Northolt",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/263850palhe",
+      "place_links": [
+        {
+          "route": "places/northolt",
+          "label": "Northolt",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "19 Oct 2026",
+      "last_seen_week": "19 Oct 2026",
+      "first_seen_at": "2026-10-27T12:12:51.141Z",
+      "last_seen_at": "2026-10-27T12:12:51.141Z",
+      "weeks_seen": [
+        "19 Oct 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-10-27T12:12:51.141Z",
+          "week": "19 Oct 2026",
+          "address": "16 Moat Farm Road Northolt UB5 5DR",
+          "proposal": "Single storey rear extension (max 6m deep and max 2.83 (following part demolition of rear extension) (42 Days Prior Approval Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-10-19",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TN7AM1JM0KK00&activeTab=summary",
+          "town": "Northolt",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/northolt",
+              "label": "Northolt",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
     {
       "id": "planning:ealing:263821nma",
       "reference": "263821NMA",
