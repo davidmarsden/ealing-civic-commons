@@ -194,6 +194,9 @@ const snapshot = {
     status: record.status,
     validated_date: isoDate(record.validated_date),
     authoritative_url: record.authoritative_url,
+    application_type: record.application_type ?? null,
+    ward: record.ward ?? null,
+    expected_decision_level: record.expected_decision_level ?? null,
   }, placeRules)),
 };
 

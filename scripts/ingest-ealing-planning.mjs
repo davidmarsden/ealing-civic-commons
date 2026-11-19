@@ -2,6 +2,7 @@
 
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const PAM_WEEKLY = 'https://pam.ealing.gov.uk/online-applications/search.do?action=weeklyList&searchType=Application';
 const USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36';
@@ -9,8 +10,6 @@ const EALING_TZ = 'Europe/London';
 const MAX_RESULT_PAGES = 50;
 const DETAIL_DELAY_MS = 200;
 
-const outputArg = process.argv.find((value) => value.startsWith('--output='));
-const outputPath = resolve(outputArg ? outputArg.slice('--output='.length) : 'ealing-planning-ingest.json');
 
 function decodeEntities(value = '') {
   return String(value)
@@ -173,13 +172,20 @@ function applicationLinks(html, baseUrl) {
   return found;
 }
 
-function nextPageLink(html, baseUrl) {
-  for (const match of html.matchAll(/<a\b[^>]*href=["']([^"']*weeklyListResults\.do\?[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
-    const url = new URL(decodeEntities(match[1]), baseUrl).toString();
-    const text = stripTags(match[2]);
-    if (/action=nextPage/i.test(url) || /^next\b/i.test(text)) return url;
+// Idox pages its results through pagedSearchResults.do?action=page&searchCriteria.page=N
+// (older installations use weeklyListResults.do?action=nextPage). Take the link
+// marked "next", else the link to the page after the current one.
+export function nextPageLink(html, baseUrl, currentPage = 1) {
+  let following = null;
+  for (const match of html.matchAll(/(<a\b[^>]*>)([\s\S]*?)<\/a>/gi)) {
+    const link = attrs(match[1]);
+    if (!/(?:weeklyListResults|pagedSearchResults)\.do\?/i.test(link.href || '')) continue;
+    const url = new URL(link.href, baseUrl);
+    if (!/^(?:nextPage|page)$/i.test(url.searchParams.get('action') || '')) continue;
+    if (/action=nextPage/i.test(url.search) || /\bnext\b/i.test(link.class || '') || /^next\b/i.test(stripTags(match[2]))) return url.toString();
+    if (Number(url.searchParams.get('searchCriteria.page')) === currentPage + 1) following ??= url.toString();
   }
-  return null;
+  return following;
 }
 
 function normalizeLabel(value) {
@@ -234,7 +240,14 @@ function slugify(value) {
     .replace(/^-+|-+$/g, '');
 }
 
-function normalizeApplication(html, authoritativeUrl, listDescription, weekLabel) {
+// The "Further Information" tab: application type, ward and decision level.
+export function detailsTabUrl(summaryUrl) {
+  const url = new URL(summaryUrl);
+  url.searchParams.set('activeTab', 'details');
+  return url.toString();
+}
+
+export function normalizeApplication(html, authoritativeUrl, listDescription, weekLabel) {
   const pairs = extractLabelValues(html);
   const reference = field(pairs, [/^reference$/, /application reference/, /^ref\.?(?: no)?$/]);
   const address = field(pairs, [/^address$/, /site address/, /location/]);
@@ -260,6 +273,7 @@ function normalizeApplication(html, authoritativeUrl, listDescription, weekLabel
     validated_date: field(pairs, [/validated/, /validation date/]),
     decision_date: field(pairs, [/decision.*date/, /decision issued/]),
     ward: field(pairs, [/^ward$/, /electoral ward/]),
+    expected_decision_level: field(pairs, [/expected decision level/]),
     parish: field(pairs, [/^parish$/]),
     applicant_name: field(pairs, [/applicant name/, /^applicant$/]),
     agent_name: field(pairs, [/agent name/, /^agent$/]),
@@ -289,7 +303,7 @@ async function collectWeeklyLinks(firstResults, cookie) {
       if (!applications.has(app.url)) applications.set(app.url, app);
     }
 
-    const next = nextPageLink(current.text, current.response.url);
+    const next = nextPageLink(current.text, current.response.url, pagesScanned);
     if (!next) return { applications: [...applications.values()], pages_scanned: pagesScanned };
     if (applications.size === before && pagesScanned > 1) {
       throw new Error('PAM weekly pagination did not advance to new applications');
@@ -303,91 +317,104 @@ async function collectWeeklyLinks(firstResults, cookie) {
   throw new Error(`PAM weekly results exceeded safety limit of ${MAX_RESULT_PAGES} pages`);
 }
 
-const result = {
-  generated_at: new Date().toISOString(),
-  purpose: 'Inspection-only normalized planning ingestion. No records are published or persisted to Civic Commons storage.',
-  source: 'Ealing PAM / Civica Public Access',
-  ok: false,
-  week: null,
-  pages_scanned: 0,
-  applications_discovered: 0,
-  applications_normalized: 0,
-  records_rejected: 0,
-  records: [],
-  errors: [],
-};
+async function main(outputPath) {
+  const result = {
+    generated_at: new Date().toISOString(),
+    purpose: 'Inspection-only normalized planning ingestion. No records are published or persisted to Civic Commons storage.',
+    source: 'Ealing PAM / Civica Public Access',
+    ok: false,
+    week: null,
+    pages_scanned: 0,
+    applications_discovered: 0,
+    applications_normalized: 0,
+    records_rejected: 0,
+    records: [],
+    errors: [],
+  };
 
-try {
-  const first = await fetchText(PAM_WEEKLY);
-  const cookie = cookiesFrom(first.response);
-  const form = parseWeeklyForm(first.text, first.response.url);
-  form.params.set('dateType', 'DC_Validated');
-  setSelect(form, 'searchCriteria.parish', (option) => /^all$/i.test(option.label));
-  setSelect(form, 'searchCriteria.ward', (option) => /^all$/i.test(option.label));
-  const week = chooseLatestCompletedWeek(form);
-  result.week = week.label;
+  try {
+    const first = await fetchText(PAM_WEEKLY);
+    const cookie = cookiesFrom(first.response);
+    const form = parseWeeklyForm(first.text, first.response.url);
+    form.params.set('dateType', 'DC_Validated');
+    setSelect(form, 'searchCriteria.parish', (option) => /^all$/i.test(option.label));
+    setSelect(form, 'searchCriteria.ward', (option) => /^all$/i.test(option.label));
+    const week = chooseLatestCompletedWeek(form);
+    result.week = week.label;
 
-  const headers = { referer: first.response.url, ...(cookie ? { cookie } : {}) };
-  let firstResults;
-  if (form.method === 'POST') {
-    firstResults = await fetchText(form.action, {
-      method: 'POST',
-      headers: { ...headers, 'content-type': 'application/x-www-form-urlencoded' },
-      body: form.params,
-    });
-  } else {
-    const action = new URL(form.action);
-    for (const [key, value] of form.params) action.searchParams.append(key, value);
-    firstResults = await fetchText(action, { headers });
-  }
-
-  const weekly = await collectWeeklyLinks(firstResults, cookie);
-  result.pages_scanned = weekly.pages_scanned;
-  result.applications_discovered = weekly.applications.length;
-
-  for (const [index, application] of weekly.applications.entries()) {
-    if (index > 0) await sleep(DETAIL_DELAY_MS);
-    try {
-      const detail = await fetchText(application.url, {
-        headers: { referer: firstResults.response.url, ...(cookie ? { cookie } : {}) },
+    const headers = { referer: first.response.url, ...(cookie ? { cookie } : {}) };
+    let firstResults;
+    if (form.method === 'POST') {
+      firstResults = await fetchText(form.action, {
+        method: 'POST',
+        headers: { ...headers, 'content-type': 'application/x-www-form-urlencoded' },
+        body: form.params,
       });
-      const record = normalizeApplication(
-        detail.text,
-        detail.response.url,
-        application.list_description,
-        week.label,
-      );
-      if (!record.core_fields_parsed) {
-        result.records_rejected += 1;
+    } else {
+      const action = new URL(form.action);
+      for (const [key, value] of form.params) action.searchParams.append(key, value);
+      firstResults = await fetchText(action, { headers });
+    }
+
+    const weekly = await collectWeeklyLinks(firstResults, cookie);
+    result.pages_scanned = weekly.pages_scanned;
+    result.applications_discovered = weekly.applications.length;
+
+    for (const [index, application] of weekly.applications.entries()) {
+      if (index > 0) await sleep(DETAIL_DELAY_MS);
+      try {
+        const detail = await fetchText(application.url, {
+          headers: { referer: firstResults.response.url, ...(cookie ? { cookie } : {}) },
+        });
+        // The details tab is extra; a record is still complete without it.
+        await sleep(DETAIL_DELAY_MS);
+        const extra = await fetchText(detailsTabUrl(detail.response.url), {
+          headers: { referer: detail.response.url, ...(cookie ? { cookie } : {}) },
+        }).then((response) => response.text, () => null);
+        const record = normalizeApplication(
+          `${detail.text}\n${extra ?? ''}`,
+          detail.response.url,
+          application.list_description,
+          week.label,
+        );
+        if (extra == null) record.parse_warnings.push('details_tab_unavailable');
+        if (!record.core_fields_parsed) {
+          result.records_rejected += 1;
+          result.errors.push({
+            url: application.url,
+            error: 'Detail page returned HTTP 200 but no core planning fields were recognized',
+          });
+          continue;
+        }
+        result.records.push(record);
+      } catch (error) {
         result.errors.push({
           url: application.url,
-          error: 'Detail page returned HTTP 200 but no core planning fields were recognized',
+          error: error instanceof Error ? error.message : String(error),
         });
-        continue;
       }
-      result.records.push(record);
-    } catch (error) {
-      result.errors.push({
-        url: application.url,
-        error: error instanceof Error ? error.message : String(error),
-      });
     }
+
+    result.applications_normalized = result.records.length;
+    result.ok = result.applications_discovered > 0 && result.applications_normalized > 0;
+    if (!result.ok) {
+      throw new Error('No planning applications with recognized core fields were normalized from the completed weekly list');
+    }
+  } catch (error) {
+    result.fatal_error = error instanceof Error ? error.message : String(error);
+    process.exitCode = 2;
+  } finally {
+    await writeFile(outputPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
   }
 
-  result.applications_normalized = result.records.length;
-  result.ok = result.applications_discovered > 0 && result.applications_normalized > 0;
-  if (!result.ok) {
-    throw new Error('No planning applications with recognized core fields were normalized from the completed weekly list');
-  }
-} catch (error) {
-  result.fatal_error = error instanceof Error ? error.message : String(error);
-  process.exitCode = 2;
-} finally {
-  await writeFile(outputPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
+  console.log(`Ealing planning ingestion written to ${outputPath}`);
+  console.log(
+    `Week: ${result.week ?? 'unknown'}; pages: ${result.pages_scanned}; discovered: ${result.applications_discovered}; normalized: ${result.applications_normalized}; rejected: ${result.records_rejected}; errors: ${result.errors.length}`,
+  );
+  if (result.fatal_error) console.error(result.fatal_error);
 }
 
-console.log(`Ealing planning ingestion written to ${outputPath}`);
-console.log(
-  `Week: ${result.week ?? 'unknown'}; pages: ${result.pages_scanned}; discovered: ${result.applications_discovered}; normalized: ${result.applications_normalized}; rejected: ${result.records_rejected}; errors: ${result.errors.length}`,
-);
-if (result.fatal_error) console.error(result.fatal_error);
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const outputArg = process.argv.find((value) => value.startsWith('--output='));
+  await main(resolve(outputArg ? outputArg.slice('--output='.length) : 'ealing-planning-ingest.json'));
+}
