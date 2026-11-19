@@ -2,10 +2,14 @@
 
 import { readFile, writeFile } from 'node:fs/promises';
 
-const input = process.argv[2] || 'ealing-planning-ingest.json';
-const latestOutput = process.argv[3] || 'public/data/planning-latest.json';
-const archiveOutput = process.argv[4] || 'public/data/planning-archive.json';
-const placeRulesPath = process.argv[5] || 'scripts/data/planning-place-rules.json';
+// --archive-only (backfilling an earlier week): add the week to the archive and
+// leave the latest snapshot, and the archive's latest week, as they are.
+const archiveOnly = process.argv.includes('--archive-only');
+const positional = process.argv.slice(2).filter(arg => !arg.startsWith('--'));
+const input = positional[0] || 'ealing-planning-ingest.json';
+const latestOutput = positional[1] || 'public/data/planning-latest.json';
+const archiveOutput = positional[2] || 'public/data/planning-archive.json';
+const placeRulesPath = positional[3] || 'scripts/data/planning-place-rules.json';
 const towns = ['Southall', 'Perivale', 'Acton', 'Greenford', 'Hanwell', 'Northolt'];
 
 function isoDate(value) {
@@ -14,6 +18,14 @@ function isoDate(value) {
   if (!match) return value;
   const months = { Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12' };
   return `${match[3]}-${months[match[2]]}-${String(match[1]).padStart(2,'0')}`;
+}
+
+// The later of two PAM week labels ("09 Nov 2026"); a backfilled earlier week
+// never moves the archive's latest week back.
+function laterWeek(a, b) {
+  if (!a) return b;
+  if (!b) return a;
+  return Date.parse(`${b} UTC`) > Date.parse(`${a} UTC`) ? b : a;
 }
 
 function townFromAddress(address) {
@@ -231,7 +243,7 @@ for (const record of snapshot.records) {
     ...previous,
     ...record,
     first_seen_week: previous.first_seen_week || snapshot.week,
-    last_seen_week: newWeek || changed ? snapshot.week : (previous.last_seen_week || snapshot.week),
+    last_seen_week: newWeek || changed ? laterWeek(previous.last_seen_week, snapshot.week) : (previous.last_seen_week || snapshot.week),
     first_seen_at: previous.first_seen_at || snapshot.generated_at,
     last_seen_at: newWeek || changed ? snapshot.generated_at : (previous.last_seen_at || snapshot.generated_at),
     weeks_seen: weeksSeen,
@@ -248,7 +260,7 @@ for (const [key, record] of byReference.entries()) {
 const archive = {
   archive_version: Math.max(Number(previousArchive?.archive_version || 1), 1),
   generated_at: archiveMutated ? snapshot.generated_at : (previousArchive?.generated_at || snapshot.generated_at),
-  latest_week: archiveMutated ? snapshot.week : (previousArchive?.latest_week || snapshot.week),
+  latest_week: archiveMutated ? laterWeek(previousArchive?.latest_week, snapshot.week) : (previousArchive?.latest_week || snapshot.week),
   source: snapshot.source,
   canonical_source: snapshot.canonical_source,
   place_link_rules_version: snapshot.place_link_rules_version,
@@ -259,7 +271,9 @@ const archive = {
   }),
 };
 
-await writeFile(latestOutput, `${JSON.stringify(snapshot, null, 2)}\n`, 'utf8');
+if (!archiveOnly) await writeFile(latestOutput, `${JSON.stringify(snapshot, null, 2)}\n`, 'utf8');
 await writeFile(archiveOutput, `${JSON.stringify(archive, null, 2)}\n`, 'utf8');
-console.log(`Published ${snapshot.records.length} planning records from weekly list ${snapshot.week} to ${latestOutput}.`);
+console.log(archiveOnly
+  ? `Added ${snapshot.records.length} planning records from weekly list ${snapshot.week} to the archive only.`
+  : `Published ${snapshot.records.length} planning records from weekly list ${snapshot.week} to ${latestOutput}.`);
 console.log(`Planning archive now contains ${archive.records.length} durable application record(s) in ${archiveOutput}.`);
