@@ -150,15 +150,23 @@ function setSelect(form, name, predicate) {
   return chosen;
 }
 
-function chooseLatestCompletedWeek(form) {
-  const monday = currentMondayEaling();
-  const options = (form.selects.get('week') ?? [])
+// Completed weekly-list options, newest first.
+export function completedWeeks(options, now = new Date()) {
+  const monday = currentMondayEaling(now);
+  return options
     .map((option) => ({ ...option, date: parsePamWeek(option.label) }))
     .filter((option) => option.date && option.date < monday)
     .sort((a, b) => b.date - a.date);
+}
+
+// The latest completed week, or the one labelled `wanted` (for backfilling).
+function chooseWeek(form, wanted = null) {
+  const options = completedWeeks(form.selects.get('week') ?? []);
   if (!options.length) throw new Error('PAM has no completed weekly-list option');
-  form.params.set('week', options[0].value);
-  return options[0];
+  const chosen = wanted ? options.find((option) => option.label === wanted || option.value === wanted) : options[0];
+  if (!chosen) throw new Error(`PAM has no completed weekly-list option "${wanted}"`);
+  form.params.set('week', chosen.value);
+  return chosen;
 }
 
 function applicationLinks(html, baseUrl) {
@@ -317,7 +325,13 @@ async function collectWeeklyLinks(firstResults, cookie) {
   throw new Error(`PAM weekly results exceeded safety limit of ${MAX_RESULT_PAGES} pages`);
 }
 
-async function main(outputPath) {
+async function listWeeks() {
+  const first = await fetchText(PAM_WEEKLY);
+  const form = parseWeeklyForm(first.text, first.response.url);
+  for (const option of completedWeeks(form.selects.get('week') ?? [])) console.log(option.label);
+}
+
+async function main(outputPath, wantedWeek = null) {
   const result = {
     generated_at: new Date().toISOString(),
     purpose: 'Inspection-only normalized planning ingestion. No records are published or persisted to Civic Commons storage.',
@@ -339,7 +353,7 @@ async function main(outputPath) {
     form.params.set('dateType', 'DC_Validated');
     setSelect(form, 'searchCriteria.parish', (option) => /^all$/i.test(option.label));
     setSelect(form, 'searchCriteria.ward', (option) => /^all$/i.test(option.label));
-    const week = chooseLatestCompletedWeek(form);
+    const week = chooseWeek(form, wantedWeek);
     result.week = week.label;
 
     const headers = { referer: first.response.url, ...(cookie ? { cookie } : {}) };
@@ -415,6 +429,8 @@ async function main(outputPath) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const outputArg = process.argv.find((value) => value.startsWith('--output='));
-  await main(resolve(outputArg ? outputArg.slice('--output='.length) : 'ealing-planning-ingest.json'));
+  const arg = (name) => process.argv.find((value) => value.startsWith(`--${name}=`))?.slice(name.length + 3) ?? null;
+  // --list-weeks prints the completed weeks PAM offers; --week="02 Nov 2026" ingests that week.
+  if (process.argv.includes('--list-weeks')) await listWeeks();
+  else await main(resolve(arg('output') ?? 'ealing-planning-ingest.json'), arg('week'));
 }

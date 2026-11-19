@@ -1,0 +1,81 @@
+name: Backfill planning archive
+
+# One-off, on demand: re-ingest earlier completed PAM weeks into the durable
+# planning archive (the latest week is left to the weekly refresh). Until
+# November 2026 the ingest read only the first page of each weekly list, so those
+# weeks hold 10 applications each. Pushes automation/planning-backfill for a
+# pull request; nothing reaches main without review.
+
+on:
+  workflow_dispatch:
+    inputs:
+      weeks:
+        description: 'Completed weeks before the latest to backfill'
+        default: '52'
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: planning-archive
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - name: Ingest earlier weeks into the archive
+        env:
+          WEEKS: ${{ inputs.weeks }}
+        run: |
+          git checkout -B automation/planning-backfill origin/main
+          node scripts/ingest-ealing-planning.mjs --list-weeks > all-weeks.txt
+          # Skip the first (latest) week: the weekly refresh owns it.
+          sed -n "2,$((WEEKS + 1))p" all-weeks.txt > weeks.txt
+          echo "Backfilling $(wc -l < weeks.txt) week(s): $(head -n1 weeks.txt) back to $(tail -n1 weeks.txt)"
+          done_weeks=0; failed=()
+          while IFS= read -r week; do
+            ok=false
+            for attempt in 1 2 3; do
+              if node scripts/ingest-ealing-planning.mjs --week="$week" --output=backfill-ingest.json \
+                && node scripts/publish-ealing-planning-snapshot.mjs --archive-only backfill-ingest.json; then
+                ok=true; break
+              fi
+              sleep $((attempt * 30))
+            done
+            if $ok; then done_weeks=$((done_weeks + 1)); else failed+=("$week"); fi
+          done < weeks.txt
+          rm -f backfill-ingest.json
+          {
+            echo "### Planning backfill"
+            echo "- Weeks added: $done_weeks of $(wc -l < weeks.txt)"
+            echo "- Archive applications: $(node -e "console.log(require('./public/data/planning-archive.json').records.length)")"
+            if [ ${#failed[@]} -gt 0 ]; then echo "- Failed after 3 attempts: ${failed[*]}"; fi
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          rm -f all-weeks.txt weeks.txt
+      - name: Check the archive
+        run: |
+          npm run test:planning-history
+          npm run test:planning-backfill
+          node scripts/check-planning-refresh.mjs origin/main
+      - name: Push the backfill branch
+        run: |
+          if git diff --quiet -- public/data/planning-archive.json; then
+            echo 'Archive unchanged.'
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/planning-archive.json
+          git commit -m "Backfill planning archive with complete earlier weeks"
+          # The branch belongs to this workflow; each run starts it afresh from main.
+          git push --force origin automation/planning-backfill
