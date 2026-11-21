@@ -1,7 +1,8 @@
 // Third-party retrieval fallback for feed sources. Some publishers' hosts (often
 // Cloudflare bot protection) refuse requests from cloud servers such as Netlify's,
 // whatever the user-agent, while the site works in a browser. During the ingest,
-// a source request that is refused this way is retried once through Apify's
+// a source request that is refused this way (an error status, or a 200 bot-check
+// page in place of the content) is retried once through Apify's
 // web-fetch actor, which fetches the page from its own network and returns the
 // original body. Every use is recorded so the source's health can say how it was
 // retrieved; nothing is presented as a direct fetch.
@@ -27,6 +28,32 @@ export function siteOf(host) {
   const labels = String(host || '').toLowerCase().split('.').filter(Boolean);
   const keep = labels.length >= 2 && labels.at(-1) === 'uk' && UK_SECOND_LEVEL.has(labels.at(-2)) ? 3 : 2;
   return labels.slice(-keep).join('.');
+}
+
+// Bot-check pages that some hosts serve with HTTP 200 instead of the content:
+// LiteSpeed's reCAPTCHA wall ("Bot Verification", seen on ealinglabour.co.uk
+// from November 2026) and Cloudflare's challenge and block pages. They are short;
+// a real page that merely mentions one of these phrases is not mistaken for one.
+const CHALLENGE_MARKERS = [
+  /lsrecaptcha|\/\.lsrecap\/recaptcha/i,
+  /<title>\s*Bot Verification\s*<\/title>/i,
+  /<title>\s*Just a moment\.\.\.\s*<\/title>/i,
+  /\/cdn-cgi\/challenge-platform\/|cf-chl-|_cf_chl_opt/i,
+  /<title>\s*Attention Required! \| Cloudflare\s*<\/title>/i
+];
+const CHALLENGE_MAX_LENGTH = 64 * 1024;
+export function isBotChallenge(html) {
+  const text = String(html || '');
+  return text.length > 0 && text.length <= CHALLENGE_MAX_LENGTH && CHALLENGE_MARKERS.some(marker => marker.test(text));
+}
+
+// A 200 response is checked for a challenge page only when it is HTML and short
+// enough to be one; the body is read from a clone, so the caller's copy is intact.
+async function isChallengeResponse(response) {
+  if (!response?.ok || !/html/i.test(response.headers.get('content-type') || 'text/html')) return false;
+  const length = Number(response.headers.get('content-length'));
+  if (length > CHALLENGE_MAX_LENGTH) return false;
+  try { return isBotChallenge(await response.clone().text()); } catch { return false; }
 }
 
 function shouldRetry(response, error) {
@@ -55,6 +82,7 @@ async function fetchOnce(originalFetch, url, token, timeoutMs) {
     if (!item || typeof item.raw !== 'string' || !status) throw new Error('fallback fetcher returned no page');
     // A page the site still refused is not a retrieval.
     if (status >= 400) throw new Error(`fallback fetcher got HTTP ${status} from the site`);
+    if (isBotChallenge(item.raw)) throw new Error('fallback fetcher got a bot-check page from the site');
     return new Response(item.raw, {
       status,
       headers: { 'content-type': item.fetch?.contentType || 'text/html; charset=utf-8', 'x-retrieved-via': 'apify-web-fetch' }
@@ -98,18 +126,19 @@ export function installFetchFallback({ token = process.env.APIFY_TOKEN, budget =
 
     let response, error;
     try { response = await originalFetch(input, init); } catch (caught) { error = caught; }
-    if (!shouldRetry(response, error)) { if (error) throw error; return response; }
+    const challenged = !error && await isChallengeResponse(response);
+    if (!challenged && !shouldRetry(response, error)) { if (error) throw error; return response; }
     // Concurrent and later requests for a URL share its one fallback attempt
     // (a promise of the retrieved page, or null if the fallback failed).
     if (!attempted.has(url)) {
       if (used >= budget) {
-        log.push({ url, host, direct: error ? String(error?.message || error) : response.status, outcome: 'budget-exhausted' });
+        log.push({ url, host, direct: error ? String(error?.message || error) : challenged ? `${response.status} bot check` : response.status, outcome: 'budget-exhausted' });
         if (error) throw error;
         return response;
       }
       used += 1;
       const started = Date.now();
-      const direct = error ? String(error?.message || error) : response.status;
+      const direct = error ? String(error?.message || error) : challenged ? `${response.status} bot check` : response.status;
       attempted.set(url, fetchViaActor(originalFetch, url, token).then(async fallback => {
         const page = { body: await fallback.text(), status: fallback.status, headers: Object.fromEntries(fallback.headers) };
         log.push({ url, host, direct, outcome: 'retrieved', status: page.status, ms: Date.now() - started });

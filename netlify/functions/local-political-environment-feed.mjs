@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { XMLParser } from 'fast-xml-parser';
+import { isBotChallenge } from '../lib/fetch-fallback.mjs';
 
 const TOWNS = ['Acton', 'Ealing', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
 
@@ -144,7 +145,10 @@ async function fetchHtml(url) {
       }
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.text();
+    const html = await response.text();
+    // A bot-check page (served with HTTP 200) is a refusal, not an empty listing.
+    if (isBotChallenge(html)) throw Object.assign(new Error('Blocked by a bot check on the site: automated requests receive a verification page instead of content'), { blocked: true });
+    return html;
   } finally {
     clearTimeout(timeout);
   }
@@ -398,7 +402,7 @@ export async function fetchLocalPoliticalEnvironmentFeed() {
         error: result.value.items.length ? null : 'Source page fetched but no safely dated article links matched the configured publication pattern'
       });
     } else {
-      health.push({ id: source.id, name: source.name, homepage: source.homepage, ok: false, status: 'error', itemCount: 0, error: String(result.reason?.message || result.reason) });
+      health.push({ id: source.id, name: source.name, homepage: source.homepage, ok: false, status: result.reason?.blocked ? 'blocked' : 'error', itemCount: 0, error: String(result.reason?.message || result.reason) });
     }
   });
 

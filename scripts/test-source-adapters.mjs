@@ -13,7 +13,9 @@ const pages = new Map([
   [LAGER_POST, await fixture('lagercan-post.html')],
   ['https://www.ealinglibdems.org.uk/', `<html><body><a href="/news/article/joint-statement-ealing-lib-dems-and-ealing-greens-on-walpole-park-theatre-plans">Joint Statement: Ealing Lib Dems and Ealing Greens on Walpole Park Theatre Plans</a><a href="/our-councillors">Our Councillors page</a></body></html>`],
   [LIBDEMS_ARTICLE, await fixture('libdems-article.html')],
-  ['https://southallcommunityalliance.com/feed/', await fixture('sca-feed.xml')]
+  ['https://southallcommunityalliance.com/feed/', await fixture('sca-feed.xml')],
+  // LiteSpeed reCAPTCHA wall, served with HTTP 200 (captured 21 Nov 2026).
+  ['https://www.ealinglabour.co.uk/', await fixture('ealinglabour-bot-verification.html')]
 ]);
 const requested = [];
 globalThis.fetch = async url => {
@@ -49,6 +51,13 @@ assert.equal(awards.id, `southall-community-alliance:${createHash('sha256').upda
 assert.ok(!/\[…\]|\[&#8230;\]/.test(awards.summary), 'feed truncation marker removed');
 assert.deepEqual(awards.towns, ['Southall']);
 assert.ok(!requested.includes('https://southallcommunityalliance.com/'), 'the page is no longer scraped');
+
+// A bot-check page is reported as blocked, not as a listing with no articles.
+const labour = healthFor('ealing-labour-news');
+assert.equal(labour.ok, false);
+assert.equal(labour.status, 'blocked');
+assert.match(labour.error, /bot check/);
+assert.equal(bySource('ealing-labour-news').length, 0);
 
 // Retired sources are gone, not silently failing.
 assert.equal(healthFor('norwood-green-residents'), undefined);

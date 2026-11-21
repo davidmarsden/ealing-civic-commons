@@ -2,14 +2,18 @@
 // Third-party retrieval fallback: when it retries, what it returns, its budget,
 // and that failures stay failures.
 import assert from 'node:assert/strict';
-import { annotateRetrieval, fallbackAttempts, fallbackHosts, installFetchFallback, siteOf } from '../netlify/lib/fetch-fallback.mjs';
+import { readFile } from 'node:fs/promises';
+import { annotateRetrieval, fallbackAttempts, fallbackHosts, installFetchFallback, isBotChallenge, siteOf } from '../netlify/lib/fetch-fallback.mjs';
 
+const challengePage = await readFile(new URL('./data/source-fixtures/ealinglabour-bot-verification.html', import.meta.url), 'utf8');
 const calls = [];
 let actorReply = url => [{ raw: `<html>${url}</html>`, fetch: { httpStatusCode: 200, contentType: 'text/html; charset=utf-8' } }];
 const sites = {
   'https://blocked.example/news/': () => new Response('denied', { status: 403 }),
   'https://blocked.example/other/': () => new Response('denied', { status: 403 }),
   'https://ok.example/': () => new Response('fine', { status: 200 }),
+  'https://walled.example/': () => new Response(challengePage, { status: 200, headers: { 'content-type': 'text/html' } }),
+  'https://mentions.example/': () => new Response('<html><title>News</title><p>Sites now show a "Bot Verification" page.</p></html>', { status: 200, headers: { 'content-type': 'text/html' } }),
   'https://missing.example/': () => new Response('gone', { status: 404 }),
   'https://reset.example/': () => { throw new TypeError('fetch failed'); },
   'https://slow.example/': () => { const error = new Error('aborted'); error.name = 'AbortError'; throw error; },
@@ -118,5 +122,27 @@ const met = annotateRetrieval([{ id: 'met', homepage: 'https://news.met.police.u
   [{ url: 'https://www.met.police.uk/area/your-area/met/ealing/x/contact-us/our-priorities', host: 'met.police.uk', outcome: 'retrieved' }]);
 assert.deepEqual([met[0].retrievedVia, met[1].retrievedVia], ['third-party fetcher', undefined]);
 assert.deepEqual(fallbackHosts(run.log), { 'blocked.example': { retrieved: 1, failed: 0, skipped: 1 }, 'reset.example': { retrieved: 1, failed: 0, skipped: 0 } });
+
+// Bot-check pages served with HTTP 200 count as refusals.
+assert.equal(isBotChallenge(challengePage), true, 'LiteSpeed reCAPTCHA wall');
+assert.equal(isBotChallenge('<html><head><title>Just a moment...</title></head><body><script src="/cdn-cgi/challenge-platform/h/b/orchestrate/jsch/v1"></script></body></html>'), true, 'Cloudflare challenge');
+assert.equal(isBotChallenge('<html><title>News</title><p>Sites now show a "Bot Verification" page.</p></html>'), false, 'a page that only mentions it');
+assert.equal(isBotChallenge(''), false);
+actorReply = url => [{ raw: `<html>${url}</html>`, fetch: { httpStatusCode: 200, contentType: 'text/html' } }];
+const walled = installFetchFallback({ token: 't' });
+const unwalled = await fetch('https://walled.example/');
+assert.equal(unwalled.status, 200);
+assert.equal(await unwalled.text(), '<html>https://walled.example/</html>', 'a bot-check page is retried through the fallback');
+assert.equal(walled.log.at(-1).direct, '200 bot check');
+assert.equal(await (await fetch('https://mentions.example/')).text(), '<html><title>News</title><p>Sites now show a "Bot Verification" page.</p></html>', 'ordinary pages are untouched');
+walled.restore();
+// A fallback that gets the same bot-check page has failed, and the caller sees the original.
+actorReply = () => [{ raw: challengePage, fetch: { httpStatusCode: 200, contentType: 'text/html' } }];
+const stillWalled = installFetchFallback({ token: 't' });
+const original = await fetch('https://walled.example/');
+assert.equal(isBotChallenge(await original.text()), true, 'the original body is still readable');
+assert.equal(stillWalled.log.at(-1).outcome, 'failed');
+assert.match(stillWalled.log.at(-1).error, /bot-check page/);
+stillWalled.restore();
 
 console.log('Fetch fallback: retry rules, labelled responses, budget, failures and health annotation OK.');
