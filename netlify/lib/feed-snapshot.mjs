@@ -66,6 +66,7 @@ export function applySourceStates(feed, previous = { sources: {}, groups: {} }, 
   const liveItemsFor = ids => items.filter(item => !item?.stale && ids.has(item?.sourceId));
   const failedGroups = new Set();
   const groupIds = new Map();
+  const groupSuccessAt = new Map();
 
   const health = (feed?.health || []).map(entry => {
     const state = sourceStateFor(entry);
@@ -78,12 +79,16 @@ export function applySourceStates(feed, previous = { sources: {}, groups: {} }, 
       if (failed) failedGroups.add(entry.group);
     }
     if (!failed) {
+      // A result reused from the source cache (lib/source-cache.mjs) was last
+      // confirmed when it was fetched, not at this ingest.
+      const successAt = entry.cached && timeOf(entry.checkedAt) ? entry.checkedAt : now;
+      if (entry.group && (!groupSuccessAt.has(entry.group) || timeOf(successAt) < timeOf(groupSuccessAt.get(entry.group)))) groupSuccessAt.set(entry.group, successAt);
       const lastItems = liveItemsFor(ids).slice(0, LAST_GOOD_ITEMS_PER_SOURCE);
       // The source's identity, kept so lists of sources (following.opml) can
       // still name it while its whole fetcher group is failing.
       const meta = { name: entry.name, homepage: entry.homepage || null, sourceClass: entry.sourceClass || null, group: entry.group || null };
-      sources[entry.id] = { lastSuccessAt: now, lastAttemptAt: now, failingSince: null, consecutiveFailures: 0, lastItems: lastItems.length ? lastItems : (before.lastItems || []), meta };
-      return { ...entry, state, lastSuccessAt: now };
+      sources[entry.id] = { lastSuccessAt: successAt, lastAttemptAt: now, failingSince: null, consecutiveFailures: 0, lastItems: lastItems.length ? lastItems : (before.lastItems || []), meta };
+      return { ...entry, state, lastSuccessAt: successAt };
     }
     const failingSince = before.failingSince || now;
     sources[entry.id] = { ...before, lastAttemptAt: now, failingSince, consecutiveFailures: (before.consecutiveFailures || 0) + 1, lastState: state };
@@ -98,7 +103,7 @@ export function applySourceStates(feed, previous = { sources: {}, groups: {} }, 
   for (const [group, ids] of groupIds) {
     if (failedGroups.has(group)) continue;
     const lastItems = liveItemsFor(ids).slice(0, LAST_GOOD_ITEMS_PER_SOURCE * 3);
-    if (lastItems.length) groups[group] = { lastSuccessAt: now, lastItems };
+    if (lastItems.length) groups[group] = { lastSuccessAt: groupSuccessAt.get(group) || now, lastItems };
   }
 
   items.sort((a, b) => timeOf(b?.publishedAt) - timeOf(a?.publishedAt));

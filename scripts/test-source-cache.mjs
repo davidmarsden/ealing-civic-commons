@@ -56,4 +56,20 @@ const second = await fetchLocalPoliticalEnvironmentFeed({ blobs: feedBlobs, now:
 assert.equal(requests, afterFirst, 'no source is fetched again within three hours');
 assert.ok(second.health.every(entry => entry.cached === true && entry.checkedAt === new Date(t0).toISOString()));
 
+// Source state keeps the real check time of a reused result, so a later failure
+// marks restored items with when they were actually last confirmed.
+const { applySourceStates } = await import('../netlify/lib/feed-snapshot.mjs');
+const fetchedAt = new Date(t0).toISOString();
+const reusedAt = new Date(t0 + 165 * 60 * 1000).toISOString();
+const failedAt = new Date(t0 + 180 * 60 * 1000).toISOString();
+const item = { id: 'labour-1', sourceId: 'ealing-labour-news', publishedAt: '2026-09-23T15:00:00Z' };
+const reused = applySourceStates({ items: [item], health: [{ id: 'ealing-labour-news', ok: true, itemCount: 1, cached: true, checkedAt: fetchedAt, group: 'localPoliticalEnvironment' }] }, undefined, reusedAt);
+assert.equal(reused.feed.health[0].lastSuccessAt, fetchedAt);
+assert.equal(reused.state.sources['ealing-labour-news'].lastSuccessAt, fetchedAt);
+assert.equal(reused.state.groups.localPoliticalEnvironment.lastSuccessAt, fetchedAt);
+const live = applySourceStates({ items: [item], health: [{ id: 'ealing-labour-news', ok: true, itemCount: 1, cached: false, checkedAt: reusedAt }] }, undefined, reusedAt);
+assert.equal(live.feed.health[0].lastSuccessAt, reusedAt, 'a live fetch is confirmed at this ingest');
+const failed = applySourceStates({ items: [], health: [{ id: 'ealing-labour-news', ok: false, status: 'error', error: 'HTTP 500', itemCount: 0 }] }, reused.state, failedAt);
+assert.equal(failed.feed.items[0].staleSince, fetchedAt, 'restored items show the real last-confirmed time');
+
 console.log('Source cache: reuse window, cached failures, live fallback and political feed polling OK.');
