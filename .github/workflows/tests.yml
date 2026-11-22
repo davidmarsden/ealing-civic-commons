@@ -28,6 +28,7 @@ jobs:
       - run: npm run test:build-assets
       - run: npm run test:feed-alerts
       - run: npm run test:fetch-fallback
+      - run: npm run test:source-cache
       - run: npm run test:dark-palette
       - run: npm run test:socialspec
       - run: npm run test:item-dates
