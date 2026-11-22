@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { XMLParser } from 'fast-xml-parser';
 import { isBotChallenge } from '../lib/fetch-fallback.mjs';
+import { cachedSourceFetch, defaultSourceCacheStore } from '../lib/source-cache.mjs';
 
 const TOWNS = ['Acton', 'Ealing', 'Greenford', 'Hanwell', 'Northolt', 'Perivale', 'Southall'];
 
@@ -383,8 +384,13 @@ async function fetchSource(source) {
   return items.sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)).slice(0, 12);
 }
 
-export async function fetchLocalPoliticalEnvironmentFeed() {
-  const results = await Promise.allSettled(sources.map(async source => ({ source, items: await fetchSource(source) })));
+// These are small sites that post rarely, so each is checked at most every few
+// hours (see lib/source-cache.mjs); between checks the last result is reused.
+export async function fetchLocalPoliticalEnvironmentFeed({ blobs = defaultSourceCacheStore(), now = Date.now() } = {}) {
+  const results = await Promise.allSettled(sources.map(async source => {
+    const { value, checkedAt, cached } = await cachedSourceFetch({ blobs, key: source.id, now, fetch: () => fetchSource(source) });
+    return { source, items: value, checkedAt, cached };
+  }));
   const items = [];
   const health = [];
 
@@ -399,10 +405,12 @@ export async function fetchLocalPoliticalEnvironmentFeed() {
         ok: true,
         status: result.value.items.length ? 'ok' : 'empty',
         itemCount: result.value.items.length,
+        checkedAt: result.value.checkedAt,
+        cached: result.value.cached,
         error: result.value.items.length ? null : 'Source page fetched but no safely dated article links matched the configured publication pattern'
       });
     } else {
-      health.push({ id: source.id, name: source.name, homepage: source.homepage, ok: false, status: result.reason?.blocked ? 'blocked' : 'error', itemCount: 0, error: String(result.reason?.message || result.reason) });
+      health.push({ id: source.id, name: source.name, homepage: source.homepage, ok: false, status: result.reason?.blocked ? 'blocked' : 'error', itemCount: 0, error: String(result.reason?.message || result.reason), ...(result.reason?.cachedAt ? { checkedAt: result.reason.cachedAt, cached: true } : {}) });
     }
   });
 
