@@ -1,11 +1,1386 @@
 {
   "archive_version": 1,
-  "generated_at": "2026-11-19T19:13:47.442Z",
-  "latest_week": "09 Nov 2026",
+  "generated_at": "2026-11-24T17:46:07.605Z",
+  "latest_week": "16 Nov 2026",
   "source": "Ealing PAM / Civica Public Access",
   "canonical_source": "Ealing Council Planning Register",
   "place_link_rules_version": 1,
   "records": [
+    {
+      "id": "planning:ealing:264234palhe",
+      "reference": "264234PALHE",
+      "address": "Westering Poplar Avenue Southall UB2 4PN",
+      "proposal": "Single storey rear extension (max 6m deep and max 3m high) (42 Days Prior Approval Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-21",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOUZI6JMMLP00&activeTab=summary",
+      "application_type": "Prior Approval - Larger Home Extension",
+      "ward": "Norwood Green",
+      "expected_decision_level": "Not Available",
+      "town": "Southall",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/264234palhe",
+      "place_links": [
+        {
+          "route": "places/southall",
+          "label": "Southall",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "Westering Poplar Avenue Southall UB2 4PN",
+          "proposal": "Single storey rear extension (max 6m deep and max 3m high) (42 Days Prior Approval Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-21",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOUZI6JMMLP00&activeTab=summary",
+          "town": "Southall",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/southall",
+              "label": "Southall",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264216palhe",
+      "reference": "264216PALHE",
+      "address": "15 Thirsk Close Northolt UB5 4DS",
+      "proposal": "Single storey (Max 6m deep and Max 3.25m high) rear extension (42 days Prior Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-20",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOSIMPJMMJ500&activeTab=summary",
+      "application_type": "Prior Approval - Larger Home Extension",
+      "ward": "Northolt Mandeville",
+      "expected_decision_level": "Not Available",
+      "town": "Northolt",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/264216palhe",
+      "place_links": [
+        {
+          "route": "places/northolt",
+          "label": "Northolt",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "15 Thirsk Close Northolt UB5 4DS",
+          "proposal": "Single storey (Max 6m deep and Max 3.25m high) rear extension (42 days Prior Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-20",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOSIMPJMMJ500&activeTab=summary",
+          "town": "Northolt",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/northolt",
+              "label": "Northolt",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264221palhe",
+      "reference": "264221PALHE",
+      "address": "51 Greenend Road Chiswick W4 1AH",
+      "proposal": "Single storey rear extension (max 4.5m deep and max 3.65 high) (42 Days Prior Approval Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-20",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOSQYDJMMJQ00&activeTab=summary",
+      "application_type": "Prior Approval - Larger Home Extension",
+      "ward": "Southfield",
+      "expected_decision_level": "Not Available",
+      "town": null,
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/264221palhe",
+      "place_links": [],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "51 Greenend Road Chiswick W4 1AH",
+          "proposal": "Single storey rear extension (max 4.5m deep and max 3.65 high) (42 Days Prior Approval Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-20",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOSQYDJMMJQ00&activeTab=summary",
+          "town": null,
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": []
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264222palhe",
+      "reference": "264222PALHE",
+      "address": "25 Blondin Avenue Ealing W5 4UL",
+      "proposal": "Single storey rear extension (max 4.5m deep and max 3.71m high) (following demolition of existing rear addition) (42 Days Prior Approval Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-20",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOSQZ8JMMJV00&activeTab=summary",
+      "application_type": "Prior Approval - Larger Home Extension",
+      "ward": "Northfield",
+      "expected_decision_level": "Not Available",
+      "town": "Ealing",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/264222palhe",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "25 Blondin Avenue Ealing W5 4UL",
+          "proposal": "Single storey rear extension (max 4.5m deep and max 3.71m high) (following demolition of existing rear addition) (42 Days Prior Approval Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-20",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOSQZ8JMMJV00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264226ptc",
+      "reference": "264226PTC",
+      "address": "18 Mattock Lane Ealing W5 5BG",
+      "proposal": "T2 Pine rear right becoming oversized for the location, fell to ground level",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-20",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOSZDWJMMKP00&activeTab=summary",
+      "application_type": "Works to a tree Conservation Area",
+      "ward": "Walpole",
+      "expected_decision_level": "Not Available",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/264226ptc",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "18 Mattock Lane Ealing W5 5BG",
+          "proposal": "T2 Pine rear right becoming oversized for the location, fell to ground level",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-20",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOSZDWJMMKP00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264228ptc",
+      "reference": "264228PTC",
+      "address": "39 Blakesley Avenue Ealing W5 2DN",
+      "proposal": "T1-Birch Rear-Becoming oversized for the location in the center of the garden x4 tree oaks have been planted and now established towards the garden, fell to ground level",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-20",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOSZESJMMKT00&activeTab=summary",
+      "application_type": "Works to a tree Conservation Area",
+      "ward": "Ealing Broadway",
+      "expected_decision_level": "Not Available",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/264228ptc",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "39 Blakesley Avenue Ealing W5 2DN",
+          "proposal": "T1-Birch Rear-Becoming oversized for the location in the center of the garden x4 tree oaks have been planted and now established towards the garden, fell to ground level",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-20",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOSZESJMMKT00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264206nma",
+      "reference": "264206NMA",
+      "address": "St Marys Church Ealing Road Northolt UB5 6AA",
+      "proposal": "Application for a Non-Material Amendment in (S96a) seeking to allow to revise the approved porch and WC arrangement in relation to planning permission reference 260697FUL dated 05/06/2026 for: Single storey front porch extension (following demolition of existing porch extension); rendering; external alterations; installation of handrail; internal alterations; roof repair; replacement of roof tiles; new external lighting; revised seating; reconstruction of the existing churchyard path",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-19",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOQWB7JMMHO00&activeTab=summary",
+      "application_type": "Non-Material Amendment",
+      "ward": "Northolt Mandeville",
+      "expected_decision_level": "Not Available",
+      "town": "Northolt",
+      "category": "Planning application",
+      "out_of_borough": false,
+      "commons_path": "/planning/264206nma",
+      "place_links": [
+        {
+          "route": "places/northolt",
+          "label": "Northolt",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "St Marys Church Ealing Road Northolt UB5 6AA",
+          "proposal": "Application for a Non-Material Amendment in (S96a) seeking to allow to revise the approved porch and WC arrangement in relation to planning permission reference 260697FUL dated 05/06/2026 for: Single storey front porch extension (following demolition of existing porch extension); rendering; external alterations; installation of handrail; internal alterations; roof repair; replacement of roof tiles; new external lighting; revised seating; reconstruction of the existing churchyard path",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-19",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOQWB7JMMHO00&activeTab=summary",
+          "town": "Northolt",
+          "category": "Planning application",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/northolt",
+              "label": "Northolt",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264208ptc",
+      "reference": "264208PTC",
+      "address": "133 The Grove Ealing W5 3SL",
+      "proposal": "T1-Ash-Mature Ash located in the rear garden close to the boundary of Grosvenor Court, the tree is allegedly causing the pavement to lift and has allegedly caused damage to the garage located in the neighbouring property, fell to ground and grind stump to approx. 300mm below ground level. T2-Bay-Reduce in height by approx 3m and trim sides to shape.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-19",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOQWC9JMMHT00&activeTab=summary",
+      "application_type": "Works to a tree Conservation Area",
+      "ward": "Ealing Common",
+      "expected_decision_level": "Not Available",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/264208ptc",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "133 The Grove Ealing W5 3SL",
+          "proposal": "T1-Ash-Mature Ash located in the rear garden close to the boundary of Grosvenor Court, the tree is allegedly causing the pavement to lift and has allegedly caused damage to the garage located in the neighbouring property, fell to ground and grind stump to approx. 300mm below ground level. T2-Bay-Reduce in height by approx 3m and trim sides to shape.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-19",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOQWC9JMMHT00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264211cpl",
+      "reference": "264211CPL",
+      "address": "20 Fulmer Way West Ealing W13 9XQ",
+      "proposal": "Rear roof extension incorporating juliet balcony; installation of three rooflights to front roofslope (Lawful Development Certificate for a Proposed Development)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-19",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOR7DLJMMI300&activeTab=summary",
+      "application_type": "Certificate of Lawfulness - Proposed",
+      "ward": "Northfield",
+      "expected_decision_level": "Not Available",
+      "town": "Ealing",
+      "category": "Planning application",
+      "out_of_borough": false,
+      "commons_path": "/planning/264211cpl",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "20 Fulmer Way West Ealing W13 9XQ",
+          "proposal": "Rear roof extension incorporating juliet balcony; installation of three rooflights to front roofslope (Lawful Development Certificate for a Proposed Development)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-19",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOR7DLJMMI300&activeTab=summary",
+          "town": "Ealing",
+          "category": "Planning application",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264250opdcob",
+      "reference": "264250OPDCOB",
+      "address": "Unit1 134 Victoria Road Acton W3 6LD",
+      "proposal": "Erection of a mezzanine floor within existing commercial unit.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-19",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOYN3TJM0KK00&activeTab=summary",
+      "application_type": "OPDC Consultation by Other Boroughs",
+      "ward": "North Acton",
+      "expected_decision_level": "Not Available",
+      "town": "Acton",
+      "category": "Out of borough",
+      "out_of_borough": true,
+      "commons_path": "/planning/264250opdcob",
+      "place_links": [
+        {
+          "route": "places/acton",
+          "label": "Acton",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "Unit1 134 Victoria Road Acton W3 6LD",
+          "proposal": "Erection of a mezzanine floor within existing commercial unit.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-19",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOYN3TJM0KK00&activeTab=summary",
+          "town": "Acton",
+          "category": "Out of borough",
+          "out_of_borough": true,
+          "place_links": [
+            {
+              "route": "places/acton",
+              "label": "Acton",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263258ful",
+      "reference": "263258FUL",
+      "address": "Sports Ground Alwyn Gardens Acton W3 0JH",
+      "proposal": "Application for the retention and regularisation of the existing as-built 7-a-side 3G Artificial Grass Pitch, including associated groundworks, drainage, edge restraint, construction of a staff changing room and a 3 metre high perimeter fencing at Alwyn Gardens Sports Ground. Existing floodlighting is separately permitted and no alterations to the floodlighting are proposed. (Retrospective)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-18",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TKHKZ1JMJCG00&activeTab=summary",
+      "application_type": "Full Application",
+      "ward": "North Acton",
+      "expected_decision_level": "Not Available",
+      "town": "Acton",
+      "category": "Planning application",
+      "out_of_borough": false,
+      "commons_path": "/planning/263258ful",
+      "place_links": [
+        {
+          "route": "places/acton",
+          "label": "Acton",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "Sports Ground Alwyn Gardens Acton W3 0JH",
+          "proposal": "Application for the retention and regularisation of the existing as-built 7-a-side 3G Artificial Grass Pitch, including associated groundworks, drainage, edge restraint, construction of a staff changing room and a 3 metre high perimeter fencing at Alwyn Gardens Sports Ground. Existing floodlighting is separately permitted and no alterations to the floodlighting are proposed. (Retrospective)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-18",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TKHKZ1JMJCG00&activeTab=summary",
+          "town": "Acton",
+          "category": "Planning application",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/acton",
+              "label": "Acton",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264189ptc",
+      "reference": "264189PTC",
+      "address": "21 Flat 2 Grange Park Ealing W5 3PS",
+      "proposal": "T1 Holly-Mature Holly growing along the left-hand side of the rear garden. Tree is very big for the space and is spanning across the entire width of the garden, fell to ground level and poison stump to prevent any regrowth. T2 Viburnum-Reduce all aspects of the crown by approx. 2m to create a tight and tidy shape. T3 Photinia-Reduce all aspects of the crown by approx. 1m to create a tight and tidy shape. T4 Pittosporum-Reduce all aspects of the crown by approx. 2m to create a tight and tidy shape. T5 Holly-Reduce height by approx. 2m",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-18",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOP4DXJMMER00&activeTab=summary",
+      "application_type": "Works to a tree Conservation Area",
+      "ward": "Ealing Common",
+      "expected_decision_level": "Not Available",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/264189ptc",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "21 Flat 2 Grange Park Ealing W5 3PS",
+          "proposal": "T1 Holly-Mature Holly growing along the left-hand side of the rear garden. Tree is very big for the space and is spanning across the entire width of the garden, fell to ground level and poison stump to prevent any regrowth. T2 Viburnum-Reduce all aspects of the crown by approx. 2m to create a tight and tidy shape. T3 Photinia-Reduce all aspects of the crown by approx. 1m to create a tight and tidy shape. T4 Pittosporum-Reduce all aspects of the crown by approx. 2m to create a tight and tidy shape. T5 Holly-Reduce height by approx. 2m",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-18",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOP4DXJMMER00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264191ptt",
+      "reference": "264191PTT",
+      "address": "1 Esmond Road Chiswick W4 1JG",
+      "proposal": "G1 Lime - Cut back to boundary to suitable growth points",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-18",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOP4ELJMMEW00&activeTab=summary",
+      "application_type": "Works to a tree with a TPO",
+      "ward": "Southfield",
+      "expected_decision_level": "Not Available",
+      "town": null,
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/264191ptt",
+      "place_links": [],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "1 Esmond Road Chiswick W4 1JG",
+          "proposal": "G1 Lime - Cut back to boundary to suitable growth points",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-18",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOP4ELJMMEW00&activeTab=summary",
+          "town": null,
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": []
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264199ptc",
+      "reference": "264199PTC",
+      "address": "60 The Ridings Ealing W5 3DR",
+      "proposal": "T3 (Holly)- T4 (Yew) to be removed , T7 (Malus) and T8 (Pear),all works to accord with BS3998.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-18",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOPFGPJMMG700&activeTab=summary",
+      "application_type": "Works to a tree Conservation Area",
+      "ward": "Hanger Hill",
+      "expected_decision_level": "Not Available",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/264199ptc",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "60 The Ridings Ealing W5 3DR",
+          "proposal": "T3 (Holly)- T4 (Yew) to be removed , T7 (Malus) and T8 (Pear),all works to accord with BS3998.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-18",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOPFGPJMMG700&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264200cons",
+      "reference": "264200CONS",
+      "address": "Chiswick Roundabout Chiswick London W4 3AA",
+      "proposal": "Redevelopment of the site to provide a mixed-use building with a maximum height of 27 storeys comprising of 496 Purpose-Built Shared Living units (Sui Generis); 60 residential units (Use Class C3); retail and office (Class E); amenity space; public realm improvements, landscaping, and other associated works (out of borough)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-18",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOPGOPJM0KK00&activeTab=summary",
+      "application_type": "Consultation by Other Boroughs",
+      "ward": "Out Of Borough",
+      "expected_decision_level": "Not Available",
+      "town": null,
+      "category": "Out of borough",
+      "out_of_borough": true,
+      "commons_path": "/planning/264200cons",
+      "place_links": [],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "Chiswick Roundabout Chiswick London W4 3AA",
+          "proposal": "Redevelopment of the site to provide a mixed-use building with a maximum height of 27 storeys comprising of 496 Purpose-Built Shared Living units (Sui Generis); 60 residential units (Use Class C3); retail and office (Class E); amenity space; public realm improvements, landscaping, and other associated works (out of borough)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-18",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOPGOPJM0KK00&activeTab=summary",
+          "town": null,
+          "category": "Out of borough",
+          "out_of_borough": true,
+          "place_links": []
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264201nma",
+      "reference": "264201NMA",
+      "address": "The Hambrough Tavern The Broadway Southall UB1 1NG",
+      "proposal": "Application for a Non-Material Amendment in (S96a) seeking to allow to amend wording in relation to planning permission reference 223545FUL dated 21/08/2024 for: Demolition of the existing buildings and redevelopment of the site for a part 5, part 17 storey building plus basement, comprising 116 build to rent residential units (Use Class C3) , public house (sui generis)), community space (Use Class F2(b), formation of vehicular access, car and cycle parking; hard and soft landscaping; associated amenity space. Amend the wording of Condition 30 part a) from: \"a) Prior to the Commencement of Construction a Whole Life Carbon Assessment shall be submitted to the Council for approval. The Assessment shall be compliant with policy SI2(F) of the London Plan and in line with the GLA (March 2022) guidance. The Development shall meet the GLA benchmark targets and seek to achieve the aspirational target.\" to read as follows: \"a) Prior to the commencement of construction (excluding demolition, site clearance, site investigation and site remediation) a Whole Life Carbon Assessment shall be submitted to the Council for approval. The Assessment shall be compliant with policy SI2(F) of the London Plan and in line with the GLA (March 2022) guidance. The Development shall meet the GLA benchmark targets and seek to achieve the aspirational target.\"",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-18",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOPI9TJMMGB00&activeTab=summary",
+      "application_type": "Non-Material Amendment",
+      "ward": "Southall West",
+      "expected_decision_level": "Not Available",
+      "town": "Southall",
+      "category": "Planning application",
+      "out_of_borough": false,
+      "commons_path": "/planning/264201nma",
+      "place_links": [
+        {
+          "route": "places/southall",
+          "label": "Southall",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "The Hambrough Tavern The Broadway Southall UB1 1NG",
+          "proposal": "Application for a Non-Material Amendment in (S96a) seeking to allow to amend wording in relation to planning permission reference 223545FUL dated 21/08/2024 for: Demolition of the existing buildings and redevelopment of the site for a part 5, part 17 storey building plus basement, comprising 116 build to rent residential units (Use Class C3) , public house (sui generis)), community space (Use Class F2(b), formation of vehicular access, car and cycle parking; hard and soft landscaping; associated amenity space. Amend the wording of Condition 30 part a) from: \"a) Prior to the Commencement of Construction a Whole Life Carbon Assessment shall be submitted to the Council for approval. The Assessment shall be compliant with policy SI2(F) of the London Plan and in line with the GLA (March 2022) guidance. The Development shall meet the GLA benchmark targets and seek to achieve the aspirational target.\" to read as follows: \"a) Prior to the commencement of construction (excluding demolition, site clearance, site investigation and site remediation) a Whole Life Carbon Assessment shall be submitted to the Council for approval. The Assessment shall be compliant with policy SI2(F) of the London Plan and in line with the GLA (March 2022) guidance. The Development shall meet the GLA benchmark targets and seek to achieve the aspirational target.\"",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-18",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOPI9TJMMGB00&activeTab=summary",
+          "town": "Southall",
+          "category": "Planning application",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/southall",
+              "label": "Southall",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263163cpe",
+      "reference": "263163CPE",
+      "address": "15 Flat 1A Madeley Road Ealing W5 2LA",
+      "proposal": "Continuous use of flat 1A to a self contained flat (Lawful Development Certificate for an Existing Development)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-17",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TK0WWBJMJ2G00&activeTab=summary",
+      "application_type": "Certificate of Lawfulness - Existing",
+      "ward": "Hanger Hill",
+      "expected_decision_level": "Not Available",
+      "town": "Ealing",
+      "category": "Planning application",
+      "out_of_borough": false,
+      "commons_path": "/planning/263163cpe",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "15 Flat 1A Madeley Road Ealing W5 2LA",
+          "proposal": "Continuous use of flat 1A to a self contained flat (Lawful Development Certificate for an Existing Development)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-17",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TK0WWBJMJ2G00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Planning application",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263254cnd",
+      "reference": "263254CND",
+      "address": "The Old Fire Station And Stable Block Longfield Avenue Ealing W5 2UQ",
+      "proposal": "Details of method statements (in consultation with Network Rail's Asset Protection Engineer) pursuant to condition 16 of planning permission 211642FUL dated 09.06.2021 for: Change of use from commercial (Use Class E) and conversion to provide 8no. residential units (Use Class C3) including lowering of the existing basement; creation of roof dormers to the front and rear of the fire station building, rooflights on the stable block and minor repair and replacement works; with associated private amenity spaces, and provision of refuse storage",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-17",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TKHCLCJMJC500&activeTab=summary",
+      "application_type": "Discharge Condition",
+      "ward": "Ealing Broadway",
+      "expected_decision_level": "Not Available",
+      "town": "Ealing",
+      "category": "Conditions",
+      "out_of_borough": false,
+      "commons_path": "/planning/263254cnd",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "The Old Fire Station And Stable Block Longfield Avenue Ealing W5 2UQ",
+          "proposal": "Details of method statements (in consultation with Network Rail's Asset Protection Engineer) pursuant to condition 16 of planning permission 211642FUL dated 09.06.2021 for: Change of use from commercial (Use Class E) and conversion to provide 8no. residential units (Use Class C3) including lowering of the existing basement; creation of roof dormers to the front and rear of the fire station building, rooflights on the stable block and minor repair and replacement works; with associated private amenity spaces, and provision of refuse storage",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-17",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TKHCLCJMJC500&activeTab=summary",
+          "town": "Ealing",
+          "category": "Conditions",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:263513var",
+      "reference": "263513VAR",
+      "address": "178 Church Road Hanwell W7 3BP",
+      "proposal": "Application for a Minor Material Amendment (S73.a) to vary condition 2 (as amended) of planning permission ref: 233242VAR dated 21/06/2024 for: Application for a Minor Material Amendment (S73.a) to vary condition 2 (approved plans) of planning permission ref: 216269FUL dated 24/05/2023 for: Conversion of the existing single dwelling house to two self-contained units, with associated cycle storage, off street parking and refuse storage facilities; single storey rear/side extension (following demolition of garage); construction of two single storey semi-detached houses to the rear of the site with associated landscaping, refuse and cycle storage. Amendment seeks minor changes to improve amenity.",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-17",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLPMYSJMK6W00&activeTab=summary",
+      "application_type": "Variation of Condition",
+      "ward": "North Hanwell",
+      "expected_decision_level": "Not Available",
+      "town": "Hanwell",
+      "category": "Planning application",
+      "out_of_borough": false,
+      "commons_path": "/planning/263513var",
+      "place_links": [
+        {
+          "route": "places/hanwell",
+          "label": "Hanwell",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "178 Church Road Hanwell W7 3BP",
+          "proposal": "Application for a Minor Material Amendment (S73.a) to vary condition 2 (as amended) of planning permission ref: 233242VAR dated 21/06/2024 for: Application for a Minor Material Amendment (S73.a) to vary condition 2 (approved plans) of planning permission ref: 216269FUL dated 24/05/2023 for: Conversion of the existing single dwelling house to two self-contained units, with associated cycle storage, off street parking and refuse storage facilities; single storey rear/side extension (following demolition of garage); construction of two single storey semi-detached houses to the rear of the site with associated landscaping, refuse and cycle storage. Amendment seeks minor changes to improve amenity.",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-17",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TLPMYSJMK6W00&activeTab=summary",
+          "town": "Hanwell",
+          "category": "Planning application",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/hanwell",
+              "label": "Hanwell",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264176opdcob",
+      "reference": "264176OPDCOB",
+      "address": "Communication Station On Roof Black Arrow House 2 Chandos Road Park Royal NW10 6NF",
+      "proposal": "Application for Prior Approval under Schedule 2, Part 11, Class B of the Town and Country Planning (General Permitted Development) (England) Order 2015 (as amended) for the demolition of the existing building and associated concrete slab and foundations (out of borough)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-17",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TONDNMJM0KK00&activeTab=summary",
+      "application_type": "OPDC Consultation by Other Boroughs",
+      "ward": "North Acton",
+      "expected_decision_level": "Not Available",
+      "town": null,
+      "category": "Out of borough",
+      "out_of_borough": true,
+      "commons_path": "/planning/264176opdcob",
+      "place_links": [],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "Communication Station On Roof Black Arrow House 2 Chandos Road Park Royal NW10 6NF",
+          "proposal": "Application for Prior Approval under Schedule 2, Part 11, Class B of the Town and Country Planning (General Permitted Development) (England) Order 2015 (as amended) for the demolition of the existing building and associated concrete slab and foundations (out of borough)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-17",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TONDNMJM0KK00&activeTab=summary",
+          "town": null,
+          "category": "Out of borough",
+          "out_of_borough": true,
+          "place_links": []
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264184nma",
+      "reference": "264184NMA",
+      "address": "The Bilton Centre Walmgate Road Perivale UB6 7LR",
+      "proposal": "Application for non-material amendment to planning permission reference 222466FUL dated 02.09.2022 for 'Replacement of existing vehicle and pedestrian gates.' Amendment seeks minor amendments to the approved security fencing scheme, including revised gate and fence details, minor fence realignments, a small additional section of fencing, updated fencing specifications, and corrections arising from updated survey information",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-17",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TONRGFJMMEC00&activeTab=summary",
+      "application_type": "Non-Material Amendment",
+      "ward": "Perivale",
+      "expected_decision_level": "Not Available",
+      "town": "Perivale",
+      "category": "Planning application",
+      "out_of_borough": false,
+      "commons_path": "/planning/264184nma",
+      "place_links": [
+        {
+          "route": "places/perivale",
+          "label": "Perivale",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "The Bilton Centre Walmgate Road Perivale UB6 7LR",
+          "proposal": "Application for non-material amendment to planning permission reference 222466FUL dated 02.09.2022 for 'Replacement of existing vehicle and pedestrian gates.' Amendment seeks minor amendments to the approved security fencing scheme, including revised gate and fence details, minor fence realignments, a small additional section of fencing, updated fencing specifications, and corrections arising from updated survey information",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-17",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TONRGFJMMEC00&activeTab=summary",
+          "town": "Perivale",
+          "category": "Planning application",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/perivale",
+              "label": "Perivale",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264185nma",
+      "reference": "264185NMA",
+      "address": "70 Gordon Road Ealing W5 2AR",
+      "proposal": "Application for non-material amendment to planning permission reference 215270FUL dated 07.02.2025 for 'Conversion of a residential building containing five self-contained flats into seven self-contained flats (2 x one bedroom, 4 x two bedroom & 1 x three bedroom); part single, part two and part three storey side/rear extensions; alterations to roof profile of existing two storey rear outrigger and associated external alterations; private and communal amenity space, provision for cycle and refuse storage.' Amendments to the to the front garden refuse and bicycle storage arrangement; increase the scale of the rear private gardens and shared amenity space; inclusion of an approved window on the first floor in the east elevation that was omitted",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-17",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TONRGNJMMEE00&activeTab=summary",
+      "application_type": "Non-Material Amendment",
+      "ward": "Ealing Broadway",
+      "expected_decision_level": "Not Available",
+      "town": "Ealing",
+      "category": "Planning application",
+      "out_of_borough": false,
+      "commons_path": "/planning/264185nma",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "70 Gordon Road Ealing W5 2AR",
+          "proposal": "Application for non-material amendment to planning permission reference 215270FUL dated 07.02.2025 for 'Conversion of a residential building containing five self-contained flats into seven self-contained flats (2 x one bedroom, 4 x two bedroom & 1 x three bedroom); part single, part two and part three storey side/rear extensions; alterations to roof profile of existing two storey rear outrigger and associated external alterations; private and communal amenity space, provision for cycle and refuse storage.' Amendments to the to the front garden refuse and bicycle storage arrangement; increase the scale of the rear private gardens and shared amenity space; inclusion of an approved window on the first floor in the east elevation that was omitted",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-17",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TONRGNJMMEE00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Planning application",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264134palhe",
+      "reference": "264134PALHE",
+      "address": "12 Oakwood Crescent Greenford UB6 0RQ",
+      "proposal": "Single storey (Max 6m deep and Max 3m high) rear extension (following demolition of existing garage, garden wall and gate) (42 days Prior Notification Process)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-16",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOFTNNJM0KK00&activeTab=summary",
+      "application_type": "Prior Approval - Larger Home Extension",
+      "ward": "North Greenford",
+      "expected_decision_level": "Not Available",
+      "town": "Greenford",
+      "category": "Prior approval",
+      "out_of_borough": false,
+      "commons_path": "/planning/264134palhe",
+      "place_links": [
+        {
+          "route": "places/greenford",
+          "label": "Greenford",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "12 Oakwood Crescent Greenford UB6 0RQ",
+          "proposal": "Single storey (Max 6m deep and Max 3m high) rear extension (following demolition of existing garage, garden wall and gate) (42 days Prior Notification Process)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-16",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOFTNNJM0KK00&activeTab=summary",
+          "town": "Greenford",
+          "category": "Prior approval",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/greenford",
+              "label": "Greenford",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264154ptt",
+      "reference": "264154PTT",
+      "address": "23 Avenue Road Acton W3 8NH",
+      "proposal": "TPO/2008/037.- Felling of the two lime trees",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-16",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOJ99WJMMAR00&activeTab=summary",
+      "application_type": "Works to a tree with a TPO",
+      "ward": "South Acton",
+      "expected_decision_level": "Not Available",
+      "town": "Acton",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/264154ptt",
+      "place_links": [
+        {
+          "route": "places/acton",
+          "label": "Acton",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "23 Avenue Road Acton W3 8NH",
+          "proposal": "TPO/2008/037.- Felling of the two lime trees",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-16",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOJ99WJMMAR00&activeTab=summary",
+          "town": "Acton",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/acton",
+              "label": "Acton",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264160ful",
+      "reference": "264160FUL",
+      "address": "46A Cedar Grove Ealing W5 4AR",
+      "proposal": "Internal alterations to the first floor flat (Retrospective Application)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-16",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOLF37JMMBK00&activeTab=summary",
+      "application_type": "Full Application",
+      "ward": "Ealing Common",
+      "expected_decision_level": "Not Available",
+      "town": "Ealing",
+      "category": "Planning application",
+      "out_of_borough": false,
+      "commons_path": "/planning/264160ful",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "46A Cedar Grove Ealing W5 4AR",
+          "proposal": "Internal alterations to the first floor flat (Retrospective Application)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-16",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOLF37JMMBK00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Planning application",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264163ptc",
+      "reference": "264163PTC",
+      "address": "6 Hamilton Road Ealing W5 2EQ",
+      "proposal": "T1 Apple x 1 (Malus) This mature apple tree has been reduced previously, its cyclical prune is now due, reduce all round back to previous reduction points, equating to an all round reduction of 0.5m G2Common Plum x 2 (Prunus domestica) These two mature plum trees have been reduced previously, their cyclical prune is now due, reduce all round back to previous reduction points, equating to a reduction of 0.5-1m G3 Pear x 3 (Pyrus communis) These three mature plum trees have been reduced previously, their cyclical prune is now due reduce all round back to previous reduction points, equating to a reduction of 0.5-1m",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-16",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOLF4PJMMBQ00&activeTab=summary",
+      "application_type": "Works to a tree Conservation Area",
+      "ward": "Ealing Common",
+      "expected_decision_level": "Not Available",
+      "town": "Ealing",
+      "category": "Tree works",
+      "out_of_borough": false,
+      "commons_path": "/planning/264163ptc",
+      "place_links": [
+        {
+          "route": "places/ealing",
+          "label": "Ealing",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "6 Hamilton Road Ealing W5 2EQ",
+          "proposal": "T1 Apple x 1 (Malus) This mature apple tree has been reduced previously, its cyclical prune is now due, reduce all round back to previous reduction points, equating to an all round reduction of 0.5m G2Common Plum x 2 (Prunus domestica) These two mature plum trees have been reduced previously, their cyclical prune is now due, reduce all round back to previous reduction points, equating to a reduction of 0.5-1m G3 Pear x 3 (Pyrus communis) These three mature plum trees have been reduced previously, their cyclical prune is now due reduce all round back to previous reduction points, equating to a reduction of 0.5-1m",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-16",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOLF4PJMMBQ00&activeTab=summary",
+          "town": "Ealing",
+          "category": "Tree works",
+          "out_of_borough": false,
+          "place_links": [
+            {
+              "route": "places/ealing",
+              "label": "Ealing",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planning:ealing:264171cons",
+      "reference": "264171CONS",
+      "address": "21 Craneswater Park Southall UB2 5RW",
+      "proposal": "Single storey rear extension with flat roof and 3x skylights (out of borough)",
+      "status": "Pending Consideration",
+      "validated_date": "2026-11-16",
+      "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOLP9GJM0KK00&activeTab=summary",
+      "application_type": "Consultation by Other Boroughs",
+      "ward": "Norwood Green",
+      "expected_decision_level": "Not Available",
+      "town": "Southall",
+      "category": "Out of borough",
+      "out_of_borough": true,
+      "commons_path": "/planning/264171cons",
+      "place_links": [
+        {
+          "route": "places/southall",
+          "label": "Southall",
+          "relationship": "located_in",
+          "provenance": "town-classification"
+        }
+      ],
+      "first_seen_week": "16 Nov 2026",
+      "last_seen_week": "16 Nov 2026",
+      "first_seen_at": "2026-11-24T17:46:07.605Z",
+      "last_seen_at": "2026-11-24T17:46:07.605Z",
+      "weeks_seen": [
+        "16 Nov 2026"
+      ],
+      "history": [
+        {
+          "observed_at": "2026-11-24T17:46:07.605Z",
+          "week": "16 Nov 2026",
+          "address": "21 Craneswater Park Southall UB2 5RW",
+          "proposal": "Single storey rear extension with flat roof and 3x skylights (out of borough)",
+          "status": "Pending Consideration",
+          "validated_date": "2026-11-16",
+          "authoritative_url": "https://pam.ealing.gov.uk/online-applications/applicationDetails.do?keyVal=TOLP9GJM0KK00&activeTab=summary",
+          "town": "Southall",
+          "category": "Out of borough",
+          "out_of_borough": true,
+          "place_links": [
+            {
+              "route": "places/southall",
+              "label": "Southall",
+              "relationship": "located_in",
+              "provenance": "town-classification"
+            }
+          ]
+        }
+      ]
+    },
     {
       "id": "planning:ealing:264127palhe",
       "reference": "264127PALHE",
