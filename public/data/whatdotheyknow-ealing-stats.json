@@ -1,0 +1,11 @@
+{
+  "source": "https://www.whatdotheyknow.com/body/ealing_borough_council.json",
+  "retrievedAt": "2026-11-26T20:25:17Z",
+  "note": "Snapshot of WDTK's authority info block. Requester-classified; 'successful' includes partially successful. Not fetched live: WDTK blocks cloud hosts with a Cloudflare challenge.",
+  "requestsCount": 3262,
+  "visibleOnAuthorityPage": 3019,
+  "classifiedCount": 2477,
+  "successfulCount": 1981,
+  "notHeldCount": 114,
+  "overdueCount": 173
+}

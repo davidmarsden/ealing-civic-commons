@@ -1,3 +1,5 @@
+import { DEFAULT_BASE_URL, STATE_LABELS, canonicalWdtkUrl, stateFromSummary } from './whatdotheyknow.mjs';
+
 export function whatDoTheyKnowCommonsItem(request) {
   if (!request?.sourceId) throw new Error('WDTK request needs sourceId');
   const evidence = [];
@@ -30,4 +32,15 @@ export function whatDoTheyKnowCommonsItem(request) {
       tags: request.tags || [],
     },
   };
+}
+
+// Items archived before the relay-host and status fixes carry chat-dev links and
+// status "standalone". Returns a corrected copy, or null when nothing needs changing.
+export function repairWhatDoTheyKnowItem(item, { baseUrl = DEFAULT_BASE_URL } = {}) {
+  if (item?.sourceId !== 'whatdotheyknow' || !item.mutableSource) return null;
+  const url = canonicalWdtkUrl(item.url, baseUrl), canonicalUrl = canonicalWdtkUrl(item.canonicalUrl, baseUrl);
+  const status = item.mutableSource.status;
+  const fixedStatus = !status || status === 'standalone' || !(status in STATE_LABELS) ? (stateFromSummary(item.summary) || null) : status;
+  if (url === item.url && canonicalUrl === item.canonicalUrl && fixedStatus === status) return null;
+  return { ...item, url, canonicalUrl, mutableSource: { ...item.mutableSource, status: fixedStatus } };
 }
