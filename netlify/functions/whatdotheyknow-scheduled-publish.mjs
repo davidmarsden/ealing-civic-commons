@@ -1,19 +1,20 @@
 import { getStore } from '@netlify/blobs';
 import { DEFAULT_BASE_URL, EALING_AUTHORITY_SLUG, parseAuthorityAtom } from '../../scripts/lib/whatdotheyknow.mjs';
 import { repairWhatDoTheyKnowItem, whatDoTheyKnowCommonsItem } from '../../scripts/lib/whatdotheyknow-commons.mjs';
-import { listArchivedItems, upsertMutableItems } from '../lib/civic-items.mjs';
+import { listArchivedItems, store, upsertMutableItems } from '../lib/civic-items.mjs';
 
 const RELAY='https://chat-dev.ealing.civiccommons.co.uk/relay/whatdotheyknow/ealing';
 const STATUS_STORE='civic-commons-operations';
 const STATUS_KEY='whatdotheyknow/last-run';
 const headers={'user-agent':'EalingCivicCommons/0.1 (+https://ealing.civiccommons.co.uk)','accept':'application/atom+xml,application/xml;q=0.9,*/*;q=0.8'};
 // Corrects WDTK items archived with relay-host links or a missing status. Idempotent:
-// once repaired, items are skipped, so later runs only read.
-async function repairArchived(baseUrl){
-  const repaired=[];let offset=0;
+// once repaired, items are skipped, so later runs only read. Reads are strongly
+// consistent and skip items this run just upserted, so a stale read can't revert them.
+async function repairArchived(baseUrl,freshIds=new Set()){
+  const repaired=[],blobs=store({consistency:'strong'});let offset=0;
   for(let pages=0;pages<50;pages++){
-    const page=await listArchivedItems({sourceId:'whatdotheyknow',limit:100,offset});
-    for(const record of page.records||[]){const fixed=repairWhatDoTheyKnowItem(record.item,{baseUrl});if(fixed)repaired.push(fixed)}
+    const page=await listArchivedItems({sourceId:'whatdotheyknow',limit:100,offset},{blobs});
+    for(const record of page.records||[]){if(freshIds.has(record.item?.id))continue;const fixed=repairWhatDoTheyKnowItem(record.item,{baseUrl});if(fixed)repaired.push(fixed)}
     if(!page.hasMore)break;offset=page.nextOffset;
   }
   if(!repaired.length)return{repaired:0};
@@ -37,7 +38,7 @@ export default async request=>{
     if(!requests.length)throw new Error('WhatDoTheyKnow Atom feed contained no ingestible request entries.');
     const items=requests.map(whatDoTheyKnowCommonsItem);
     const persistence=await upsertMutableItems(items);
-    let repair=null;try{repair=await repairArchived(baseUrl)}catch(error){repair={error:String(error?.message||error)};console.error('WDTK archive repair failed',error)}
+    let repair=null;try{repair=await repairArchived(baseUrl,new Set(items.map(item=>item.id)))}catch(error){repair={error:String(error?.message||error)};console.error('WDTK archive repair failed',error)}
     const result={ok:true,startedAt,completedAt:new Date().toISOString(),nextRun:schedulerEvent?.next_run||null,authoritySlug,discoveryMode:'atom-static-relay',discovered:requests.length,normalised:items.length,persistence,repair};
     await recordStatus(result);
     console.log('Scheduled WDTK publication succeeded',result);
