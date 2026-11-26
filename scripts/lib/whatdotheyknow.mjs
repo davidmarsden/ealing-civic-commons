@@ -15,10 +15,61 @@ export function requestSlug(url = '') {
   return match?.[1] || null;
 }
 
+// Alaveteli request states, keyed by the labels WDTK prints in listings and feeds.
+export const STATE_LABELS = {
+  waiting_classification: 'Awaiting classification',
+  waiting_response: 'Awaiting response',
+  waiting_response_overdue: 'Delayed',
+  waiting_response_very_overdue: 'Long overdue',
+  waiting_clarification: 'Awaiting clarification',
+  internal_review: 'Awaiting internal review',
+  successful: 'Successful',
+  partially_successful: 'Partially successful',
+  not_held: 'Information not held',
+  rejected: 'Refused',
+  user_withdrawn: 'Withdrawn by the requester',
+  gone_postal: 'Handled by post',
+  error_message: 'Delivery error',
+  requires_admin: 'Unusual response',
+  attention_requested: 'Reported for administrator attention',
+  vexatious: 'Considered vexatious',
+  not_foi: 'Not an FOI request',
+};
+const LABEL_STATES = Object.fromEntries(Object.entries(STATE_LABELS).map(([code, label]) => [label.toLowerCase(), code]));
+// Longest first, so "Partially successful" wins over "Successful".
+const LABELS_BY_LENGTH = Object.values(STATE_LABELS).sort((a, b) => b.length - a.length);
+
+export function stateFromLabel(label) {
+  return LABEL_STATES[String(label || '').replace(/\s+/g, ' ').replace(/\.$/, '').trim().toLowerCase()] || null;
+}
+
+// Recover a state from listing text such as "Response by X to Y on 26 November 2026 . Awaiting classification ...".
+export function stateFromSummary(summary) {
+  const textValue = String(summary || '');
+  for (const label of LABELS_BY_LENGTH) {
+    const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (new RegExp(`(?:^|\\d{4}\\s*\\.\\s*)${escaped}\\b`, 'i').test(textValue)) return stateFromLabel(label);
+  }
+  return null;
+}
+
 function atomStatus(content) {
-  const raw = String(text(content) || '');
-  const match = raw.match(/icon[_-]([a-z0-9_-]+)/i) || raw.match(/<strong[^>]*>\s*([^<]+?)\s*<\/strong>/i) || raw.match(/&lt;strong&gt;\s*([^&]+?)\s*&lt;\/strong&gt;/i);
-  return match?.[1]?.replaceAll('_', ' ')?.trim() || null;
+  const raw = String(text(content) || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+  // The listing icon carries two classes, e.g. "icon-standalone icon_waiting_classification"; the second is the state.
+  const icon = [...raw.matchAll(/icon_([a-z_]+)/gi)].map(m => m[1].toLowerCase()).find(code => code !== 'standalone' && code in STATE_LABELS);
+  if (icon) return icon;
+  const strong = raw.match(/<strong[^>]*>\s*([^<]+?)\s*<\/strong>/i)?.[1];
+  return stateFromLabel(strong);
+}
+
+// The relay serves WDTK's feed with its own host in every link; point links back at WDTK.
+export function canonicalWdtkUrl(value, baseUrl = DEFAULT_BASE_URL) {
+  if (!value) return value ?? null;
+  try {
+    const url = new URL(value, baseUrl), base = new URL(baseUrl);
+    if (url.host !== base.host && /^\/(request|request_event|body|user)\//.test(url.pathname)) { url.protocol = base.protocol; url.host = base.host; }
+    return url.toString();
+  } catch { return value; }
 }
 
 export function parseAuthorityAtom(atomText, { baseUrl = DEFAULT_BASE_URL, authoritySlug = EALING_AUTHORITY_SLUG } = {}) {
@@ -28,10 +79,10 @@ export function parseAuthorityAtom(atomText, { baseUrl = DEFAULT_BASE_URL, autho
   return array(feed.entry || feed.item).map(entry => {
     const links = array(entry.link);
     const href = links.map(link => typeof link === 'string' ? link : link?.['@_href']).find(Boolean);
-    const eventUrl = href ? new URL(href, baseUrl).toString() : null;
+    const eventUrl = href ? canonicalWdtkUrl(href, baseUrl) : null;
     const raw = String(text(entry.content || entry.summary || entry.description) || '');
-    const requestHref = raw.match(/https?:\/\/www\.whatdotheyknow\.com\/request\/[^&"'<>\s]+/i)?.[0]?.replace(/&amp;.*$/,'') || raw.match(/href=(?:&quot;|["'])([^"'&]*\/request\/[^"'&<]+)/i)?.[1];
-    const url = requestHref ? new URL(requestHref, baseUrl).toString() : eventUrl;
+    const requestHref = raw.match(/https?:\/\/[^/"'&<>\s]+\/request\/[^&"'<>\s]+/i)?.[0]?.replace(/&amp;.*$/,'') || raw.match(/href=(?:&quot;|["'])([^"'&]*\/request\/[^"'&<]+)/i)?.[1];
+    const url = requestHref ? canonicalWdtkUrl(requestHref, baseUrl) : eventUrl;
     const slug = requestSlug(url) || clean(entry.id)?.match(/InfoRequestEvent\/(\d+)/)?.[1];
     return {
       source: 'whatdotheyknow', sourceType: 'foi-request', sourceId: slug,

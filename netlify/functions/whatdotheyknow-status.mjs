@@ -1,4 +1,5 @@
 import { getStore } from '@netlify/blobs';
+import authorityStats from '../../public/data/whatdotheyknow-ealing-stats.json' with { type: 'json' };
 
 const STORE='civic-commons-operations';
 const KEY='whatdotheyknow/last-run';
@@ -8,6 +9,6 @@ export default async request=>{
   if(request.method!=='GET')return json({error:'Method not allowed'},405);
   try{
     const lastRun=await getStore(STORE,{consistency:'strong'}).get(KEY,{type:'json'});
-    return json({sourceId:'whatdotheyknow-ealing',source:'WhatDoTheyKnow — Ealing Council',schedule:'17 */6 * * *',lastRun:lastRun||null});
+    return json({sourceId:'whatdotheyknow-ealing',source:'WhatDoTheyKnow — Ealing Council',schedule:'17 */6 * * *',lastRun:lastRun||null,authorityStats});
   }catch(error){console.error('WDTK status lookup failed',error);return json({error:'WhatDoTheyKnow publisher status is temporarily unavailable.'},503)}
 };

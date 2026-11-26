@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { normalizeRequestJson, parseAuthorityAtom } from './lib/whatdotheyknow.mjs';
+import { normalizeRequestJson, parseAuthorityAtom, stateFromSummary } from './lib/whatdotheyknow.mjs';
+import { repairWhatDoTheyKnowItem, whatDoTheyKnowCommonsItem } from './lib/whatdotheyknow-commons.mjs';
 
 const fixture = JSON.parse(await readFile(new URL('./data/whatdotheyknow-ealing-fixture.json', import.meta.url), 'utf8'));
 const normalized = normalizeRequestJson(fixture);
@@ -21,3 +22,19 @@ assert.equal(parsed[0].title, 'Example request');
 assert.equal(parsed[0].authority.urlName, 'ealing_borough_council');
 
 console.log('WhatDoTheyKnow Atom parsing, request normalisation, attachments and deterministic identity OK.');
+
+// Relay feed: chat-dev host in links, two icon classes, status in <strong>.
+const relayAtom = `<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"><entry><id>tag:chat-dev.ealing.civiccommons.co.uk,2005:InfoRequestEvent/20977682</id><published>2026-11-26T18:06:46+00:00</published><link type="text/html" rel="alternate" href="https://chat-dev.ealing.civiccommons.co.uk/request_event/20977682"/><title type="html">Food Officers</title><content type="html">&lt;div class=&quot;requester&quot;&gt;Response by &lt;a href=&quot;https://chat-dev.ealing.civiccommons.co.uk/body/ealing_borough_council&quot;&gt;Ealing Borough Council&lt;/a&gt; on 26 November 2026.&lt;/div&gt;&lt;p&gt;&lt;i class=&quot;icon-standalone icon_partially_successful&quot;&gt;&lt;/i&gt;&lt;strong&gt; Partially successful &lt;/strong&gt;&lt;/p&gt;</content></entry></feed>`;
+const relayParsed = parseAuthorityAtom(relayAtom);
+assert.equal(relayParsed.length, 1);
+assert.equal(relayParsed[0].url, 'https://www.whatdotheyknow.com/request_event/20977682', 'relay host must be rewritten to WDTK');
+assert.equal(relayParsed[0].status, 'partially_successful', 'state must come from the icon_ class, not icon-standalone');
+assert.equal(stateFromSummary('Request sent by X on 3 October 2026 . Long overdue. Dear'), 'waiting_response_very_overdue');
+assert.equal(stateFromSummary('Nothing here is Successful'), null, 'labels only count straight after the date');
+
+const legacy = whatDoTheyKnowCommonsItem({ ...relayParsed[0], url: 'https://chat-dev.ealing.civiccommons.co.uk/request_event/1', status: 'standalone', summary: 'Response by Ealing Borough Council to maggie on 26 November 2026 . Awaiting classification Thank you' });
+const repaired = repairWhatDoTheyKnowItem(legacy);
+assert.equal(repaired.url, 'https://www.whatdotheyknow.com/request_event/1');
+assert.equal(repaired.mutableSource.status, 'waiting_classification');
+assert.equal(repairWhatDoTheyKnowItem(repaired), null, 'repair must be idempotent');
+console.log('WhatDoTheyKnow relay links, states and archive repair OK.');
